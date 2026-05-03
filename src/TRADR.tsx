@@ -545,7 +545,7 @@ function CalendarView({ trades, C, onDayClick }: any) {
         <button onClick={() => { if (month === 11) { setMonth(0); setYear(y => y + 1); } else setMonth(m => m + 1); }} style={navBtn}>›</button>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: "2px", marginBottom: "4px" }}>
-        {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => <div key={i} style={{ textAlign: "center", fontSize: "9px", color: C.muted, padding: "4px 0", fontFamily: MONO, letterSpacing: "0.08em" }}>{d}</div>)}
+        {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => <div key={i} style={{ textAlign: "center", fontSize: "11px", color: C.muted, padding: "4px 0", fontFamily: MONO, letterSpacing: "0.08em" }}>{d}</div>)}
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: "2px" }}>
         {cells.map((d, i) => {
@@ -558,7 +558,7 @@ function CalendarView({ trades, C, onDayClick }: any) {
             <div key={i} onClick={() => data && onDayClick(key)}
               style={{ border: `1px solid ${isToday ? C.text : C.border}`, padding: "6px 3px", textAlign: "center", cursor: data ? "pointer" : "default", minHeight: "44px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: "2px", background: "transparent" }}>
               <div style={{ fontSize: "11px", color: isToday ? C.text : C.text2, fontFamily: MONO }}>{d}</div>
-              {data && <div style={{ fontSize: "8px", color: textCol, fontFamily: MONO, letterSpacing: "0.04em" }}>{data.pnl >= 0 ? "+" : ""}{data.pnl.toFixed(1)}</div>}
+              {data && <div style={{ fontSize: "10px", color: textCol, fontFamily: MONO, letterSpacing: "0.04em" }}>{data.pnl >= 0 ? "+" : ""}{data.pnl.toFixed(1)}</div>}
             </div>
           );
         })}
@@ -624,7 +624,8 @@ function StrategyPill({ name, selected, onClick, C }: any) {
       background: selected ? C.text : "transparent",
       border: `1px solid ${selected ? C.text : C.border2}`,
       borderRadius: "999px",
-      padding: "7px 13px",
+      padding: "10px 16px",
+      minHeight: "44px",
       cursor: "pointer",
       fontFamily: MONO,
       display: "flex",
@@ -655,7 +656,7 @@ function StrategySelect({ strategies, value, onChange, C, align = "left" }: any)
     <div ref={ref} style={{ position: "relative", display: "inline-block" }}>
       <button onClick={() => setOpen(o => !o)} style={{
         background: "transparent", border: `1px solid ${C.border2}`, borderRadius: "999px",
-        padding: "7px 14px", cursor: "pointer", fontFamily: MONO, display: "inline-flex",
+        padding: "7px 14px", minHeight: "44px", cursor: "pointer", fontFamily: MONO, display: "inline-flex",
         alignItems: "center", gap: "8px", whiteSpace: "nowrap", color: C.text,
       }}>
         <span style={{ fontSize: "10px", letterSpacing: "0.1em", fontWeight: 500 }}>{stratCode(value)}</span>
@@ -667,12 +668,13 @@ function StrategySelect({ strategies, value, onChange, C, align = "left" }: any)
           position: "absolute", top: "calc(100% + 6px)", [align]: 0, zIndex: 50,
           minWidth: "220px", background: C.panel, border: `1px solid ${C.border2}`,
           borderRadius: "12px", padding: "6px", boxShadow: `0 8px 24px ${C.shadow}`,
+          maxHeight: "320px", overflowY: "auto",
         }}>
           {strategies.map((s: string) => (
             <button key={s} onClick={() => { onChange(s); setOpen(false); }} style={{
               display: "flex", width: "100%", alignItems: "center", gap: "10px",
               background: s === value ? C.panel2 : "transparent", border: "none",
-              borderRadius: "8px", padding: "9px 11px", cursor: "pointer", textAlign: "left",
+              borderRadius: "8px", padding: "11px 11px", minHeight: "44px", cursor: "pointer", textAlign: "left",
               fontFamily: MONO, color: C.text,
             }}>
               <span style={{ fontSize: "10px", letterSpacing: "0.1em", fontWeight: 500, minWidth: "34px" }}>{stratCode(s)}</span>
@@ -702,7 +704,7 @@ function SubNavDropdown({ sections, value, onChange, C }: any) {
     <div ref={ref} style={{ position: "relative", display: "inline-block" }}>
       <button onClick={() => setOpen(o => !o)} style={{
         background: "transparent", border: `1px solid ${C.border2}`, borderRadius: "999px",
-        padding: "6px 12px", cursor: "pointer", fontFamily: MONO, display: "inline-flex",
+        padding: "6px 12px", minHeight: "44px", cursor: "pointer", fontFamily: MONO, display: "inline-flex",
         alignItems: "center", gap: "8px", whiteSpace: "nowrap", color: C.text,
         fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase",
       }}>
@@ -717,8 +719,8 @@ function SubNavDropdown({ sections, value, onChange, C }: any) {
         }}>
           {sections.map((s: any) => (
             <button key={s.id} onClick={() => { onChange(s.id); setOpen(false); }} style={{
-              display: "block", width: "100%", background: s.id === value ? C.panel2 : "transparent",
-              border: "none", borderRadius: "8px", padding: "9px 11px", cursor: "pointer",
+              display: "flex", alignItems: "center", width: "100%", background: s.id === value ? C.panel2 : "transparent",
+              border: "none", borderRadius: "8px", padding: "9px 11px", minHeight: "44px", cursor: "pointer",
               textAlign: "left", fontFamily: MONO, fontSize: "11px", letterSpacing: "0.1em",
               textTransform: "uppercase", color: s.id === value ? C.text : C.text2,
             }}>
@@ -742,7 +744,7 @@ function GearButton({ onClick, active, C }: any) {
         color: active ? C.bg : C.muted,
         border: `1px solid ${active ? C.text : C.border2}`,
         borderRadius: "999px",
-        width: "32px", height: "32px",
+        width: "44px", height: "44px",
         display: "inline-flex", alignItems: "center", justifyContent: "center",
         cursor: "pointer", padding: 0, flexShrink: 0,
       }}>
@@ -937,7 +939,7 @@ function CsvImportPanel({ existingTrades, onImport, onClose, allStrategyNames, C
 
           <div>
             <label style={lbl}>Column mapping</label>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px 14px", marginTop: "8px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "10px 14px", marginTop: "8px" }}>
               {fields.map(f => (
                 <div key={f.key}>
                   <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "2px" }}>
@@ -1024,15 +1026,15 @@ function EditInline({ val, onSave, onCancel, C }: any) {
 
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
 const EMOTION_TAGS = [
-  { id: "disciplined", label: "Disciplined", color: "#22c55e" },
-  { id: "patient",     label: "Patient",     color: "#22c55e" },
-  { id: "fomo",        label: "FOMO",        color: "#ef4444" },
-  { id: "revenge",     label: "Revenge",     color: "#ef4444" },
-  { id: "overtrading", label: "Overtrading", color: "#ef4444" },
-  { id: "hesitated",   label: "Hesitated",   color: "#f59e0b" },
-  { id: "earlyexit",   label: "Early Exit",  color: "#f59e0b" },
-  { id: "movedsl",     label: "Moved SL",    color: "#f59e0b" },
-  { id: "chased",      label: "Chased",      color: "#f59e0b" },
+  { id: "disciplined", label: "Disciplined", color: "#00C96B" },  // DARK.green
+  { id: "patient",     label: "Patient",     color: "#00C96B" },  // DARK.green
+  { id: "fomo",        label: "FOMO",        color: "#FF3D00" },  // DARK.red
+  { id: "revenge",     label: "Revenge",     color: "#FF3D00" },  // DARK.red
+  { id: "overtrading", label: "Overtrading", color: "#FF3D00" },  // DARK.red
+  { id: "hesitated",   label: "Hesitated",   color: "#BCBCB4" },  // DARK.text2
+  { id: "earlyexit",   label: "Early Exit",  color: "#BCBCB4" },  // DARK.text2
+  { id: "movedsl",     label: "Moved SL",    color: "#BCBCB4" },  // DARK.text2
+  { id: "chased",      label: "Chased",      color: "#BCBCB4" },  // DARK.text2
 ];
 
 function getEmotionTags(emotions: string | string[] | undefined): string[] {
@@ -2178,6 +2180,7 @@ export default function Tradr({ user }: { user?: any } = {}) {
     borderRadius: 0,
     color: C.text,
     padding: "12px 0",
+    minHeight: "44px",
     fontSize: "16px",
     width: "100%",
     outline: "none",
@@ -2214,12 +2217,16 @@ export default function Tradr({ user }: { user?: any } = {}) {
     border: `1px solid ${C.border2}`,
     borderRadius: "999px",
     padding: "12px 18px",
+    minHeight: "44px",
     fontSize: "12px",
     letterSpacing: "0.04em",
     cursor: "pointer",
     fontFamily: MONO,
     textTransform: "uppercase",
     transition: "opacity 0.15s",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
   };
 
   const NAV_TABS = [
@@ -2313,6 +2320,7 @@ export default function Tradr({ user }: { user?: any } = {}) {
         .row-hvr{cursor:pointer;transition:opacity 0.15s;}
         .row-hvr:hover{opacity:0.75;}
         .check-row:hover .ca{opacity:1!important;}
+        @media(hover:none){.ca{opacity:1!important;}}
         @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}@keyframes livePulse{0%,100%{transform:scale(1);opacity:0.4}50%{transform:scale(2.2);opacity:0}}
         .fade-in{animation:rise 0.25s ease;}
         input[type=file]{display:none;}
@@ -2331,7 +2339,7 @@ export default function Tradr({ user }: { user?: any } = {}) {
             <div style={{ display: "flex", alignItems: "baseline", gap: "14px", fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.08em", textTransform: "uppercase" }}>
               <span>{profile.handle || "@trader"}</span>
               <button onClick={() => supabase.auth.signOut()}
-                style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.08em", textTransform: "uppercase", padding: 0 }}>
+                style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.08em", textTransform: "uppercase", padding: "8px 4px", minHeight: "44px" }}>
                 sign out →
               </button>
             </div>
@@ -2392,7 +2400,7 @@ export default function Tradr({ user }: { user?: any } = {}) {
                           <div style={{ display: "flex", gap: "4px" }}>
                             {(["week", "all"] as const).map(m => (
                               <button key={m} onClick={() => setTimeMode(m)}
-                                style={{ background: timeMode === m ? C.text : "transparent", color: timeMode === m ? C.bg : C.muted, border: `1px solid ${timeMode === m ? C.text : C.border2}`, borderRadius: "999px", padding: "4px 12px", cursor: "pointer", fontFamily: MONO, fontSize: "9px", letterSpacing: "0.12em", textTransform: "uppercase" }}>
+                                style={{ background: timeMode === m ? C.text : "transparent", color: timeMode === m ? C.bg : C.muted, border: `1px solid ${timeMode === m ? C.text : C.border2}`, borderRadius: "999px", padding: "10px 14px", minHeight: "44px", cursor: "pointer", fontFamily: MONO, fontSize: "9px", letterSpacing: "0.12em", textTransform: "uppercase", display: "flex", alignItems: "center" }}>
                                 {m === "week" ? "This Week" : "All Time"}
                               </button>
                             ))}
@@ -2402,7 +2410,7 @@ export default function Tradr({ user }: { user?: any } = {}) {
                             <div style={{ display: "flex", gap: "4px", marginLeft: "auto" }}>
                               {(["r", "$"] as const).map(m => (
                                 <button key={m} onClick={() => setPnlMode(m)}
-                                  style={{ background: pnlMode === m ? C.text : "transparent", color: pnlMode === m ? C.bg : C.muted, border: `1px solid ${pnlMode === m ? C.text : C.border2}`, borderRadius: "999px", padding: "4px 12px", cursor: "pointer", fontFamily: MONO, fontSize: "9px", letterSpacing: "0.12em", textTransform: "uppercase" }}>
+                                  style={{ background: pnlMode === m ? C.text : "transparent", color: pnlMode === m ? C.bg : C.muted, border: `1px solid ${pnlMode === m ? C.text : C.border2}`, borderRadius: "999px", padding: "10px 16px", minHeight: "44px", cursor: "pointer", fontFamily: MONO, fontSize: "9px", letterSpacing: "0.12em", textTransform: "uppercase", display: "flex", alignItems: "center" }}>
                                   {m === "r" ? "R" : "$"}
                                 </button>
                               ))}
@@ -2464,7 +2472,7 @@ export default function Tradr({ user }: { user?: any } = {}) {
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px" }}>
                           <div>
                             <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.1em", marginBottom: "4px" }}>TRADES</div>
-                            <div style={{ fontFamily: DISPLAY, fontSize: "22px", fontWeight: 500, color: atLimit ? C.red : nearLimit ? "#f59e0b" : C.text }}>
+                            <div style={{ fontFamily: DISPLAY, fontSize: "22px", fontWeight: 500, color: atLimit ? C.red : nearLimit ? C.text2 : C.text }}>
                               {todayTrades.length}{maxTrades > 0 ? `/${maxTrades}` : ""}
                             </div>
                           </div>
@@ -2849,15 +2857,15 @@ export default function Tradr({ user }: { user?: any } = {}) {
                   </div>
                   <div style={{ borderTop: `1px solid ${C.border}` }}>
                     {ruleItems.map((rule: any, idx: number) => (
-                      <div key={rule.id} className="check-row" style={{ padding: "14px 0", borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "baseline", gap: "14px" }}>
+                      <div key={rule.id} className="check-row" style={{ minHeight: "52px", borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: "14px", padding: "8px 0" }}>
                         <span style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, letterSpacing: "0.08em", minWidth: "24px" }}>{String(idx + 1).padStart(2, "0")}</span>
                         {editingRule === rule.id
                           ? <EditInline val={rule.text} onSave={(t: string) => saveEditRule(rule.id, t)} onCancel={() => setEditingRule(null)} C={C} />
                           : <>
                             <span style={{ flex: 1, fontSize: "14px", color: C.text, lineHeight: 1.55, fontFamily: BODY }}>{rule.text}</span>
-                            <div className="ca" style={{ display: "flex", gap: "10px", opacity: 0, transition: "opacity 0.15s" }}>
-                              <button onClick={() => setEditingRule(rule.id)} style={{ background: "none", border: "none", color: C.muted, fontSize: "10px", cursor: "pointer", fontFamily: MONO, letterSpacing: "0.08em", textTransform: "uppercase" }}>edit</button>
-                              <button onClick={() => deleteRule(rule.id)} style={{ background: "none", border: "none", color: C.red, fontSize: "10px", cursor: "pointer", fontFamily: MONO, letterSpacing: "0.08em", textTransform: "uppercase" }}>remove</button>
+                            <div className="ca" style={{ display: "flex", gap: "4px", opacity: 0, transition: "opacity 0.15s" }}>
+                              <button onClick={() => setEditingRule(rule.id)} style={{ background: "none", border: `1px solid ${C.border2}`, borderRadius: "6px", color: C.muted, fontSize: "10px", cursor: "pointer", fontFamily: MONO, letterSpacing: "0.08em", textTransform: "uppercase", padding: "8px 10px", minHeight: "44px" }}>edit</button>
+                              <button onClick={() => deleteRule(rule.id)} style={{ background: "none", border: `1px solid ${C.border2}`, borderRadius: "6px", color: C.red, fontSize: "10px", cursor: "pointer", fontFamily: MONO, letterSpacing: "0.08em", textTransform: "uppercase", padding: "8px 10px", minHeight: "44px" }}>rm</button>
                             </div>
                           </>}
                       </div>
@@ -3009,7 +3017,7 @@ export default function Tradr({ user }: { user?: any } = {}) {
                   {(form.strategy ? _allStratMap[form.strategy]?.setups || [] : allSetups).map((s: string) => <option key={s}>{s}</option>)}
                 </select>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))", gap: "12px" }}>
                 <div><label style={lbl}>Entry</label><input type="number" name="entryPrice" value={form.entryPrice} onChange={handleChange} placeholder="0.00" style={inp} /></div>
                 <div><label style={lbl}>Stop Loss</label><input type="number" name="slPrice" value={form.slPrice} onChange={handleChange} placeholder="0.00" style={inp} /></div>
                 <div><label style={lbl}>Take Profit</label><input type="number" name="tpPrice" value={form.tpPrice} onChange={handleChange} placeholder="0.00" style={inp} /></div>
@@ -3020,12 +3028,10 @@ export default function Tradr({ user }: { user?: any } = {}) {
                   <span style={{ fontFamily: DISPLAY, fontSize: "22px", color: C.text, fontWeight: 500, letterSpacing: "-0.02em" }}>{form.rr}R</span>
                 </div>
               )}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: "16px" }}>
                 <div><label style={lbl}>Outcome</label><select name="outcome" value={form.outcome} onChange={handleChange} style={sel}><option value="">Select</option>{OUTCOMES.map(o => <option key={o}>{o}</option>)}</select></div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
-                  <div><label style={lbl}>P&L (R)</label><input type="number" name="pnl" value={form.pnl} onChange={handleChange} placeholder="+2.5 or -1" style={inp} /></div>
-                  <div><label style={lbl}>P&L ($)</label><input type="number" name="pnlDollar" value={form.pnlDollar} onChange={handleChange} placeholder="e.g. +320" style={inp} /></div>
-                </div>
+                <div><label style={lbl}>P&L (R)</label><input type="number" name="pnl" value={form.pnl} onChange={handleChange} placeholder="+2.5 or -1" style={inp} /></div>
+                <div><label style={lbl}>P&L ($)</label><input type="number" name="pnlDollar" value={form.pnlDollar} onChange={handleChange} placeholder="e.g. +320" style={inp} /></div>
               </div>
               <div><label style={lbl}>Notes</label><textarea name="notes" value={form.notes} onChange={handleChange} placeholder="What did price do? Why did you enter?" rows={3} style={{ ...inp, resize: "vertical", lineHeight: 1.6 }} /></div>
               <div>
@@ -3137,7 +3143,7 @@ export default function Tradr({ user }: { user?: any } = {}) {
                     return (
                       <div key={t.id} style={{ borderBottom: `1px solid ${C.border}` }}>
                         <div className="row-hvr" onClick={() => setExpandedId(expanded ? null : t.id)}
-                          style={{ padding: "16px 0", cursor: "pointer", display: "grid", gridTemplateColumns: "1fr auto auto auto", alignItems: "center", gap: "12px" }}>
+                          style={{ padding: "14px 0", minHeight: "52px", cursor: "pointer", display: "grid", gridTemplateColumns: "1fr auto auto auto", alignItems: "center", gap: "12px" }}>
                           <div>
                             <div style={{ fontFamily: MONO, fontSize: "14px", color: C.text, letterSpacing: "0.04em" }}>{t.pair || "—"}</div>
                             <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, marginTop: "3px", letterSpacing: "0.04em" }}>{t.date}{t.session ? ` · ${t.session}` : ""}</div>
@@ -3509,19 +3515,22 @@ export default function Tradr({ user }: { user?: any } = {}) {
                     {checkItems.map((item: any) => {
                       const ch = isChecked(item.id);
                       return (
-                        <div key={item.id} className="check-row" style={{ padding: "14px 0", borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: "14px" }}>
+                        <div key={item.id} className="check-row" style={{ borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: "14px", minHeight: "52px" }}>
+                          {/* 44×44 touch target wrapping the 18px visual circle */}
                           <div onClick={() => toggleCheck(item.id)}
-                            style={{ width: "18px", height: "18px", borderRadius: "50%", border: `1px solid ${ch ? C.text : C.border2}`, background: ch ? C.text : "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, transition: "all 0.15s" }}>
-                            {ch && <span style={{ color: C.bg, fontSize: "10px", lineHeight: 1 }}>✓</span>}
+                            style={{ width: "44px", height: "44px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
+                            <div style={{ width: "18px", height: "18px", borderRadius: "50%", border: `1px solid ${ch ? C.text : C.border2}`, background: ch ? C.text : "transparent", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s" }}>
+                              {ch && <span style={{ color: C.bg, fontSize: "10px", lineHeight: 1 }}>✓</span>}
+                            </div>
                           </div>
                           {editingCheckItem === item.id
                             ? <EditInline val={item.text} onSave={(t: string) => saveEditCheck(item.id, t)} onCancel={() => setEditingCheckItem(null)} C={C} />
                             : <>
                               <span onClick={() => toggleCheck(item.id)}
                                 style={{ flex: 1, fontSize: "14px", color: ch ? C.muted : C.text, textDecoration: ch ? "line-through" : "none", cursor: "pointer", lineHeight: 1.5, fontFamily: BODY }}>{item.text}</span>
-                              <div className="ca" style={{ display: "flex", gap: "10px", opacity: 0, transition: "opacity 0.15s" }}>
-                                <button onClick={() => setEditingCheckItem(item.id)} style={{ background: "none", border: "none", color: C.muted, fontSize: "10px", cursor: "pointer", fontFamily: MONO, letterSpacing: "0.08em", textTransform: "uppercase" }}>edit</button>
-                                <button onClick={() => deleteCheckItem(item.id)} style={{ background: "none", border: "none", color: C.red, fontSize: "10px", cursor: "pointer", fontFamily: MONO, letterSpacing: "0.08em", textTransform: "uppercase" }}>remove</button>
+                              <div className="ca" style={{ display: "flex", gap: "4px", opacity: 0, transition: "opacity 0.15s" }}>
+                                <button onClick={() => setEditingCheckItem(item.id)} style={{ background: "none", border: `1px solid ${C.border2}`, borderRadius: "6px", color: C.muted, fontSize: "10px", cursor: "pointer", fontFamily: MONO, letterSpacing: "0.08em", textTransform: "uppercase", padding: "8px 10px", minHeight: "44px" }}>edit</button>
+                                <button onClick={() => deleteCheckItem(item.id)} style={{ background: "none", border: `1px solid ${C.border2}`, borderRadius: "6px", color: C.red, fontSize: "10px", cursor: "pointer", fontFamily: MONO, letterSpacing: "0.08em", textTransform: "uppercase", padding: "8px 10px", minHeight: "44px" }}>rm</button>
                               </div>
                             </>}
                         </div>
@@ -3549,15 +3558,15 @@ export default function Tradr({ user }: { user?: any } = {}) {
                   </div>
                   <div style={{ borderTop: `1px solid ${C.border}` }}>
                     {ruleItems.map((rule: any, idx: number) => (
-                      <div key={rule.id} className="check-row" style={{ padding: "14px 0", borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "baseline", gap: "14px" }}>
+                      <div key={rule.id} className="check-row" style={{ minHeight: "52px", borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: "14px", padding: "8px 0" }}>
                         <span style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, letterSpacing: "0.08em", minWidth: "24px" }}>{String(idx + 1).padStart(2, "0")}</span>
                         {editingRule === rule.id
                           ? <EditInline val={rule.text} onSave={(t: string) => saveEditRule(rule.id, t)} onCancel={() => setEditingRule(null)} C={C} />
                           : <>
                             <span style={{ flex: 1, fontSize: "14px", color: C.text, lineHeight: 1.55, fontFamily: BODY }}>{rule.text}</span>
-                            <div className="ca" style={{ display: "flex", gap: "10px", opacity: 0, transition: "opacity 0.15s" }}>
-                              <button onClick={() => setEditingRule(rule.id)} style={{ background: "none", border: "none", color: C.muted, fontSize: "10px", cursor: "pointer", fontFamily: MONO, letterSpacing: "0.08em", textTransform: "uppercase" }}>edit</button>
-                              <button onClick={() => deleteRule(rule.id)} style={{ background: "none", border: "none", color: C.red, fontSize: "10px", cursor: "pointer", fontFamily: MONO, letterSpacing: "0.08em", textTransform: "uppercase" }}>remove</button>
+                            <div className="ca" style={{ display: "flex", gap: "4px", opacity: 0, transition: "opacity 0.15s" }}>
+                              <button onClick={() => setEditingRule(rule.id)} style={{ background: "none", border: `1px solid ${C.border2}`, borderRadius: "6px", color: C.muted, fontSize: "10px", cursor: "pointer", fontFamily: MONO, letterSpacing: "0.08em", textTransform: "uppercase", padding: "8px 10px", minHeight: "44px" }}>edit</button>
+                              <button onClick={() => deleteRule(rule.id)} style={{ background: "none", border: `1px solid ${C.border2}`, borderRadius: "6px", color: C.red, fontSize: "10px", cursor: "pointer", fontFamily: MONO, letterSpacing: "0.08em", textTransform: "uppercase", padding: "8px 10px", minHeight: "44px" }}>rm</button>
                             </div>
                           </>}
                       </div>
@@ -3638,7 +3647,7 @@ export default function Tradr({ user }: { user?: any } = {}) {
           <div style={{ position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: "480px", background: C.bg, borderTop: `0.5px solid ${C.border}`, display: "flex", zIndex: 10, paddingBottom: "env(safe-area-inset-bottom)" }}>
             {NAV_TABS.map(tab => (
               <button key={tab.id} onClick={() => setView(tab.id)}
-                style={{ flex: 1, padding: "12px 4px 12px", background: "none", border: "none", borderTop: view === tab.id ? `1px solid ${C.text}` : "1px solid transparent", marginTop: "-0.5px", color: view === tab.id ? C.text : C.dim, fontSize: "9px", letterSpacing: "0.10em", cursor: "pointer", fontFamily: MONO, textTransform: "uppercase", transition: "color 0.12s ease" }}>
+                style={{ flex: 1, minHeight: "44px", padding: "0 4px", background: "none", border: "none", borderTop: view === tab.id ? `1px solid ${C.text}` : "1px solid transparent", marginTop: "-0.5px", color: view === tab.id ? C.text : C.dim, fontSize: "9px", letterSpacing: "0.10em", cursor: "pointer", fontFamily: MONO, textTransform: "uppercase", transition: "color 0.12s ease", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 {tab.label}
               </button>
             ))}
@@ -3648,7 +3657,7 @@ export default function Tradr({ user }: { user?: any } = {}) {
         {/* ── Feedback floating button ── */}
         <button
           onClick={() => setFeedbackOpen(true)}
-          style={{ position: "fixed", bottom: isDesktop ? "28px" : "80px", right: "16px", zIndex: 998, background: C.text, color: C.bg, border: "none", borderRadius: "999px", padding: "10px 18px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", boxShadow: "0 2px 12px rgba(0,0,0,0.25)" }}>
+          style={{ position: "fixed", bottom: isDesktop ? "28px" : "calc(44px + env(safe-area-inset-bottom) + 16px)", right: "16px", zIndex: 998, background: C.text, color: C.bg, border: "none", borderRadius: "999px", padding: "12px 20px", minHeight: "44px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", boxShadow: "0 2px 12px rgba(0,0,0,0.25)", display: "flex", alignItems: "center" }}>
           Feedback
         </button>
 
@@ -3707,7 +3716,7 @@ export default function Tradr({ user }: { user?: any } = {}) {
                 </button>
                 <button onClick={submitFeedback}
                   disabled={!feedbackText.trim() || feedbackSending || feedbackSent}
-                  style={{ flex: 2, padding: "12px", border: "none", borderRadius: "8px", background: feedbackSent ? "#22c55e" : feedbackText.trim() && !feedbackSending ? C.text : C.border2, color: feedbackSent ? "#fff" : feedbackText.trim() && !feedbackSending ? C.bg : C.muted, cursor: feedbackText.trim() && !feedbackSending && !feedbackSent ? "pointer" : "not-allowed", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", transition: "background 0.2s, color 0.2s" }}>
+                  style={{ flex: 2, padding: "12px", border: "none", borderRadius: "8px", background: feedbackSent ? C.green : feedbackText.trim() && !feedbackSending ? C.text : C.border2, color: feedbackSent ? C.bg : feedbackText.trim() && !feedbackSending ? C.bg : C.muted, cursor: feedbackText.trim() && !feedbackSending && !feedbackSent ? "pointer" : "not-allowed", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", transition: "background 0.2s, color 0.2s" }}>
                   {feedbackSent ? "Sent! ✓" : feedbackSending ? "Sending…" : "Send to Dylon"}
                 </button>
               </div>
@@ -4003,14 +4012,14 @@ function ProfileView({ profile, myCode, followers, following, friendCodes, myCir
       {/* ── Core stats ── */}
       <section>
         <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.14em", marginBottom: "14px" }}>SNAPSHOT</div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(88px, 1fr))", borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}` }}>
           {[
             ["W/L", `${wins}/${losses}`],
-            ["WR", total > 0 ? `${winRate}%` : "—"],
+            ["WIN RATE", total > 0 ? `${winRate}%` : "—"],
             ["P&L", total > 0 ? `${pnlPos ? "+" : ""}${totalPnL}R` : "—"],
-            ["R:R", avgRR === "—" ? "—" : `${avgRR}R`],
+            ["AVG R:R", avgRR === "—" ? "—" : `${avgRR}R`],
           ].map(([k, v], i) => (
-            <div key={k as string} style={{ padding: "4px 10px", borderLeft: i === 0 ? "none" : `1px solid ${C.border}` }}>
+            <div key={k as string} style={{ padding: "16px 12px", borderLeft: i === 0 ? "none" : `1px solid ${C.border}` }}>
               <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.1em", marginBottom: "6px" }}>{k}</div>
               <div style={{ fontFamily: DISPLAY, fontSize: "20px", fontWeight: 500, color: C.text, letterSpacing: "-0.02em" }}>{v}</div>
             </div>
@@ -4128,14 +4137,15 @@ function OnboardingFlow({ C, allStrategyNames, onComplete }: {
     background: "transparent", border: "none",
     borderBottom: `1px solid ${C.border2}`, borderRadius: 0,
     color: C.text, padding: "14px 0", fontSize: "16px",
-    fontFamily: "'Inter', system-ui, sans-serif", width: "100%", outline: "none",
+    fontFamily: BODY, width: "100%", outline: "none", minHeight: "44px",
   };
   const pillPrimary = (active: boolean): React.CSSProperties => ({
     background: active ? C.text : C.border2, color: active ? C.bg : C.muted,
     border: "none", borderRadius: "999px", padding: "16px 32px",
     fontSize: "14px", fontWeight: 500, cursor: active ? "pointer" : "default",
-    fontFamily: "'Inter', system-ui, sans-serif", letterSpacing: "0.01em",
-    width: "100%", transition: "background 0.15s",
+    fontFamily: BODY, letterSpacing: "0.01em",
+    width: "100%", transition: "background 0.15s", minHeight: "44px",
+    display: "flex", alignItems: "center", justifyContent: "center",
   });
 
   async function finish() {
@@ -4152,13 +4162,13 @@ function OnboardingFlow({ C, allStrategyNames, onComplete }: {
       display: "flex", flexDirection: "column",
       alignItems: "center", justifyContent: "center",
       padding: "32px 24px",
-      fontFamily: "'Inter', system-ui, sans-serif",
+      fontFamily: "BODY",
     }}>
       <div style={{ width: "100%", maxWidth: "420px" }}>
 
         {/* Wordmark */}
         <div style={{
-          fontFamily: "'Syne', 'Inter', system-ui, sans-serif",
+          fontFamily: DISPLAY,
           fontSize: "17px", fontWeight: 700, letterSpacing: "-0.01em",
           color: C.text, marginBottom: "56px",
         }}>
@@ -4180,14 +4190,14 @@ function OnboardingFlow({ C, allStrategyNames, onComplete }: {
         {step === "welcome" && (
           <div style={{ animation: "rise 0.3s ease" }}>
             <div style={{
-              fontFamily: "'IBM Plex Mono', ui-monospace, monospace",
+              fontFamily: "MONO",
               fontSize: "10px", color: C.muted, letterSpacing: "0.16em",
               textTransform: "uppercase", marginBottom: "16px",
             }}>
               — Step 1 of 3
             </div>
             <h1 style={{
-              fontFamily: "'Syne', 'Inter', system-ui, sans-serif",
+              fontFamily: DISPLAY,
               fontSize: "clamp(32px, 8vw, 44px)", fontWeight: 700,
               letterSpacing: "-0.03em", lineHeight: 1.05,
               color: C.text, marginBottom: "12px",
@@ -4205,7 +4215,7 @@ function OnboardingFlow({ C, allStrategyNames, onComplete }: {
             <div style={{ display: "flex", flexDirection: "column", gap: "24px", marginBottom: "40px" }}>
               <div>
                 <label style={{
-                  fontFamily: "'IBM Plex Mono', ui-monospace, monospace",
+                  fontFamily: "MONO",
                   fontSize: "10px", color: C.muted, letterSpacing: "0.14em",
                   textTransform: "uppercase", display: "block", marginBottom: "8px",
                 }}>Your name</label>
@@ -4218,7 +4228,7 @@ function OnboardingFlow({ C, allStrategyNames, onComplete }: {
               </div>
               <div>
                 <label style={{
-                  fontFamily: "'IBM Plex Mono', ui-monospace, monospace",
+                  fontFamily: "MONO",
                   fontSize: "10px", color: C.muted, letterSpacing: "0.14em",
                   textTransform: "uppercase", display: "block", marginBottom: "8px",
                 }}>Handle <span style={{ color: C.dim, fontSize: "9px" }}>optional</span></label>
@@ -4246,14 +4256,14 @@ function OnboardingFlow({ C, allStrategyNames, onComplete }: {
         {step === "strategy" && (
           <div style={{ animation: "rise 0.3s ease" }}>
             <div style={{
-              fontFamily: "'IBM Plex Mono', ui-monospace, monospace",
+              fontFamily: "MONO",
               fontSize: "10px", color: C.muted, letterSpacing: "0.16em",
               textTransform: "uppercase", marginBottom: "16px",
             }}>
               — Step 2 of 3
             </div>
             <h1 style={{
-              fontFamily: "'Syne', 'Inter', system-ui, sans-serif",
+              fontFamily: DISPLAY,
               fontSize: "clamp(32px, 8vw, 44px)", fontWeight: 700,
               letterSpacing: "-0.03em", lineHeight: 1.05,
               color: C.text, marginBottom: "12px",
@@ -4285,7 +4295,7 @@ function OnboardingFlow({ C, allStrategyNames, onComplete }: {
                   }}
                 >
                   <span style={{
-                    fontFamily: "'Inter', system-ui, sans-serif",
+                    fontFamily: "BODY",
                     fontSize: "14px", color: strategy === s ? C.text : C.text2,
                     fontWeight: strategy === s ? 500 : 400,
                   }}>{s}</span>
@@ -4308,7 +4318,7 @@ function OnboardingFlow({ C, allStrategyNames, onComplete }: {
                 }}
               >
                 <span style={{
-                  fontFamily: "'IBM Plex Mono', ui-monospace, monospace",
+                  fontFamily: "MONO",
                   fontSize: "11px", color: C.muted, letterSpacing: "0.1em",
                   textTransform: "uppercase",
                 }}>I'll decide later</span>
@@ -4331,14 +4341,14 @@ function OnboardingFlow({ C, allStrategyNames, onComplete }: {
         {step === "ready" && (
           <div style={{ animation: "rise 0.3s ease" }}>
             <div style={{
-              fontFamily: "'IBM Plex Mono', ui-monospace, monospace",
+              fontFamily: "MONO",
               fontSize: "10px", color: C.muted, letterSpacing: "0.16em",
               textTransform: "uppercase", marginBottom: "16px",
             }}>
               — Step 3 of 3
             </div>
             <h1 style={{
-              fontFamily: "'Syne', 'Inter', system-ui, sans-serif",
+              fontFamily: DISPLAY,
               fontSize: "clamp(32px, 8vw, 44px)", fontWeight: 700,
               letterSpacing: "-0.03em", lineHeight: 1.05,
               color: C.text, marginBottom: "16px",
@@ -4358,18 +4368,18 @@ function OnboardingFlow({ C, allStrategyNames, onComplete }: {
               display: "flex", flexDirection: "column", gap: "12px",
             }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                <span style={{ fontFamily: "'IBM Plex Mono', ui-monospace, monospace", fontSize: "10px", color: C.muted, letterSpacing: "0.12em", textTransform: "uppercase" }}>Name</span>
-                <span style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: "14px", color: C.text }}>{name}</span>
+                <span style={{ fontFamily: "MONO", fontSize: "10px", color: C.muted, letterSpacing: "0.12em", textTransform: "uppercase" }}>Name</span>
+                <span style={{ fontFamily: "BODY", fontSize: "14px", color: C.text }}>{name}</span>
               </div>
               {handle && (
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                  <span style={{ fontFamily: "'IBM Plex Mono', ui-monospace, monospace", fontSize: "10px", color: C.muted, letterSpacing: "0.12em", textTransform: "uppercase" }}>Handle</span>
-                  <span style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: "14px", color: C.text }}>{handle}</span>
+                  <span style={{ fontFamily: "MONO", fontSize: "10px", color: C.muted, letterSpacing: "0.12em", textTransform: "uppercase" }}>Handle</span>
+                  <span style={{ fontFamily: "BODY", fontSize: "14px", color: C.text }}>{handle}</span>
                 </div>
               )}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                <span style={{ fontFamily: "'IBM Plex Mono', ui-monospace, monospace", fontSize: "10px", color: C.muted, letterSpacing: "0.12em", textTransform: "uppercase" }}>Strategy</span>
-                <span style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: "14px", color: C.text }}>{strategy || "Not set"}</span>
+                <span style={{ fontFamily: "MONO", fontSize: "10px", color: C.muted, letterSpacing: "0.12em", textTransform: "uppercase" }}>Strategy</span>
+                <span style={{ fontFamily: "BODY", fontSize: "14px", color: C.text }}>{strategy || "Not set"}</span>
               </div>
             </div>
 
@@ -4386,7 +4396,7 @@ function OnboardingFlow({ C, allStrategyNames, onComplete }: {
             style={{
               background: "none", border: "none", color: C.muted,
               cursor: "pointer", fontSize: "12px",
-              fontFamily: "'IBM Plex Mono', ui-monospace, monospace",
+              fontFamily: "MONO",
               letterSpacing: "0.1em", textTransform: "uppercase",
               marginTop: "20px", padding: "8px 0",
             }}
