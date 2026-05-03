@@ -1,8 +1,11 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { supabase } from "./lib/supabase";
 import { onStorageError } from "./lib/storage";
+import { log } from "./lib/log";
+import { isFlagOn } from "./lib/flags";
 import { subscribeToCircle } from "./data/circles";
 import { subscribeToFollows } from "./data/follows";
+import { getProfile, upsertProfile } from "./data/profile";
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
@@ -125,6 +128,13 @@ const STRATEGIES: Record<string, StrategyDef> = {
   },
 };
 const STRATEGY_NAMES = Object.keys(STRATEGIES);
+// ─── EXTRA STRATEGIES ─────────────────────────────────────────────────────────
+// Custom user-defined strategies live here so STRATEGIES itself stays immutable.
+// loadAll() and saveCustomStrategies() write here instead of mutating STRATEGIES.
+let _extraStrategies: Record<string, StrategyDef> = {};
+function getAllStrategiesMap(): Record<string, StrategyDef> {
+  return { ...STRATEGIES, ..._extraStrategies };
+}
 const SESSIONS = ["London","New York","Asia","London/NY Overlap","Pre-Market","After Hours"];
 const BIAS = ["Bullish","Bearish","Neutral"];
 const OUTCOMES = ["Win","Loss","Breakeven"];
@@ -187,7 +197,7 @@ function calcRR(e: any, s: any, t: any): string {
   if (!isFinite(rr) || rr > 100) return "";
   return rr.toFixed(2);
 }
-function stratCode(name: string) { return STRATEGIES[name]?.code || name.slice(0, 3).toUpperCase(); }
+function stratCode(name: string) { return getAllStrategiesMap()[name]?.code || name.slice(0, 3).toUpperCase(); }
 
 // ─── CSV PARSING + BROKER AUTO-DETECTION ─────────────────────────────────────
 // Handles quoted fields (incl. commas inside quotes) and "" escape sequences.
@@ -298,7 +308,7 @@ function rowToTrade(row: Record<string, string>, mapping: Record<string, string>
   const get = (f: string) => mapping[f] ? row[mapping[f]] : "";
   const pnl = parseNum(get("pnl"));
   const trade: any = {
-    id: Date.now() + Math.random(),
+    id: Date.now() * 1000 + Math.floor(Math.random() * 999),
     date: normalizeDate(get("date")),
     pair: (get("pair") || "").toUpperCase(),
     session: get("session") || "",
@@ -753,9 +763,9 @@ function StrategyEditor({ draft, setDraft, onSave, onCancel, isEdit, C, inp, lbl
   const [newRule, setNewRule] = useState("");
   const addSetup = () => { if (!newSetup.trim()) return; setDraft((d: any) => ({ ...d, setups: [...d.setups, newSetup.trim()] })); setNewSetup(""); };
   const removeSetup = (i: number) => setDraft((d: any) => ({ ...d, setups: d.setups.filter((_: any, idx: number) => idx !== i) }));
-  const addCheck = () => { if (!newCheck.trim()) return; setDraft((d: any) => ({ ...d, checklist: [...d.checklist, { id: Date.now() + Math.random(), text: newCheck.trim() }] })); setNewCheck(""); };
+  const addCheck = () => { if (!newCheck.trim()) return; setDraft((d: any) => ({ ...d, checklist: [...d.checklist, { id: Date.now() * 1000 + Math.floor(Math.random() * 999), text: newCheck.trim() }] })); setNewCheck(""); };
   const removeCheck = (id: any) => setDraft((d: any) => ({ ...d, checklist: d.checklist.filter((x: any) => x.id !== id) }));
-  const addRule = () => { if (!newRule.trim()) return; setDraft((d: any) => ({ ...d, rules: [...d.rules, { id: Date.now() + Math.random(), text: newRule.trim() }] })); setNewRule(""); };
+  const addRule = () => { if (!newRule.trim()) return; setDraft((d: any) => ({ ...d, rules: [...d.rules, { id: Date.now() * 1000 + Math.floor(Math.random() * 999), text: newRule.trim() }] })); setNewRule(""); };
   const removeRule = (id: any) => setDraft((d: any) => ({ ...d, rules: d.rules.filter((x: any) => x.id !== id) }));
 
   const row: React.CSSProperties = { display: "flex", alignItems: "center", gap: "10px", padding: "10px 0", borderBottom: `1px solid ${C.border}` };
@@ -1346,39 +1356,76 @@ export default function Tradr({ user }: { user?: any } = {}) {
         const parsed = JSON.parse(t.value);
         setTrades(Array.isArray(parsed) ? parsed : []);
       }
-    } catch { setTrades([]); }
+    } catch (e) { log.error("loadAll.trades", e); setTrades([]); }
+
+    // ── Profile load ──────────────────────────────────────────────
+    // V2 path: read from public.profiles when the newProfile flag is on.
+    // V1 path (default): read from user_kv tradr_profile JSON blob.
+    // The KV row is still authoritative until the flag flip + a confirmed
+    // dual-write window has caught up everyone's data.
     try {
-      const pr = await (window as any).storage.get("tradr_profile");
-      let p = pr ? JSON.parse(pr.value) : { ...DEF_PROFILE };
+      let p: any = null;
+      if (isFlagOn("newProfile") && user?.id) {
+        const v2 = await getProfile(user.id);
+        if (v2) {
+          // Map v2 row → legacy Profile shape so the rest of TRADR.tsx is unchanged.
+          p = {
+            ...DEF_PROFILE,
+            ...(v2.prefs || {}),
+            uid: v2.userId,
+            handle: v2.handle ? `@${v2.handle}` : "",
+            name: v2.name,
+            avatar: v2.avatar,
+            bio: v2.bio,
+            broker: v2.broker,
+            timezone: v2.timezone,
+            onboarded: v2.onboarded,
+            publicTrades: v2.publicTrades,
+          };
+        }
+      }
+      if (!p) {
+        const pr = await (window as any).storage.get("tradr_profile");
+        p = pr ? JSON.parse(pr.value) : { ...DEF_PROFILE };
+      }
       if (user?.id && p.uid !== user.id) {
         p = { ...p, uid: user.id };
-        try { await (window as any).storage.set("tradr_profile", JSON.stringify(p)); } catch { }
+        try { await (window as any).storage.set("tradr_profile", JSON.stringify(p)); }
+        catch (e) { log.error("loadAll.profile.uidStamp", e); }
       }
       setProfile(p); setProfileDraft(p);
-    } catch { }
-    try { const fr = await (window as any).storage.get("tradr_friends"); if (fr) setFriends(JSON.parse(fr.value)); } catch { }
-    try { const ff = await (window as any).storage.get("tradr_feed", true); if (ff) setFriendFeed(JSON.parse(ff.value)); } catch { }
-    try { const sc = await (window as any).storage.get("tradr_checklists"); if (sc) setStratChecklists(JSON.parse(sc.value)); } catch { }
-    try { const sr = await (window as any).storage.get("tradr_rules"); if (sr) setStratRules(JSON.parse(sr.value)); } catch { }
-    try { const dm = await (window as any).storage.get("tradr_dark"); if (dm) setDarkMode(JSON.parse(dm.value)); } catch { }
-    try { const ci = await (window as any).storage.get("tradr_circles"); if (ci) setMyCircles(JSON.parse(ci.value)); } catch { }
-    try { const st = await (window as any).storage.get("tradr_thresholds"); if (st) setStratThresholds(JSON.parse(st.value)); } catch { }
+    } catch (e) { log.error("loadAll.profile", e); }
+
+    try { const fr = await (window as any).storage.get("tradr_friends"); if (fr) setFriends(JSON.parse(fr.value)); }
+    catch (e) { log.error("loadAll.friends", e); }
+    try { const ff = await (window as any).storage.get("tradr_feed", true); if (ff) setFriendFeed(JSON.parse(ff.value)); }
+    catch (e) { log.error("loadAll.feed", e); }
+    try { const sc = await (window as any).storage.get("tradr_checklists"); if (sc) setStratChecklists(JSON.parse(sc.value)); }
+    catch (e) { log.error("loadAll.checklists", e); }
+    try { const sr = await (window as any).storage.get("tradr_rules"); if (sr) setStratRules(JSON.parse(sr.value)); }
+    catch (e) { log.error("loadAll.rules", e); }
+    try { const dm = await (window as any).storage.get("tradr_dark"); if (dm) setDarkMode(JSON.parse(dm.value)); }
+    catch (e) { log.error("loadAll.dark", e); }
+    try { const ci = await (window as any).storage.get("tradr_circles"); if (ci) setMyCircles(JSON.parse(ci.value)); }
+    catch (e) { log.error("loadAll.circles", e); }
+    try { const st = await (window as any).storage.get("tradr_thresholds"); if (st) setStratThresholds(JSON.parse(st.value)); }
+    catch (e) { log.error("loadAll.thresholds", e); }
     try {
       const cs = await (window as any).storage.get("tradr_custom_strategies");
       if (cs) {
         const parsed = JSON.parse(cs.value);
         setCustomStrategies(parsed);
-        // Merge into STRATEGIES so stratCode/stratShort/setups lookup work.
-        parsed.forEach((s: any) => { STRATEGIES[s.name] = s; });
+        // Merge into _extraStrategies so stratCode/setup lookups work without
+        // mutating the immutable STRATEGIES const.
+        _extraStrategies = Object.fromEntries(parsed.map((s: any) => [s.name, s]));
       }
-    } catch { }
+    } catch (e) { log.error("loadAll.customStrategies", e); }
     setLoading(false);
   }
 
   async function saveCustomStrategies(u: any[]) {
-    // Drop old custom entries from STRATEGIES then add the new set.
-    customStrategies.forEach((s: any) => { delete STRATEGIES[s.name]; });
-    u.forEach((s: any) => { STRATEGIES[s.name] = s; });
+    // Rebuild _extraStrategies from the new set (replaces stale entries).
+    _extraStrategies = Object.fromEntries(u.map((s: any) => [s.name, s]));
     setCustomStrategies(u);
     await (window as any).storage.set("tradr_custom_strategies", JSON.stringify(u));
   }
@@ -1425,7 +1472,15 @@ export default function Tradr({ user }: { user?: any } = {}) {
     showToast("Strategy deleted");
   }
 
-  async function saveTrades(u: Trade[]) { setTrades(u); await (window as any).storage.set("tradr_trades", JSON.stringify(u)); }
+  async function saveTrades(u: Trade[]) {
+    setTrades(u);
+    try {
+      await (window as any).storage.set("tradr_trades", JSON.stringify(u));
+    } catch (e) {
+      log.error("saveTrades", e);
+      // storage.ts already shows a toast via onStorageError; just log here.
+    }
+  }
   async function handleCsvImport(newTrades: any[]) {
     if (!newTrades.length) { setShowCsvImport(false); return; }
     setIsImportingCsv(true);
@@ -1440,6 +1495,7 @@ export default function Tradr({ user }: { user?: any } = {}) {
   }
   async function saveProfile(u: Profile) {
     setProfile(u);
+    // ── Legacy KV write (always — keeps live app working until v2 cutover) ──
     await (window as any).storage.set("tradr_profile", JSON.stringify(u));
     if (u.handle) {
       registerHandle(u.handle, profile.handle || null);
@@ -1451,7 +1507,30 @@ export default function Tradr({ user }: { user?: any } = {}) {
           JSON.stringify({ name: u.name || "Trader", handle: norm, avatar: u.avatar || "", bio: u.bio || "", publicTrades: u.publicTrades || false }),
           true
         );
-      } catch {}
+      } catch (e) { log.error("saveProfile.publicProfile", e, { handle: norm }); }
+    }
+    // ── V2 dual-write (only when flag on; failures are logged but never throw) ──
+    if (isFlagOn("newProfile") && user?.id) {
+      const norm = u.handle ? u.handle.replace(/^@/, "").toLowerCase() : "";
+      // Pack everything that doesn't have a typed column into prefs so we
+      // round-trip 100% of the legacy Profile shape.
+      const { uid: _uid, handle: _h, name: _n, avatar: _a, bio: _b, broker: _br, timezone: _tz, onboarded: _o, publicTrades: _pt, ...prefs } = u as any;
+      try {
+        await upsertProfile({
+          userId: user.id,
+          handle: norm || `user_${user.id.slice(0, 8)}`,
+          name: u.name || "",
+          avatar: u.avatar || "",
+          bio: u.bio || "",
+          broker: u.broker || "",
+          timezone: u.timezone || "UTC",
+          memberCode: getMyCode(),
+          isPublic: !!norm,
+          publicTrades: !!u.publicTrades,
+          onboarded: !!u.onboarded,
+          prefs,
+        });
+      } catch (e) { log.error("saveProfile.v2", e, { userId: user.id }); }
     }
   }
   async function saveFriends(u: any) { setFriends(u); await (window as any).storage.set("tradr_friends", JSON.stringify(u)); }
@@ -2056,7 +2135,8 @@ export default function Tradr({ user }: { user?: any } = {}) {
   const totalItems = checkItems.length;
   const scorePct = totalItems ? Math.round((checkedCount / totalItems) * 100) : 0;
   const insights = generateInsights(trades);
-  const allSetups = allStrategyNames.flatMap((s: string) => STRATEGIES[s]?.setups || []).filter((v: string, i: number, a: string[]) => a.indexOf(v) === i);
+  const _allStratMap = getAllStrategiesMap();
+  const allSetups = allStrategyNames.flatMap((s: string) => _allStratMap[s]?.setups || []).filter((v: string, i: number, a: string[]) => a.indexOf(v) === i);
 
   // ─── SHARED STYLES (editorial) ─────────────────────────────────────────────
   const inp: React.CSSProperties = {
@@ -2869,7 +2949,7 @@ export default function Tradr({ user }: { user?: any } = {}) {
                 <label style={lbl}>Setup {form.strategy && <span style={{ color: C.muted, marginLeft: "6px" }}>· {stratCode(form.strategy)}</span>}</label>
                 <select name="setup" value={form.setup} onChange={handleChange} style={sel}>
                   <option value="">Select setup</option>
-                  {(form.strategy ? STRATEGIES[form.strategy]?.setups || [] : allSetups).map((s: string) => <option key={s}>{s}</option>)}
+                  {(form.strategy ? _allStratMap[form.strategy]?.setups || [] : allSetups).map((s: string) => <option key={s}>{s}</option>)}
                 </select>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
@@ -2960,7 +3040,7 @@ export default function Tradr({ user }: { user?: any } = {}) {
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", marginTop: "14px" }}>
                 <select value={filter.strategy} onChange={e => setFilter({ ...filter, strategy: e.target.value, setup: "" })} style={sel}><option value="">All strategies</option>{allStrategyNames.map((s: string) => <option key={s}>{s}</option>)}</select>
-                <select value={filter.setup} onChange={e => setFilter({ ...filter, setup: e.target.value })} style={sel}><option value="">All setups</option>{(filter.strategy ? STRATEGIES[filter.strategy]?.setups || [] : allSetups).map((s: string) => <option key={s} value={s}>{s.split("(")[0].trim()}</option>)}</select>
+                <select value={filter.setup} onChange={e => setFilter({ ...filter, setup: e.target.value })} style={sel}><option value="">All setups</option>{(filter.strategy ? _allStratMap[filter.strategy]?.setups || [] : allSetups).map((s: string) => <option key={s} value={s}>{s.split("(")[0].trim()}</option>)}</select>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", marginTop: "14px", marginBottom: "20px" }}>
                 <input type="date" value={filter.dateFrom} onChange={e => setFilter({ ...filter, dateFrom: e.target.value })} style={{ ...inp, colorScheme: darkMode ? "dark" : "light" }} />

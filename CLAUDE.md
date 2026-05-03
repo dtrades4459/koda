@@ -132,8 +132,10 @@ interface Profile {
 `api/feedback.ts` sends feedback to Dylon's Telegram bot.
 
 **Env vars needed in Vercel dashboard (Settings → Environment Variables):**
-- `TELEGRAM_BOT_TOKEN` = `8693819106:AAENjfQhcWpCa1oNmFAzfWJKmWnOmVvvK0w`
-- `TELEGRAM_CHAT_ID` = `7587404723`
+- `TELEGRAM_BOT_TOKEN` — your bot token from @BotFather (do NOT paste the real value here)
+- `TELEGRAM_CHAT_ID` — your Telegram user/chat numeric ID (do NOT paste the real value here)
+
+> ⚠️ Never commit real credential values to CLAUDE.md or any tracked file. This file is in a public git repo.
 
 **Important:** Dylon must open Telegram, find his bot, and send it `/start` once before messages will deliver.
 
@@ -243,15 +245,33 @@ On success: sets `feedbackSent(true)`, button turns green and shows "Sent! ✓",
 
 ## What's Next / Backlog
 
-### Audit follow-ups (post phase 1 — see DEPLOYMENT.md / MIGRATION.md)
+### Audit follow-ups
 
+**Phase 1 — shipped**
+- [x] `src/lib/log.ts`, `sentry.ts`, `flags.ts` added; main.tsx wires Sentry init
+- [x] `.github/workflows/ci.yml` runs lint+tsc+build on PRs
+- [x] `supabase/migrations/001_rls_cleanup.sql` + `002_v2_schema_additive.sql` written
+- [x] Typed v2 modules: `src/data/trades.ts`, `profile.ts`, `bootstrap.ts`
+
+**Phase 2 — shipped (behind feature flag, default off)**
+- [x] `loadAll()` silent catches replaced with `log.error("loadAll.<scope>", e)` — every load step is now traceable
+- [x] `loadAll()` reads from `public.profiles` when `isFlagOn("newProfile")`, falls back to KV when not found
+- [x] `saveProfile()` always writes legacy KV row, additionally upserts to `public.profiles` when flag is on (dual-write)
+- [x] V2 prefs column round-trips every legacy Profile field (targets, rules, checklist, alias, etc.) so flag-off clients see no data loss
+
+**Phase 2 — to run / verify**
 - [ ] Run migration `001_rls_cleanup.sql` in Supabase
 - [ ] Run migration `002_v2_schema_additive.sql` in Supabase (creates v2 tables, no data migrated)
+- [ ] Verify v2 profile path on yourself: `localStorage.tradr_flags = "newProfile"; location.reload();` then save profile, check `select * from profiles;`
 - [ ] Set up branch protection on `main` (require CI `build` status check)
 - [ ] (Optional) Install `@sentry/react` + set `VITE_SENTRY_DSN` in Vercel
-- [ ] Replace silent `try { } catch { }` blocks in `TRADR.tsx` with `log.error("scope", e)`
-- [ ] Wire `getProfile`/`upsertProfile` from `src/data/profile.ts` behind the `newProfile` flag
-- [ ] Backfill script for trades (template in MIGRATION.md), behind `newTrades` flag
+
+**Phase 3 — pending**
+- [ ] Wire follows v2 behind `newFollows` flag (uses `public.follows` table)
+- [ ] Wire circles v2 behind `newCircles` flag (uses `circles` + `circle_members`)
+- [ ] Wire trades v2 behind `newTrades` flag — riskiest, do last
+- [ ] Backfill script for trades (template in MIGRATION.md)
+- [ ] Replace remaining silent `try { } catch { }` blocks in `TRADR.tsx` (saveTrades, saveFriends, saveStratChecklists, saveMyCircles, etc.)
 - [ ] Split `TRADR.tsx` — start with `SettingsScreen.tsx`, one screen per PR
 - [ ] Move screenshots from base64-in-trade to Supabase Storage URLs
 - [ ] Replace N+1 `fetchCircleLeaderboard` (TRADR.tsx:1607) with a single SQL query against the v2 schema
