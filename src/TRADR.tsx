@@ -1422,7 +1422,7 @@ export default function Tradr({ user }: { user?: any } = {}) {
   const [myCircles, setMyCircles] = useState<Circle[]>([]);
   const [circlesView, setCirclesView] = useState<string>("browse");
   const [activeCircle, setActiveCircle] = useState<Circle | null>(null);
-  const [circleForm, setCircleForm] = useState<{ name: string; description: string; strategy: string; privacy: string }>({ name: "", description: "", strategy: "", privacy: "public" });
+  const [circleForm, setCircleForm] = useState<{ name: string; description: string; strategy: string; privacy: string; emoji: string }>({ name: "", description: "", strategy: "", privacy: "public", emoji: "🎯" });
   const [circleJoinCode, setCircleJoinCode] = useState<string>("");
   const [circleMsg, setCircleMsg] = useState<string>("");
   const [darkMode, setDarkMode] = useState(true);
@@ -1524,6 +1524,22 @@ export default function Tradr({ user }: { user?: any } = {}) {
   );
 
   useEffect(() => { loadAll(); }, []);
+
+  // ── ?join= deep-link handler ────────────────────────────────────────────────
+  // tradrjournal.xyz/?join=TRADR-ABCD-EFGH → open join flow pre-filled
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const joinCode = params.get("join");
+      if (joinCode) {
+        setCircleJoinCode(joinCode.toUpperCase());
+        setView("circles");
+        setCirclesView("join");
+        // Clean URL so refreshing doesn't re-trigger
+        window.history.replaceState({}, "", window.location.pathname);
+      }
+    } catch {}
+  }, []);
 
   // ── Stats fingerprint — cheap memo so auto-publish only fires when the
   //    numbers actually change, not on every render triggered by unrelated state.
@@ -2091,6 +2107,7 @@ export default function Tradr({ user }: { user?: any } = {}) {
         id: Date.now(), code, name: circleForm.name.trim(),
         description: circleForm.description.trim(),
         strategy: circleForm.strategy, privacy: circleForm.privacy,
+        emoji: circleForm.emoji || "🎯",
         createdBy: profile.name || "Trader", createdAt: new Date().toISOString(),
       };
       // Write metadata (owned by me) + my own member row.
@@ -2098,7 +2115,7 @@ export default function Tradr({ user }: { user?: any } = {}) {
       await (window as any).storage.set(`tradr_circle_member_${code}_${me.code}`, JSON.stringify(me), true);
       const updated = [...myCircles, { ...circle, members: [me], isOwner: true }];
       await saveMyCircles(updated);
-      setCircleForm({ name: "", description: "", strategy: "", privacy: "public" });
+      setCircleForm({ name: "", description: "", strategy: "", privacy: "public", emoji: "🎯" });
       setCirclesView("browse");
       showToast("Circle created");
     } finally {
@@ -5438,15 +5455,16 @@ function TradingCircles({ myCircles, circlesView, setCirclesView, activeCircle, 
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [lbSort, setLbSort] = useState<"all" | "week">("all");
   const [loadingLB, setLoadingLB] = useState(false);
-  const [circleTab, setCircleTab] = useState<"leaderboard" | "chat">("leaderboard");
+  const [circleTab, setCircleTab] = useState<"leaderboard" | "chat" | "members">("leaderboard");
   const [chatMessages, setChatMessages] = useState<any[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [chatSending, setChatSending] = useState(false);
   const [chatLoading, setChatLoading] = useState(false);
   const chatBottomRef = useRef<HTMLDivElement>(null);
-  // Tap a row to expand a tiny member card with COPY + Follow CTA. Toggle by
-  // setting to memberCode, clear on a second tap. Resets on circle switch.
   const [expandedMember, setExpandedMember] = useState<string | null>(null);
+
+  const CIRCLE_EMOJIS = ["🎯","🔥","💎","🚀","🏆","📈","⚡","🎪","🦅","🐉"];
+  const MEDALS = ["🥇","🥈","🥉"];
 
   async function loadChatMessages(circleCode: string) {
     setChatLoading(true);
@@ -5506,11 +5524,6 @@ function TradingCircles({ myCircles, circlesView, setCirclesView, activeCircle, 
     setLoadingLB(false);
   }
 
-  // Auto-refresh leaderboard every 2 min while sitting on the detail view.
-  // The parent's sync effect keeps activeCircle.members fresh, so this picks
-  // up new stats entries from other members without a manual tap. Realtime
-  // (subscribeToCircle, wired in TRADR.syncCircles) will trigger fresher
-  // refreshes by updating activeCircle.members; this interval is the floor.
   useEffect(() => {
     if (circlesView !== "detail" || !activeCircle) return;
     let alive = true;
@@ -5521,14 +5534,8 @@ function TradingCircles({ myCircles, circlesView, setCirclesView, activeCircle, 
       } catch {}
     }
     const id = setInterval(refresh, 120_000);
-    // Realtime: re-fetch the leaderboard the moment any row in this circle
-    // changes (member join, entry publish, meta update).
     let unsub = () => {};
-    try {
-      unsub = subscribeToCircle(activeCircle.code, () => { refresh(); });
-    } catch {}
-
-    // Realtime chat — new messages pop in without a refresh.
+    try { unsub = subscribeToCircle(activeCircle.code, () => { refresh(); }); } catch {}
     const chatChannel = supabase
       .channel(`circle_chat_${activeCircle.code}`)
       .on("postgres_changes" as any, {
@@ -5540,13 +5547,31 @@ function TradingCircles({ myCircles, circlesView, setCirclesView, activeCircle, 
         setTimeout(() => chatBottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
       })
       .subscribe();
-
     return () => {
       alive = false; clearInterval(id);
       try { unsub(); } catch {}
       supabase.removeChannel(chatChannel);
     };
   }, [circlesView, activeCircle, fetchCircleLeaderboard]);
+
+  // ── Derived circle stats ──────────────────────────────────────────────
+  const myRank = leaderboard.findIndex((e: any) => e.memberCode === getMyCode()) + 1;
+  const leader = leaderboard[0];
+  const circleAvgWR = leaderboard.length > 0
+    ? Math.round(leaderboard.reduce((s: number, e: any) => s + (e.winRate || 0), 0) / leaderboard.length)
+    : 0;
+  const circleTotalTrades = leaderboard.reduce((s: number, e: any) => s + (e.total || 0), 0);
+
+  function shareInviteLink(circle: any) {
+    const url = `https://tradrjournal.xyz/?join=${circle.code}`;
+    const msg = `Join my TRADR circle "${circle.name}" → ${url}`;
+    if (navigator.share) {
+      navigator.share({ title: "Join my TRADR circle", text: msg, url }).catch(() => {});
+    } else {
+      navigator.clipboard?.writeText(url);
+      showToast("Invite link copied");
+    }
+  }
 
   return (
     <div style={{ marginTop: "clamp(16px, 4vw, 28px)" }}>
@@ -5555,7 +5580,7 @@ function TradingCircles({ myCircles, circlesView, setCirclesView, activeCircle, 
       {circlesView === "browse" && (
         <>
           <section>
-            <SectionKicker label="A FEW PEOPLE WHO ACTUALLY TAKE IT SERIOUSLY" C={C} />
+            <SectionKicker label="COMPETE. CONNECT. COMPARE." C={C} />
             <h1 style={{ fontFamily: DISPLAY, fontSize: "clamp(44px, 11vw, 68px)", fontWeight: 700, letterSpacing: "-0.03em", lineHeight: 0.95, color: C.text, marginTop: "20px", marginBottom: "28px" }}>
               Your <span style={{ fontStyle: "italic", fontWeight: 500, color: C.text2 }}>circles</span>.
             </h1>
@@ -5565,37 +5590,41 @@ function TradingCircles({ myCircles, circlesView, setCirclesView, activeCircle, 
             </div>
           </section>
 
-          {/* My circles */}
           {myCircles.length > 0 ? (
             <section style={{ marginTop: "clamp(40px, 6vw, 56px)" }}>
               <SectionKicker label={`MY CIRCLES · ${myCircles.length}`} C={C} />
-              <div style={{ marginTop: "20px", borderTop: `1px solid ${C.border}` }}>
+              <div style={{ marginTop: "20px", display: "flex", flexDirection: "column", gap: "12px" }}>
                 {myCircles.map((circle: any) => (
                   <div key={circle.id} className="row-hvr" onClick={() => openCircle(circle)}
-                    style={{ padding: "20px 0", borderBottom: `1px solid ${C.border}`, cursor: "pointer" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px", gap: "16px" }}>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: "flex", alignItems: "baseline", gap: "10px", marginBottom: "4px", flexWrap: "wrap" }}>
-                          <span style={{ fontFamily: DISPLAY, fontSize: "22px", fontWeight: 500, color: C.text, letterSpacing: "-0.02em", lineHeight: 1.1 }}>{circle.name}</span>
-                          {circle.isOwner && <span style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.14em", textTransform: "uppercase" }}>· OWNER</span>}
-                        </div>
-                        {circle.description && <div style={{ fontFamily: BODY, fontSize: "13px", color: C.text2, lineHeight: 1.55, marginTop: "4px" }}>{circle.description}</div>}
+                    style={{ padding: "20px", background: C.panel, borderRadius: "14px", cursor: "pointer", border: `1px solid ${C.border}` }}>
+                    <div style={{ display: "flex", alignItems: "flex-start", gap: "16px" }}>
+                      {/* Emoji icon */}
+                      <div style={{ width: "48px", height: "48px", borderRadius: "12px", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "24px", flexShrink: 0, border: `1px solid ${C.border}` }}>
+                        {circle.emoji || "🎯"}
                       </div>
-                      <span style={{ fontFamily: MONO, fontSize: "14px", color: C.muted, flexShrink: 0 }}>›</span>
-                    </div>
-                    <div style={{ display: "flex", gap: "16px", flexWrap: "wrap", fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: "10px" }}>
-                      <span>{circle.members?.length || 1} members</span>
-                      {circle.strategy && <span>{stratCode(circle.strategy)} · {stratShort(circle.strategy)}</span>}
-                      <span style={{ color: circle.privacy === "public" ? C.green : C.muted }}>{circle.privacy === "public" ? "Public" : "Private"}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: "10px", marginBottom: "4px" }}>
+                          <span style={{ fontFamily: DISPLAY, fontSize: "20px", fontWeight: 500, color: C.text, letterSpacing: "-0.02em", lineHeight: 1.1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{circle.name}</span>
+                          <span style={{ fontFamily: MONO, fontSize: "18px", color: C.muted, flexShrink: 0 }}>›</span>
+                        </div>
+                        {circle.description && <div style={{ fontFamily: BODY, fontSize: "13px", color: C.text2, lineHeight: 1.5, marginBottom: "10px" }}>{circle.description}</div>}
+                        <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: "8px" }}>
+                          <span>{circle.members?.length || 1} members</span>
+                          {circle.strategy && <span>{stratCode(circle.strategy)}</span>}
+                          <span style={{ color: circle.privacy === "public" ? C.green : C.muted }}>{circle.privacy === "public" ? "● PUBLIC" : "◐ PRIVATE"}</span>
+                          {circle.isOwner && <span style={{ color: C.text2 }}>OWNER</span>}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
             </section>
           ) : (
-            <section style={{ marginTop: "clamp(40px, 6vw, 56px)", padding: "48px 0", borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}`, textAlign: "center" }}>
+            <section style={{ marginTop: "clamp(40px, 6vw, 56px)", padding: "48px 24px", background: C.panel, borderRadius: "16px", textAlign: "center", border: `1px solid ${C.border}` }}>
+              <div style={{ fontSize: "40px", marginBottom: "16px" }}>🎯</div>
               <div style={{ fontFamily: DISPLAY, fontSize: "22px", fontStyle: "italic", fontWeight: 500, color: C.text2, letterSpacing: "-0.01em", marginBottom: "8px" }}>No circles yet.</div>
-              <div style={{ fontFamily: BODY, fontSize: "13px", color: C.muted, lineHeight: 1.6 }}>Create one or join with a code.</div>
+              <div style={{ fontFamily: BODY, fontSize: "13px", color: C.muted, lineHeight: 1.6 }}>Create one or join with a code from a friend.</div>
             </section>
           )}
         </>
@@ -5611,6 +5640,18 @@ function TradingCircles({ myCircles, circlesView, setCirclesView, activeCircle, 
           <h2 style={{ fontFamily: DISPLAY, fontSize: "clamp(32px, 7vw, 44px)", fontWeight: 700, letterSpacing: "-0.03em", lineHeight: 1, color: C.text, marginTop: "8px" }}>
             Start <span style={{ fontStyle: "italic", fontWeight: 500, color: C.text2 }}>something small</span>.
           </h2>
+          {/* Emoji picker */}
+          <div>
+            <label style={lbl}>Icon</label>
+            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "8px" }}>
+              {CIRCLE_EMOJIS.map(em => (
+                <button key={em} onClick={() => setCircleForm((f: any) => ({ ...f, emoji: em }))}
+                  style={{ width: "44px", height: "44px", borderRadius: "10px", fontSize: "22px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", background: (circleForm.emoji || "🎯") === em ? C.text + "22" : C.panel, border: `1px solid ${(circleForm.emoji || "🎯") === em ? C.text : C.border}`, transition: "all 120ms" }}>
+                  {em}
+                </button>
+              ))}
+            </div>
+          </div>
           <div><label style={lbl}>Circle name</label><input value={circleForm.name} onChange={e => setCircleForm((f: any) => ({ ...f, name: e.target.value }))} placeholder="e.g. London ICT Traders" style={inp} /></div>
           <div><label style={lbl}>Description (optional)</label><textarea value={circleForm.description} onChange={e => setCircleForm((f: any) => ({ ...f, description: e.target.value }))} placeholder="What's this circle about?" rows={2} style={{ ...inp, resize: "vertical", lineHeight: 1.6 }} /></div>
           <div>
@@ -5628,7 +5669,7 @@ function TradingCircles({ myCircles, circlesView, setCirclesView, activeCircle, 
           <div>
             <label style={lbl}>Privacy</label>
             <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
-              {[["public", "Public"], ["private", "Private"]].map(([val, label]) => (
+              {[["public", "● Public"], ["private", "◐ Private"]].map(([val, label]) => (
                 <button key={val} onClick={() => setCircleForm((f: any) => ({ ...f, privacy: val }))}
                   style={{ background: circleForm.privacy === val ? C.text : "transparent", border: `1px solid ${circleForm.privacy === val ? C.text : C.border2}`, borderRadius: "999px", padding: "10px 18px", cursor: "pointer", fontFamily: MONO, fontSize: "11px", letterSpacing: "0.08em", color: circleForm.privacy === val ? C.bg : C.text, textTransform: "uppercase" }}>
                   {label}
@@ -5636,7 +5677,7 @@ function TradingCircles({ myCircles, circlesView, setCirclesView, activeCircle, 
               ))}
             </div>
             <div style={{ fontFamily: BODY, fontSize: "12px", color: C.muted, marginTop: "10px", lineHeight: 1.55 }}>
-              {circleForm.privacy === "public" ? "Anyone with the code can join." : "Invite only."}
+              {circleForm.privacy === "public" ? "Anyone with the invite code can join." : "Invite only — you share the code."}
             </div>
           </div>
           <button onClick={createCircle} disabled={isCreatingCircle || !circleForm.name.trim()} style={{ ...pillPrimary(!!circleForm.name.trim() && !isCreatingCircle), marginTop: "8px" }}>
@@ -5653,6 +5694,7 @@ function TradingCircles({ myCircles, circlesView, setCirclesView, activeCircle, 
             <SectionKicker label="JOIN A CIRCLE" C={C} />
           </div>
           <div style={{ textAlign: "center", padding: "32px 0" }}>
+            <div style={{ fontSize: "48px", marginBottom: "20px" }}>⤵</div>
             <div style={{ fontFamily: DISPLAY, fontSize: "clamp(28px, 6vw, 38px)", fontWeight: 500, letterSpacing: "-0.02em", color: C.text, marginBottom: "32px", fontStyle: "italic" }}>
               Enter the code.
             </div>
@@ -5666,47 +5708,88 @@ function TradingCircles({ myCircles, circlesView, setCirclesView, activeCircle, 
             {circleMsg && <div style={{ fontFamily: BODY, fontSize: "13px", color: circleMsg.toLowerCase().includes("joined") ? C.green : C.red, marginTop: "14px" }}>{circleMsg}</div>}
           </div>
           <div style={{ fontFamily: BODY, fontSize: "12px", color: C.muted, lineHeight: 1.6, textAlign: "center", maxWidth: "32ch", margin: "0 auto" }}>
-            Ask the circle owner for their invite code, then paste it above.
+            Ask the circle owner for their invite link or code, then paste it above.
           </div>
         </div>
       )}
 
-      {/* ── CIRCLE DETAIL / LEADERBOARD ── */}
+      {/* ── CIRCLE DETAIL ── */}
       {circlesView === "detail" && activeCircle && (
-        <div style={{ display: "flex", flexDirection: "column", gap: "clamp(28px, 4vw, 44px)" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "clamp(24px, 4vw, 36px)" }}>
+          {/* Header bar */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "14px" }}>
             <button onClick={() => { setCirclesView("browse"); setActiveCircle(null); setLeaderboard([]); }} style={{ ...pillGhost, padding: "8px 14px" }}>‹ BACK</button>
-            {/* Non-owners can leave; owners cannot leave their own circle */}
             {!activeCircle.isOwner && (
-              <button
-                onClick={() => {
-                  if (window.confirm(`Leave "${activeCircle.name}"? You can rejoin with the code.`)) {
-                    leaveCircle(activeCircle.code);
-                  }
-                }}
-                style={{ background: "transparent", color: C.muted, border: `0.5px solid ${C.border2}`, borderRadius: "999px", padding: "8px 14px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase" }}
-              >
+              <button onClick={() => { if (window.confirm(`Leave "${activeCircle.name}"? You can rejoin with the code.`)) leaveCircle(activeCircle.code); }}
+                style={{ background: "transparent", color: C.muted, border: `0.5px solid ${C.border2}`, borderRadius: "999px", padding: "8px 14px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase" }}>
                 Leave
               </button>
             )}
           </div>
-          {/* Circle title */}
+
+          {/* Circle hero */}
           <section>
-            <h1 style={{ fontFamily: DISPLAY, fontSize: "clamp(40px, 10vw, 60px)", fontWeight: 700, letterSpacing: "-0.03em", lineHeight: 0.95, color: C.text, marginBottom: "8px" }}>
-              {activeCircle.name}
-            </h1>
-            <div style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, letterSpacing: "0.08em", textTransform: "uppercase" }}>
-              {activeCircle.members?.length || 1} members · {activeCircle.code}
+            <div style={{ display: "flex", alignItems: "center", gap: "18px", marginBottom: "16px" }}>
+              <div style={{ width: "64px", height: "64px", borderRadius: "16px", background: C.panel, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "32px", flexShrink: 0, border: `1px solid ${C.border}` }}>
+                {activeCircle.emoji || "🎯"}
+              </div>
+              <div>
+                <h1 style={{ fontFamily: DISPLAY, fontSize: "clamp(32px, 8vw, 48px)", fontWeight: 700, letterSpacing: "-0.03em", lineHeight: 0.95, color: C.text, marginBottom: "6px" }}>
+                  {activeCircle.name}
+                </h1>
+                <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                  {activeCircle.code}
+                </div>
+              </div>
             </div>
             {activeCircle.description && (
-              <div style={{ fontFamily: BODY, fontSize: "14px", color: C.text2, lineHeight: 1.6, marginTop: "14px", maxWidth: "48ch" }}>{activeCircle.description}</div>
+              <div style={{ fontFamily: BODY, fontSize: "14px", color: C.text2, lineHeight: 1.6, maxWidth: "48ch", marginBottom: "16px" }}>{activeCircle.description}</div>
             )}
+            {/* Aggregate stats bar */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "0", background: C.panel, borderRadius: "12px", overflow: "hidden", border: `1px solid ${C.border}` }}>
+              {[
+                ["MEMBERS", activeCircle.members?.length || 1],
+                ["ON BOARD", leaderboard.length || "—"],
+                ["TRADES", circleTotalTrades || "—"],
+                ["AVG WR", leaderboard.length > 0 ? `${circleAvgWR}%` : "—"],
+              ].map(([k, v], i) => (
+                <div key={k as string} style={{ padding: "14px 10px", textAlign: "center", borderLeft: i > 0 ? `1px solid ${C.border}` : "none" }}>
+                  <div style={{ fontFamily: DISPLAY, fontSize: "20px", fontWeight: 500, color: C.text, letterSpacing: "-0.02em", lineHeight: 1 }}>{v}</div>
+                  <div style={{ fontFamily: MONO, fontSize: "8px", color: C.muted, letterSpacing: "0.12em", marginTop: "5px" }}>{k}</div>
+                </div>
+              ))}
+            </div>
           </section>
 
-          {/* Publish */}
-          <section style={{ borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}`, padding: "22px 0" }}>
-            <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.14em", marginBottom: "18px" }}>YOUR STATS TO PUBLISH</div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "0", marginBottom: "18px" }}>
+          {/* Weekly leader callout */}
+          {leader && (
+            <div style={{ background: `${C.green}11`, border: `1px solid ${C.green}33`, borderRadius: "12px", padding: "14px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
+              <div>
+                <div style={{ fontFamily: MONO, fontSize: "9px", color: C.green, letterSpacing: "0.14em", marginBottom: "4px" }}>🏆 CURRENT LEADER</div>
+                <div style={{ fontFamily: DISPLAY, fontSize: "18px", fontWeight: 500, color: C.text, letterSpacing: "-0.01em" }}>{leader.name}</div>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <div style={{ fontFamily: DISPLAY, fontSize: "22px", fontWeight: 700, color: C.green, letterSpacing: "-0.02em" }}>{leader.totalPnL >= 0 ? "+" : ""}{leader.totalPnL.toFixed(1)}R</div>
+                <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.08em" }}>{leader.winRate.toFixed(0)}% WR · {leader.total} trades</div>
+              </div>
+            </div>
+          )}
+
+          {/* Your rank callout (if on the board) */}
+          {myRank > 0 && myRank > 1 && (
+            <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: "12px", padding: "12px 18px", display: "flex", alignItems: "center", gap: "14px" }}>
+              <span style={{ fontFamily: MONO, fontSize: "24px", fontWeight: 700, color: C.text2, letterSpacing: "-0.02em" }}>#{myRank}</span>
+              <div>
+                <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.14em", marginBottom: "2px" }}>YOUR RANK</div>
+                <div style={{ fontFamily: BODY, fontSize: "13px", color: C.text2 }}>Keep publishing to climb the board.</div>
+              </div>
+            </div>
+          )}
+
+          {/* Publish strip */}
+          <section style={{ borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}`, padding: "20px 0" }}>
+            <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.14em", marginBottom: "14px" }}>YOUR STATS TO PUBLISH</div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "0", marginBottom: "14px" }}>
               {[["W/L", `${wins}/${losses}`], ["WR", `${winRate}%`], ["P&L", `${pnlPos ? "+" : ""}${totalPnL}R`], ["R:R", avgRR === "—" ? "—" : `${avgRR}R`]].map(([k, v], i) => (
                 <div key={k} style={{ padding: "4px 10px", borderLeft: i === 0 ? "none" : `1px solid ${C.border}` }}>
                   <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.1em", marginBottom: "6px" }}>{k}</div>
@@ -5714,48 +5797,154 @@ function TradingCircles({ myCircles, circlesView, setCirclesView, activeCircle, 
                 </div>
               ))}
             </div>
-            <button onClick={() => publishToCircle(activeCircle.code)} style={{ ...pillGhost, width: "100%", padding: "14px 20px" }}>PUBLISH MY STATS →</button>
+            <button onClick={() => publishToCircle(activeCircle.code)} style={{ ...pillPrimary(true), width: "100%", padding: "14px 20px" }}>PUBLISH MY STATS →</button>
           </section>
 
-          {/* Leaderboard / Chat */}
+          {/* Tabs: Leaderboard / Chat / Members */}
           <section>
-            {/* Tab switcher */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
               <div style={{ display: "flex", gap: "6px" }}>
-                {(["leaderboard", "chat"] as const).map(tab => (
+                {(["leaderboard", "chat", "members"] as const).map(tab => (
                   <button key={tab}
                     onClick={() => { setCircleTab(tab); if (tab === "chat" && chatMessages.length === 0) loadChatMessages(activeCircle.code); }}
-                    style={{ background: circleTab === tab ? C.text : "transparent", color: circleTab === tab ? C.bg : C.muted, border: `1px solid ${circleTab === tab ? C.text : C.border2}`, borderRadius: "999px", padding: "5px 16px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase" }}>
-                    {tab === "leaderboard" ? "Leaderboard" : "Chat"}
+                    style={{ background: circleTab === tab ? C.text : "transparent", color: circleTab === tab ? C.bg : C.muted, border: `1px solid ${circleTab === tab ? C.text : C.border2}`, borderRadius: "999px", padding: "5px 14px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase" }}>
+                    {tab === "leaderboard" ? "Board" : tab === "chat" ? "Chat" : "Members"}
                   </button>
                 ))}
               </div>
               {circleTab === "leaderboard" && (
-                <button onClick={async () => { setLoadingLB(true); const e = await fetchCircleLeaderboard(activeCircle); setLeaderboard(e); setLoadingLB(false); }}
-                  style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.08em", textTransform: "uppercase" }}>↻ Refresh</button>
+                <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                  {(["all", "week"] as const).map(s => (
+                    <button key={s} onClick={() => setLbSort(s)}
+                      style={{ background: lbSort === s ? C.text2 + "22" : "transparent", border: `1px solid ${lbSort === s ? C.text2 : C.border2}`, borderRadius: "999px", padding: "4px 10px", cursor: "pointer", fontFamily: MONO, fontSize: "9px", color: lbSort === s ? C.text : C.muted, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                      {s === "all" ? "ALL TIME" : "THIS WEEK"}
+                    </button>
+                  ))}
+                  <button onClick={async () => { setLoadingLB(true); const e = await fetchCircleLeaderboard(activeCircle); setLeaderboard(e); setLoadingLB(false); }}
+                    style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "11px" }}>↻</button>
+                </div>
               )}
             </div>
+
+            {/* ── LEADERBOARD ── */}
+            {circleTab === "leaderboard" && (
+              <div>
+                {loadingLB ? (
+                  <div style={{ padding: "28px 0", fontFamily: BODY, fontSize: "13px", color: C.muted, fontStyle: "italic" }}>Loading…</div>
+                ) : leaderboard.length === 0 ? (
+                  <div style={{ padding: "40px 24px", textAlign: "center", background: C.panel, borderRadius: "12px" }}>
+                    <div style={{ fontSize: "32px", marginBottom: "12px" }}>📊</div>
+                    <div style={{ fontFamily: DISPLAY, fontSize: "16px", fontStyle: "italic", color: C.text2, marginBottom: "6px" }}>No stats published yet.</div>
+                    <div style={{ fontFamily: BODY, fontSize: "13px", color: C.muted }}>Be the first — hit "Publish My Stats" above.</div>
+                  </div>
+                ) : (
+                  <div style={{ borderTop: `1px solid ${C.border}` }}>
+                    {leaderboard.map((entry: any, i: number) => {
+                      const isMe = entry.memberCode === getMyCode();
+                      const pPos = entry.totalPnL >= 0;
+                      const isFirst = i === 0;
+                      const pnlCol = isFirst && pPos ? C.green : pPos ? C.text : C.red;
+                      const isExpanded = expandedMember === entry.memberCode;
+                      const isFollowing = (following || []).includes(entry.memberCode);
+                      const medal = MEDALS[i] || null;
+                      return (
+                        <div key={entry.memberCode} style={{ borderBottom: `1px solid ${C.border}`, background: isFirst ? `${C.green}08` : "transparent" }}>
+                          <div
+                            onClick={() => setExpandedMember(isExpanded ? null : entry.memberCode)}
+                            style={{ padding: "16px 0", display: "grid", gridTemplateColumns: "auto 1fr auto", alignItems: "center", gap: "14px", cursor: "pointer", paddingLeft: isExpanded ? "10px" : 0, paddingRight: isExpanded ? "10px" : 0 }}>
+                            <span style={{ fontFamily: MONO, fontSize: "13px", color: isFirst ? C.green : C.muted, letterSpacing: "0.06em", minWidth: "28px" }}>
+                              {medal || String(i + 1).padStart(2, "0")}
+                            </span>
+                            <div style={{ minWidth: 0 }}>
+                              <div style={{ display: "flex", alignItems: "baseline", gap: "8px", flexWrap: "wrap" }}>
+                                <span style={{ fontFamily: DISPLAY, fontSize: "17px", fontWeight: 500, color: C.text, letterSpacing: "-0.01em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{entry.name}</span>
+                                {isMe && <span style={{ fontFamily: MONO, fontSize: "9px", color: C.green, letterSpacing: "0.12em", textTransform: "uppercase" }}>· YOU</span>}
+                              </div>
+                              <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginTop: "3px", fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                                <span>{entry.total} trades</span>
+                                <span style={{ color: entry.winRate >= 50 ? C.green : entry.winRate > 0 ? C.red : C.muted }}>{entry.winRate.toFixed(0)}% WR</span>
+                                {entry.topStrategy && <span>{stratCode(entry.topStrategy)}</span>}
+                                {entry.streak?.count >= 2 && <span style={{ color: entry.streak.type === "Win" ? C.green : C.red }}>{entry.streak.count}{entry.streak.type === "Win" ? "W" : "L"}</span>}
+                              </div>
+                            </div>
+                            <div style={{ textAlign: "right", flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
+                              <div style={{ fontFamily: DISPLAY, fontSize: "18px", fontWeight: 700, color: pnlCol, letterSpacing: "-0.01em", lineHeight: 1 }}>{pPos ? "+" : ""}{entry.totalPnL.toFixed(1)}R</div>
+                              {entry.avgRR ? <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.06em" }}>{entry.avgRR.toFixed(1)}R avg</div> : null}
+                            </div>
+                          </div>
+                          {isExpanded && (
+                            <div style={{ padding: "0 10px 16px", display: "flex", flexDirection: "column", gap: "12px" }}>
+                              <div>
+                                <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.14em", marginBottom: "4px" }}>
+                                  {entry.alias && entry.alias !== entry.memberCode ? "ALIAS · USER CODE" : "USER CODE"}
+                                </div>
+                                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                  <span style={{ fontFamily: MONO, fontSize: "13px", color: C.text, letterSpacing: "0.10em", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                    {entry.alias && entry.alias !== entry.memberCode ? `${entry.alias} · ${entry.memberCode}` : entry.memberCode}
+                                  </span>
+                                  <button onClick={(e) => { e.stopPropagation(); navigator.clipboard?.writeText(entry.memberCode); showToast("Code copied"); }}
+                                    style={{ ...pillGhost, padding: "6px 12px", fontSize: "9px" }}>COPY</button>
+                                </div>
+                              </div>
+                              {!isMe && (
+                                <div style={{ display: "flex", gap: "8px" }}>
+                                  <button onClick={(e) => { e.stopPropagation(); isFollowing ? unfollowUser(entry.memberCode) : followUser(entry.memberCode); }}
+                                    style={{ background: isFollowing ? "transparent" : C.text, color: isFollowing ? C.muted : C.bg, border: `1px solid ${isFollowing ? C.border2 : C.text}`, borderRadius: "999px", padding: "8px 18px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", flex: 1 }}>
+                                    {isFollowing ? "✓ Following" : "+ Follow"}
+                                  </button>
+                                  {activeCircle?.isOwner && (
+                                    <button onClick={async (e) => { e.stopPropagation(); await kickMember(activeCircle.code, entry.memberCode); setLeaderboard(prev => prev.filter(r => r.memberCode !== entry.memberCode)); setExpandedMember(null); }}
+                                      style={{ background: "transparent", color: C.red, border: `1px solid ${C.red}44`, borderRadius: "999px", padding: "8px 14px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase" }}>
+                                      KICK
+                                    </button>
+                                  )}
+                                </div>
+                              )}
+                              {entry.handle && openProfile && (
+                                <button onClick={(e) => { e.stopPropagation(); openProfile(entry.handle); }}
+                                  style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "9px", letterSpacing: "0.1em", textTransform: "uppercase", padding: 0, textDecoration: "underline" }}>View Profile →</button>
+                              )}
+                              {entry.updatedAt && (
+                                <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.10em", textTransform: "uppercase" }}>
+                                  Last published · {new Date(entry.updatedAt).toLocaleString()}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* ── CHAT ── */}
             {circleTab === "chat" && (() => {
               const myId = profile?.uid;
               return (
                 <div>
-                  <div style={{ borderTop: `1px solid ${C.border}`, minHeight: "260px", maxHeight: "400px", overflowY: "auto", paddingTop: "8px" }}>
+                  <div style={{ borderTop: `1px solid ${C.border}`, minHeight: "260px", maxHeight: "420px", overflowY: "auto", paddingTop: "8px" }}>
                     {chatLoading
                       ? <div style={{ padding: "40px 0", textAlign: "center", fontFamily: BODY, fontSize: "13px", color: C.muted, fontStyle: "italic" }}>Loading…</div>
                       : chatMessages.length === 0
                         ? <div style={{ padding: "48px 0", textAlign: "center" }}>
+                            <div style={{ fontSize: "32px", marginBottom: "10px" }}>💬</div>
                             <div style={{ fontFamily: DISPLAY, fontSize: "16px", fontStyle: "italic", color: C.text2, marginBottom: "6px" }}>No messages yet.</div>
                             <div style={{ fontFamily: BODY, fontSize: "12px", color: C.muted }}>Be the first to say something.</div>
                           </div>
                         : chatMessages.map((msg: any) => {
                             const isMe = msg.sender_id === myId;
                             return (
-                              <div key={msg.id} style={{ padding: "10px 0", borderBottom: `1px solid ${C.border}`, display: "flex", justifyContent: isMe ? "flex-end" : "flex-start" }}>
-                                <div style={{ maxWidth: "80%" }}>
-                                  {!isMe && <div onClick={() => openProfile && msg.sender_handle && openProfile(msg.sender_handle)} style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.08em", marginBottom: "4px", cursor: openProfile && msg.sender_handle ? "pointer" : "default" }}>{msg.sender_name}{msg.sender_handle ? ` · @${msg.sender_handle}` : ""}</div>}
-                                  <div style={{ background: isMe ? C.text : C.panel, color: isMe ? C.bg : C.text, borderRadius: isMe ? "12px 12px 2px 12px" : "12px 12px 12px 2px", padding: "9px 13px", fontFamily: BODY, fontSize: "14px", lineHeight: 1.5, wordBreak: "break-word" }}>{msg.text}</div>
+                              <div key={msg.id} style={{ padding: "10px 0", display: "flex", justifyContent: isMe ? "flex-end" : "flex-start", gap: "10px", alignItems: "flex-end" }}>
+                                {!isMe && (
+                                  <div style={{ width: "28px", height: "28px", borderRadius: "50%", background: C.panel, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: MONO, fontSize: "10px", color: C.muted, flexShrink: 0, border: `1px solid ${C.border}` }}>
+                                    {(msg.sender_name || "?")[0].toUpperCase()}
+                                  </div>
+                                )}
+                                <div style={{ maxWidth: "75%" }}>
+                                  {!isMe && <div onClick={() => openProfile && msg.sender_handle && openProfile(msg.sender_handle)} style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.08em", marginBottom: "4px", cursor: openProfile && msg.sender_handle ? "pointer" : "default" }}>{msg.sender_name}{msg.sender_handle ? ` @${msg.sender_handle}` : ""}</div>}
+                                  <div style={{ background: isMe ? C.text : C.panel, color: isMe ? C.bg : C.text, borderRadius: isMe ? "16px 16px 4px 16px" : "16px 16px 16px 4px", padding: "10px 14px", fontFamily: BODY, fontSize: "14px", lineHeight: 1.5, wordBreak: "break-word", border: isMe ? "none" : `1px solid ${C.border}` }}>{msg.text}</div>
                                   <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, marginTop: "4px", display: "flex", gap: "10px", justifyContent: isMe ? "flex-end" : "flex-start", alignItems: "center" }}>
                                     <span>{fmtMsgTime(msg.created_at)}</span>
                                     {isMe && <button onClick={() => deleteChatMessage(msg.id)} style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "9px", padding: 0, textTransform: "uppercase", letterSpacing: "0.06em" }}>Delete</button>}
@@ -5767,7 +5956,7 @@ function TradingCircles({ myCircles, circlesView, setCirclesView, activeCircle, 
                     }
                     <div ref={chatBottomRef} />
                   </div>
-                  <div style={{ display: "flex", gap: "10px", alignItems: "flex-end", paddingTop: "14px", borderTop: `1px solid ${C.border}`, marginTop: "2px" }}>
+                  <div style={{ display: "flex", gap: "10px", alignItems: "flex-end", paddingTop: "14px", borderTop: `1px solid ${C.border}`, marginTop: "4px" }}>
                     <textarea value={chatInput} onChange={e => setChatInput(e.target.value)}
                       onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendChatMessage(activeCircle.code, myId); } }}
                       placeholder="Message the circle…" rows={2}
@@ -5782,124 +5971,56 @@ function TradingCircles({ myCircles, circlesView, setCirclesView, activeCircle, 
               );
             })()}
 
-            {/* ── LEADERBOARD ── */}
-            {circleTab === "leaderboard" && (<div>
-            {loadingLB ? (
-              <div style={{ padding: "28px 0", fontFamily: BODY, fontSize: "13px", color: C.muted, fontStyle: "italic" }}>Loading…</div>
-            ) : leaderboard.length === 0 ? (
-              <div style={{ padding: "28px 0", fontFamily: BODY, fontSize: "13px", color: C.muted, fontStyle: "italic" }}>No stats published yet. Be the first.</div>
-            ) : (
+            {/* ── MEMBERS ── */}
+            {circleTab === "members" && (
               <div style={{ borderTop: `1px solid ${C.border}` }}>
-                {leaderboard.map((entry: any, i: number) => {
-                  const isMe = entry.memberCode === getMyCode();
-                  const pPos = entry.totalPnL >= 0;
-                  const pnlCol = i === 0 && pPos ? C.green : pPos ? C.text : C.red;
-                  const isExpanded = expandedMember === entry.memberCode;
-                  const isFollowing = (following || []).includes(entry.memberCode);
+                {(activeCircle.members || []).length === 0 ? (
+                  <div style={{ padding: "28px 0", fontFamily: BODY, fontSize: "13px", color: C.muted, fontStyle: "italic" }}>No member data available.</div>
+                ) : (activeCircle.members || []).map((m: any, idx: number) => {
+                  const isMe = m.code === getMyCode();
+                  const isFollowing = (following || []).includes(m.code);
+                  const lbEntry = leaderboard.find((e: any) => e.memberCode === m.code);
                   return (
-                    <div key={entry.memberCode}
-                      style={{ borderBottom: `1px solid ${C.border}` }}>
-                      <div
-                        onClick={() => setExpandedMember(isExpanded ? null : entry.memberCode)}
-                        style={{ padding: "16px 0", display: "grid", gridTemplateColumns: "auto 1fr auto", alignItems: "center", gap: "14px", cursor: "pointer", background: isExpanded ? C.panel : "transparent", paddingLeft: isExpanded ? "10px" : 0, paddingRight: isExpanded ? "10px" : 0, transition: "background 120ms ease" }}>
-                        <span style={{ fontFamily: MONO, fontSize: "12px", color: C.muted, letterSpacing: "0.08em", minWidth: "28px" }}>{String(i + 1).padStart(2, "0")}</span>
-                        <div style={{ minWidth: 0 }}>
-                          <div style={{ display: "flex", alignItems: "baseline", gap: "10px", flexWrap: "wrap" }}>
-                            <span style={{ fontFamily: DISPLAY, fontSize: "17px", fontWeight: 500, color: C.text, letterSpacing: "-0.01em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{entry.name}</span>
-                            {isMe && <span style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.12em", textTransform: "uppercase" }}>· You</span>}
-                          </div>
-                          <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", marginTop: "3px", fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.06em", textTransform: "uppercase" }}>
-                            <span>{entry.total} trades</span>
-                            <span style={{ color: entry.winRate >= 50 ? C.green : entry.winRate > 0 ? C.red : C.muted }}>{entry.winRate.toFixed(0)}% WR</span>
-                            {entry.topStrategy && <span>{stratCode(entry.topStrategy)}</span>}
-                            {entry.streak && entry.streak.count >= 2 && <span style={{ color: entry.streak.type === "Win" ? C.green : C.red }}>{entry.streak.count}{entry.streak.type === "Win" ? "W" : "L"}</span>}
-                          </div>
-                        </div>
-                        <div style={{ textAlign: "right", flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
-                          <div style={{ fontFamily: DISPLAY, fontSize: "18px", fontWeight: 500, color: pnlCol, letterSpacing: "-0.01em", lineHeight: 1 }}>{pPos ? "+" : ""}{entry.totalPnL.toFixed(1)}R</div>
-                          {entry.avgRR ? <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.06em" }}>{entry.avgRR.toFixed(1)}R AVG</div> : null}
-                        </div>
+                    <div key={m.code || idx} style={{ display: "flex", alignItems: "center", gap: "14px", padding: "14px 0", borderBottom: `1px solid ${C.border}` }}>
+                      <div style={{ width: "40px", height: "40px", borderRadius: "50%", background: C.panel, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: DISPLAY, fontSize: "18px", flexShrink: 0, border: `1px solid ${C.border}` }}>
+                        {m.avatar ? (m.avatar.length <= 8 && !m.avatar.startsWith("http") && !m.avatar.startsWith("data:") ? m.avatar : "👤") : "👤"}
                       </div>
-                      {isExpanded && (
-                        <div style={{ padding: "0 10px 16px", display: "flex", flexDirection: "column", gap: "12px", background: C.panel }}>
-                          <div>
-                            <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.14em", marginBottom: "4px" }}>
-                              {entry.alias && entry.alias !== entry.memberCode ? "ALIAS · USER CODE" : "USER CODE"}
-                            </div>
-                            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                              <span style={{ fontFamily: MONO, fontSize: "13px", color: C.text, letterSpacing: "0.10em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
-                                {entry.alias && entry.alias !== entry.memberCode ? `${entry.alias} · ${entry.memberCode}` : entry.memberCode}
-                              </span>
-                              <button
-                                onClick={(e) => { e.stopPropagation(); navigator.clipboard?.writeText(entry.memberCode); showToast("Code copied"); }}
-                                style={{ ...pillGhost, padding: "6px 12px", fontSize: "9px" }}>COPY</button>
-                            </div>
-                          </div>
-                          {!isMe && (
-                            <div style={{ display: "flex", gap: "8px" }}>
-                              <button
-                                onClick={(e) => { e.stopPropagation(); isFollowing ? unfollowUser(entry.memberCode) : followUser(entry.memberCode); }}
-                                style={{ background: isFollowing ? "transparent" : C.text, color: isFollowing ? C.muted : C.bg, border: `1px solid ${isFollowing ? C.border2 : C.text}`, borderRadius: "999px", padding: "8px 18px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", flex: 1 }}>
-                                {isFollowing ? "✓ Following" : "+ Follow"}
-                              </button>
-                              {/* Only circle owner sees kick button */}
-                              {activeCircle?.isOwner && (
-                                <button
-                                  onClick={async (e) => {
-                                    e.stopPropagation();
-                                    await kickMember(activeCircle.code, entry.memberCode);
-                                    // Remove the kicked member from the local leaderboard immediately.
-                                    setLeaderboard(prev => prev.filter(r => r.memberCode !== entry.memberCode));
-                                    setExpandedMember(null);
-                                  }}
-                                  style={{ background: "transparent", color: C.red, border: `1px solid ${C.red}44`, borderRadius: "999px", padding: "8px 14px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase" }}>
-                                  KICK
-                                </button>
-                              )}
-                            </div>
-                          )}
-                          {entry.handle && openProfile && (
-                            <button onClick={(e) => { e.stopPropagation(); openProfile(entry.handle); }}
-                              style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "9px", letterSpacing: "0.1em", textTransform: "uppercase", padding: 0, textDecoration: "underline" }}>View Profile</button>
-                          )}
-                          {entry.updatedAt && (
-                            <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.10em", textTransform: "uppercase" }}>
-                              Last published · {new Date(entry.updatedAt).toLocaleString()}
-                            </div>
-                          )}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: "flex", alignItems: "baseline", gap: "8px" }}>
+                          <span style={{ fontFamily: DISPLAY, fontSize: "16px", fontWeight: 500, color: C.text, letterSpacing: "-0.01em" }}>{m.name || "Trader"}</span>
+                          {isMe && <span style={{ fontFamily: MONO, fontSize: "9px", color: C.green, letterSpacing: "0.12em" }}>· YOU</span>}
+                          {m.code === activeCircle.createdBy || m.isOwner ? <span style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.1em" }}>OWNER</span> : null}
                         </div>
+                        {m.alias && <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.06em", marginTop: "2px" }}>{m.alias}</div>}
+                        {lbEntry && <div style={{ fontFamily: MONO, fontSize: "10px", color: lbEntry.totalPnL >= 0 ? C.green : C.red, letterSpacing: "0.06em", marginTop: "2px" }}>{lbEntry.totalPnL >= 0 ? "+" : ""}{lbEntry.totalPnL.toFixed(1)}R · {lbEntry.winRate.toFixed(0)}% WR</div>}
+                      </div>
+                      {!isMe && (
+                        <button onClick={() => isFollowing ? unfollowUser(m.code) : followUser(m.code)}
+                          style={{ background: isFollowing ? "transparent" : C.text, color: isFollowing ? C.muted : C.bg, border: `1px solid ${isFollowing ? C.border2 : C.text}`, borderRadius: "999px", padding: "6px 14px", cursor: "pointer", fontFamily: MONO, fontSize: "9px", letterSpacing: "0.1em", textTransform: "uppercase", flexShrink: 0 }}>
+                          {isFollowing ? "✓" : "+Follow"}
+                        </button>
                       )}
                     </div>
                   );
                 })}
               </div>
             )}
-            </div>)}
           </section>
 
-          {/* Invite */}
+          {/* Invite strip */}
           <section style={{ borderTop: `1px solid ${C.border}`, paddingTop: "22px" }}>
-            <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.14em", marginBottom: "10px" }}>INVITE CODE</div>
-            <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-              <div style={{ flex: 1, borderBottom: `1px solid ${C.border2}`, padding: "14px 0", fontFamily: MONO, fontSize: "18px", color: C.text, letterSpacing: "0.14em" }}>{activeCircle.code}</div>
+            <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.14em", marginBottom: "12px" }}>INVITE TO CIRCLE</div>
+            <div style={{ display: "flex", gap: "8px", alignItems: "center", marginBottom: "12px" }}>
+              <div style={{ flex: 1, borderBottom: `1px solid ${C.border2}`, padding: "12px 0", fontFamily: MONO, fontSize: "16px", color: C.text, letterSpacing: "0.14em" }}>{activeCircle.code}</div>
               <button onClick={() => { navigator.clipboard?.writeText(activeCircle.code); showToast("Code copied"); }}
-                style={{ ...pillGhost, padding: "10px 18px" }}>COPY</button>
-              <button
-                onClick={() => {
-                  const msg = `Join my TRADR circle "${activeCircle.name}" — use code ${activeCircle.code} on the Circles tab.`;
-                  if (navigator.share) {
-                    navigator.share({ title: "Join my TRADR circle", text: msg }).catch(() => {});
-                  } else {
-                    navigator.clipboard?.writeText(msg);
-                    showToast("Invite message copied");
-                  }
-                }}
-                style={{ ...pillGhost, padding: "10px 18px" }}>
-                SHARE
-              </button>
+                style={{ ...pillGhost, padding: "8px 16px" }}>CODE</button>
+              <button onClick={() => { navigator.clipboard?.writeText(`https://tradrjournal.xyz/?join=${activeCircle.code}`); showToast("Link copied"); }}
+                style={{ ...pillGhost, padding: "8px 16px" }}>LINK</button>
+              <button onClick={() => shareInviteLink(activeCircle)}
+                style={{ ...pillPrimary(true), width: "auto", padding: "8px 16px" }}>SHARE</button>
             </div>
-            <div style={{ fontFamily: BODY, fontSize: "12px", color: C.muted, marginTop: "10px", lineHeight: 1.5 }}>
-              COPY copies just the code. SHARE sends a ready-made invite message — or copies it on desktop.
+            <div style={{ fontFamily: BODY, fontSize: "12px", color: C.muted, lineHeight: 1.5 }}>
+              LINK copies a join URL · SHARE sends a ready-made invite.
             </div>
           </section>
         </div>
@@ -5907,6 +6028,7 @@ function TradingCircles({ myCircles, circlesView, setCirclesView, activeCircle, 
     </div>
   );
 }
+
 // ─── PUBLIC PROFILE MODAL ────────────────────────────────────────────────────
 function ProfileModal({ handle, myCode, following, followUser, unfollowUser, onClose, C }: any) {
   const [pubProfile, setPubProfile] = useState<any>(null);
