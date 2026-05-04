@@ -461,6 +461,17 @@ function TrMark({ size = 28, bg = "#0C0C0B" }: { size?: number; bg?: string }) {
   );
 }
 
+// Minimal crown badge — shown next to handle for Pro/Elite users
+function CrownIcon({ size = 13, color = "currentColor" }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 20 16" xmlns="http://www.w3.org/2000/svg"
+      style={{ display: "inline-block", verticalAlign: "middle", flexShrink: 0 }}>
+      <path d="M2 14h16M3 14L1 6l5 3.5L10 2l4 7.5L19 6l-2 8H3z"
+        fill={color} stroke={color} strokeWidth="0.5" strokeLinejoin="round" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function Toast({ message, onDone, C }: any) {
   useEffect(() => { const t = setTimeout(onDone, 2200); return () => clearTimeout(t); }, []);
   return (
@@ -2941,6 +2952,9 @@ export default function Tradr({ user }: { user?: any } = {}) {
                 title="Go to your profile"
               >
                 {profile.handle || "@trader"}
+                {(profile.plan === "pro" || profile.plan === "elite") && (
+                  <CrownIcon size={11} color="currentColor" />
+                )}
               </button>
               <button onClick={() => supabase.auth.signOut()}
                 style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.08em", textTransform: "uppercase", padding: "8px 4px", minHeight: "44px" }}>
@@ -3735,7 +3749,12 @@ export default function Tradr({ user }: { user?: any } = {}) {
                       <input id="avatarInput" type="file" accept="image/jpeg,image/png" onChange={handleAvatarUpload} />
                       <div style={{ flex: 1 }}>
                         <div style={{ fontFamily: DISPLAY, fontSize: "20px", fontWeight: 500, color: C.text, letterSpacing: "-0.01em" }}>{profile.name}</div>
-                        <div style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, letterSpacing: "0.06em", marginTop: "2px" }}>{profile.handle}</div>
+                        <div style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, letterSpacing: "0.06em", marginTop: "2px", display: "flex", alignItems: "center", gap: "5px" }}>
+                          {profile.handle}
+                          {(profile.plan === "pro" || profile.plan === "elite") && (
+                            <CrownIcon size={11} color={C.text} />
+                          )}
+                        </div>
                       </div>
                       <button onClick={() => { setProfileDraft({ ...profile }); setEditingProfile(!editingProfile); }} style={pillGhost}>
                         {editingProfile ? "CANCEL" : "EDIT"}
@@ -5104,8 +5123,11 @@ function ProfileView({ profile, myCode, followers, following, friendCodes, myCir
           <h1 style={{ fontFamily: DISPLAY, fontSize: "clamp(32px, 7vw, 44px)", fontWeight: 700, letterSpacing: "-0.02em", lineHeight: 1, color: C.text, margin: 0 }}>
             {profile.name || "Trader"}
           </h1>
-          <div style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, letterSpacing: "0.08em", marginTop: "8px", textTransform: "lowercase" }}>
+          <div style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, letterSpacing: "0.08em", marginTop: "8px", textTransform: "lowercase", display: "flex", alignItems: "center", gap: "6px" }}>
             {profile.handle || "@trader"}
+            {(profile.plan === "pro" || profile.plan === "elite") && (
+              <CrownIcon size={12} color={C.text} />
+            )}
           </div>
           {profile.bio && (
             <div style={{ fontFamily: BODY, fontSize: "14px", color: C.text2, lineHeight: 1.6, marginTop: "12px", maxWidth: "48ch" }}>{profile.bio}</div>
