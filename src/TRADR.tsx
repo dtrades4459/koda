@@ -3738,188 +3738,143 @@ export default function Tradr({ user }: { user?: any } = {}) {
                       openProfile={openProfile}
                     />
                   </section>
-                  {/* Plan / Upgrade */}
+                  {/* Plan row */}
                   <section style={{ paddingTop: "28px", borderTop: `1px solid ${C.border}` }}>
-                    <SectionKicker label="PLAN" C={C} />
-                    <div style={{ marginTop: "16px" }}>
-                      {profile.plan !== "pro" && profile.plan !== "elite" && (
-                        <div style={{ padding: "16px 0", borderBottom: `1px solid ${C.border}` }}>
-                          <button
-                            onClick={() => setShowUpgrade(true)}
-                            style={{
-                              background: "linear-gradient(135deg, #f59e0b, #d97706)",
-                              color: "#000", border: "none", borderRadius: "10px",
-                              padding: "13px 20px", fontSize: "14px", fontWeight: 700,
-                              cursor: "pointer", width: "100%", letterSpacing: "0.02em",
-                            }}
-                          >
-                            ⚡ Upgrade to Pro — $5.99/mo
-                          </button>
-                          <div style={{ marginTop: "6px", fontSize: "11px", color: C.muted, textAlign: "center" }}>
-                            Unlimited imports · Advanced analytics · Export reports
-                          </div>
-                        </div>
-                      )}
-                      {(profile.plan === "pro" || profile.plan === "elite") && (
-                        <div style={{ padding: "16px 0", borderBottom: `1px solid ${C.border}` }}>
-                          <div style={{
-                            background: "linear-gradient(135deg, #f59e0b18, #d9770612)",
-                            border: "1px solid #f59e0b44", borderRadius: "12px", padding: "14px 16px",
-                          }}>
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                <span style={{ fontSize: "20px" }}>⚡</span>
-                                <div>
-                                  <div style={{ fontSize: "14px", fontWeight: 700, color: "#f59e0b" }}>TRADR Pro</div>
-                                  <div style={{ fontSize: "11px", color: C.muted, marginTop: "1px" }}>All features unlocked</div>
-                                </div>
-                              </div>
-                              {profile.stripeCustomerId && (
-                                <button
-                                  onClick={async () => {
-                                    try {
-                                      const r = await fetch("/api/stripe-portal", {
-                                        method: "POST", headers: { "Content-Type": "application/json" },
-                                        body: JSON.stringify({ stripeCustomerId: profile.stripeCustomerId }),
-                                      });
-                                      const { url } = await r.json();
-                                      window.location.href = url;
-                                    } catch { showToast("Could not open billing portal — try again."); }
-                                  }}
-                                  style={{
-                                    background: "none", border: "1px solid #f59e0b66", borderRadius: "6px",
-                                    padding: "6px 12px", fontSize: "11px", color: "#f59e0b",
-                                    cursor: "pointer", letterSpacing: "0.05em", fontWeight: 600,
-                                  }}
-                                >Manage →</button>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </section>
-
-                  {/* Data & Privacy */}
-                  <section style={{ paddingTop: "28px", borderTop: `1px solid ${C.border}` }}>
-                    <SectionKicker label="DATA & PRIVACY" C={C} />
-                    <div style={{ marginTop: "20px", display: "flex", flexDirection: "column", gap: "12px" }}>
-                      <div style={{ display: "flex", gap: "10px" }}>
-                        <button onClick={() => {
-                            if (profile.plan !== "pro" && profile.plan !== "elite") { setShowUpgrade(true); return; }
-                            exportCSV();
-                          }}
-                          style={{ flex: 1, padding: "12px", border: `1px solid ${C.border2}`, borderRadius: "8px", background: "transparent", color: C.text, cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase" }}>
-                          {profile.plan !== "pro" && profile.plan !== "elite" ? "🔒 Export CSV (Pro)" : "Export CSV"}
-                        </button>
-                        <button onClick={exportData}
-                          style={{ flex: 1, padding: "12px", border: `1px solid ${C.border2}`, borderRadius: "8px", background: "transparent", color: C.text, cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase" }}>
-                          Export JSON
-                        </button>
-                      </div>
-                      <div style={{ fontFamily: BODY, fontSize: "12px", color: C.muted, lineHeight: 1.55 }}>
-                        Download all your trades and profile data. Your data belongs to you.
-                      </div>
-                    </div>
-                  </section>
-
-                  {/* Integrations Status */}
-                  <section style={{ paddingTop: "28px", borderTop: `1px solid ${C.border}` }}>
-                    <SectionKicker label="INTEGRATIONS" C={C} />
-                    <div style={{ marginTop: "16px" }}>
-
-                      {/* Stripe status */}
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0", borderBottom: `1px solid ${C.border}` }}>
+                    {profile.plan !== "pro" && profile.plan !== "elite" ? (
+                      <button
+                        onClick={() => setShowUpgrade(true)}
+                        style={{
+                          width: "100%", padding: "13px 18px", background: "transparent",
+                          border: `1px solid #f59e0b55`, borderRadius: "10px", cursor: "pointer",
+                          display: "flex", alignItems: "center", justifyContent: "space-between",
+                        }}
+                      >
                         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                          <span style={{ fontSize: "18px" }}>💳</span>
-                          <div>
-                            <div style={{ fontSize: "13px", fontWeight: 600, color: C.text }}>Stripe Billing</div>
-                            <div style={{ fontSize: "11px", color: profile.stripeCustomerId ? "#22c55e" : C.muted }}>
-                              {profile.stripeCustomerId ? "✓ Connected" : "Not connected"}
-                            </div>
+                          <span style={{ fontSize: "16px" }}>⚡</span>
+                          <div style={{ textAlign: "left" }}>
+                            <div style={{ fontSize: "13px", fontWeight: 600, color: "#f59e0b" }}>Upgrade to Pro</div>
+                            <div style={{ fontSize: "11px", color: C.muted, marginTop: "1px" }}>Unlimited imports · Advanced analytics</div>
                           </div>
                         </div>
-                        {!profile.stripeCustomerId && (
+                        <span style={{ fontFamily: MONO, fontSize: "11px", color: "#f59e0b" }}>£5.99/mo →</span>
+                      </button>
+                    ) : (
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 0" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <span style={{ fontSize: "15px" }}>⚡</span>
+                          <div>
+                            <span style={{ fontSize: "13px", fontWeight: 600, color: C.text }}>TRADR Pro</span>
+                            <span style={{ fontFamily: MONO, fontSize: "10px", color: C.green, marginLeft: "8px", letterSpacing: "0.06em" }}>ACTIVE</span>
+                          </div>
+                        </div>
+                        {profile.stripeCustomerId && (
                           <button
-                            onClick={() => setShowStripeGuide(true)}
-                            style={{ background: "none", border: `1px solid ${C.border2}`, borderRadius: "6px", padding: "5px 10px", fontSize: "11px", color: C.muted, cursor: "pointer" }}
-                          >Setup →</button>
+                            onClick={async () => {
+                              try {
+                                const r = await fetch("/api/stripe-portal", {
+                                  method: "POST", headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ stripeCustomerId: profile.stripeCustomerId }),
+                                });
+                                const { url } = await r.json();
+                                window.location.href = url;
+                              } catch { showToast("Could not open billing portal — try again."); }
+                            }}
+                            style={{ background: "none", border: `1px solid ${C.border2}`, borderRadius: "6px", padding: "5px 10px", fontSize: "11px", color: C.muted, cursor: "pointer", fontFamily: MONO, letterSpacing: "0.06em" }}
+                          >Manage →</button>
                         )}
                       </div>
-
-                      {/* Tradovate status */}
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                          <span style={{ fontSize: "18px" }}>📡</span>
-                          <div>
-                            <div style={{ fontSize: "13px", fontWeight: 600, color: C.text }}>Tradovate Auto-Import</div>
-                            <div style={{ fontSize: "11px", color: tradovateSession ? "#22c55e" : C.muted }}>
-                              {tradovateSession ? "✓ Connected" : "Not connected"}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                    )}
                   </section>
 
-                  {/* Broker Integrations */}
+                  {/* Connections */}
                   <section style={{ paddingTop: "28px", borderTop: `1px solid ${C.border}` }}>
-                    <SectionKicker label="BROKER INTEGRATIONS" C={C} />
-                    <div style={{ marginTop: "16px", display: "flex", flexDirection: "column", gap: "12px" }}>
-                      <div style={{ border: `1px solid ${tradovateSession ? C.green + "66" : C.border}`, borderRadius: "10px", padding: "14px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", transition: "border-color 0.2s" }}>
+                    <SectionKicker label="CONNECTIONS" C={C} />
+                    <div style={{ marginTop: "16px", display: "flex", flexDirection: "column" }}>
+                      {/* Tradovate */}
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "11px 0", borderBottom: `1px solid ${C.border}` }}>
                         <div>
-                          <div style={{ fontFamily: MONO, fontSize: "11px", color: tradovateSession ? C.green : C.text, letterSpacing: "0.08em" }}>
-                            {tradovateSession ? `✓ ${tradovateSession.accountName ?? "Tradovate"} · ${tradovateSession.env.toUpperCase()}` : "Tradovate"}
+                          <div style={{ fontSize: "13px", fontWeight: 500, color: C.text }}>
+                            Tradovate
+                            {tradovateSession && <span style={{ fontFamily: MONO, fontSize: "10px", color: C.green, marginLeft: "8px", letterSpacing: "0.06em" }}>LIVE</span>}
                           </div>
-                          <div style={{ fontFamily: BODY, fontSize: "11px", color: C.muted, marginTop: "3px" }}>
-                            {tradovateSession ? "Live positions & auto-import active" : "Connect for live positions & auto-import"}
+                          <div style={{ fontSize: "11px", color: C.muted, marginTop: "2px" }}>
+                            {tradovateSession ? `${tradovateSession.accountName ?? "Connected"} · ${tradovateSession.env.toUpperCase()}` : "Live positions & auto-import"}
                           </div>
                         </div>
                         <button onClick={() => setShowLiveModal(true)}
-                          style={{ background: "none", border: `1px solid ${C.border2}`, borderRadius: "6px", padding: "6px 12px", cursor: "pointer", fontFamily: MONO, fontSize: "9px", letterSpacing: "0.1em", color: C.text, textTransform: "uppercase", whiteSpace: "nowrap" }}>
+                          style={{ background: "none", border: `1px solid ${C.border2}`, borderRadius: "6px", padding: "5px 10px", fontSize: "11px", color: C.muted, cursor: "pointer", fontFamily: MONO, letterSpacing: "0.06em", whiteSpace: "nowrap" }}>
                           {tradovateSession ? "Manage →" : "Connect →"}
                         </button>
                       </div>
+                      {/* Stripe */}
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "11px 0" }}>
+                        <div>
+                          <div style={{ fontSize: "13px", fontWeight: 500, color: C.text }}>
+                            Stripe Billing
+                            {profile.stripeCustomerId && <span style={{ fontFamily: MONO, fontSize: "10px", color: C.green, marginLeft: "8px", letterSpacing: "0.06em" }}>CONNECTED</span>}
+                          </div>
+                          <div style={{ fontSize: "11px", color: C.muted, marginTop: "2px" }}>Subscription management</div>
+                        </div>
+                        {!profile.stripeCustomerId && (
+                          <button onClick={() => setShowStripeGuide(true)}
+                            style={{ background: "none", border: `1px solid ${C.border2}`, borderRadius: "6px", padding: "5px 10px", fontSize: "11px", color: C.muted, cursor: "pointer", fontFamily: MONO, letterSpacing: "0.06em" }}>
+                            Setup →
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </section>
+
+                  {/* Data export */}
+                  <section style={{ paddingTop: "28px", borderTop: `1px solid ${C.border}` }}>
+                    <SectionKicker label="YOUR DATA" C={C} />
+                    <div style={{ marginTop: "14px", display: "flex", gap: "10px" }}>
+                      <button onClick={() => {
+                          if (profile.plan !== "pro" && profile.plan !== "elite") { setShowUpgrade(true); return; }
+                          exportCSV();
+                        }}
+                        style={{ flex: 1, padding: "11px", border: `1px solid ${C.border2}`, borderRadius: "8px", background: "transparent", color: profile.plan === "pro" || profile.plan === "elite" ? C.text : C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                        {profile.plan !== "pro" && profile.plan !== "elite" ? "🔒 CSV" : "Export CSV"}
+                      </button>
+                      <button onClick={exportData}
+                        style={{ flex: 1, padding: "11px", border: `1px solid ${C.border2}`, borderRadius: "8px", background: "transparent", color: C.text, cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                        Export JSON
+                      </button>
                     </div>
                   </section>
 
                   {/* Danger zone */}
-                  <section style={{ paddingTop: "28px", borderTop: `1px solid ${C.red}44` }}>
-                    <SectionKicker label="DANGER ZONE" C={C} />
-                    <div style={{ marginTop: "20px", display: "flex", flexDirection: "column", gap: "12px" }}>
-                      <div style={{ fontFamily: BODY, fontSize: "13px", color: C.text2, lineHeight: 1.6 }}>
-                        Permanently delete your account and all associated data. This cannot be undone.
-                      </div>
+                  <section style={{ paddingTop: "28px", borderTop: `1px solid ${C.border}` }}>
+                    <SectionKicker label="DELETE ACCOUNT" C={C} />
+                    <div style={{ marginTop: "14px", display: "flex", flexDirection: "column", gap: "10px" }}>
                       <input
                         value={deleteConfirm} onChange={e => setDeleteConfirm(e.target.value)}
-                        placeholder='Type DELETE to confirm'
-                        style={{ padding: "11px 14px", background: "transparent", border: `1px solid ${C.red}66`, borderRadius: "8px", color: C.text, fontFamily: MONO, fontSize: "13px", letterSpacing: "0.04em" }}
+                        placeholder="Type DELETE to confirm"
+                        style={{ padding: "11px 14px", background: "transparent", border: `1px solid ${C.border2}`, borderRadius: "8px", color: C.text, fontFamily: MONO, fontSize: "12px", letterSpacing: "0.04em", outline: "none" }}
                       />
                       <button
                         onClick={deleteAccount}
                         disabled={deletingAccount || deleteConfirm.toUpperCase() !== "DELETE"}
-                        style={{ padding: "12px", border: `1px solid ${C.red}`, borderRadius: "8px", background: deleteConfirm.toUpperCase() === "DELETE" ? C.red + "22" : "transparent", color: C.red, cursor: deleteConfirm.toUpperCase() === "DELETE" ? "pointer" : "not-allowed", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", opacity: deletingAccount ? 0.6 : 1 }}>
+                        style={{ padding: "11px", border: `1px solid ${deleteConfirm.toUpperCase() === "DELETE" ? C.red : C.border2}`, borderRadius: "8px", background: "transparent", color: deleteConfirm.toUpperCase() === "DELETE" ? C.red : C.muted, cursor: deleteConfirm.toUpperCase() === "DELETE" ? "pointer" : "not-allowed", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", opacity: deletingAccount ? 0.6 : 1, transition: "all 0.2s" }}>
                         {deletingAccount ? "Deleting…" : "Delete My Account"}
                       </button>
                     </div>
                   </section>
 
                   {/* Legal footer */}
-                  <section style={{ paddingTop: "24px", borderTop: `1px solid ${C.border}` }}>
-                    <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
-                      <a href="/privacy.html" target="_blank" rel="noopener"
-                        style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.08em", textDecoration: "none" }}>
-                        Privacy Policy
-                      </a>
-                      <a href="/terms.html" target="_blank" rel="noopener"
-                        style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.08em", textDecoration: "none" }}>
-                        Terms of Service
-                      </a>
-                      <span style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.06em" }}>
-                        TRADR © {new Date().getFullYear()}
-                      </span>
-                    </div>
-                  </section>
+                  <div style={{ paddingTop: "32px", display: "flex", gap: "16px", flexWrap: "wrap", alignItems: "center" }}>
+                    <a href="/privacy.html" target="_blank" rel="noopener"
+                      style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.08em", textDecoration: "none" }}>
+                      Privacy
+                    </a>
+                    <a href="/terms.html" target="_blank" rel="noopener"
+                      style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.08em", textDecoration: "none" }}>
+                      Terms
+                    </a>
+                    <span style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.06em", marginLeft: "auto" }}>
+                      TRADR © {new Date().getFullYear()}
+                    </span>
+                  </div>
                 </div>
               )}
 
