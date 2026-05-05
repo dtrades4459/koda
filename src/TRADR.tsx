@@ -56,6 +56,8 @@ export interface Trade {
   reactions: ReactionMap;
   createdAt?: string;
   updatedAt?: string;
+  mae?: string;
+  mfe?: string;
 }
 
 export interface Profile {
@@ -87,6 +89,10 @@ export interface Profile {
   stripeCustomerId?: string;
   /** User email (from auth session — populated at load time). */
   email?: string;
+  /** Max daily loss in R before kill switch activates. 0 = disabled. */
+  maxDailyLoss?: string;
+  /** Account balance in $ for position size calculator. */
+  accountBalance?: string;
 }
 
 export interface CircleMember {
@@ -1442,8 +1448,279 @@ function getEmotionTags(emotions: string | string[] | undefined): string[] {
   return EMOTION_TAGS.filter(t => lower.includes(t.id) || lower.includes(t.label.toLowerCase())).map(t => t.id);
 }
 
-const EMPTY_TRADE: Partial<Trade> = { date: new Date().toISOString().split("T")[0], pair: "", session: "", bias: "", strategy: "", setup: "", entryPrice: "", slPrice: "", tpPrice: "", rr: "", outcome: "", pnl: "", pnlDollar: "", entryTime: "", exitTime: "", direction: "", notes: "", emotions: "", screenshot: "", comments: [], reactions: {} };
+const EMPTY_TRADE: Partial<Trade> = { date: new Date().toISOString().split("T")[0], pair: "", session: "", bias: "", strategy: "", setup: "", entryPrice: "", slPrice: "", tpPrice: "", rr: "", outcome: "", pnl: "", pnlDollar: "", entryTime: "", exitTime: "", direction: "", notes: "", emotions: "", screenshot: "", mae: "", mfe: "", comments: [], reactions: {} };
 const DEF_PROFILE: Profile = { name: "Trader", handle: "@trader", bio: "Multi-strategy trader | Consistency over everything", avatar: "", broker: "", timezone: "London (GMT)", startDate: new Date().toISOString().split("T")[0], targetRR: "2", maxTradesPerDay: "2", publicTrades: false, instruments: [], socialLinks: {}, plan: "free" };
+
+// ─── Drawdown Curve ──────────────────────────────────────────────────────────
+function DrawdownCurve({ trades, C }: any) {
+  if (!trades || trades.length === 0) return null;
+  const sorted = [...trades].sort((a: any, b: any) => a.date > b.date ? 1 : -1);
+  // Build daily cumulative P&L then compute drawdown from peak
+  const dailyMap: Record<string, number> = {};
+  sorted.forEach((t: any) => {
+    const d = t.date; const v = parseFloat(t.pnl) || 0;
+    dailyMap[d] = (dailyMap[d] || 0) + v;
+  });
+  const days = Object.keys(dailyMap).sort();
+  let cum = 0, peak = 0;
+  const points = days.map(d => {
+    cum += dailyMap[d];
+    if (cum > peak) peak = cum;
+    const dd = peak > 0 ? ((cum - peak) / Math.max(Math.abs(peak), 0.01)) * 100 : 0;
+    return { d, dd: Math.min(0, dd) };
+  });
+  if (points.length < 2) return null;
+  const minDD = Math.min(...points.map(p => p.dd));
+  const maxY = 0; const minY = Math.min(minDD * 1.2, -0.5);
+  const W = 320; const H = 140; const PAD = 28;
+  const xScale = (i: number) => PAD + (i / (points.length - 1)) * (W - PAD * 2);
+  const yScale = (v: number) => PAD + ((maxY - v) / (maxY - minY)) * (H - PAD * 2);
+  const pathD = points.map((p, i) => `${i === 0 ? "M" : "L"}${xScale(i).toFixed(1)},${yScale(p.dd).toFixed(1)}`).join(" ");
+  const fillD = `${pathD} L${xScale(points.length - 1).toFixed(1)},${yScale(0).toFixed(1)} L${xScale(0).toFixed(1)},${yScale(0).toFixed(1)} Z`;
+  return (
+    <div>
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ display: "block" }}>
+        <defs>
+          <linearGradient id="ddGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#FF3D00" stopOpacity="0.25" />
+            <stop offset="100%" stopColor="#FF3D00" stopOpacity="0.02" />
+          </linearGradient>
+        </defs>
+        {/* zero line */}
+        <line x1={PAD} y1={yScale(0)} x2={W - PAD} y2={yScale(0)} stroke={C.border2} strokeWidth="0.5" strokeDasharray="3 3" />
+        {/* fill */}
+        <path d={fillD} fill="url(#ddGrad)" />
+        {/* line */}
+        <path d={pathD} fill="none" stroke="#FF3D00" strokeWidth="1.5" strokeLinejoin="round" />
+        {/* min label */}
+        {minDD < -0.5 && (
+          <text x={PAD + 4} y={yScale(minDD) - 4} fontSize="9" fill={C.red || "#FF3D00"} fontFamily="monospace">
+            {minDD.toFixed(1)}%
+          </text>
+        )}
+        <text x={PAD} y={H - 6} fontSize="8" fill={C.muted} fontFamily="monospace">{points[0]?.d?.slice(5)}</text>
+        <text x={W - PAD} y={H - 6} fontSize="8" fill={C.muted} fontFamily="monospace" textAnchor="end">{points[points.length - 1]?.d?.slice(5)}</text>
+      </svg>
+      <div style={{ display: "flex", gap: "20px", marginTop: "8px" }}>
+        <div>
+          <div style={{ fontFamily: "monospace", fontSize: "9px", color: C.muted, letterSpacing: "0.1em" }}>MAX DRAWDOWN</div>
+          <div style={{ fontFamily: "Georgia, serif", fontSize: "20px", color: "#FF3D00" }}>{minDD.toFixed(1)}%</div>
+        </div>
+        <div>
+          <div style={{ fontFamily: "monospace", fontSize: "9px", color: C.muted, letterSpacing: "0.1em" }}>DAYS TRACKED</div>
+          <div style={{ fontFamily: "Georgia, serif", fontSize: "20px", color: C.text }}>{points.length}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Session Heatmap ─────────────────────────────────────────────────────────
+function SessionHeatmap({ trades, C }: any) {
+  const sessions = ["London", "New York", "Asian", "London/NY"];
+  const days = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+  type Cell = { pnl: number; count: number };
+  const grid: Record<string, Record<string, Cell>> = {};
+  sessions.forEach(s => { grid[s] = {}; days.forEach(d => { grid[s][d] = { pnl: 0, count: 0 }; }); });
+  trades.forEach((t: any) => {
+    if (!t.date || !t.session) return;
+    const dow = new Date(t.date + "T12:00:00").getDay();
+    if (dow === 0 || dow === 6) return;
+    const dayLabel = days[dow - 1];
+    const sess = sessions.find(s => t.session?.toLowerCase().includes(s.toLowerCase().split("/")[0].toLowerCase()));
+    if (!sess) return;
+    grid[sess][dayLabel].pnl += parseFloat(t.pnl) || 0;
+    grid[sess][dayLabel].count += 1;
+  });
+  const allPnls = sessions.flatMap(s => days.map(d => grid[s][d].pnl)).filter(v => v !== 0);
+  const maxAbs = allPnls.length ? Math.max(...allPnls.map(Math.abs)) : 1;
+  function cellColor(pnl: number, count: number) {
+    if (count === 0) return C.border;
+    const intensity = Math.min(Math.abs(pnl) / maxAbs, 1);
+    if (pnl > 0) return `rgba(0,201,107,${0.1 + intensity * 0.7})`;
+    return `rgba(255,61,0,${0.1 + intensity * 0.7})`;
+  }
+  return (
+    <div style={{ overflowX: "auto" }}>
+      <div style={{ display: "grid", gridTemplateColumns: `80px repeat(${days.length}, 1fr)`, gap: "3px", minWidth: "320px" }}>
+        <div style={{ fontFamily: "monospace", fontSize: "9px", color: C.muted, letterSpacing: "0.08em", alignSelf: "end", paddingBottom: "4px" }} />
+        {days.map(d => (
+          <div key={d} style={{ fontFamily: "monospace", fontSize: "9px", color: C.muted, letterSpacing: "0.1em", textAlign: "center", paddingBottom: "4px" }}>{d.toUpperCase()}</div>
+        ))}
+        {sessions.map(sess => (
+          <>
+            <div key={sess + "label"} style={{ fontFamily: "monospace", fontSize: "9px", color: C.text2, letterSpacing: "0.06em", alignSelf: "center", paddingRight: "8px" }}>{sess.toUpperCase().slice(0, 8)}</div>
+            {days.map(d => {
+              const cell = grid[sess][d];
+              return (
+                <div key={sess + d} title={`${sess} ${d}: ${cell.count} trades, ${cell.pnl >= 0 ? "+" : ""}${cell.pnl.toFixed(2)}R`}
+                  style={{ background: cellColor(cell.pnl, cell.count), borderRadius: "4px", height: "36px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                  {cell.count > 0 && <>
+                    <div style={{ fontFamily: "monospace", fontSize: "8px", color: cell.pnl >= 0 ? "#00C96B" : "#FF3D00", fontWeight: 600 }}>
+                      {cell.pnl >= 0 ? "+" : ""}{cell.pnl.toFixed(1)}R
+                    </div>
+                    <div style={{ fontFamily: "monospace", fontSize: "7px", color: C.muted }}>{cell.count}t</div>
+                  </>}
+                </div>
+              );
+            })}
+          </>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── MAE/MFE Scatter Chart ────────────────────────────────────────────────────
+function MAEMFEChart({ trades, C }: any) {
+  const pts = trades.filter((t: any) => t.mae && t.mfe).map((t: any) => ({
+    mae: parseFloat(t.mae) || 0,
+    mfe: parseFloat(t.mfe) || 0,
+    pnl: parseFloat(t.pnl) || 0,
+    outcome: t.outcome,
+    pair: t.pair,
+  }));
+  if (pts.length < 3) return (
+    <div style={{ textAlign: "center", padding: "40px 0", color: C.muted, fontSize: "13px", fontStyle: "italic", fontFamily: "sans-serif" }}>
+      Log MAE & MFE on {Math.max(0, 3 - pts.length)} more trade{3 - pts.length !== 1 ? "s" : ""} to see the scatter.
+    </div>
+  );
+  const maxMAE = Math.max(...pts.map((p: any) => p.mae), 1);
+  const maxMFE = Math.max(...pts.map((p: any) => p.mfe), 1);
+  const W = 300; const H = 200; const PAD = 32;
+  const xS = (v: number) => PAD + (v / maxMAE) * (W - PAD * 2);
+  const yS = (v: number) => H - PAD - (v / maxMFE) * (H - PAD * 2);
+  // Efficiency: what % of MFE did they capture?
+  const avgEff = pts.length ? pts.reduce((a: number, p: any) => a + (p.mfe > 0 ? Math.min(p.pnl / p.mfe, 1) : 0), 0) / pts.length * 100 : 0;
+  return (
+    <div>
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ display: "block" }}>
+        {/* axes */}
+        <line x1={PAD} y1={H - PAD} x2={W - PAD} y2={H - PAD} stroke={C.border2} strokeWidth="0.5" />
+        <line x1={PAD} y1={PAD} x2={PAD} y2={H - PAD} stroke={C.border2} strokeWidth="0.5" />
+        {/* axis labels */}
+        <text x={W / 2} y={H - 4} textAnchor="middle" fontSize="9" fill={C.muted} fontFamily="monospace">MAE (R)</text>
+        <text x={10} y={H / 2} textAnchor="middle" fontSize="9" fill={C.muted} fontFamily="monospace" transform={`rotate(-90, 10, ${H / 2})`}>MFE (R)</text>
+        {/* points */}
+        {pts.map((p: any, i: number) => (
+          <circle key={i} cx={xS(p.mae)} cy={yS(p.mfe)} r="5"
+            fill={p.outcome === "Win" ? "#00C96B" : p.outcome === "Loss" ? "#FF3D00" : "#BCBCB4"}
+            fillOpacity="0.7" stroke="none" />
+        ))}
+      </svg>
+      <div style={{ display: "flex", gap: "20px", marginTop: "8px" }}>
+        <div>
+          <div style={{ fontFamily: "monospace", fontSize: "9px", color: C.muted, letterSpacing: "0.1em" }}>AVG CAPTURE EFF</div>
+          <div style={{ fontFamily: "Georgia, serif", fontSize: "20px", color: avgEff >= 60 ? "#00C96B" : "#BCBCB4" }}>{avgEff.toFixed(0)}%</div>
+        </div>
+        <div>
+          <div style={{ fontFamily: "monospace", fontSize: "9px", color: C.muted, letterSpacing: "0.1em" }}>TRADES WITH DATA</div>
+          <div style={{ fontFamily: "Georgia, serif", fontSize: "20px", color: C.text }}>{pts.length}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Position Size Calculator ────────────────────────────────────────────────
+function PositionSizeCalc({ C, inp, profile, saveProfile }: any) {
+  const [balance, setBalance] = useState(profile?.accountBalance || "");
+  const [riskPct, setRiskPct] = useState("1");
+  const [entry, setEntry] = useState("");
+  const [sl, setSl] = useState("");
+  const [tickSize, setTickSize] = useState("0.25");
+  const [tickValue, setTickValue] = useState("12.5");
+
+  const balNum = parseFloat(balance) || 0;
+  const riskNum = parseFloat(riskPct) || 1;
+  const entryNum = parseFloat(entry) || 0;
+  const slNum = parseFloat(sl) || 0;
+  const tickSzNum = parseFloat(tickSize) || 0.25;
+  const tickValNum = parseFloat(tickValue) || 12.5;
+
+  const riskDollar = balNum > 0 ? (balNum * riskNum) / 100 : 0;
+  const priceDiff = Math.abs(entryNum - slNum);
+  const ticks = tickSzNum > 0 ? priceDiff / tickSzNum : 0;
+  const valuePerContract = ticks * tickValNum;
+  const contracts = valuePerContract > 0 ? riskDollar / valuePerContract : 0;
+  const contractsRounded = Math.floor(contracts * 10) / 10;
+
+  const PRESETS = [
+    { label: "ES", tick: "0.25", val: "12.5" },
+    { label: "NQ", tick: "0.25", val: "5" },
+    { label: "MES", tick: "0.25", val: "1.25" },
+    { label: "MNQ", tick: "0.25", val: "0.5" },
+    { label: "CL", tick: "0.01", val: "10" },
+    { label: "GC", tick: "0.1", val: "10" },
+  ];
+
+  function saveBalance() {
+    if (balance && profile) saveProfile({ ...profile, accountBalance: balance });
+  }
+
+  const row: React.CSSProperties = { display: "flex", flexDirection: "column", gap: "4px" };
+  const lbl: React.CSSProperties = { fontFamily: "monospace", fontSize: "9px", color: C.muted, letterSpacing: "0.12em", textTransform: "uppercase" };
+
+  return (
+    <div style={{ border: `1px solid ${C.border}`, borderRadius: "10px", padding: "16px", marginTop: "20px" }}>
+      <div style={{ fontFamily: "monospace", fontSize: "9px", color: C.muted, letterSpacing: "0.14em", marginBottom: "14px" }}>POSITION SIZE CALCULATOR</div>
+      <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "14px" }}>
+        {PRESETS.map(p => (
+          <button key={p.label} onClick={() => { setTickSize(p.tick); setTickValue(p.val); }}
+            style={{ background: tickSize === p.tick && tickValue === p.val ? C.text : "transparent", color: tickSize === p.tick && tickValue === p.val ? C.bg : C.muted, border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "4px 10px", cursor: "pointer", fontFamily: "monospace", fontSize: "10px", letterSpacing: "0.08em" }}>
+            {p.label}
+          </button>
+        ))}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "14px" }}>
+        <div style={row}>
+          <span style={lbl}>Account ($)</span>
+          <input value={balance} onChange={e => setBalance(e.target.value)} onBlur={saveBalance}
+            placeholder="25000" style={{ ...inp, fontSize: "13px" }} />
+        </div>
+        <div style={row}>
+          <span style={lbl}>Risk %</span>
+          <input value={riskPct} onChange={e => setRiskPct(e.target.value)}
+            placeholder="1" style={{ ...inp, fontSize: "13px" }} />
+        </div>
+        <div style={row}>
+          <span style={lbl}>Entry price</span>
+          <input value={entry} onChange={e => setEntry(e.target.value)}
+            placeholder="5280.00" style={{ ...inp, fontSize: "13px" }} />
+        </div>
+        <div style={row}>
+          <span style={lbl}>Stop loss</span>
+          <input value={sl} onChange={e => setSl(e.target.value)}
+            placeholder="5274.00" style={{ ...inp, fontSize: "13px" }} />
+        </div>
+        <div style={row}>
+          <span style={lbl}>Tick size</span>
+          <input value={tickSize} onChange={e => setTickSize(e.target.value)}
+            placeholder="0.25" style={{ ...inp, fontSize: "13px" }} />
+        </div>
+        <div style={row}>
+          <span style={lbl}>Tick value ($)</span>
+          <input value={tickValue} onChange={e => setTickValue(e.target.value)}
+            placeholder="12.5" style={{ ...inp, fontSize: "13px" }} />
+        </div>
+      </div>
+      <div style={{ border: `1px solid ${contractsRounded > 0 ? C.green + "55" : C.border}`, borderRadius: "8px", padding: "14px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div>
+          <div style={{ fontFamily: "monospace", fontSize: "9px", color: C.muted, letterSpacing: "0.12em", marginBottom: "4px" }}>CONTRACTS</div>
+          <div style={{ fontFamily: DISPLAY, fontSize: "28px", fontWeight: 500, color: contractsRounded > 0 ? C.text : C.muted }}>
+            {contractsRounded > 0 ? contractsRounded.toFixed(1) : "—"}
+          </div>
+        </div>
+        {riskDollar > 0 && (
+          <div style={{ textAlign: "right" }}>
+            <div style={{ fontFamily: "monospace", fontSize: "9px", color: C.muted, letterSpacing: "0.12em", marginBottom: "4px" }}>RISK $</div>
+            <div style={{ fontFamily: DISPLAY, fontSize: "20px", color: C.red }}>${riskDollar.toFixed(0)}</div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function Tradr({ user }: { user?: any } = {}) {
   const [trades, setTrades] = useState<Trade[]>([]);
@@ -2851,6 +3128,8 @@ export default function Tradr({ user }: { user?: any } = {}) {
     { id: "strategies", label: "Strategies" },
     { id: "calendar", label: "Calendar" },
     { id: "psychology", label: "Psychology" },
+    { id: "heatmap", label: "Heatmap" },
+    { id: "maemfe", label: "MAE/MFE" },
   ];
   const CHECKLIST_SECTIONS = [
     { id: "pretrade", label: "Pre-trade" },
@@ -3105,20 +3384,45 @@ export default function Tradr({ user }: { user?: any } = {}) {
                     </div>
                   )}
 
-                  {/* Daily risk dashboard */}
+                  {/* Daily risk dashboard + kill switch */}
                   {(() => {
                     const today = new Date().toISOString().split("T")[0];
                     const todayTrades = trades.filter(t => t.date === today);
                     const maxTrades = parseInt(profile.maxTradesPerDay) || 0;
                     const todayPnl = todayTrades.reduce((a, t) => a + (parseFloat(t.pnl as string) || 0), 0);
                     const targetRR = parseFloat(profile.targetRR) || 0;
+                    const maxLoss = parseFloat(profile.maxDailyLoss || "0") || 0;
                     const atLimit = maxTrades > 0 && todayTrades.length >= maxTrades;
                     const nearLimit = maxTrades > 0 && todayTrades.length === maxTrades - 1;
-                    if (todayTrades.length === 0 && maxTrades === 0) return null;
+                    const killSwitchTripped = maxLoss > 0 && todayPnl <= -maxLoss;
+                    if (todayTrades.length === 0 && maxTrades === 0 && maxLoss === 0) return null;
+
+                    if (killSwitchTripped) return (
+                      <section style={{ marginTop: "28px", padding: "20px 16px", border: `1px solid ${C.red}`, borderRadius: "10px", background: C.red + "12" }}>
+                        <div style={{ fontFamily: MONO, fontSize: "9px", color: C.red, letterSpacing: "0.18em", marginBottom: "10px" }}>KILL SWITCH ACTIVE</div>
+                        <div style={{ fontFamily: DISPLAY, fontSize: "22px", fontWeight: 500, color: C.red, marginBottom: "8px" }}>
+                          Daily halt — {todayPnl.toFixed(2)}R
+                        </div>
+                        <div style={{ fontFamily: BODY, fontSize: "13px", color: C.text2, lineHeight: 1.6, marginBottom: "14px" }}>
+                          You've hit your max daily loss of {maxLoss}R. Step away, review your trades, and come back tomorrow.
+                        </div>
+                        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                          <button onClick={() => setView("stats")}
+                            style={{ background: "transparent", border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "8px 16px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", color: C.text2 }}>
+                            Review Today
+                          </button>
+                          <button onClick={() => { if (confirm("Override kill switch? Only do this if this was a data entry error.")) saveProfile({ ...profile, maxDailyLoss: "" }); }}
+                            style={{ background: "transparent", border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "8px 16px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", color: C.muted }}>
+                            Override
+                          </button>
+                        </div>
+                      </section>
+                    );
+
                     return (
                       <section style={{ marginTop: "28px", padding: "16px", border: `1px solid ${atLimit ? C.red + "66" : C.border}`, borderRadius: "10px", background: atLimit ? C.red + "08" : "transparent" }}>
                         <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.14em", marginBottom: "14px" }}>TODAY</div>
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px" }}>
+                        <div style={{ display: "grid", gridTemplateColumns: maxLoss > 0 ? "1fr 1fr 1fr 1fr" : "1fr 1fr 1fr", gap: "8px" }}>
                           <div>
                             <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.1em", marginBottom: "4px" }}>TRADES</div>
                             <div style={{ fontFamily: DISPLAY, fontSize: "22px", fontWeight: 500, color: atLimit ? C.red : nearLimit ? C.text2 : C.text }}>
@@ -3139,10 +3443,23 @@ export default function Tradr({ user }: { user?: any } = {}) {
                               </div>
                             </div>
                           )}
+                          {maxLoss > 0 && (
+                            <div>
+                              <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.1em", marginBottom: "4px" }}>MAX LOSS</div>
+                              <div style={{ fontFamily: DISPLAY, fontSize: "22px", fontWeight: 500, color: todayPnl <= -(maxLoss * 0.75) ? C.red : C.muted }}>
+                                -{maxLoss}R
+                              </div>
+                            </div>
+                          )}
                         </div>
                         {atLimit && (
                           <div style={{ marginTop: "12px", fontFamily: MONO, fontSize: "10px", color: C.red, letterSpacing: "0.08em" }}>
-                            ⚠ Daily trade limit reached. Step back and review.
+                            Daily trade limit reached. Step back and review.
+                          </div>
+                        )}
+                        {maxLoss > 0 && !killSwitchTripped && todayPnl <= -(maxLoss * 0.75) && (
+                          <div style={{ marginTop: "12px", fontFamily: MONO, fontSize: "10px", color: C.red, letterSpacing: "0.08em" }}>
+                            Approaching max daily loss ({Math.abs(todayPnl).toFixed(2)}R of {maxLoss}R limit).
                           </div>
                         )}
                       </section>
@@ -3586,6 +3903,23 @@ export default function Tradr({ user }: { user?: any } = {}) {
                       </button>
                     </div>
                   </section>
+
+                  {/* Legal footer */}
+                  <section style={{ paddingTop: "24px", borderTop: `1px solid ${C.border}` }}>
+                    <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
+                      <a href="/privacy.html" target="_blank" rel="noopener"
+                        style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.08em", textDecoration: "none" }}>
+                        Privacy Policy
+                      </a>
+                      <a href="/terms.html" target="_blank" rel="noopener"
+                        style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.08em", textDecoration: "none" }}>
+                        Terms of Service
+                      </a>
+                      <span style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.06em" }}>
+                        TRADR © {new Date().getFullYear()}
+                      </span>
+                    </div>
+                  </section>
                 </div>
               )}
 
@@ -3776,6 +4110,21 @@ export default function Tradr({ user }: { user?: any } = {}) {
                             <span style={{ position: "absolute", top: "3px", left: profileDraft.publicTrades ? "22px" : "3px", width: "18px", height: "18px", borderRadius: "50%", background: C.bg, transition: "left 150ms" }} />
                           </button>
                         </div>
+                        {profileDraft.publicTrades && (
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 0", borderTop: `1px solid ${C.border}` }}>
+                            <div>
+                              <div style={{ fontFamily: MONO, fontSize: "11px", color: C.text, letterSpacing: "0.06em" }}>Share with mentor</div>
+                              <div style={{ fontFamily: BODY, fontSize: "12px", color: C.muted, marginTop: "3px" }}>Copy your public profile link</div>
+                            </div>
+                            <button onClick={() => {
+                              const handle = (profile.handle || "").replace(/^@/, "");
+                              const url = `https://tradrjournal.xyz/@${handle}`;
+                              navigator.clipboard?.writeText(url).then(() => showToast("Mentor link copied!")).catch(() => showToast("Link: " + url));
+                            }} style={{ background: "transparent", border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "6px 14px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.08em", textTransform: "uppercase", color: C.muted }}>
+                              Copy link
+                            </button>
+                          </div>
+                        )}
                         <div><label style={lbl}>Bio</label><textarea value={profileDraft.bio} onChange={e => setProfileDraft({ ...profileDraft, bio: e.target.value })} rows={2} style={{ ...inp, resize: "vertical", lineHeight: 1.6 }} /></div>
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
                           <div><label style={lbl}>Broker</label><input value={profileDraft.broker} onChange={e => setProfileDraft({ ...profileDraft, broker: e.target.value })} placeholder="IC Markets" style={inp} /></div>
@@ -3796,6 +4145,7 @@ export default function Tradr({ user }: { user?: any } = {}) {
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
                           <div><label style={lbl}>Target R:R</label><input type="number" value={profileDraft.targetRR} onChange={e => setProfileDraft({ ...profileDraft, targetRR: e.target.value })} style={inp} /></div>
                           <div><label style={lbl}>Max Trades/Day</label><input type="number" value={profileDraft.maxTradesPerDay} onChange={e => setProfileDraft({ ...profileDraft, maxTradesPerDay: e.target.value })} style={inp} /></div>
+                          <div><label style={lbl}>Max Daily Loss (R) — Kill Switch</label><input type="number" step="0.5" value={profileDraft.maxDailyLoss || ""} onChange={e => setProfileDraft({ ...profileDraft, maxDailyLoss: e.target.value })} placeholder="e.g. 3" style={inp} /></div>
                         </div>
                         <button onClick={async () => {
                           const name = (profileDraft.name || "").trim();
@@ -3908,6 +4258,16 @@ export default function Tradr({ user }: { user?: any } = {}) {
                 <div><label style={lbl}>P&L ($)</label><input type="number" name="pnlDollar" value={form.pnlDollar} onChange={handleChange} placeholder="e.g. +320" style={inp} /></div>
               </div>
               <div><label style={lbl}>Notes</label><textarea name="notes" value={form.notes} onChange={handleChange} placeholder="What did price do? Why did you enter?" rows={3} style={{ ...inp, resize: "vertical", lineHeight: 1.6 }} /></div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
+                <div>
+                  <label style={lbl}>MAE — Max adverse excursion <span style={{ color: C.dim }}>(R)</span></label>
+                  <input name="mae" type="number" step="0.01" value={form.mae || ""} onChange={handleChange} placeholder="e.g. 0.8" style={inp} />
+                </div>
+                <div>
+                  <label style={lbl}>MFE — Max favourable excursion <span style={{ color: C.dim }}>(R)</span></label>
+                  <input name="mfe" type="number" step="0.01" value={form.mfe || ""} onChange={handleChange} placeholder="e.g. 3.2" style={inp} />
+                </div>
+              </div>
               <div>
                 <label style={lbl}>Emotional State</label>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginTop: "8px" }}>
@@ -4154,7 +4514,64 @@ export default function Tradr({ user }: { user?: any } = {}) {
             <div style={{ marginTop: "clamp(16px, 4vw, 28px)", display: "flex", flexDirection: "column", gap: "clamp(32px, 5vw, 48px)" }}>
               {!isDesktop && (
                 <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "8px", paddingBottom: "10px", borderBottom: `1px solid ${C.border}` }}>
-                  <SubNavDropdown sections={STATS_SECTIONS} value={statsTab} onChange={setStatsTab} C={C} />
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <SubNavDropdown sections={STATS_SECTIONS} value={statsTab} onChange={setStatsTab} C={C} />
+                    <button onClick={() => {
+                      const norm = (profile.handle || "").replace(/^@/, "").toLowerCase();
+                      const today = new Date().toISOString().split("T")[0];
+                      const wr = total > 0 ? Math.round((wins / total) * 100) : 0;
+                      const avgR = total > 0 ? (totalPnL / total).toFixed(2) : "0";
+                      const recentTrades = [...trades].sort((a: any,b: any) => b.date > a.date ? 1 : -1).slice(0, 15);
+                      const stratMap: Record<string, {w:number,l:number,pnl:number}> = {};
+                      trades.forEach((t: any) => {
+                        if (!t.strategy) return;
+                        if (!stratMap[t.strategy]) stratMap[t.strategy] = {w:0,l:0,pnl:0};
+                        if (t.outcome === "Win") stratMap[t.strategy].w++;
+                        else if (t.outcome === "Loss") stratMap[t.strategy].l++;
+                        stratMap[t.strategy].pnl += parseFloat(t.pnl)||0;
+                      });
+                      const topStrats = Object.entries(stratMap).sort((a,b)=>b[1].pnl-a[1].pnl).slice(0,5);
+                      const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>TRADR Report — ${profile.name||"Trader"} — ${today}</title><style>
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;color:#111;padding:40px;max-width:800px;margin:0 auto}
+h1{font-size:28px;font-weight:600;letter-spacing:-0.02em;margin-bottom:4px}
+.meta{font-size:12px;color:#888;font-family:monospace;letter-spacing:0.08em;margin-bottom:40px}
+h2{font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:#888;margin:32px 0 12px;padding-top:24px;border-top:1px solid #eee}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:8px}
+.card{background:#f8f8f7;border-radius:8px;padding:14px;text-align:center}
+.card-n{font-size:28px;font-weight:500;letter-spacing:-0.02em}
+.card-l{font-size:10px;color:#888;margin-top:2px;letter-spacing:0.08em;text-transform:uppercase}
+.green{color:#15803d}.red{color:#dc2626}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;padding:8px 0;border-bottom:2px solid #eee;font-family:monospace;font-size:10px;letter-spacing:0.1em;color:#888}
+td{padding:8px 0;border-bottom:1px solid #f0f0f0}
+.footer{margin-top:48px;font-size:11px;color:#aaa;font-family:monospace;letter-spacing:0.08em;border-top:1px solid #eee;padding-top:16px}
+@media print{body{padding:20px}.no-print{display:none}}
+</style></head><body>
+<button class="no-print" onclick="window.print()" style="margin-bottom:24px;padding:10px 20px;background:#111;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-family:monospace;letter-spacing:0.08em">Print / Save as PDF</button>
+<h1>${profile.name||"Trader"}</h1>
+<div class="meta">@${norm} &nbsp;·&nbsp; TRADR PERFORMANCE REPORT &nbsp;·&nbsp; ${today}</div>
+<div class="grid">
+<div class="card"><div class="card-n">${total}</div><div class="card-l">Trades</div></div>
+<div class="card"><div class="card-n ${wr>=50?"green":"red"}">${wr}%</div><div class="card-l">Win Rate</div></div>
+<div class="card"><div class="card-n ${parseFloat(avgR)>=0?"green":"red"}">${parseFloat(avgR)>=0?"+":""}${avgR}R</div><div class="card-l">Avg R / Trade</div></div>
+<div class="card"><div class="card-n ${totalPnL>=0?"green":"red"}">${totalPnL>=0?"+":""}${totalPnL.toFixed(1)}R</div><div class="card-l">Total P&L</div></div>
+</div>
+<h2>Top Strategies</h2>
+<table><tr><th>Strategy</th><th>W</th><th>L</th><th>Win %</th><th>Total P&L</th></tr>
+${topStrats.map(([name,s]:[string,any])=>`<tr><td>${name}</td><td>${s.w}</td><td>${s.l}</td><td>${s.w+s.l>0?Math.round(s.w/(s.w+s.l)*100):0}%</td><td class="${s.pnl>=0?"green":"red"}">${s.pnl>=0?"+":""}${s.pnl.toFixed(2)}R</td></tr>`).join("")}
+</table>
+<h2>Recent Trades</h2>
+<table><tr><th>Date</th><th>Pair</th><th>Strategy</th><th>Session</th><th>Outcome</th><th>P&L</th></tr>
+${recentTrades.map((t:any)=>`<tr><td>${t.date}</td><td>${t.pair||"—"}</td><td>${t.strategy||"—"}</td><td>${t.session||"—"}</td><td class="${t.outcome==="Win"?"green":t.outcome==="Loss"?"red":""}">${t.outcome||"—"}</td><td class="${parseFloat(t.pnl)>=0?"green":"red"}">${parseFloat(t.pnl)>=0?"+":""}${t.pnl||0}R</td></tr>`).join("")}
+</table>
+<div class="footer">Generated by TRADR · tradrjournal.xyz · ${today}</div>
+</body></html>`;
+                      const w = window.open("", "_blank");
+                      if (w) { w.document.write(html); w.document.close(); }
+                    }} style={{ background: "transparent", border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "6px 14px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.08em", textTransform: "uppercase", color: C.muted, whiteSpace: "nowrap" }}>
+                      Export PDF ↗
+                    </button>
+                  </div>
                   <GearButton onClick={() => { setView("home"); setHomeSection("settings"); }} active={false} C={C} />
                 </div>
               )}
@@ -4254,6 +4671,10 @@ export default function Tradr({ user }: { user?: any } = {}) {
                         <section>
                           <SectionKicker label="TRADE DURATION ANALYSIS" C={C}/>
                           <div style={{ marginTop:"14px" }}><TradeDurationChart trades={trades} C={C}/></div>
+                        </section>
+                        <section>
+                          <SectionKicker label="DRAWDOWN CURVE" C={C}/>
+                          <div style={{ marginTop:"14px" }}><DrawdownCurve trades={trades} C={C}/></div>
                         </section>
                       </>
                   }
@@ -4378,6 +4799,27 @@ export default function Tradr({ user }: { user?: any } = {}) {
             </div>
           )}
 
+              {statsTab === "heatmap" && (
+                <section>
+                  <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.14em", marginBottom: "16px" }}>P&L BY SESSION × DAY</div>
+                  <SessionHeatmap trades={trades} C={C} />
+                  <div style={{ marginTop: "32px" }}>
+                    <SectionKicker label="DRAWDOWN CURVE" C={C} />
+                    <div style={{ marginTop: "14px" }}><DrawdownCurve trades={trades} C={C} /></div>
+                  </div>
+                </section>
+              )}
+
+              {statsTab === "maemfe" && (
+                <section>
+                  <SectionKicker label="MAE vs MFE — TRADE EFFICIENCY" C={C} />
+                  <div style={{ marginTop: "8px", fontFamily: BODY, fontSize: "12px", color: C.muted, lineHeight: 1.6, marginBottom: "16px" }}>
+                    MAE = how far price moved against you · MFE = how far it moved in your favour · capture efficiency = P&L ÷ MFE
+                  </div>
+                  <MAEMFEChart trades={trades} C={C} />
+                </section>
+              )}
+
           {/* ══════════════════════════ CHECKLIST ══════════════════════════ */}
           {view === "checklist" && (
             <div style={{ marginTop: "clamp(16px, 4vw, 28px)", display: "flex", flexDirection: "column", gap: "18px" }}>
@@ -4463,6 +4905,8 @@ export default function Tradr({ user }: { user?: any } = {}) {
                     : <button onClick={() => setAddingCheck(true)} style={{ ...pillGhost, alignSelf: "flex-start" }}>+ ADD CONDITION</button>
                   }
                   {checkedCount > 0 && <button onClick={resetChecklist} style={{ ...pillGhost, alignSelf: "flex-start" }}>↺ RESET CHECKLIST</button>}
+
+                  <PositionSizeCalc C={C} inp={inp} profile={profile} saveProfile={saveProfile} />
                 </div>
               )}
 
