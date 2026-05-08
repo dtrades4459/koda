@@ -1451,6 +1451,11 @@ function getEmotionTags(emotions: string | string[] | undefined): string[] {
 const EMPTY_TRADE: Partial<Trade> = { date: new Date().toISOString().split("T")[0], pair: "", session: "", bias: "", strategy: "", setup: "", entryPrice: "", slPrice: "", tpPrice: "", rr: "", outcome: "", pnl: "", pnlDollar: "", entryTime: "", exitTime: "", direction: "", notes: "", emotions: "", screenshot: "", mae: "", mfe: "", comments: [], reactions: {} };
 const DEF_PROFILE: Profile = { name: "Trader", handle: "@trader", bio: "Multi-strategy trader | Consistency over everything", avatar: "", broker: "", timezone: "London (GMT)", startDate: new Date().toISOString().split("T")[0], targetRR: "2", maxTradesPerDay: "2", publicTrades: false, instruments: [], socialLinks: {}, plan: "free" };
 
+// ── TRADR Global circle ──────────────────────────────────────────────────────
+// Set this to the code of the global public circle after creating it in the app.
+// New users are automatically joined to this circle when they complete onboarding.
+const TRADR_GLOBAL_CODE = "TRADRG"; // TODO: replace with real circle code once created
+
 // ─── Drawdown Curve ──────────────────────────────────────────────────────────
 function DrawdownCurve({ trades, C }: any) {
   if (!trades || trades.length === 0) return null;
@@ -2629,8 +2634,8 @@ export default function Tradr({ user }: { user?: any } = {}) {
 
   async function submitTrade() {
     if (!form.pair || !form.date || !form.outcome || savingTrade) return;
-    // Gate: free users limited to 20 trades
-    if ((profile.plan ?? "free") === "free" && !editId && trades.length >= 20) {
+    // Gate: free users limited to 20 trades (disabled during beta — re-enable with window.tradrFlags.enableFlag("paywall"))
+    if (isFlagOn("paywall") && (profile.plan ?? "free") === "free" && !editId && trades.length >= 20) {
       setShowUpgrade(true);
       return;
     }
@@ -3176,8 +3181,19 @@ export default function Tradr({ user }: { user?: any } = {}) {
             socialLinks: twitter.trim() ? { twitter: twitter.trim() } : profile.socialLinks,
           };
           await saveProfile(updated);
-          // If they picked a strategy, pre-select it in the log form so their first trade is faster.
-          if (strategy) setForm((f: Partial<Trade>) => ({ ...f, strategy }));
+          // Auto-join TRADR Global circle for every new user (silent — no error on failure).
+          if (TRADR_GLOBAL_CODE && !myCircles.find((c: any) => c.code === TRADR_GLOBAL_CODE)) {
+            try {
+              const res = await (window as any).storage.get("tradr_circle_" + TRADR_GLOBAL_CODE, true);
+              if (res) {
+                const circle = JSON.parse(res.value);
+                const me = myMemberRecord();
+                await (window as any).storage.set(`tradr_circle_member_${TRADR_GLOBAL_CODE}_${me.code}`, JSON.stringify(me), true);
+                const members = await readCircleMembers(TRADR_GLOBAL_CODE, [me]);
+                await saveMyCircles([...myCircles, { ...circle, members, isOwner: false }]);
+              }
+            } catch { /* silently ignore — circle may not exist yet */ }
+          }
           setView("log");
         }}
       />
@@ -3754,7 +3770,7 @@ export default function Tradr({ user }: { user?: any } = {}) {
                   </section>
                   {/* Plan row */}
                   <section style={{ paddingTop: "28px", borderTop: `1px solid ${C.border}` }}>
-                    {profile.plan !== "pro" && profile.plan !== "elite" ? (
+                    {isFlagOn("paywall") && profile.plan !== "pro" && profile.plan !== "elite" ? (
                       <button
                         onClick={() => setShowUpgrade(true)}
                         style={{
@@ -3839,11 +3855,11 @@ export default function Tradr({ user }: { user?: any } = {}) {
                     <SectionKicker label="YOUR DATA" C={C} />
                     <div style={{ marginTop: "14px", display: "flex", gap: "10px" }}>
                       <button onClick={() => {
-                          if (profile.plan !== "pro" && profile.plan !== "elite") { setShowUpgrade(true); return; }
+                          if (isFlagOn("paywall") && profile.plan !== "pro" && profile.plan !== "elite") { setShowUpgrade(true); return; }
                           exportCSV();
                         }}
-                        style={{ flex: 1, padding: "11px", border: `1px solid ${C.border2}`, borderRadius: "8px", background: "transparent", color: profile.plan === "pro" || profile.plan === "elite" ? C.text : C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.08em", textTransform: "uppercase" }}>
-                        {profile.plan !== "pro" && profile.plan !== "elite" ? "🔒 CSV" : "Export CSV"}
+                        style={{ flex: 1, padding: "11px", border: `1px solid ${C.border2}`, borderRadius: "8px", background: "transparent", color: C.text, cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                        Export CSV
                       </button>
                       <button onClick={exportData}
                         style={{ flex: 1, padding: "11px", border: `1px solid ${C.border2}`, borderRadius: "8px", background: "transparent", color: C.text, cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.08em", textTransform: "uppercase" }}>
@@ -3946,7 +3962,7 @@ export default function Tradr({ user }: { user?: any } = {}) {
 
               {/* AI INSIGHTS */}
               {homeSection === "ai" && (
-                (profile.plan === "pro" || profile.plan === "elite") ? (
+                (!isFlagOn("paywall") || profile.plan === "pro" || profile.plan === "elite") ? (
                   <div style={{ marginTop: "clamp(24px, 5vw, 40px)" }}>
                     <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", marginBottom: "24px" }}>
                       RULE-BASED INSIGHTS — UPDATES AFTER EACH TRADE.
@@ -4941,16 +4957,6 @@ ${recentTrades.map((t:any)=>`<tr><td>${t.date}</td><td>${t.pair||"—"}</td><td>
 
           {/* ══════════════════════════ IMPORT ══════════════════════════ */}
           {view === "import" && (() => {
-            const COMING_SOON_BROKERS = [
-              { name: "NinjaTrader",        desc: "Live sync for NinjaTrader 8 accounts.",           tag: "FUTURES" },
-              { name: "Interactive Brokers", desc: "IBKR TWS — equities, futures, FX.",              tag: "MULTI-ASSET" },
-              { name: "TopstepX Direct",     desc: "Live eval stats without CSV exports.",           tag: "PROP FIRM" },
-              { name: "Apex Trader Funding", desc: "Direct API sync. No more manual statements.",    tag: "PROP FIRM" },
-              { name: "Earn2Trade",          desc: "Auto-import from your Gauntlet/Trader Career.",  tag: "PROP FIRM" },
-              { name: "MT5 Live",            desc: "Real-time sync from MetaTrader 5 accounts.",     tag: "FOREX / CFD" },
-              { name: "Tradier",             desc: "US equities and options broker sync.",            tag: "EQUITIES" },
-              { name: "Coinbase Advanced",   desc: "Spot and futures crypto trade import.",          tag: "CRYPTO" },
-            ];
             return (
               <div style={{ marginTop: "clamp(16px, 4vw, 28px)", display: "flex", flexDirection: "column", gap: "clamp(32px, 5vw, 48px)" }}>
                 {!isDesktop && (
@@ -4958,29 +4964,6 @@ ${recentTrades.map((t:any)=>`<tr><td>${t.date}</td><td>${t.pair||"—"}</td><td>
                     <GearButton onClick={() => { setView("home"); setHomeSection("settings"); }} active={false} C={C} />
                   </div>
                 )}
-
-                {/* ── Coming soon teaser banner ── */}
-                <section style={{ border: `1px solid ${C.border2}`, padding: "20px 24px", position: "relative", overflow: "hidden" }}>
-                  {/* subtle background grid */}
-                  <div style={{ position: "absolute", inset: 0, backgroundImage: `repeating-linear-gradient(0deg, ${C.border} 0px, ${C.border} 1px, transparent 1px, transparent 32px), repeating-linear-gradient(90deg, ${C.border} 0px, ${C.border} 1px, transparent 1px, transparent 32px)`, opacity: 0.35, pointerEvents: "none" }} />
-                  <div style={{ position: "relative" }}>
-                    <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.20em", textTransform: "uppercase", marginBottom: "10px" }}>Integrations · Roadmap</div>
-                    <div style={{ fontFamily: DISPLAY, fontSize: "clamp(20px, 4vw, 26px)", fontWeight: 500, color: C.text, letterSpacing: "-0.02em", lineHeight: 1.2, marginBottom: "10px" }}>
-                      More brokers.<br />Zero manual entry.
-                    </div>
-                    <div style={{ fontFamily: BODY, fontSize: "13px", color: C.muted, lineHeight: 1.65, maxWidth: "360px", marginBottom: "18px" }}>
-                      We're building direct sync for every major prop firm and broker. Log trades the moment they close — no CSV, no copy-paste.
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
-                      <div style={{ fontFamily: MONO, fontSize: "10px", color: C.text, letterSpacing: "0.12em", textTransform: "uppercase", border: `1px solid ${C.border2}`, padding: "8px 16px" }}>
-                        Launching soon — stay tuned
-                      </div>
-                      <div style={{ fontFamily: MONO, fontSize: "9px", color: C.dim, letterSpacing: "0.10em", textTransform: "uppercase" }}>
-                        {COMING_SOON_BROKERS.length} integrations in progress
-                      </div>
-                    </div>
-                  </div>
-                </section>
 
                 {/* ── Live connections ── */}
                 <section>
@@ -5055,27 +5038,6 @@ ${recentTrades.map((t:any)=>`<tr><td>${t.date}</td><td>${t.pair||"—"}</td><td>
                         </div>
                       </div>
                     </button>
-                  </div>
-                </section>
-
-                {/* ── Coming soon grid ── */}
-                <section>
-                  <div style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, letterSpacing: "0.14em", marginBottom: "20px", display: "flex", alignItems: "center", gap: "12px" }}>
-                    <span style={{ flex: "0 0 24px", height: "1px", background: C.border2 }} />
-                    COMING SOON
-                  </div>
-                  <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "1fr 1fr" : "1fr", gap: "1px", border: `1px solid ${C.border}`, overflow: "hidden" }}>
-                    {COMING_SOON_BROKERS.map((b, i) => (
-                      <div key={b.name}
-                        style={{ padding: "18px 20px", borderRight: isDesktop && i % 2 === 0 ? `1px solid ${C.border}` : "none", borderBottom: i < COMING_SOON_BROKERS.length - (isDesktop ? 2 : 1) ? `1px solid ${C.border}` : "none", background: C.bg }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "6px" }}>
-                          <div style={{ fontFamily: DISPLAY, fontSize: "15px", fontWeight: 500, color: C.text2, letterSpacing: "-0.01em" }}>{b.name}</div>
-                          <span style={{ fontFamily: MONO, fontSize: "8px", letterSpacing: "0.12em", textTransform: "uppercase", padding: "2px 6px", border: `1px solid ${C.border2}`, color: C.dim, whiteSpace: "nowrap", flexShrink: 0, marginLeft: "8px" }}>{b.tag}</span>
-                        </div>
-                        <div style={{ fontFamily: BODY, fontSize: "12px", color: C.dim, lineHeight: 1.55 }}>{b.desc}</div>
-                        <div style={{ fontFamily: MONO, fontSize: "9px", color: C.dim, letterSpacing: "0.14em", textTransform: "uppercase", marginTop: "10px" }}>— Coming soon</div>
-                      </div>
-                    ))}
                   </div>
                 </section>
 
@@ -5725,7 +5687,7 @@ function ProfileView({ profile, myCode, followers, following, friendCodes, myCir
 
 // ─── ONBOARDING FLOW ──────────────────────────────────────────────────────────
 
-const ONBOARDING_STEPS = ["welcome", "about", "instruments", "strategy", "ready"] as const;
+const ONBOARDING_STEPS = ["welcome", "ready"] as const;
 type OnboardingStep = typeof ONBOARDING_STEPS[number];
 
 const AVATAR_EMOJIS = [
@@ -5771,12 +5733,6 @@ function OnboardingFlow({ C, allStrategyNames, onComplete }: {
   const [handle, setHandle] = useState("");
   const [handleEdited, setHandleEdited] = useState(false);
   const [avatar, setAvatar] = useState("");
-  const [bio, setBio] = useState("");
-  const [twitter, setTwitter] = useState("");
-  const [instruments, setInstruments] = useState<string[]>([]);
-  const [strategy, setStrategy] = useState("");
-  const [customStrategy, setCustomStrategy] = useState("");
-  const [showCustom, setShowCustom] = useState(false);
   const [saving, setSaving] = useState(false);
   const [nameErr, setNameErr] = useState("");
 
@@ -5796,10 +5752,6 @@ function OnboardingFlow({ C, allStrategyNames, onComplete }: {
     setHandle(clean ? `@${clean}` : "");
   }
 
-  function toggleInstrument(code: string) {
-    setInstruments(prev => prev.includes(code) ? prev.filter(c => c !== code) : [...prev, code]);
-  }
-
   const stepIndex = ONBOARDING_STEPS.indexOf(step);
   function goNext() {
     if (stepIndex < ONBOARDING_STEPS.length - 1) setStep(ONBOARDING_STEPS[stepIndex + 1]);
@@ -5811,8 +5763,7 @@ function OnboardingFlow({ C, allStrategyNames, onComplete }: {
   async function finish() {
     if (saving) return;
     setSaving(true);
-    const finalStrategy = showCustom ? customStrategy.trim() : strategy;
-    await onComplete({ name, handle, avatar, bio, twitter, instruments, strategy: finalStrategy });
+    await onComplete({ name, handle, avatar, bio: "", twitter: "", instruments: [], strategy: "" });
     setSaving(false);
   }
 
@@ -5938,165 +5889,10 @@ function OnboardingFlow({ C, allStrategyNames, onComplete }: {
           </div>
         )}
 
-        {/* ── STEP 2: About yourself ── */}
-        {step === "about" && (
-          <div style={{ animation: "rise 0.3s ease" }}>
-            <StepBadge n={2} />
-            <Heading line1="Tell us about" line2="yourself." />
-            <p style={{ fontSize: "14px", color: C.muted, lineHeight: 1.7, marginBottom: "28px" }}>
-              Optional — shows on your public profile. You can always update it later.
-            </p>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: "24px", marginBottom: "32px" }}>
-              <div>
-                <MonoLbl optional>Bio</MonoLbl>
-                <textarea
-                  value={bio} onChange={e => setBio(e.target.value)}
-                  placeholder="Multi-strategy trader | Consistency over everything"
-                  rows={3}
-                  style={{ ...inp, resize: "none", lineHeight: 1.6 }}
-                />
-              </div>
-              <div>
-                <MonoLbl optional>X / Twitter</MonoLbl>
-                <input
-                  value={twitter} onChange={e => setTwitter(e.target.value.replace(/^@+/, ""))}
-                  placeholder="@handle" style={inp}
-                  onKeyDown={e => { if (e.key === "Enter") goNext(); }}
-                />
-              </div>
-            </div>
-
-            <button onClick={goNext} style={pillPrimary(true)}>
-              {bio.trim() || twitter.trim() ? "Continue →" : "Skip →"}
-            </button>
-          </div>
-        )}
-
-        {/* ── STEP 3: Instruments ── */}
-        {step === "instruments" && (
-          <div style={{ animation: "rise 0.3s ease" }}>
-            <StepBadge n={3} />
-            <Heading line1="What futures do" line2="you trade?" />
-            <p style={{ fontSize: "14px", color: C.muted, lineHeight: 1.7, marginBottom: "24px" }}>
-              Select all that apply. More markets coming soon.
-            </p>
-
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "32px" }}>
-              {FUTURES_INSTRUMENTS.map(({ code, label }) => {
-                const active = instruments.includes(code);
-                return (
-                  <button key={code} onClick={() => toggleInstrument(code)} style={{
-                    background: active ? C.text : "transparent",
-                    color: active ? C.bg : C.text2,
-                    border: `1px solid ${active ? C.text : C.border2}`,
-                    borderRadius: "8px", padding: "8px 14px",
-                    cursor: "pointer", transition: "all 0.15s",
-                    display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "2px",
-                  }}>
-                    <span style={{ fontFamily: MONO, fontSize: "12px", fontWeight: 600, letterSpacing: "0.04em" }}>{code}</span>
-                    <span style={{ fontFamily: BODY, fontSize: "10px", opacity: 0.7 }}>{label}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            <button onClick={goNext} style={pillPrimary(true)}>
-              {instruments.length === 0 ? "Skip →" : `Continue with ${instruments.length} selected →`}
-            </button>
-          </div>
-        )}
-
-        {/* ── STEP 4: Strategy ── */}
-        {step === "strategy" && (
-          <div style={{ animation: "rise 0.3s ease" }}>
-            <StepBadge n={4} />
-            <Heading line1="What's your" line2="main strategy?" />
-            <p style={{ fontSize: "14px", color: C.muted, lineHeight: 1.7, marginBottom: "24px" }}>
-              We'll pre-load your checklist and rules. Add more strategies later.
-            </p>
-
-            <div style={{ display: "flex", flexDirection: "column", borderTop: `1px solid ${C.border}`, marginBottom: "32px" }}>
-              {allStrategyNames.map((s: string) => (
-                <div key={s} onClick={() => { setStrategy(strategy === s ? "" : s); setShowCustom(false); }} style={{
-                  display: "flex", alignItems: "center", justifyContent: "space-between",
-                  padding: "15px 0", borderBottom: `1px solid ${C.border}`, cursor: "pointer",
-                }}>
-                  <span style={{
-                    fontFamily: BODY, fontSize: "14px",
-                    color: strategy === s ? C.text : C.text2, fontWeight: strategy === s ? 500 : 400,
-                  }}>{s}</span>
-                  <div style={{
-                    width: "18px", height: "18px", borderRadius: "50%",
-                    border: `1px solid ${strategy === s ? C.text : C.border2}`,
-                    background: strategy === s ? C.text : "transparent",
-                    flexShrink: 0, transition: "all 0.15s",
-                  }} />
-                </div>
-              ))}
-
-              {/* Custom strategy */}
-              <div onClick={() => { setShowCustom(true); setStrategy(""); }} style={{
-                display: "flex", alignItems: "center", justifyContent: "space-between",
-                padding: "15px 0", borderBottom: `1px solid ${C.border}`, cursor: "pointer",
-              }}>
-                <span style={{
-                  fontFamily: MONO, fontSize: "11px", letterSpacing: "0.1em",
-                  textTransform: "uppercase" as const,
-                  color: showCustom ? C.text : C.muted, fontWeight: showCustom ? 500 : 400,
-                }}>Custom strategy…</span>
-                <div style={{
-                  width: "18px", height: "18px", borderRadius: "50%",
-                  border: `1px solid ${showCustom ? C.text : C.border2}`,
-                  background: showCustom ? C.text : "transparent",
-                  flexShrink: 0, transition: "all 0.15s",
-                }} />
-              </div>
-
-              {showCustom && (
-                <div style={{ padding: "10px 0 2px" }}>
-                  <input
-                    value={customStrategy} onChange={e => setCustomStrategy(e.target.value)}
-                    placeholder="e.g. Breakout Momentum"
-                    style={{ ...inp, fontSize: "14px" }} autoFocus
-                    onKeyDown={e => { if (e.key === "Enter" && customStrategy.trim()) goNext(); }}
-                  />
-                </div>
-              )}
-
-              {/* Skip option */}
-              <div onClick={() => { setStrategy(""); setShowCustom(false); setCustomStrategy(""); }} style={{
-                display: "flex", alignItems: "center", justifyContent: "space-between",
-                padding: "15px 0", borderBottom: `1px solid ${C.border}`, cursor: "pointer",
-              }}>
-                <span style={{
-                  fontFamily: MONO, fontSize: "11px", letterSpacing: "0.1em",
-                  textTransform: "uppercase" as const,
-                  color: !strategy && !showCustom ? C.text : C.muted,
-                  fontWeight: !strategy && !showCustom ? 500 : 400,
-                }}>I'll decide later</span>
-                <div style={{
-                  width: "18px", height: "18px", borderRadius: "50%",
-                  border: `1px solid ${!strategy && !showCustom ? C.text : C.border2}`,
-                  background: !strategy && !showCustom ? C.text : "transparent",
-                  flexShrink: 0, transition: "all 0.15s",
-                }} />
-              </div>
-            </div>
-
-            <button
-              onClick={() => { if (showCustom && !customStrategy.trim()) return; goNext(); }}
-              style={pillPrimary(!showCustom || !!customStrategy.trim())}
-            >
-              Continue →
-            </button>
-          </div>
-        )}
-
-        {/* ── STEP 5: Ready ── */}
+        {/* ── STEP 2: Ready ── */}
         {step === "ready" && (
           <div style={{ animation: "rise 0.3s ease" }}>
-            <StepBadge n={5} />
+            <StepBadge n={2} />
             <h1 style={{
               fontFamily: DISPLAY, fontSize: "clamp(32px, 8vw, 44px)", fontWeight: 700,
               letterSpacing: "-0.03em", lineHeight: 1.05, color: C.text, marginBottom: "16px",
@@ -6105,7 +5901,7 @@ function OnboardingFlow({ C, allStrategyNames, onComplete }: {
               <span style={{ fontStyle: "italic", fontWeight: 500, color: C.text2 }}>{name || "trader"}.</span>
             </h1>
             <p style={{ fontSize: "14px", color: C.muted, lineHeight: 1.7, marginBottom: "32px" }}>
-              Your edge is built one trade at a time. Log your first trade — the stats follow automatically.
+              Your edge is built one trade at a time. Log your first — the stats follow automatically.
             </p>
 
             {/* Summary */}
@@ -6130,18 +5926,6 @@ function OnboardingFlow({ C, allStrategyNames, onComplete }: {
                   <span style={{ fontFamily: BODY, fontSize: "14px", color: C.text }}>{handle}</span>
                 </div>
               )}
-              {instruments.length > 0 && (
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.12em", textTransform: "uppercase" as const }}>Markets</span>
-                  <span style={{ fontFamily: MONO, fontSize: "12px", color: C.text }}>{instruments.join(", ")}</span>
-                </div>
-              )}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                <span style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.12em", textTransform: "uppercase" as const }}>Strategy</span>
-                <span style={{ fontFamily: BODY, fontSize: "14px", color: C.text }}>
-                  {showCustom ? (customStrategy || "Custom") : (strategy || "Not set")}
-                </span>
-              </div>
             </div>
 
             <button onClick={finish} disabled={saving} style={pillPrimary(!saving)}>
@@ -6357,7 +6141,17 @@ function TradingCircles({ myCircles, circlesView, setCirclesView, activeCircle, 
             <section style={{ marginTop: "clamp(40px, 6vw, 56px)", padding: "48px 24px", background: C.panel, borderRadius: "16px", textAlign: "center", border: `1px solid ${C.border}` }}>
               <div style={{ fontFamily: MONO, fontSize: "32px", color: C.border2, marginBottom: "16px", letterSpacing: "-0.02em" }}>◆</div>
               <div style={{ fontFamily: DISPLAY, fontSize: "22px", fontStyle: "italic", fontWeight: 500, color: C.text2, letterSpacing: "-0.01em", marginBottom: "8px" }}>No circles yet.</div>
-              <div style={{ fontFamily: BODY, fontSize: "13px", color: C.muted, lineHeight: 1.6 }}>Create one or join with a code from a friend.</div>
+              <div style={{ fontFamily: BODY, fontSize: "13px", color: C.muted, lineHeight: 1.6, marginBottom: "24px" }}>
+                Compete with friends, share trades, and build your edge together.
+              </div>
+              <div style={{ display: "flex", gap: "10px", justifyContent: "center", flexWrap: "wrap" }}>
+                <button onClick={() => setCirclesView("create")} style={{ background: C.text, color: C.bg, border: "none", borderRadius: "999px", padding: "10px 22px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase" }}>
+                  + Create circle
+                </button>
+                <button onClick={() => setCirclesView("join")} style={{ background: "transparent", color: C.text, border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "10px 22px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase" }}>
+                  ⤵ Join with code
+                </button>
+              </div>
             </section>
           )}
         </>
@@ -7304,7 +7098,6 @@ function UpgradeModal({ C, userId, userEmail, stripeCustomerId, onCustomerId, on
     { icon: "📥", text: "CSV & broker auto-import" },
     { icon: "🔍", text: "Advanced analytics & heatmaps" },
     { icon: "🧠", text: "Full insights — patterns & edge detection" },
-    { icon: "🏆", text: "Priority in Trading Circles leaderboard" },
     { icon: "📤", text: "Export reports (CSV + PDF)" },
   ];
 
@@ -7374,4 +7167,3 @@ function UpgradeModal({ C, userId, userEmail, stripeCustomerId, onCustomerId, on
     </div>
   );
 }
-
