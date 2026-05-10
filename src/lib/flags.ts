@@ -20,7 +20,7 @@ const STORAGE_KEY = "tradr_flags";
 const STORAGE_KEY_OFF = "tradr_flags_off";
 
 // Flags that are ON by default for all users.
-// Add a flag here once you have validated it on your own account.
+// Add a flag here once you've validated it on your own account.
 // To turn one off for debugging:
 //   window.tradrFlags.disableFlag("newProfile"); location.reload();
 const DEFAULT_ON: ReadonlySet<string> = new Set([
@@ -53,9 +53,9 @@ function read(): Set<string> {
 }
 
 export function isFlagOn(name: string): boolean {
-  if (readOff().has(name)) return false;
-  if (read().has(name)) return true;
-  return DEFAULT_ON.has(name);
+  if (readOff().has(name)) return false;   // explicitly disabled overrides everything
+  if (read().has(name)) return true;       // explicitly enabled
+  return DEFAULT_ON.has(name);            // default-on flags
 }
 
 export function enableFlag(name: string): void {

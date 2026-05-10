@@ -99,13 +99,13 @@ const USERNAME_DOMAIN = "users.tradr.app";
 const usernameToEmail = (u: string) => `${u.toLowerCase().trim()}@${USERNAME_DOMAIN}`;
 const USERNAME_RE = /^[a-z0-9_]{3,20}$/;
 
-function AuthForm({ onSuccess }: { onSuccess: () => void }) {
+function AuthForm({ onSuccess, initialError = "" }: { onSuccess: () => void; initialError?: string }) {
   const [mode, setMode] = useState<AuthMode>("signin");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(initialError);
   const [msg, setMsg] = useState("");
 
   // If user arrives via a password-reset magic link, Supabase fires a
@@ -156,21 +156,6 @@ function AuthForm({ onSuccess }: { onSuccess: () => void }) {
         setError(raw);
       }
     } finally {
-      setLoading(false);
-    }
-  }
-
-
-  async function handleGoogleSignIn() {
-    setLoading(true); setError("");
-    try {
-      const { error: e } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: { redirectTo: window.location.origin },
-      });
-      if (e) throw e;
-    } catch (e: any) {
-      setError(e?.message || "Google sign-in failed.");
       setLoading(false);
     }
   }
@@ -353,33 +338,32 @@ function AuthForm({ onSuccess }: { onSuccess: () => void }) {
             Beta — no email required. Keep a copy of your password somewhere safe.
           </div>
         )}
-
-        {/* ── OR divider ── */}
-        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "16px" }}>
-          <div style={{ flex: 1, height: "1px", background: C.border }} />
-          <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: "10px", color: C.muted, letterSpacing: "0.12em", textTransform: "uppercase" }}>or</span>
-          <div style={{ flex: 1, height: "1px", background: C.border }} />
-        </div>
-
-        {/* ── Google OAuth ── */}
-        <button onClick={handleGoogleSignIn} disabled={loading}
-          style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", width: "100%", padding: "13px 20px", background: "transparent", border: `1px solid ${C.border2}`, borderRadius: "999px", color: C.text, cursor: "pointer", fontFamily: "var(--font-mono, monospace)", fontSize: "11px", letterSpacing: "0.10em", textTransform: "uppercase", transition: "opacity 0.15s", marginTop: "4px" }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
-            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-          </svg>
-          Continue with Google
-        </button>
-
       </div>
     </div>
   );
 }
 
+// ─── PARSE OAUTH ERROR FROM URL HASH ─────────────────────────────────────────
+// Supabase redirects back to the app with #error=...&error_description=... when
+// an OAuth flow fails (e.g. Google login that isn't configured, or user cancels).
+function parseOAuthError(): string {
+  const hash = window.location.hash.slice(1); // strip leading #
+  if (!hash.includes("error=")) return "";
+  const params = new URLSearchParams(hash);
+  const code = params.get("error") ?? "";
+  const desc = params.get("error_description") ?? "";
+  // Clean the hash from the URL so a refresh doesn't re-trigger the message.
+  history.replaceState(null, "", window.location.pathname + window.location.search);
+  if (code === "access_denied" || desc.toLowerCase().includes("cancel")) {
+    return "Google sign-in was cancelled. Use your username and password instead.";
+  }
+  if (desc) return `Sign-in failed: ${desc.replace(/\+/g, " ")}. Please use username and password.`;
+  return "Google sign-in isn't available. Please use your username and password.";
+}
+
 // ─── LANDING PAGE ─────────────────────────────────────────────────────────────
 function LandingPage({ onSuccess }: { onSuccess: () => void }) {
+  const [oauthError] = useState(() => parseOAuthError());
   return (
     <div className="tradr-landing" style={{ minHeight: "100vh", background: C.bg, color: C.text, fontFamily: BODY }}>
       <style>{`
@@ -470,7 +454,7 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
 
           {/* Auth column */}
           <aside className="tradr-auth-card">
-            <AuthForm onSuccess={onSuccess} />
+            <AuthForm onSuccess={onSuccess} initialError={oauthError} />
           </aside>
         </div>
 
