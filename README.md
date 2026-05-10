@@ -1,6 +1,7 @@
 # TRADR
 
 Mobile-first trading journal + social layer, delivered as an installable PWA.
+<!-- ci trigger -->
 
 **Stack:** React 19 · TypeScript · Vite · Supabase · Vercel
 
