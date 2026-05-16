@@ -98,6 +98,27 @@ const DEF_PROFILE: Profile = {
 };
 
 
+
+// ─── EMOTION TAGS ─────────────────────────────────────────────────────────────
+const EMOTION_TAGS = [
+  { id: "disciplined", label: "Disciplined", color: "#00C96B" },
+  { id: "patient",     label: "Patient",     color: "#00C96B" },
+  { id: "fomo",        label: "FOMO",        color: "#FF3D00" },
+  { id: "revenge",     label: "Revenge",     color: "#FF3D00" },
+  { id: "overtrading", label: "Overtrading", color: "#FF3D00" },
+  { id: "hesitated",   label: "Hesitated",   color: "#BCBCB4" },
+  { id: "earlyexit",   label: "Early Exit",  color: "#BCBCB4" },
+  { id: "movedsl",     label: "Moved SL",    color: "#BCBCB4" },
+  { id: "chased",      label: "Chased",      color: "#BCBCB4" },
+];
+
+function getEmotionTags(emotions: string | string[] | undefined): string[] {
+  if (!emotions) return [];
+  if (Array.isArray(emotions)) return emotions;
+  const lower = emotions.toLowerCase();
+  return EMOTION_TAGS.filter(t => lower.includes(t.id) || lower.includes(t.label.toLowerCase())).map(t => t.id);
+}
+
 // ─── THEME ────────────────────────────────────────────────────────────────────
 // Warm editorial palette — dark primary, light secondary.
 const DARK = {
