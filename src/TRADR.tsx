@@ -1732,8 +1732,8 @@ export default function Tradr({ user }: { user?: any } = {}) {
   const NAV_TABS = [
     { id: "home",    label: "HOME",    icon: "◈" },
     { id: "log",     label: "LOG",     icon: "+" },
-    { id: "history", label: "JOURNAL", icon: "≡" },
     { id: "stats",   label: "STATS",   icon: "↗" },
+    { id: "history", label: "JOURNAL", icon: "≡" },
     { id: "circles", label: "CIRCLES", icon: "◆" },
   ];
 
@@ -1741,7 +1741,6 @@ export default function Tradr({ user }: { user?: any } = {}) {
   // main-nav + sub-nav fit on one row instead of stacking into two.
   const HOME_SECTIONS = [
     { id: "feed", label: "Overview" },
-    { id: "analytics", label: "Analytics" },
     { id: "ai", label: "Execution" },
     { id: "rules", label: "Rules" },
   ];
@@ -2829,7 +2828,7 @@ export default function Tradr({ user }: { user?: any } = {}) {
               <div>
                 <label style={lbl}>Strategy</label>
                 <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "8px" }}>
-                  {allStrategyNames.map((s: string) => <StrategyPill key={s} name={s} selected={form.strategy === s} onClick={() => setForm((f: any) => ({ ...f, strategy: s, setup: "" }))} C={C} />)}
+                  {allStrategyNames.map((s: string) => <StrategyPill key={s} name={s} selected={form.strategy === s} onClick={() => setForm((f: any) => ({ ...f, strategy: form.strategy === s ? "" : s, setup: "" }))} C={C} />)}
                 </div>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>

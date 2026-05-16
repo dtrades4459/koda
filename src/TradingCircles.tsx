@@ -156,14 +156,40 @@ export function TradingCircles({ myCircles, circlesView, setCirclesView, activeC
           </section>
 
           {myCircles.length > 0 ? (
+            <>
+            {/* TRADR Global pinned above MY CIRCLES */}
+            {myCircles.filter((c: any) => c.code === "TRADRG-HB1U").map((circle: any) => (
+              <section key={circle.id} style={{ marginTop: "clamp(28px, 5vw, 40px)" }}>
+                <SectionKicker label="TRADR GLOBAL" C={C} />
+                <div style={{ marginTop: "12px" }}>
+                  <div className="row-hvr" onClick={() => openCircle(circle)}
+                    style={{ padding: "20px", background: C.panel, borderRadius: "14px", cursor: "pointer", border: `1px solid ${C.border2}` }}>
+                    <div style={{ display: "flex", alignItems: "flex-start", gap: "16px" }}>
+                      <div style={{ width: "44px", height: "44px", borderRadius: "10px", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: MONO, fontSize: "22px", color: C.text2, flexShrink: 0, border: `1px solid ${C.border2}` }}>
+                        {circle.emoji || "◆"}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: "10px", marginBottom: "4px" }}>
+                          <span style={{ fontFamily: DISPLAY, fontSize: "20px", fontWeight: 500, color: C.text, letterSpacing: "-0.02em", lineHeight: 1.1 }}>{circle.name}</span>
+                          <span style={{ fontFamily: MONO, fontSize: "18px", color: C.muted, flexShrink: 0 }}>›</span>
+                        </div>
+                        {circle.description && <div style={{ fontFamily: BODY, fontSize: "13px", color: C.text2, lineHeight: 1.5, marginBottom: "10px" }}>{circle.description}</div>}
+                        <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: "8px" }}>
+                          <span>{circle.members?.length || 1} members</span>
+                          <span style={{ color: C.green }}>● PUBLIC</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            ))}
+            {/* User's own circles */}
+            {myCircles.filter((c: any) => c.code !== "TRADRG-HB1U").length > 0 && (
             <section style={{ marginTop: "clamp(40px, 6vw, 56px)" }}>
-              <SectionKicker label={`MY CIRCLES · ${myCircles.length}`} C={C} />
+              <SectionKicker label={`MY CIRCLES · ${myCircles.filter((c: any) => c.code !== "TRADRG-HB1U").length}`} C={C} />
               <div style={{ marginTop: "20px", display: "flex", flexDirection: "column", gap: "12px" }}>
-                {[...myCircles].sort((a: any, b: any) => {
-                  if (a.code === "TRADRG-HB1U") return -1;
-                  if (b.code === "TRADRG-HB1U") return 1;
-                  return 0;
-                }).map((circle: any) => (
+                {myCircles.filter((c: any) => c.code !== "TRADRG-HB1U").map((circle: any) => (
                   <div key={circle.id} className="row-hvr" onClick={() => openCircle(circle)}
                     style={{ padding: "20px", background: C.panel, borderRadius: "14px", cursor: "pointer", border: `1px solid ${C.border}` }}>
                     <div style={{ display: "flex", alignItems: "flex-start", gap: "16px" }}>
@@ -189,6 +215,8 @@ export function TradingCircles({ myCircles, circlesView, setCirclesView, activeC
                 ))}
               </div>
             </section>
+            )}
+            </>
           ) : (
             <section style={{ marginTop: "clamp(40px, 6vw, 56px)", padding: "48px 24px", background: C.panel, borderRadius: "16px", textAlign: "center", border: `1px solid ${C.border}` }}>
               <div style={{ fontFamily: MONO, fontSize: "32px", color: C.border2, marginBottom: "16px", letterSpacing: "-0.02em" }}>◆</div>
