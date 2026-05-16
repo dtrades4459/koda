@@ -29,3 +29,7 @@ dist-ssr
 *.sw?
 src/TRADR.tsx.bak
 src/TRADR.tsx.tmp
+
+# Local Claude AI session files
+.claude/
+.claude/

@@ -45,7 +45,7 @@ async function setUserPlan(userId: string, plan: "free" | "pro") {
   const { data } = await db
     .from("user_kv")
     .select("value")
-    .eq("uid", userId)
+    .eq("user_id", userId)
     .eq("key", "tradr_profile")
     .maybeSingle();
 
@@ -58,7 +58,7 @@ async function setUserPlan(userId: string, plan: "free" | "pro") {
   profile.plan = plan;
 
   await db.from("user_kv").upsert({
-    uid: userId,
+    user_id: userId,
     key: "tradr_profile",
     value: JSON.stringify(profile),
   });

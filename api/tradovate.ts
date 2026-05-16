@@ -22,8 +22,18 @@ function base(env: string) {
   return env === "live" ? LIVE_BASE : DEMO_BASE;
 }
 
-function cors(res: any) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
+const ALLOWED_ORIGINS = new Set([
+  "https://tradrjournal.xyz",
+  "https://www.tradrjournal.xyz",
+  "http://localhost:5173",
+  "http://localhost:4173",
+]);
+
+function cors(req: any, res: any) {
+  const origin = req.headers["origin"] ?? "";
+  const allowed = ALLOWED_ORIGINS.has(origin) ? origin : "https://tradrjournal.xyz";
+  res.setHeader("Access-Control-Allow-Origin", allowed);
+  res.setHeader("Vary", "Origin");
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 }
@@ -47,7 +57,7 @@ async function proxy(
 }
 
 export default async function handler(req: any, res: any) {
-  cors(res);
+  cors(req, res);
   if (req.method === "OPTIONS") return res.status(200).end();
 
   const action = req.query.action as string | undefined;

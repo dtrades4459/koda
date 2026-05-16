@@ -265,14 +265,15 @@ export async function tradovateGetFills(
 }
 
 /**
- * Pair Tradovate fills into round-trip trades using simple FIFO matching.
- * Returns plain objects compatible with the Trade interface in TRADR.tsx.
+ * Pair Tradovate fills into round-trip trades using proper FIFO queue matching.
+ * Handles scaling in/out and partial fills correctly — buy[0]/sell[0] pairing
+ * breaks whenever a trader adds to or reduces a position mid-trade.
  *
  * Each returned trade has `source: "tradovate"` and embeds the entry fill ID
  * in the notes for deduplication on re-sync.
  */
 export function fillsToTrades(fills: TradovateFill[]): any[] {
-  // Group fills by contractId
+  // Group fills by contractId so ES and NQ don't cross-match
   const byContract: Record<number, TradovateFill[]> = {};
   for (const f of fills) {
     (byContract[f.contractId] ??= []).push(f);
@@ -281,44 +282,82 @@ export function fillsToTrades(fills: TradovateFill[]): any[] {
   const trades: any[] = [];
 
   for (const contractFills of Object.values(byContract)) {
+    // Process fills in strict chronological order
     const sorted = [...contractFills].sort((a, b) =>
       a.timestamp.localeCompare(b.timestamp)
     );
-    const buys  = sorted.filter(f => f.side === "Buy");
-    const sells = sorted.filter(f => f.side === "Sell");
-    const pairs = Math.min(buys.length, sells.length);
 
-    for (let i = 0; i < pairs; i++) {
-      const entry = buys[i];
-      const exit  = sells[i];
-      const rawPnl = (exit.price - entry.price) * entry.qty;
-      const pnlDollar = rawPnl.toFixed(2);
-      const outcome = rawPnl >= 0 ? "Win" : "Loss";
+    // FIFO queues — each slot tracks the original fill + how many contracts remain unmatched
+    const longQ:  Array<{ fill: TradovateFill; remaining: number }> = [];
+    const shortQ: Array<{ fill: TradovateFill; remaining: number }> = [];
 
-      trades.push({
-        id: Date.now() * 1000 + trades.length,
-        date: entry.timestamp.split("T")[0],
-        pair: entry.symbol,
-        strategy: "",
-        setup: "",
-        bias: "",
-        session: "",
-        entryPrice: String(entry.price),
-        slPrice: "",
-        tpPrice: "",
-        rr: "",
-        outcome,
-        pnl: "",
-        pnlDollar,
-        notes: `Tradovate fill #${entry.id} · ${entry.qty} contracts`,
-        screenshot: "",
-        emotions: [],
-        comments: [],
-        reactions: {},
-        source: "tradovate",
-      });
+    for (const fill of sorted) {
+      let toMatch = fill.qty;
+
+      if (fill.side === "Buy") {
+        // A buy closes short positions first, then opens a long
+        while (toMatch > 0 && shortQ.length > 0) {
+          const head = shortQ[0];
+          const matched = Math.min(toMatch, head.remaining);
+          // Short P&L: sold high, bought back low
+          const rawPnl = (head.fill.price - fill.price) * matched;
+          trades.push(makeTrade(head.fill, fill, matched, rawPnl, trades.length));
+          head.remaining -= matched;
+          toMatch -= matched;
+          if (head.remaining === 0) shortQ.shift();
+        }
+        if (toMatch > 0) longQ.push({ fill, remaining: toMatch });
+
+      } else {
+        // A sell closes long positions first, then opens a short
+        while (toMatch > 0 && longQ.length > 0) {
+          const head = longQ[0];
+          const matched = Math.min(toMatch, head.remaining);
+          // Long P&L: bought low, sold high
+          const rawPnl = (fill.price - head.fill.price) * matched;
+          trades.push(makeTrade(head.fill, fill, matched, rawPnl, trades.length));
+          head.remaining -= matched;
+          toMatch -= matched;
+          if (head.remaining === 0) longQ.shift();
+        }
+        if (toMatch > 0) shortQ.push({ fill, remaining: toMatch });
+      }
     }
   }
 
   return trades;
+}
+
+/** Build a single Trade object from a matched entry + exit fill. */
+function makeTrade(
+  entry: TradovateFill,
+  exit: TradovateFill,
+  qty: number,
+  rawPnl: number,
+  index: number
+): any {
+  const pnlDollar = rawPnl.toFixed(2);
+  const outcome   = rawPnl >= 0 ? "Win" : "Loss";
+  return {
+    id: Date.now() * 1000 + index,
+    date: entry.timestamp.split("T")[0],
+    pair: entry.symbol,
+    strategy: "",
+    setup: "",
+    bias: "",
+    session: "",
+    entryPrice: String(entry.price),
+    slPrice: "",
+    tpPrice: "",
+    rr: "",
+    outcome,
+    pnl: "",
+    pnlDollar,
+    notes: `Tradovate fill #${entry.id} · ${qty} contract${qty !== 1 ? "s" : ""}`,
+    screenshot: "",
+    emotions: [],
+    comments: [],
+    reactions: {},
+    source: "tradovate",
+  };
 }
