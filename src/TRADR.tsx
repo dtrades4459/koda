@@ -461,6 +461,27 @@ export default function Tradr({ user }: { user?: any } = {}) {
     return `${w}:${l}:${pnl.toFixed(2)}:${avgRR}`;
   }, [trades]);
 
+  // ─── FETCH LATEST CIRCLE MESSAGES FOR HOME TAB ───────────────────────────────
+  useEffect(() => {
+    if (homeSection !== "circles" || !myCircles.length) return;
+    (async () => {
+      const msgs: Record<string, any> = {};
+      await Promise.all(myCircles.map(async (c: any) => {
+        try {
+          const { data } = await supabase
+            .from("circle_messages")
+            .select("text, author_name, created_at")
+            .eq("circle_code", c.code)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          if (data) msgs[c.code] = data;
+        } catch {}
+      }));
+      setCircleLatestMsgs(msgs);
+    })();
+  }, [homeSection, myCircles]);
+
   // ── Auto-publish to circles ──────────────────────────────────────
   // Circles are the product pillar: any time trades change, every circle
   // the user is in must reflect the latest stats without a manual tap.
