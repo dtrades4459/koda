@@ -2093,7 +2093,7 @@ export default function Tradr({ user }: { user?: any } = {}) {
               {/* FEED */}
               {homeSection === "feed" && (
                 <div>
-                  {/* Hero stat — P&L with time + unit toggles */}
+                  {/* Glass hero card */}
                   {(() => {
                     const isWeek = timeMode === "week";
                     const isDollar = pnlMode === "$" && hasDollarData;
@@ -2105,74 +2105,126 @@ export default function Tradr({ user }: { user?: any } = {}) {
                       ? `${valPos ? "+" : "−"}$${Math.abs(val).toFixed(2)}`
                       : `${valPos ? "+" : ""}${val.toFixed(2)}`;
                     const tradeCount = isWeek ? weekTrades.length : total;
+                    const live = (C as any).live ?? "oklch(0.84 0.14 175)";
+                    const orb1 = (C as any).orb1 ?? "oklch(0.55 0.22 252)";
+                    const orb2 = (C as any).orb2 ?? "oklch(0.45 0.20 268)";
+                    const orb3 = (C as any).orb3 ?? "oklch(0.68 0.18 175)";
                     return (
-                      <section style={{ marginTop: "clamp(24px, 5vw, 40px)" }}>
-                        {/* Toggle row */}
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "20px" }}>
-                          {/* Time toggle */}
-                          <div style={{ display: "flex", gap: "4px" }}>
-                            {(["week", "all"] as const).map(m => (
-                              <button key={m} onClick={() => setTimeMode(m)}
-                                style={{ background: timeMode === m ? C.text : "transparent", color: timeMode === m ? C.bg : C.muted, border: `1px solid ${timeMode === m ? C.text : C.border2}`, borderRadius: "999px", padding: "10px 14px", minHeight: "44px", cursor: "pointer", fontFamily: MONO, fontSize: "9px", letterSpacing: "0.12em", textTransform: "uppercase", display: "flex", alignItems: "center" }}>
-                                {m === "week" ? "This Week" : "All Time"}
-                              </button>
-                            ))}
-                          </div>
-                          {/* Unit toggle — only if dollar data exists */}
-                          {hasDollarData && (
-                            <div style={{ display: "flex", gap: "4px", marginLeft: "auto" }}>
-                              {(["r", "$"] as const).map(m => (
-                                <button key={m} onClick={() => setPnlMode(m)}
-                                  style={{ background: pnlMode === m ? C.text : "transparent", color: pnlMode === m ? C.bg : C.muted, border: `1px solid ${pnlMode === m ? C.text : C.border2}`, borderRadius: "999px", padding: "10px 16px", minHeight: "44px", cursor: "pointer", fontFamily: MONO, fontSize: "9px", letterSpacing: "0.12em", textTransform: "uppercase", display: "flex", alignItems: "center" }}>
-                                  {m === "r" ? "R" : "$"}
-                                </button>
+                      <section style={{ marginTop: "clamp(16px, 4vw, 28px)" }}>
+                        {/* Hero card */}
+                        <div style={{
+                          position: "relative", borderRadius: "24px", padding: "22px 22px 20px",
+                          background: (C as any).surfaceGlass ?? C.panel,
+                          backdropFilter: "blur(20px) saturate(160%)",
+                          WebkitBackdropFilter: "blur(20px) saturate(160%)",
+                          border: `1px solid ${C.border2}`, overflow: "hidden",
+                        }}>
+                          {/* Iridescent corner glow */}
+                          <div style={{
+                            position: "absolute", top: -70, left: -70, width: 220, height: 220,
+                            borderRadius: "50%", pointerEvents: "none",
+                            background: `conic-gradient(from 200deg at 50% 50%, ${orb3}, ${orb1}, ${orb2}, ${orb3})`,
+                            filter: "blur(40px)", opacity: 0.45, zIndex: 0,
+                          }}/>
+                          {/* Ghost "EDGE" stencil */}
+                          <div style={{
+                            position: "absolute", bottom: -16, right: -8, pointerEvents: "none", zIndex: 0,
+                            fontFamily: DISPLAY, fontWeight: 700, fontSize: "110px", lineHeight: 0.85, letterSpacing: "-0.05em",
+                            background: "linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.01))",
+                            WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent",
+                            WebkitTextStroke: "1px rgba(255,255,255,0.04)",
+                          }}>EDGE</div>
+
+                          {/* Content */}
+                          <div style={{ position: "relative", zIndex: 1 }}>
+                            {/* Toggle row */}
+                            <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "18px" }}>
+                              <div style={{ display: "flex", gap: "4px" }}>
+                                {(["week", "all"] as const).map(m => (
+                                  <button key={m} onClick={() => setTimeMode(m)}
+                                    style={{ background: timeMode === m ? C.text : "transparent", color: timeMode === m ? C.bg : C.muted, border: `1px solid ${timeMode === m ? C.text : C.border2}`, borderRadius: "999px", padding: "8px 14px", minHeight: "36px", cursor: "pointer", fontFamily: MONO, fontSize: "9px", letterSpacing: "0.12em", textTransform: "uppercase", display: "flex", alignItems: "center" }}>
+                                    {m === "week" ? "This Week" : "All Time"}
+                                  </button>
+                                ))}
+                              </div>
+                              {hasDollarData && (
+                                <div style={{ display: "flex", gap: "4px", marginLeft: "auto" }}>
+                                  {(["r", "$"] as const).map(m => (
+                                    <button key={m} onClick={() => setPnlMode(m)}
+                                      style={{ background: pnlMode === m ? C.text : "transparent", color: pnlMode === m ? C.bg : C.muted, border: `1px solid ${pnlMode === m ? C.text : C.border2}`, borderRadius: "999px", padding: "8px 14px", minHeight: "36px", cursor: "pointer", fontFamily: MONO, fontSize: "9px", letterSpacing: "0.12em", textTransform: "uppercase", display: "flex", alignItems: "center" }}>
+                                      {m === "r" ? "R" : "$"}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                            {/* Big number */}
+                            <div style={{ fontFamily: DISPLAY, fontSize: "clamp(52px, 13vw, 78px)", fontWeight: 700, letterSpacing: "-0.04em", lineHeight: 0.92, color: C.text, marginBottom: "8px" }}>
+                              {valStr}{!isDollar && <span style={{ color: C.muted, fontStyle: "italic", fontWeight: 500 }}>R</span>}
+                            </div>
+                            {/* Subtitle */}
+                            <div style={{ fontFamily: BODY, fontSize: "13px", color: C.text2 }}>
+                              {tradeCount === 0
+                                ? <span style={{ color: C.muted }}>{isWeek ? "No trades logged this week." : "No trades logged yet."}</span>
+                                : <><span style={{ color: valPos ? C.green : C.red }}>{valPos ? "Up" : "Down"}</span> over {tradeCount} trade{tradeCount !== 1 ? "s" : ""}{isWeek ? " this week" : " all time"}.</>
+                              }
+                            </div>
+
+                            {/* Stats triplet */}
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0", marginTop: "18px", borderTop: `1px solid ${C.border}` }}>
+                              {[
+                                { label: "WIN RATE", value: `${winRate}%`, color: null },
+                                { label: "AVG R:R", value: avgRR === "—" ? "—" : `${avgRR}R`, color: null },
+                                { label: "STREAK", value: streak.count > 0 ? `${streak.count}${streak.type === "Win" ? "W" : "L"}` : "—", color: streak.count >= 2 ? (streak.type === "Win" ? C.green : C.red) : null },
+                              ].map((s: any, i) => (
+                                <div key={s.label} style={{ padding: "14px 10px 0", borderLeft: i === 0 ? "none" : `1px solid ${C.border}` }}>
+                                  <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.12em", marginBottom: "5px" }}>{s.label}</div>
+                                  <div style={{ fontFamily: DISPLAY, fontSize: "22px", fontWeight: 600, color: s.color ?? C.text, letterSpacing: "-0.02em", lineHeight: 1 }}>{s.value}</div>
+                                  {s.label === "STREAK" && streak.count >= 3 && (
+                                    <div style={{ fontFamily: MONO, fontSize: "8px", letterSpacing: "0.1em", color: streak.type === "Win" ? C.green : C.red, marginTop: "3px", opacity: 0.8 }}>
+                                      {streak.type === "Win" ? "ON FIRE" : "STAY SHARP"}
+                                    </div>
+                                  )}
+                                </div>
                               ))}
                             </div>
-                          )}
+
+                            {/* Record line */}
+                            {total > 0 && (
+                              <div style={{ marginTop: "12px", display: "flex", justifyContent: "space-between", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.08em", color: C.muted, textTransform: "uppercase" }}>
+                                <span>{wins}W · {losses}L · {bes}BE</span>
+                                <span>{total} total</span>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        {/* Big number */}
-                        <div style={{ fontFamily: DISPLAY, fontSize: "clamp(56px, 14vw, 84px)", fontWeight: 700, letterSpacing: "-0.04em", lineHeight: 0.95, color: C.text, marginBottom: "8px" }}>
-                          {valStr}{!isDollar && <span style={{ color: C.muted, fontStyle: "italic", fontWeight: 500 }}>R</span>}
-                        </div>
-                        {/* Subtitle */}
-                        <div style={{ fontFamily: BODY, fontSize: "14px", color: C.text2 }}>
-                          {tradeCount === 0
-                            ? <span style={{ color: C.muted }}>{isWeek ? "No trades logged this week." : "No trades logged yet."}</span>
-                            : <><span style={{ color: valPos ? C.green : C.red }}>{valPos ? "Up" : "Down"}</span> over {tradeCount} trade{tradeCount !== 1 ? "s" : ""}{isWeek ? " this week" : " all time"}.</>
-                          }
+
+                        {/* QuickAction chip row */}
+                        <div style={{ display: "flex", gap: "8px", marginTop: "12px", overflowX: "auto", paddingBottom: "2px" }}>
+                          {[
+                            { label: "Log Trade", icon: "M5 4h10v12H5zM7 7h6M7 10h6M7 13h4", action: () => setView("log") },
+                            { label: "Journal", icon: "M4 4h12v12H4zM7 8h6M7 11h6M7 14h3", action: () => setView("history") },
+                            { label: "Stats", icon: "M3 16V9M9 16V3M15 16v-5M18 16H2", action: () => setView("stats") },
+                            { label: "Circles", icon: "M5 8a3 3 0 1 1 6 0 3 3 0 0 1-6 0zM12.5 11a3 3 0 0 1 4.5 2.5M3 17c0-2.5 2-3.8 5-3.8s5 1.3 5 3.8", action: () => setView("circles") },
+                          ].map(chip => (
+                            <button key={chip.label} onClick={chip.action} style={{
+                              display: "flex", alignItems: "center", gap: "6px",
+                              background: "transparent", border: `1px solid ${C.border2}`,
+                              borderRadius: "999px", padding: "9px 14px", minHeight: "40px",
+                              cursor: "pointer", fontFamily: MONO, fontSize: "10px",
+                              letterSpacing: "0.08em", color: C.text2, whiteSpace: "nowrap",
+                              flexShrink: 0,
+                            }}>
+                              <svg width="13" height="13" viewBox="0 0 20 20" fill="none">
+                                <path d={chip.icon} stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                              {chip.label}
+                            </button>
+                          ))}
                         </div>
                       </section>
                     );
                   })()}
-
-                  {/* Secondary stats — mono labels, hairline-separated */}
-                  <section style={{ marginTop: "40px", borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}` }}>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", }}>
-                      {[
-                        { label: "WIN RATE", value: `${winRate}%`, color: null },
-                        { label: "AVG R:R", value: avgRR === "—" ? "—" : `${avgRR}R`, color: null },
-                        { label: "STREAK", value: streak.count > 0 ? `${streak.count}${streak.type === "Win" ? "W" : "L"}` : "—", color: streak.count >= 2 ? (streak.type === "Win" ? C.green : C.red) : null },
-                      ].map((s: any, i) => (
-                        <div key={s.label} style={{ padding: "16px 12px", borderLeft: i === 0 ? "none" : `1px solid ${C.border}` }}>
-                          <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.12em", marginBottom: "6px" }}>{s.label}</div>
-                          <div style={{ fontFamily: DISPLAY, fontSize: "24px", fontWeight: 500, color: s.color ?? C.text, letterSpacing: "-0.02em", lineHeight: 1 }}>{s.value}</div>
-                          {s.label === "STREAK" && streak.count >= 3 && (
-                            <div style={{ fontFamily: MONO, fontSize: "8px", letterSpacing: "0.1em", color: streak.type === "Win" ? C.green : C.red, marginTop: "4px", opacity: 0.8 }}>
-                              {streak.type === "Win" ? "ON FIRE" : "STAY SHARP"}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </section>
-
-                  {/* Record line — W / L / BE */}
-                  {total > 0 && (
-                    <div style={{ marginTop: "16px", display: "flex", justifyContent: "space-between", fontFamily: MONO, fontSize: "11px", letterSpacing: "0.08em", color: C.muted, textTransform: "uppercase" }}>
-                      <span>{wins}W · {losses}L · {bes}BE</span>
-                      <span>{total} total</span>
-                    </div>
-                  )}
 
                   {/* Daily risk dashboard + kill switch */}
                   {(() => {
@@ -3065,8 +3117,29 @@ export default function Tradr({ user }: { user?: any } = {}) {
                   <span style={{ fontFamily: DISPLAY, fontSize: "22px", color: C.text, fontWeight: 500, letterSpacing: "-0.02em" }}>{form.rr}R</span>
                 </div>
               )}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: "16px" }}>
-                <div><label style={lbl}>Outcome</label><select name="outcome" value={form.outcome} onChange={handleChange} style={sel}><option value="">Select</option>{OUTCOMES.map(o => <option key={o}>{o}</option>)}</select></div>
+              {/* Outcome — SegBtn style */}
+              <div>
+                <label style={lbl}>Outcome</label>
+                <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
+                  {(["Win", "Loss", "Breakeven"] as const).map(o => {
+                    const active = form.outcome === o;
+                    const col = o === "Win" ? C.green : o === "Loss" ? C.red : C.muted;
+                    return (
+                      <button key={o} type="button"
+                        onClick={() => setForm((f: any) => ({ ...f, outcome: active ? "" : o }))}
+                        style={{
+                          flex: 1, padding: "12px 8px", borderRadius: "12px", cursor: "pointer",
+                          fontFamily: MONO, fontSize: "10px", letterSpacing: "0.08em", textTransform: "uppercase",
+                          border: `1px solid ${active ? col : C.border2}`,
+                          background: active ? `color-mix(in oklch, ${col} 16%, transparent)` : "transparent",
+                          color: active ? col : C.muted, fontWeight: active ? 600 : 400,
+                          transition: "all 0.15s",
+                        }}>{o === "Breakeven" ? "BE" : o}</button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
                 <div><label style={lbl}>P&L (R)</label><input type="number" name="pnl" value={form.pnl} onChange={handleChange} placeholder="+2.5 or -1" style={inp} /></div>
                 <div><label style={lbl}>P&L ($)</label><input type="number" name="pnlDollar" value={form.pnlDollar} onChange={handleChange} placeholder="e.g. +320" style={inp} /></div>
               </div>
@@ -3115,10 +3188,29 @@ export default function Tradr({ user }: { user?: any } = {}) {
                   </label>
                 )}
               </div>
-              <button onClick={submitTrade} disabled={savingTrade || !(form.pair && form.date && form.outcome)}
-                style={{ ...pillPrimary(!!(form.pair && form.date && form.outcome && !savingTrade)), marginTop: "8px" }}>
-                {savingTrade ? "Saving…" : editId ? "Update trade →" : "Save trade →"}
-              </button>
+              {/* TealArrowBtn save */}
+              {(() => {
+                const enabled = !!(form.pair && form.date && form.outcome && !savingTrade);
+                const live = (C as any).live ?? "oklch(0.84 0.14 175)";
+                return (
+                  <button onClick={submitTrade} disabled={savingTrade || !(form.pair && form.date && form.outcome)}
+                    style={{
+                      display: "flex", alignItems: "center", justifyContent: "space-between",
+                      background: enabled ? C.text : C.panel2,
+                      color: enabled ? C.bg : C.muted, border: "none", borderRadius: "14px",
+                      padding: "5px 6px 5px 20px", fontSize: "14px", fontWeight: 600,
+                      cursor: enabled ? "pointer" : "not-allowed", width: "100%",
+                      fontFamily: BODY, marginTop: "8px", opacity: enabled ? 1 : 0.6, transition: "opacity 0.2s",
+                    }}>
+                    <span>{savingTrade ? "Saving…" : editId ? "Update trade" : "Save trade"}</span>
+                    <span style={{ width: "36px", height: "36px", borderRadius: "999px", background: enabled ? live : C.muted, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M3 8h10M9 4l4 4-4 4" stroke={enabled ? "#0A0A0A" : C.bg} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </span>
+                  </button>
+                );
+              })()}
               {editId && <button onClick={() => { setForm(EMPTY_TRADE); setEditId(null); setView("history"); }} style={pillGhost}>CANCEL EDIT</button>}
             </div>
           )}
@@ -3183,21 +3275,56 @@ export default function Tradr({ user }: { user?: any } = {}) {
                   </div>
                 )
               ) : (
-                <div style={{ borderTop: `1px solid ${C.border}` }}>
+                <div style={{ borderRadius: "18px", overflow: "hidden", border: `1px solid ${C.border}`, background: C.panel }}>
                   {filteredTrades.map(t => {
                     const expanded = expandedId === t.id;
                     const commentText = commentInputs[t.id] || "";
                     return (
                       <div key={t.id} style={{ borderBottom: `1px solid ${C.border}` }}>
                         <div className="row-hvr" onClick={() => setExpandedId(expanded ? null : t.id)}
-                          style={{ padding: "14px 0", minHeight: "52px", cursor: "pointer", display: "grid", gridTemplateColumns: "1fr auto auto auto", alignItems: "center", gap: "12px" }}>
-                          <div>
-                            <div style={{ fontFamily: MONO, fontSize: "14px", color: C.text, letterSpacing: "0.04em" }}>{t.pair || "—"}</div>
-                            <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, marginTop: "3px", letterSpacing: "0.04em" }}>{t.date}{t.session ? ` · ${t.session}` : ""}</div>
+                          style={{ padding: "12px 14px", minHeight: "56px", cursor: "pointer", display: "flex", alignItems: "center", gap: "12px" }}>
+                          {/* Instrument badge */}
+                          <div style={{
+                            width: "38px", height: "38px", borderRadius: "11px", flexShrink: 0,
+                            background: t.outcome === "Win" ? `color-mix(in oklch, ${C.green} 14%, transparent)` : t.outcome === "Loss" ? `color-mix(in oklch, ${C.red} 14%, transparent)` : `rgba(255,255,255,0.06)`,
+                            border: `1px solid ${t.outcome === "Win" ? `color-mix(in oklch, ${C.green} 28%, transparent)` : t.outcome === "Loss" ? `color-mix(in oklch, ${C.red} 28%, transparent)` : C.border2}`,
+                            color: t.outcome === "Win" ? C.green : t.outcome === "Loss" ? C.red : C.muted,
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            fontFamily: MONO, fontWeight: 600, fontSize: "10px", letterSpacing: "0.04em",
+                          }}>{(t.pair || "—").slice(0, 3).toUpperCase()}</div>
+                          {/* Middle: name + direction badge / date + strategy */}
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                              <span style={{ fontFamily: DISPLAY, fontSize: "14px", fontWeight: 600, color: C.text, letterSpacing: "0.02em" }}>{t.pair || "—"}</span>
+                              {t.direction && (
+                                <span style={{
+                                  padding: "1px 6px", borderRadius: "4px", fontSize: "8px", letterSpacing: "0.10em",
+                                  fontFamily: MONO, fontWeight: 700, textTransform: "uppercase",
+                                  background: t.direction === "Long" ? `color-mix(in oklch, ${C.green} 14%, transparent)` : `color-mix(in oklch, ${C.red} 14%, transparent)`,
+                                  color: t.direction === "Long" ? C.green : C.red,
+                                }}>{t.direction === "Long" ? "LONG" : "SHORT"}</span>
+                              )}
+                            </div>
+                            <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, marginTop: "2px" }}>
+                              {t.date}{t.strategy ? ` · ${stratCode(t.strategy)}` : ""}{t.session ? ` · ${t.session}` : ""}
+                            </div>
                           </div>
-                          {t.strategy && <span style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.08em" }}>{stratCode(t.strategy)}</span>}
-                          <span style={{ fontFamily: DISPLAY, fontSize: "15px", color: C.text, fontWeight: 500, letterSpacing: "-0.01em", minWidth: "50px", textAlign: "right" }}>{t.rr ? `${t.rr}R` : "—"}</span>
-                          <span style={{ fontFamily: MONO, fontSize: "12px", letterSpacing: "0.06em", color: outcomeColor(t.outcome, C), minWidth: "22px", textAlign: "right" }}>{outcomeLetter(t.outcome)}</span>
+                          {/* Right: P&L + R */}
+                          <div style={{ textAlign: "right", flexShrink: 0 }}>
+                            {t.pnlDollar ? (
+                              <>
+                                <div style={{ fontFamily: MONO, fontSize: "13px", fontWeight: 600, color: parseFloat(t.pnlDollar) >= 0 ? C.green : C.red, fontVariantNumeric: "tabular-nums" }}>
+                                  {parseFloat(t.pnlDollar) >= 0 ? "+" : ""}${Math.abs(parseFloat(t.pnlDollar)).toFixed(0)}
+                                </div>
+                                <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, marginTop: "2px" }}>{t.rr ? `${t.rr}R` : outcomeLetter(t.outcome)}</div>
+                              </>
+                            ) : (
+                              <>
+                                <div style={{ fontFamily: DISPLAY, fontSize: "15px", fontWeight: 500, color: t.outcome === "Win" ? C.green : t.outcome === "Loss" ? C.red : C.muted, letterSpacing: "-0.01em" }}>{t.rr ? `${parseFloat(t.rr) >= 0 ? "+" : ""}${t.rr}R` : "—"}</div>
+                                <div style={{ fontFamily: MONO, fontSize: "9px", color: outcomeColor(t.outcome, C), marginTop: "2px" }}>{outcomeLetter(t.outcome)}</div>
+                              </>
+                            )}
+                          </div>
                         </div>
                         {expanded && (
                           <div style={{ padding: "4px 0 24px" }}>
@@ -4295,242 +4422,3 @@ function ConfluenceTracker({ checkItems, checkedCount, totalItems, isChecked, ac
     </div>
   );
 }
-
-// ─── PROFILE (self) ──────────────────────────────────────────────────────────
-// Editorial self-profile page. Shows identity, core stats, follow counts,
-// friends chips (mutual follows), and circle memberships split public/private.
-// Private circles only expose name + my rank — no member list, no stats.
-function ProfileView({ profile, myCode, followers, following, friendCodes, myCircles, followUser, unfollowUser, wins, losses, total, winRate, totalPnL, pnlPos, avgRR, streak, showToast, C, pillGhost, pillPrimary, setView, setActiveCircle, setCirclesView }: any) {
-  // Clickable follow/following/friends lists. Null = no list open.
-  const [followList, setFollowList] = useState<null | "followers" | "following" | "friends">(null);
-
-  // Rough rank within each circle based on locally-cached members. Shared sync
-  // keeps this reasonably fresh. If a circle has no members list (just created
-  // solo), rank defaults to 1 of 1.
-  function myRankIn(circle: any) {
-    const members = circle.members || [];
-    const idx = members.findIndex((m: any) => m.code === myCode);
-    return { rank: idx >= 0 ? idx + 1 : 1, of: Math.max(members.length, 1) };
-  }
-  const publicCircles = myCircles.filter((c: any) => (c.privacy || "public") === "public");
-  const privateCircles = myCircles.filter((c: any) => c.privacy === "private");
-
-  const activeCodes: string[] =
-    followList === "followers" ? followers :
-    followList === "following" ? following :
-    followList === "friends" ? friendCodes : [];
-
-  function openCircle(circle: any) {
-    setActiveCircle(circle);
-    setCirclesView("detail");
-    setView("circles");
-  }
-
-  return (
-    <div style={{ marginTop: "clamp(16px, 4vw, 28px)", display: "flex", flexDirection: "column", gap: "clamp(28px, 4vw, 44px)" }}>
-      {/* ── Header: avatar, name, handle, invite code ── */}
-      <section style={{ display: "flex", alignItems: "flex-start", gap: "18px", flexWrap: "wrap" }}>
-        <AvatarCircle name={profile.name || "Trader"} avatar={profile.avatar} size={72} C={C} />
-        <div style={{ flex: 1, minWidth: "200px" }}>
-          <h1 style={{ fontFamily: DISPLAY, fontSize: "clamp(32px, 7vw, 44px)", fontWeight: 700, letterSpacing: "-0.02em", lineHeight: 1, color: C.text, margin: 0 }}>
-            {profile.name || "Trader"}
-          </h1>
-          <div style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, letterSpacing: "0.08em", marginTop: "8px", textTransform: "lowercase", display: "flex", alignItems: "center", gap: "6px" }}>
-            {profile.handle || "@trader"}
-            {(profile.plan === "pro" || profile.plan === "elite") && (
-              <CrownIcon size={12} color={C.text} />
-            )}
-          </div>
-          {profile.bio && (
-            <div style={{ fontFamily: BODY, fontSize: "14px", color: C.text2, lineHeight: 1.6, marginTop: "12px", maxWidth: "48ch" }}>{profile.bio}</div>
-          )}
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "14px", flexWrap: "wrap" }}>
-            <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.12em", textTransform: "uppercase" }}>CODE</div>
-            <div style={{ fontFamily: MONO, fontSize: "12px", color: C.text, letterSpacing: "0.1em" }}>{myCode}</div>
-            <button onClick={() => { navigator.clipboard?.writeText(myCode); showToast("Code copied"); }}
-              style={{ ...pillGhost, padding: "4px 10px", fontSize: "9px" }}>COPY</button>
-            <button onClick={() => {
-              const handle = (profile.handle ?? "").replace(/^@/, "");
-              navigator.clipboard?.writeText(`https://tradrjournal.xyz/@${handle}`).then(() => showToast("Profile link copied!"));
-            }} style={{ ...pillGhost, padding: "4px 10px", fontSize: "9px" }}>SHARE PROFILE</button>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Social counts: clickable → expand to list below ── */}
-      <section>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}` }}>
-          {([
-            ["FOLLOWERS", followers.length, "followers"],
-            ["FOLLOWING", following.length, "following"],
-            ["FRIENDS", friendCodes.length, "friends"],
-          ] as [string, number, "followers" | "following" | "friends"][]).map(([k, v, id], i) => {
-            const open = followList === id;
-            return (
-              <button key={k} onClick={() => setFollowList(open ? null : id)}
-                style={{ padding: "18px 14px", borderLeft: i === 0 ? "none" : `1px solid ${C.border}`, background: open ? C.panel : "transparent", border: "none", borderTop: "none", borderRight: "none", borderBottom: "none", textAlign: "left", cursor: "pointer", color: "inherit" }}>
-                <div style={{ fontFamily: MONO, fontSize: "9px", color: open ? C.text : C.muted, letterSpacing: "0.14em", marginBottom: "8px" }}>{k}</div>
-                <div style={{ fontFamily: DISPLAY, fontSize: "28px", fontWeight: 500, color: C.text, letterSpacing: "-0.02em", lineHeight: 1 }}>{v}</div>
-              </button>
-            );
-          })}
-        </div>
-        {followList && (
-          <div style={{ padding: "16px 0 4px" }}>
-            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: "10px" }}>
-              <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.14em" }}>
-                {followList === "followers" ? `FOLLOWERS · ${followers.length}` : followList === "following" ? `FOLLOWING · ${following.length}` : `FRIENDS · ${friendCodes.length}`}
-              </div>
-              <button onClick={() => setFollowList(null)} style={{ background: "none", border: "none", color: C.muted, fontSize: "10px", cursor: "pointer", fontFamily: MONO, letterSpacing: "0.08em", textTransform: "uppercase" }}>Close</button>
-            </div>
-            {activeCodes.length === 0 ? (
-              <div style={{ fontFamily: BODY, fontStyle: "italic", fontSize: "13px", color: C.muted, lineHeight: 1.6, padding: "8px 0" }}>
-                {followList === "followers" && "Nobody's following you yet."}
-                {followList === "following" && "You're not following anyone yet — tap Follow on a circle leaderboard."}
-                {followList === "friends" && "No mutual follows yet. Friends are traders who follow you back."}
-              </div>
-            ) : (
-              <div style={{ borderTop: `1px solid ${C.border}` }}>
-                {activeCodes.map((code: string) => {
-                  const iFollow = following.includes(code);
-                  const followsMe = followers.includes(code);
-                  const isMutual = iFollow && followsMe;
-                  return (
-                    <div key={code} style={{ display: "grid", gridTemplateColumns: "auto 1fr auto", alignItems: "center", gap: "12px", padding: "12px 0", borderBottom: `1px solid ${C.border}` }}>
-                      <AvatarCircle name={code.split("-")[0]} size={28} C={C} />
-                      <div style={{ minWidth: 0 }}>
-                        <div style={{ fontFamily: DISPLAY, fontSize: "15px", color: C.text, letterSpacing: "-0.01em", fontWeight: 500 }}>{code.split("-")[0]}</div>
-                        <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.08em", marginTop: "2px", textTransform: "uppercase" }}>
-                          {isMutual ? "FRIENDS · MUTUAL" : iFollow ? "YOU FOLLOW" : followsMe ? "FOLLOWS YOU" : ""}
-                        </div>
-                      </div>
-                      {iFollow ? (
-                        <button onClick={() => unfollowUser(code)}
-                          style={{ background: "transparent", color: C.muted, border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "5px 12px", cursor: "pointer", fontFamily: MONO, fontSize: "9px", letterSpacing: "0.12em", textTransform: "uppercase" }}>
-                          {isMutual ? "Unfriend" : "Unfollow"}
-                        </button>
-                      ) : (
-                        <button onClick={() => followUser(code)}
-                          style={{ background: C.text, color: C.bg, border: `1px solid ${C.text}`, borderRadius: "999px", padding: "5px 12px", cursor: "pointer", fontFamily: MONO, fontSize: "9px", letterSpacing: "0.12em", textTransform: "uppercase" }}>
-                          {followsMe ? "Follow back" : "Follow"}
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
-      </section>
-
-      {/* ── Core stats ── */}
-      <section>
-        <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.14em", marginBottom: "14px" }}>SNAPSHOT</div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(88px, 1fr))", borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}` }}>
-          {[
-            ["W/L", `${wins}/${losses}`],
-            ["WIN RATE", total > 0 ? `${winRate}%` : "—"],
-            ["P&L", total > 0 ? `${pnlPos ? "+" : ""}${totalPnL}R` : "—"],
-            ["AVG R:R", avgRR === "—" ? "—" : `${avgRR}R`],
-          ].map(([k, v], i) => (
-            <div key={k as string} style={{ padding: "16px 12px", borderLeft: i === 0 ? "none" : `1px solid ${C.border}` }}>
-              <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.1em", marginBottom: "6px" }}>{k}</div>
-              <div style={{ fontFamily: DISPLAY, fontSize: "20px", fontWeight: 500, color: C.text, letterSpacing: "-0.02em" }}>{v}</div>
-            </div>
-          ))}
-        </div>
-        {streak.count >= 2 && (
-          <div style={{ fontFamily: MONO, fontSize: "10px", color: streak.type === "Win" ? C.green : C.red, letterSpacing: "0.1em", marginTop: "14px", textTransform: "uppercase" }}>
-            {streak.count}{streak.type === "Win" ? "W" : "L"} STREAK
-          </div>
-        )}
-      </section>
-
-      {/* ── Friends (mutual) ── */}
-      <section style={{ borderTop: `1px solid ${C.border}`, paddingTop: "22px" }}>
-        <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.14em", marginBottom: "14px" }}>FRIENDS · {friendCodes.length}</div>
-        {friendCodes.length === 0 ? (
-          <div style={{ fontFamily: BODY, fontStyle: "italic", fontSize: "13px", color: C.muted, lineHeight: 1.6 }}>
-            No mutual follows yet. Follow traders in your circles — once they follow back, they show up here.
-          </div>
-        ) : (
-          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-            {friendCodes.map((code: string) => (
-              <div key={code} style={{ display: "flex", alignItems: "center", gap: "8px", background: "transparent", border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "6px 12px" }}>
-                <AvatarCircle name={code.split("-")[0]} size={20} C={C} />
-                <span style={{ fontFamily: MONO, fontSize: "10px", color: C.text, letterSpacing: "0.06em" }}>{code.split("-")[0]}</span>
-                <button onClick={() => unfollowUser(code)} style={{ background: "none", border: "none", color: C.dim, fontSize: "10px", cursor: "pointer", fontFamily: MONO, padding: 0, marginLeft: "2px" }}>×</button>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* ── Public circles ── */}
-      <section style={{ borderTop: `1px solid ${C.border}`, paddingTop: "22px" }}>
-        <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.14em", marginBottom: "14px" }}>PUBLIC CIRCLES · {publicCircles.length}</div>
-        {publicCircles.length === 0 ? (
-          <div style={{ fontFamily: BODY, fontStyle: "italic", fontSize: "13px", color: C.muted, lineHeight: 1.6 }}>
-            Not in any public circles yet.
-          </div>
-        ) : (
-          <div>
-            {publicCircles.map((c: any) => {
-              const { rank, of } = myRankIn(c);
-              return (
-                <div key={c.code} onClick={() => openCircle(c)}
-                  style={{ display: "grid", gridTemplateColumns: "1fr auto", alignItems: "center", gap: "14px", padding: "14px 0", borderBottom: `1px solid ${C.border}`, cursor: "pointer" }}>
-                  <div>
-                    <div style={{ fontFamily: DISPLAY, fontSize: "17px", fontWeight: 500, color: C.text, letterSpacing: "-0.01em" }}>{c.name}</div>
-                    <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.06em", marginTop: "3px", textTransform: "uppercase" }}>
-                      {c.strategy ? `${c.strategy} · ` : ""}{of} members · {c.code}
-                    </div>
-                  </div>
-                  <div style={{ fontFamily: MONO, fontSize: "11px", color: C.text, letterSpacing: "0.08em", whiteSpace: "nowrap" }}>
-                    #{rank} <span style={{ color: C.muted }}>of {of}</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
-
-      {/* ── Private circles (name + rank only) ── */}
-      <section style={{ borderTop: `1px solid ${C.border}`, paddingTop: "22px" }}>
-        <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.14em", marginBottom: "14px" }}>PRIVATE CIRCLES · {privateCircles.length}</div>
-        {privateCircles.length === 0 ? (
-          <div style={{ fontFamily: BODY, fontStyle: "italic", fontSize: "13px", color: C.muted, lineHeight: 1.6 }}>
-            No private circles.
-          </div>
-        ) : (
-          <div>
-            {privateCircles.map((c: any) => {
-              const { rank, of } = myRankIn(c);
-              return (
-                <div key={c.code} onClick={() => openCircle(c)}
-                  style={{ display: "grid", gridTemplateColumns: "1fr auto", alignItems: "center", gap: "14px", padding: "14px 0", borderBottom: `1px solid ${C.border}`, cursor: "pointer" }}>
-                  <div style={{ fontFamily: DISPLAY, fontSize: "17px", fontWeight: 500, color: C.text, letterSpacing: "-0.01em" }}>{c.name}</div>
-                  <div style={{ fontFamily: MONO, fontSize: "11px", color: C.text, letterSpacing: "0.08em", whiteSpace: "nowrap" }}>
-                    #{rank} <span style={{ color: C.muted }}>of {of}</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
-
-      <section style={{ paddingTop: "8px", paddingBottom: "40px" }}>
-        <button onClick={() => setView("home")} style={{ ...pillGhost, padding: "10px 18px" }}>
-          Edit profile in Settings →
-        </button>
-      </section>
-    </div>
-  );
-}
-
-// ─── TRADING CIRCLES (editorial) ─────────────────────────────────────────────
-
-// ─── FRIENDS FEED (editorial) ────────────────────────────────────────────────

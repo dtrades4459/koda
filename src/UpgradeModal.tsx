@@ -102,7 +102,7 @@ export function UpgradeModal({ C, userId, userEmail, stripeCustomerId, onCustome
             Trade with<br/>a real <span style={{ fontStyle: "italic", color: live }}>edge.</span>
           </div>
           <div style={{ marginTop: "6px", fontFamily: BODY, fontSize: "13px", color: C.muted ?? "#65655F", lineHeight: 1.5 }}>
-            Everything you need, in one place.
+                    Everything you need, in one place.
           </div>
         </div>
 
