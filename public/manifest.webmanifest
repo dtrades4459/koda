@@ -1,7 +1,7 @@
 {
-  "name": "TRADR",
-  "short_name": "TRADR",
-  "description": "Multi-strategy trading journal + social circles for serious traders.",
+  "name": "TRADR OS",
+  "short_name": "TRADR OS",
+  "description": "The operating system for serious traders. Journal, analyse, compete.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -10,6 +10,12 @@
   "theme_color": "#080808",
   "categories": ["finance", "productivity", "social"],
   "icons": [
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
     {
       "src": "/icon.svg",
       "sizes": "any",

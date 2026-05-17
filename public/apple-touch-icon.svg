@@ -1,6 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180">
-  <rect width="180" height="180" rx="34" fill="#0C0C0B"/>
-  <text x="90" y="122" text-anchor="middle" fill="#EDEDE8"
-    font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif"
-    font-weight="700" font-size="95" letter-spacing="-4">tr</text>
+  <rect width="180" height="180" rx="34" fill="#080808"/>
+  <g fill="none" stroke="#EDEDE8" stroke-width="3.9" stroke-linejoin="miter" stroke-linecap="square">
+    <polygon points="18,42 67,90 18,138"/>
+    <polygon points="50,42 99,90 50,138"/>
+    <polygon points="82,42 131,90 82,138"/>
+    <polygon points="114,42 163,90 114,138"/>
+  </g>
 </svg>

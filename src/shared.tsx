@@ -54,10 +54,13 @@ export function outcomeLetter(outcome: string) {
 export function TrMark({ size = 28, bg = "#0C0C0B" }: { size?: number; bg?: string }) {
   return (
     <svg width={size} height={size} viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style={{ display: "block", flexShrink: 0 }}>
-      <rect width="100" height="100" rx="20" fill={bg}/>
-      <text x="50" y="67" textAnchor="middle" fill="#EDEDE8"
-        fontFamily="-apple-system, BlinkMacSystemFont, 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif"
-        fontWeight="700" fontSize="52" letterSpacing="-2">tr</text>
+      <rect width="100" height="100" rx="18" fill={bg}/>
+      <g fill="none" stroke="#EDEDE8" strokeWidth="2.2" strokeLinejoin="miter" strokeLinecap="square">
+        <polygon points="10,23 37,50 10,77"/>
+        <polygon points="28,23 55,50 28,77"/>
+        <polygon points="46,23 73,50 46,77"/>
+        <polygon points="64,23 91,50 64,77"/>
+      </g>
     </svg>
   );
 }
