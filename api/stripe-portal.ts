@@ -20,6 +20,7 @@ export const config = { runtime: "nodejs" };
 
 const APP_URL = process.env.APP_URL ?? "https://tradrjournal.xyz";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default async function handler(req: any, res: any) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -31,15 +32,15 @@ export default async function handler(req: any, res: any) {
     const { stripeCustomerId } = req.body as { stripeCustomerId: string };
     if (!stripeCustomerId) return res.status(400).json({ error: "stripeCustomerId required" });
 
-    const s = new Stripe(process.env.STRIPE_SECRET_KEY as string, { apiVersion: "2024-11-20.acacia" as any });
+    const s = new Stripe(process.env.STRIPE_SECRET_KEY as string, { apiVersion: "2024-11-20.acacia" as Stripe.LatestApiVersion });
     const session = await s.billingPortal.sessions.create({
       customer: stripeCustomerId,
       return_url: APP_URL,
     });
 
     res.json({ url: session.url });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[stripe-portal]", err);
-    res.status(500).json({ error: err.message ?? "Internal server error" });
+    res.status(500).json({ error: err instanceof Error ? err.message : "Internal server error" });
   }
 }

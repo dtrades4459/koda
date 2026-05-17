@@ -411,6 +411,7 @@ export default function Tradr({ user }: { user?: any } = {}) {
     Object.fromEntries(STRATEGY_NAMES.map(s => [s, { minCount: Math.ceil(STRATEGIES[s].checklist.length * 0.75), required: [] }]))
   );
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { loadAll(); }, []);
 
   useEffect(() => {

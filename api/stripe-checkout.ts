@@ -23,7 +23,7 @@ const APP_URL = process.env.APP_URL ?? "https://tradrjournal.xyz";
 
 function stripe() {
   if (!process.env.STRIPE_SECRET_KEY) throw new Error("STRIPE_SECRET_KEY not set");
-  return new Stripe(process.env.STRIPE_SECRET_KEY as string, { apiVersion: "2024-11-20.acacia" as any });
+  return new Stripe(process.env.STRIPE_SECRET_KEY as string, { apiVersion: "2024-11-20.acacia" as Stripe.LatestApiVersion });
 }
 
 function supabase() {
@@ -33,6 +33,7 @@ function supabase() {
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default async function handler(req: any, res: any) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -67,7 +68,7 @@ export default async function handler(req: any, res: any) {
         .maybeSingle();
 
       if (kvRow?.value) {
-        try { customerId = JSON.parse(kvRow.value).customerId ?? ""; } catch {}
+        try { customerId = JSON.parse(kvRow.value).customerId ?? ""; } catch { /* ignore JSON parse error */ }
       }
     }
 
@@ -98,8 +99,8 @@ export default async function handler(req: any, res: any) {
     });
 
     res.json({ url: session.url, customerId });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[stripe-checkout]", err);
-    res.status(500).json({ error: err.message ?? "Internal server error" });
+    res.status(500).json({ error: err instanceof Error ? err.message : "Internal server error" });
   }
 }
