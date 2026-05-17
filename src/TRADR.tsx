@@ -120,40 +120,66 @@ function getEmotionTags(emotions: string | string[] | undefined): string[] {
 }
 
 // ─── THEME ────────────────────────────────────────────────────────────────────
-// Warm editorial palette — dark primary, light secondary.
+// TRADR OS design system — OKLCH-based palette, Geist type, glass surfaces.
 const DARK = {
-  bg: "#0C0C0B",
-  panel: "#161614",
-  panel2: "#1E1E1B",
-  border: "#2A2A26",
-  border2: "#3A3A34",
-  text: "#EDEDE8",
-  text2: "#BCBCB4",
-  muted: "#8A8A82",
-  dim: "#55554F",
-  accent: "#EDEDE8",   // primary CTA = text
-  blue: "#89cff0",     // brand dot only
-  green: "#00C96B",
-  red: "#FF3D00",
-  yellow: "#8A8A82",   // collapsed to muted (no more colored warnings)
+  // Core surfaces
+  bg: "#0A0A0B",
+  panel: "#131317",
+  panel2: "#1A1A20",
+  border: "rgba(255,255,255,0.07)",
+  border2: "rgba(255,255,255,0.13)",
+  // Text
+  text: "#F2F2EE",
+  text2: "#A6A6A2",
+  muted: "#65655F",
+  dim: "#45453F",
+  // Accents
+  accent: "oklch(0.74 0.16 250)",    // electric blue — links, highlights
+  accentSoft: "oklch(0.74 0.16 250 / 0.16)",
+  live: "oklch(0.84 0.14 175)",      // mint/teal — "go" CTAs
+  liveSoft: "oklch(0.84 0.14 175 / 0.18)",
+  // Outcome
+  green: "oklch(0.78 0.18 152)",
+  red: "oklch(0.70 0.21 25)",
+  // Glass/bloom
+  surfaceGlass: "rgba(20,20,26,0.72)",
+  orb1: "oklch(0.55 0.22 252)",
+  orb2: "oklch(0.45 0.20 268)",
+  orb3: "oklch(0.68 0.18 175)",
+  // Legacy compat
+  blue: "oklch(0.74 0.16 250)",
+  yellow: "#65655F",
   inputBg: "transparent",
-  shadow: "rgba(0,0,0,0.4)",
+  shadow: "rgba(0,0,0,0.45)",
 };
 const LIGHT = {
-  bg: "#F5F4EF",
-  panel: "#EFEEE8",
-  panel2: "#E6E5DE",
-  border: "#D6D4CC",
-  border2: "#BEBCB3",
-  text: "#1A1A17",
-  text2: "#4A4A44",
-  muted: "#7A7A72",
-  dim: "#B1B0A8",
-  accent: "#1A1A17",
-  blue: "#3B7A9A",
-  green: "#00A859",
-  red: "#D93400",
-  yellow: "#7A7A72",
+  // Core surfaces
+  bg: "#F4F2ED",
+  panel: "#FFFFFF",
+  panel2: "#FAFAF6",
+  border: "rgba(10,10,10,0.07)",
+  border2: "rgba(10,10,10,0.14)",
+  // Text
+  text: "#0A0A0A",
+  text2: "#55554F",
+  muted: "#9A9890",
+  dim: "#C0BEB6",
+  // Accents
+  accent: "oklch(0.55 0.18 252)",
+  accentSoft: "oklch(0.55 0.18 252 / 0.10)",
+  live: "oklch(0.62 0.14 175)",
+  liveSoft: "oklch(0.62 0.14 175 / 0.12)",
+  // Outcome
+  green: "oklch(0.55 0.18 152)",
+  red: "oklch(0.55 0.22 25)",
+  // Glass/bloom
+  surfaceGlass: "rgba(244,242,237,0.75)",
+  orb1: "oklch(0.78 0.14 252)",
+  orb2: "oklch(0.72 0.12 268)",
+  orb3: "oklch(0.78 0.10 175)",
+  // Legacy compat
+  blue: "oklch(0.55 0.18 252)",
+  yellow: "#9A9890",
   inputBg: "transparent",
   shadow: "rgba(0,0,0,0.08)",
 };
@@ -1850,11 +1876,11 @@ export default function Tradr({ user }: { user?: any } = {}) {
   };
 
   const NAV_TABS = [
-    { id: "home",    label: "HOME",    icon: "◈" },
-    { id: "log",     label: "LOG",     icon: "+" },
-    { id: "stats",   label: "STATS",   icon: "↗" },
-    { id: "history", label: "JOURNAL", icon: "≡" },
-    { id: "circles", label: "CIRCLES", icon: "◆" },
+    { id: "home",    label: "Home",    path: "M3 10l7-7 7 7v8a1 1 0 01-1 1H4a1 1 0 01-1-1z" },
+    { id: "log",     label: "Log",     path: "M5 4h10v12H5zM7 7h6M7 10.5h6M7 14h4" },
+    { id: "stats",   label: "Stats",   path: "M3 16V9M9 16V3M15 16v-5M18 16H2" },
+    { id: "history", label: "Journal", path: "M4 4h12v12H4zM7 8h6M7 11h6M7 14h3" },
+    { id: "circles", label: "Circles", path: "M5 8a3 3 0 1 1 6 0 3 3 0 0 1-6 0zM12.5 11a3 3 0 0 1 4.5 2.5M3 17c0-2.5 2-3.8 5-3.8s5 1.3 5 3.8" },
   ];
 
   // Sub-section config per main view — fed to the desktop SubNavDropdown so
@@ -1886,8 +1912,12 @@ export default function Tradr({ user }: { user?: any } = {}) {
   };
 
   if (loading) return (
-    <div style={{ minHeight: "100vh", background: DARK.bg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "20px" }}>
-      <TrMark size={72} bg={DARK.panel} />
+    <div style={{ minHeight: "100vh", background: DARK.bg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "16px" }}>
+      <TrMark size={64} bg={DARK.panel} />
+      <div style={{ display: "flex", alignItems: "baseline", gap: "8px" }}>
+        <span style={{ fontFamily: DISPLAY, fontWeight: 600, fontSize: "18px", letterSpacing: "0.22em", color: DARK.text }}>TRADR</span>
+        <span style={{ fontFamily: MONO, fontWeight: 500, fontSize: "9px", letterSpacing: "0.16em", color: DARK.text2, padding: "2px 5px", borderRadius: "4px", border: `1px solid ${DARK.border2}`, lineHeight: 1 }}>OS</span>
+      </div>
     </div>
   );
 
@@ -1964,36 +1994,32 @@ export default function Tradr({ user }: { user?: any } = {}) {
 
       {/* ── PAGE FRAME (responsive: 480px canvas on mobile, up to 960px on desktop) ── */}
       <div className="tradr-app" ref={swipeRef} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}
-        style={{ maxWidth: isDesktop ? "1280px" : "480px", margin: "0 auto", paddingBottom: isDesktop ? "32px" : "84px", minHeight: "100vh", background: C.bg, borderLeft: `1px solid ${C.border}`, borderRight: `1px solid ${C.border}` }}>
+        style={{ maxWidth: isDesktop ? "1280px" : "480px", margin: "0 auto", paddingBottom: isDesktop ? "32px" : "96px", minHeight: "100vh", background: C.bg, borderLeft: `1px solid ${C.border}`, borderRight: `1px solid ${C.border}` }}>
 
         {/* ── MASTHEAD ── */}
-        <header style={{ padding: isDesktop ? "18px 40px 0" : "14px 22px 12px", borderBottom: `0.5px solid ${C.border}`, position: "sticky", top: 0, background: C.bg, zIndex: 10 }}>
+        <header style={{ padding: isDesktop ? "16px 40px 0" : "10px 20px 10px", borderBottom: `1px solid ${C.border}`, position: "sticky", top: 0, background: C.bg, zIndex: 10, backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", paddingBottom: isDesktop ? "14px" : 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <TrMark size={isDesktop ? 26 : 24} bg={C.panel} />
-              <span style={{ fontFamily: DISPLAY, fontSize: isDesktop ? "17px" : "15px", fontWeight: 700, letterSpacing: "-0.02em", color: C.text, lineHeight: 1 }}>TRADR</span>
+            {/* Logo: mark + TRADR wordmark + OS tag */}
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <TrMark size={isDesktop ? 24 : 22} bg={C.panel} />
+              <span style={{ fontFamily: DISPLAY, fontSize: isDesktop ? "15px" : "14px", fontWeight: 600, letterSpacing: "0.22em", color: C.text, lineHeight: 1 }}>TRADR</span>
+              <span style={{ fontFamily: MONO, fontWeight: 500, fontSize: "9px", letterSpacing: "0.16em", color: C.text2, padding: "2px 5px", borderRadius: "4px", border: `1px solid ${C.border2}`, lineHeight: 1 }}>OS</span>
             </div>
-            <div style={{ display: "flex", alignItems: "baseline", gap: "14px", fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+            {/* Right: handle + sign out */}
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <button
                 onClick={() => { setView("home"); setHomeSection("settings"); }}
-                style={{
-                  background: "none", border: "none", cursor: "pointer",
-                  color: C.text, fontFamily: MONO, fontSize: "12px",
-                  letterSpacing: "0.06em", padding: "4px 8px",
-                  borderRadius: "6px", transition: "background 0.15s",
-                }}
-                onMouseEnter={e => (e.currentTarget.style.background = C.border2 ?? "#3A3A34")}
-                onMouseLeave={e => (e.currentTarget.style.background = "none")}
-                title="Go to your profile"
+                style={{ background: C.panel, border: `1px solid ${C.border2}`, cursor: "pointer", color: C.text2, fontFamily: MONO, fontSize: "10px", letterSpacing: "0.08em", textTransform: "uppercase", padding: "6px 12px", borderRadius: "999px", minHeight: "34px", display: "flex", alignItems: "center", gap: "5px" }}
+                title="Settings"
               >
                 {profile.handle || "@trader"}
                 {(profile.plan === "pro" || profile.plan === "elite") && (
-                  <CrownIcon size={11} color="currentColor" />
+                  <CrownIcon size={10} color={(C as any).live ?? C.green} />
                 )}
               </button>
               <button onClick={() => supabase.auth.signOut()}
-                style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.08em", textTransform: "uppercase", padding: "8px 4px", minHeight: "44px" }}>
-                sign out →
+                style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.08em", textTransform: "uppercase", padding: "8px 4px", minHeight: "34px" }}>
+                out →
               </button>
             </div>
           </div>
@@ -2019,14 +2045,16 @@ export default function Tradr({ user }: { user?: any } = {}) {
         {/* ── CONTENT — desktop: sidebar+main grid; mobile: single column ── */}
         <div style={{ display:isDesktop?"grid":"block", gridTemplateColumns:isDesktop?"220px 1fr":undefined }} className="fade-in" key={view}>
           {isDesktop && (
-            <aside style={{ borderRight:`1px solid ${C.border}`, padding:"28px 0 32px", position:"sticky", top:"64px", height:"calc(100vh - 64px)", overflowY:"auto", display:"flex", flexDirection:"column" }}>
+            <aside style={{ borderRight:`1px solid ${C.border}`, padding:"24px 0 32px", position:"sticky", top:"64px", height:"calc(100vh - 64px)", overflowY:"auto", display:"flex", flexDirection:"column" }}>
               <div style={{ flex:1 }}>
                 {NAV_TABS.map(tab => {
                   const sn = subNavFor(tab.id); const ia = view === tab.id;
                   return (
                     <div key={tab.id}>
                       <button onClick={()=>setView(tab.id)} style={{ display:"flex", alignItems:"center", gap:"10px", width:"100%", background:ia?C.panel:"transparent", border:"none", borderLeft:ia?`2px solid ${C.text}`:"2px solid transparent", padding:"10px 22px", cursor:"pointer", fontFamily:MONO, fontSize:"11px", letterSpacing:"0.1em", textTransform:"uppercase", color:ia?C.text:C.dim, textAlign:"left", transition:"all 0.12s ease" }}>
-                        <span style={{ fontSize:"13px", fontFamily:"system-ui, sans-serif", letterSpacing:0, lineHeight:1, opacity:ia?1:0.6 }}>{(tab as any).icon}</span>
+                        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" style={{ opacity: ia ? 1 : 0.55, flexShrink: 0 }}>
+                          <path d={(tab as any).path} stroke="currentColor" strokeWidth="1.35" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
                         {tab.label}
                       </button>
                       {ia && sn && (
@@ -2521,19 +2549,19 @@ export default function Tradr({ user }: { user?: any } = {}) {
                       <button
                         onClick={() => setShowUpgrade(true)}
                         style={{
-                          width: "100%", padding: "13px 18px", background: "transparent",
-                          border: `1px solid #f59e0b55`, borderRadius: "10px", cursor: "pointer",
+                          width: "100%", padding: "13px 18px", background: (C as any).liveSoft ?? "rgba(100,220,180,0.08)",
+                          border: `1px solid ${(C as any).live ?? "oklch(0.84 0.14 175)"}`, borderRadius: "14px", cursor: "pointer",
                           display: "flex", alignItems: "center", justifyContent: "space-between",
                         }}
                       >
                         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                          <span style={{ fontSize: "16px" }}>⚡</span>
+                          <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: (C as any).live ?? "oklch(0.84 0.14 175)", boxShadow: `0 0 8px ${(C as any).live ?? "oklch(0.84 0.14 175)"}`, flexShrink: 0 }}/>
                           <div style={{ textAlign: "left" }}>
-                            <div style={{ fontSize: "13px", fontWeight: 600, color: "#f59e0b" }}>Upgrade to Pro</div>
-                            <div style={{ fontSize: "11px", color: C.muted, marginTop: "1px" }}>Unlimited imports · Advanced analytics</div>
+                            <div style={{ fontSize: "13px", fontWeight: 600, color: (C as any).live ?? "oklch(0.84 0.14 175)", fontFamily: DISPLAY }}>Upgrade to Pro</div>
+                            <div style={{ fontSize: "11px", color: C.muted, marginTop: "1px", fontFamily: MONO }}>Unlimited imports · Advanced analytics</div>
                           </div>
                         </div>
-                        <span style={{ fontFamily: MONO, fontSize: "11px", color: "#f59e0b" }}>£5.99/mo →</span>
+                        <span style={{ fontFamily: MONO, fontSize: "11px", color: (C as any).live ?? "oklch(0.84 0.14 175)" }}>$24.99/mo →</span>
                       </button>
                     ) : (
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 0" }}>
@@ -3904,16 +3932,22 @@ ${recentTrades.map((t:any)=>`<tr><td>${t.date}</td><td>${t.pair||"—"}</td><td>
           </div>{/* end main */}
         </div>{/* end grid */}
 
-        {/* ── BOTTOM NAV (mobile only — desktop uses the top-nav strip inside the masthead) ── */}
+        {/* ── BOTTOM NAV — floating glass pill (mobile only) ── */}
         {!isDesktop && (
-          <div style={{ position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: "480px", background: C.bg, borderTop: `0.5px solid ${C.border}`, display: "flex", zIndex: 10, paddingBottom: "env(safe-area-inset-bottom)" }}>
-            {NAV_TABS.map(tab => (
-              <button key={tab.id} onClick={() => setView(tab.id)}
-                style={{ flex: 1, minHeight: "52px", padding: "6px 4px 4px", background: "none", border: "none", borderTop: view === tab.id ? `1.5px solid ${C.text}` : "1.5px solid transparent", marginTop: "-0.5px", color: view === tab.id ? C.text : C.dim, fontSize: "9px", letterSpacing: "0.10em", cursor: "pointer", fontFamily: MONO, textTransform: "uppercase", transition: "color 0.12s ease", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "3px" }}>
-                <span style={{ fontSize: "14px", lineHeight: 1, fontFamily: "system-ui, sans-serif", letterSpacing: 0 }}>{(tab as any).icon}</span>
-                <span>{tab.label}</span>
-              </button>
-            ))}
+          <div style={{ position: "fixed", bottom: "calc(16px + env(safe-area-inset-bottom))", left: "50%", transform: "translateX(-50%)", width: "calc(100% - 32px)", maxWidth: "440px", zIndex: 30 }}>
+            <div style={{ display: "flex", padding: "5px", background: (C as any).surfaceGlass ?? C.panel, backdropFilter: "blur(28px) saturate(180%)", WebkitBackdropFilter: "blur(28px) saturate(180%)", borderRadius: "999px", border: `1px solid ${C.border2}`, boxShadow: `0 8px 32px ${C.shadow}` }}>
+              {NAV_TABS.map(tab => {
+                const active = view === tab.id;
+                return (
+                  <button key={tab.id} onClick={() => setView(tab.id)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "3px", padding: "8px 4px", borderRadius: "999px", background: active ? C.text : "transparent", color: active ? C.bg : C.muted, border: "none", cursor: "pointer", transition: "background 0.2s, color 0.2s", minHeight: "48px" }}>
+                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none" style={{ flexShrink: 0 }}>
+                      <path d={(tab as any).path} stroke="currentColor" strokeWidth="1.35" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    <span style={{ fontSize: "9px", fontFamily: MONO, letterSpacing: "0.06em", fontWeight: active ? 600 : 400 }}>{tab.label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
 

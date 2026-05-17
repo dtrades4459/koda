@@ -2,9 +2,9 @@ import { useState, useEffect, useRef } from "react";
 import type { StrategyDef } from "./types";
 
 // ─── FONT STACKS (duplicated from TRADR.tsx for standalone use) ──────────────
-export const MONO = "'IBM Plex Mono', ui-monospace, monospace";
-export const BODY = "'Inter', system-ui, sans-serif";
-export const DISPLAY = "'Syne', 'Inter', system-ui, sans-serif";
+export const MONO = "'Geist Mono', 'IBM Plex Mono', ui-monospace, monospace";
+export const BODY = "'Geist', 'Inter', system-ui, sans-serif";
+export const DISPLAY = "'Geist', 'Inter', system-ui, sans-serif";
 
 // ─── STRATEGY CODE HELPERS ───────────────────────────────────────────────────
 // Module-level mutable full strategies map (built-ins + custom).
