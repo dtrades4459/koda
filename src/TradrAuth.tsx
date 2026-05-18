@@ -107,6 +107,7 @@ function AuthForm({ onSuccess, initialError = "" }: { onSuccess: () => void; ini
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(initialError);
   const [msg, setMsg] = useState("");
+  const [recoveryEmail, setRecoveryEmail] = useState("");
 
   // If user arrives via a password-reset magic link, Supabase fires a
   // PASSWORD_RECOVERY event — switch to the new-password form automatically.
@@ -138,7 +139,7 @@ function AuthForm({ onSuccess, initialError = "" }: { onSuccess: () => void; ini
       } else {
         const { error: e } = await supabase.auth.signUp({
           email, password,
-          options: { data: { username: u } },
+          options: { data: { username: u, ...(recoveryEmail.trim() ? { recovery_email: recoveryEmail.trim().toLowerCase() } : {}) } },
         });
         if (e) throw e;
         // If confirmation is OFF in Supabase, this signs them in immediately.
@@ -166,12 +167,12 @@ function AuthForm({ onSuccess, initialError = "" }: { onSuccess: () => void; ini
     if (!USERNAME_RE.test(u)) { setError("Invalid username format."); return; }
     setLoading(true); setError("");
     try {
-      // resetPasswordForEmail sends a magic link to the synthetic email address.
-      const { error: e } = await supabase.auth.resetPasswordForEmail(usernameToEmail(u), {
-        // redirectTo must match an allowed redirect URL in your Supabase project settings.
-        redirectTo: window.location.origin,
+      const r = await fetch("/api/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: u }),
       });
-      if (e) throw e;
+      if (!r.ok) throw new Error("Failed to request reset");
       setMode("reset-sent");
     } catch (e: any) {
       setError(e?.message || "Failed to send reset link. Try again.");
@@ -220,7 +221,7 @@ function AuthForm({ onSuccess, initialError = "" }: { onSuccess: () => void; ini
           — Link sent
         </div>
         <p style={{ fontSize: "14px", color: C.text2, lineHeight: 1.65, marginBottom: "20px", fontFamily: BODY }}>
-          Check the inbox linked to your username. Click the link in the email, then come back here to set a new password.
+          Your reset link has been sent to the TRADR team — we'll forward it to your recovery email within a few minutes. If you didn't add a recovery email at signup, message us on <a href="https://tradrjournal.xyz" style={{ color: C.blue, textDecoration: "none" }}>tradrjournal.xyz</a> so we can help.
         </p>
         <button onClick={() => { setMode("signin"); setUsername(""); setError(""); }} style={{ ...btn(false) }}>
           Back to sign in
@@ -374,8 +375,16 @@ function AuthForm({ onSuccess, initialError = "" }: { onSuccess: () => void; ini
         )}
 
         {mode === "signup" && (
-          <div style={{ fontSize: "12px", color: C.muted, lineHeight: 1.55, marginTop: "4px", fontFamily: BODY }}>
-            Beta — no email required. Keep a copy of your password somewhere safe.
+          <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+            <label style={lbl}>Recovery email <span style={{ color: C.dim }}>(optional — needed for password reset)</span></label>
+            <input type="email" value={recoveryEmail}
+              onChange={e => setRecoveryEmail(e.target.value)}
+              placeholder="you@example.com"
+              style={inp}
+              autoComplete="email" />
+            <div style={{ fontSize: "11px", color: C.dim, marginTop: "2px", fontFamily: BODY }}>
+              We never show this publicly. Used only to send you a reset link.
+            </div>
           </div>
         )}
       </div>

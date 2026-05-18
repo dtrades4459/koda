@@ -30,17 +30,19 @@ function parseCSV(text: string): { headers: string[], rows: Record<string, strin
 }
 
 const CSV_FIELD_HINTS: { field: string; patterns: RegExp[] }[] = [
-  { field: "pair", patterns: [/^(symbol|ticker|pair|instrument|market|contract|asset|stock|coin)s?$/i, /symbol|ticker|pair|instrument/i] },
-  { field: "date", patterns: [/^(open[_\s]*time|close[_\s]*time|execution[_\s]*time|trade[_\s]*date|date[_\s]*time|timestamp|date|time)$/i, /date|time/i] },
-  { field: "bias", patterns: [/^(direction|side|action|type|position|long[_\s]*\/?[_\s]*short|buy[_\s]*\/?[_\s]*sell)$/i, /direction|side/i] },
-  { field: "outcome", patterns: [/^(outcome|result|status|win[_\s]*\/?[_\s]*loss|w\/?l)$/i, /outcome|result|status/i] },
-  { field: "pnl", patterns: [/^(p[\s/]?[&/]?l|pnl|profit|profit[_\s]*loss|net[_\s]*p[&/]?l|realized[_\s]*p[&/]?l|net|realized|gain)$/i, /pnl|profit|p.?l/i] },
-  { field: "entryPrice", patterns: [/^(entry[_\s]*price|entry|open[_\s]*price|buy[_\s]*price|avg[_\s]*entry|price[_\s]*in|fill[_\s]*price)$/i, /entry|open.*price/i] },
-  { field: "slPrice", patterns: [/^(stop[_\s]*loss|stop|sl|s\/l)$/i, /stop|sl/i] },
-  { field: "tpPrice", patterns: [/^(take[_\s]*profit|target|tp|t\/p|limit)$/i, /target|take.*profit|tp/i] },
-  { field: "rr", patterns: [/^(r[_\s/:-]*r|risk[_\s]*reward|r[_\s]*multiple|r[_\s]*value)$/i, /risk.*reward|r:?r/i] },
-  { field: "notes", patterns: [/^(note|notes|comment|comments|description|memo)$/i, /note|comment|memo/i] },
-  { field: "session", patterns: [/^(session|market[_\s]*session)$/i, /session/i] },
+  { field: "pair",       patterns: [/^(symbol|ticker|pair|instrument|market|contract|asset|stock|coin)s?$/i, /symbol|ticker|pair|instrument/i] },
+  { field: "date",       patterns: [/^(open[_\s]*time|close[_\s]*time|execution[_\s]*time|entry[_\s]*date|trade[_\s]*date|date[_\s]*time|timestamp|date|time)$/i, /entry.*date|date.*time|timestamp/i, /date|time/i] },
+  { field: "bias",       patterns: [/^(direction|side|action|type|b\/?s|buy[_\s]*sell|position|long[_\s]*\/?[_\s]*short)$/i, /^(direction|side)$/i, /direction|side/i] },
+  { field: "outcome",    patterns: [/^(outcome|result|status|win[_\s]*\/?[_\s]*loss|w\/?l)$/i, /outcome|result|status/i] },
+  { field: "pnl",        patterns: [/^(p[\s/]?[&/]?l|pnl|profit|profit[_\s]*loss|net[_\s]*p[\s&/]?[&/]?l|realized[_\s]*p[&/]?l|net|realized|gain)$/i, /net.*p.?l|realized.*p.?l/i, /pnl|profit/i, /p.?l/i] },
+  { field: "entryPrice", patterns: [/^(entry[_\s]*price|entry|open[_\s]*price|buy[_\s]*price|avg[_\s]*entry|price[_\s]*in|fill[_\s]*price|buy[_\s]*fill[_\s]*price)$/i, /entry.*price|fill.*price/i, /entry|open.*price/i] },
+  { field: "exitPrice",  patterns: [/^(exit[_\s]*price|close[_\s]*price|sell[_\s]*price|sell[_\s]*fill[_\s]*price|exit)$/i, /exit.*price|sell.*fill.*price/i] },
+  { field: "slPrice",    patterns: [/^(stop[_\s]*loss|stop|sl|s\/l)$/i, /stop.*loss|stop/i] },
+  { field: "tpPrice",    patterns: [/^(take[_\s]*profit|target|tp|t\/p|limit)$/i, /target|take.*profit|tp/i] },
+  { field: "qty",        patterns: [/^(qty|quantity|size|volume|contracts?|lots?|shares?)$/i, /^(qty|quantity|size)$/i] },
+  { field: "rr",         patterns: [/^(r[_\s/:-]*r|risk[_\s]*reward|r[_\s]*multiple|r[_\s]*value)$/i, /risk.*reward|r:?r/i] },
+  { field: "notes",      patterns: [/^(note|notes|comment|comments|description|memo)$/i, /note|comment|memo/i] },
+  { field: "session",    patterns: [/^(session|market[_\s]*session)$/i, /session/i] },
 ];
 
 function autoDetectMapping(headers: string[]): Record<string, string> {
@@ -61,6 +63,29 @@ function normalizeBias(raw: string): string {
   if (/short|sell|bear/.test(v)) return "Bearish";
   return "";
 }
+// ─── BROKER AUTO-DETECTION ────────────────────────────────────────────────────
+// Returns the CSV_PRESETS key that best matches the given headers, or null.
+function detectBroker(headers: string[]): string | null {
+  const h = new Set(headers.map(s => s.toLowerCase().trim()));
+  const has = (patterns: RegExp[]) => headers.some(col => patterns.some(p => p.test(col)));
+
+  // Rithmic (Apex, TopstepX, Earn2Trade) — distinctive column: "Net P&L" or "Buy Fill Price"
+  if (has([/net.*p.?l/i, /buy.*fill.*price/i, /sell.*fill.*price/i])) return "rithmic";
+  if (h.has("net p&l") || h.has("buy fill price") || h.has("buy fill time")) return "rithmic";
+
+  // Tradovate — "B/S" column + "P&L" + "Buy Time"
+  if ((h.has("b/s") || h.has("buy time")) && (h.has("p&l") || h.has("p / l"))) return "tradovate";
+
+  // TradingView strategy tester export — "Profit" + "Date/Time" + "Type"
+  if (h.has("profit") && (h.has("date/time") || h.has("datetime")) && h.has("type")) return "tradingview";
+
+  // MT4/MT5 — "Open Time" + "S / L"
+  if ((h.has("open time") || h.has("open_time")) && (h.has("s / l") || h.has("stop loss"))) return "mt4";
+
+  return null;
+}
+
+
 
 function normalizeOutcome(raw: string, pnl: number): string {
   const v = (raw || "").toLowerCase();
@@ -130,6 +155,7 @@ function tradeKey(t: any): string {
 function rowToTrade(row: Record<string, string>, mapping: Record<string, string>, defaultStrategy: string) {
   const get = (f: string) => mapping[f] ? row[mapping[f]] : "";
   const pnl = parseNum(get("pnl"));
+  const qty = get("qty") ? parseNum(get("qty")) : NaN;
   const trade: any = {
     id: Date.now() * 1000 + Math.floor(Math.random() * 999),
     date: normalizeDate(get("date")),
@@ -139,8 +165,10 @@ function rowToTrade(row: Record<string, string>, mapping: Record<string, string>
     strategy: defaultStrategy || "",
     setup: "",
     entryPrice: get("entryPrice"),
+    exitPrice: get("exitPrice"),
     slPrice: get("slPrice"),
     tpPrice: get("tpPrice"),
+    qty: isNaN(qty) ? "" : String(qty),
     rr: get("rr") || (get("entryPrice") && get("slPrice") && get("tpPrice") ? calcRR(get("entryPrice"), get("slPrice"), get("tpPrice")) : ""),
     outcome: normalizeOutcome(get("outcome"), pnl),
     pnl: isNaN(pnl) ? "" : pnl.toFixed(2),
@@ -169,14 +197,24 @@ const CSV_PRESETS: Record<string, { label: string; hint: string; mapping: Record
   },
   rithmic: {
     label: "Rithmic",
-    hint: "Apex / TopstepX / Earn2Trade prop firm CSV (Trade Route statement)",
+    hint: "Apex / TopstepX / Earn2Trade prop firm CSV (Rithmic Trade Route statement)",
     mapping: {
       pair:       "Symbol",
-      date:       "Date",
-      bias:       "Side",
+      date:       "Entry Date/Time",       // "Date" fallback handled by auto-detect
+      bias:       "Buy/Sell",
       pnl:        "Net P&L",
-      entryPrice: "Fill Price",
+      entryPrice: "Buy Fill Price",
+      exitPrice:  "Sell Fill Price",
+      qty:        "Qty",
       notes:      "Account",
+    },
+    // Secondary column names used as fallbacks when applying the preset
+    fallbacks: {
+      date:       ["Date", "Entry Time", "Trade Date"],
+      bias:       ["Side", "B/S", "Direction"],
+      entryPrice: ["Fill Price", "Entry Price", "Price"],
+      exitPrice:  ["Exit Price", "Close Price"],
+      qty:        ["Quantity", "Size", "Contracts"],
     },
   },
   tradingview: {
@@ -218,11 +256,19 @@ export function CsvImportPanel({ existingTrades, onImport, onClose, allStrategyN
   const [activePreset, setActivePreset] = useState<string | null>(null);
 
   function applyPreset(presetKey: string) {
-    const preset = CSV_PRESETS[presetKey];
+    const preset = CSV_PRESETS[presetKey] as any;
     if (!preset) return;
     const resolved: Record<string, string> = {};
     for (const [field, col] of Object.entries(preset.mapping)) {
-      const hit = headers.find(h => h.toLowerCase() === col.toLowerCase());
+      // Try primary column name first
+      let hit = headers.find(h => h.toLowerCase() === (col as string).toLowerCase());
+      // Try fallbacks if available
+      if (!hit && preset.fallbacks?.[field]) {
+        for (const fb of preset.fallbacks[field] as string[]) {
+          hit = headers.find(h => h.toLowerCase() === fb.toLowerCase());
+          if (hit) break;
+        }
+      }
       if (hit) resolved[field] = hit;
     }
     setMapping(prev => ({ ...prev, ...resolved }));
@@ -242,7 +288,28 @@ export function CsvImportPanel({ existingTrades, onImport, onClose, allStrategyN
         if (!h.length || !r.length) { setError("CSV looks empty. Double-check the file."); return; }
         setHeaders(h);
         setRows(r);
-        setMapping(autoDetectMapping(h));
+        // Start with auto-detected field mapping
+        const autoMap = autoDetectMapping(h);
+        // Then try to identify broker and overlay preset on top
+        const broker = detectBroker(h);
+        if (broker) {
+          const preset = CSV_PRESETS[broker] as any;
+          const presetMap: Record<string, string> = {};
+          for (const [field, col] of Object.entries(preset.mapping)) {
+            let hit = h.find((hh: string) => hh.toLowerCase() === (col as string).toLowerCase());
+            if (!hit && preset.fallbacks?.[field]) {
+              for (const fb of preset.fallbacks[field] as string[]) {
+                hit = h.find((hh: string) => hh.toLowerCase() === fb.toLowerCase());
+                if (hit) break;
+              }
+            }
+            if (hit) presetMap[field] = hit;
+          }
+          setMapping({ ...autoMap, ...presetMap });
+          setActivePreset(broker);
+        } else {
+          setMapping(autoMap);
+        }
         setError("");
       } catch (err: any) { setError("Couldn't parse CSV: " + (err?.message || "unknown error")); }
     };
@@ -250,17 +317,19 @@ export function CsvImportPanel({ existingTrades, onImport, onClose, allStrategyN
   }
 
   const fields = [
-    { key: "date", label: "Date", required: true },
-    { key: "pair", label: "Pair / Symbol", required: true },
-    { key: "outcome", label: "Outcome", required: false },
-    { key: "pnl", label: "P&L", required: false },
-    { key: "entryPrice", label: "Entry price", required: false },
-    { key: "slPrice", label: "Stop loss", required: false },
-    { key: "tpPrice", label: "Take profit", required: false },
-    { key: "rr", label: "R:R", required: false },
-    { key: "bias", label: "Direction / side", required: false },
-    { key: "session", label: "Session", required: false },
-    { key: "notes", label: "Notes", required: false },
+    { key: "date",       label: "Date",           required: true },
+    { key: "pair",       label: "Pair / Symbol",   required: true },
+    { key: "outcome",    label: "Outcome",          required: false },
+    { key: "pnl",        label: "P&L",              required: false },
+    { key: "entryPrice", label: "Entry price",      required: false },
+    { key: "exitPrice",  label: "Exit price",       required: false },
+    { key: "qty",        label: "Qty / Contracts",  required: false },
+    { key: "slPrice",    label: "Stop loss",        required: false },
+    { key: "tpPrice",    label: "Take profit",      required: false },
+    { key: "rr",         label: "R:R",              required: false },
+    { key: "bias",       label: "Direction / side", required: false },
+    { key: "session",    label: "Session",          required: false },
+    { key: "notes",      label: "Notes",            required: false },
   ];
 
   const existingKeys = new Set(existingTrades.map(tradeKey));

@@ -84,7 +84,8 @@ function persistOff(s: Set<string>): void {
   try { localStorage.setItem(STORAGE_KEY_OFF, Array.from(s).join(",")); } catch { /* noop */ }
 }
 
-// Expose on window so you can flip flags from devtools on any device.
-if (typeof window !== "undefined") {
+// Expose on window so you can flip flags from devtools — dev/localhost only.
+// In production builds Vite dead-code-eliminates this entire block.
+if (import.meta.env.DEV && typeof window !== "undefined") {
   (window as any).tradrFlags = { isFlagOn, enableFlag, disableFlag, listFlags };
 }

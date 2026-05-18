@@ -171,3 +171,92 @@ export function subscribeToFollows(myCode: string, onChange: () => void): () => 
     try { supabase.removeChannel(channel); } catch { /* noop */ }
   };
 }
+
+// ─── V2 FOLLOWS (public.follows table) ───────────────────────────────────────
+// These functions are only called when isFlagOn("newFollows") is true.
+// They shadow the KV functions above — dual-write keeps both in sync.
+
+/** Resolve a member code → auth user UUID via public.profiles. */
+async function uidForCode(code: string): Promise<string | null> {
+  try {
+    const { data } = await supabase
+      .from("profiles")
+      .select("user_id")
+      .eq("member_code", code.trim().toUpperCase())
+      .maybeSingle();
+    return (data as any)?.user_id ?? null;
+  } catch (e) {
+    log.error("follows.uidForCode", e, { code });
+    return null;
+  }
+}
+
+/** Insert a follow edge into public.follows (no-op on conflict). */
+export async function followUserV2(myUid: string, targetCode: string): Promise<void> {
+  const targetUid = await uidForCode(targetCode);
+  if (!targetUid) return; // target not in v2 yet — skip silently
+  try {
+    const { error } = await supabase
+      .from("follows")
+      .upsert({ follower_id: myUid, target_id: targetUid }, { onConflict: "follower_id,target_id", ignoreDuplicates: true });
+    if (error) log.error("follows.followUserV2", error, { targetCode });
+  } catch (e) {
+    log.error("follows.followUserV2", e, { targetCode });
+  }
+}
+
+/** Delete a follow edge from public.follows. */
+export async function unfollowUserV2(myUid: string, targetCode: string): Promise<void> {
+  const targetUid = await uidForCode(targetCode);
+  if (!targetUid) return;
+  try {
+    const { error } = await supabase
+      .from("follows")
+      .delete()
+      .eq("follower_id", myUid)
+      .eq("target_id", targetUid);
+    if (error) log.error("follows.unfollowUserV2", error, { targetCode });
+  } catch (e) {
+    log.error("follows.unfollowUserV2", e, { targetCode });
+  }
+}
+
+export interface FollowGraphV2 {
+  following: string[]; // member_codes I follow
+  followers: string[]; // member_codes following me
+}
+
+/**
+ * Read following + followers from public.follows, returning member_codes.
+ * Falls back gracefully if the table doesn't exist yet.
+ */
+export async function readFollowGraphV2(myUid: string): Promise<FollowGraphV2> {
+  try {
+    const [fwdRes, bwdRes] = await Promise.all([
+      // Who I follow: join profiles on target_id to get their codes
+      supabase
+        .from("follows")
+        .select("profiles!follows_target_id_fkey(member_code)")
+        .eq("follower_id", myUid),
+      // Who follows me: join profiles on follower_id to get their codes
+      supabase
+        .from("follows")
+        .select("profiles!follows_follower_id_fkey(member_code)")
+        .eq("target_id", myUid),
+    ]);
+
+    const following: string[] = (fwdRes.data ?? [])
+      .map((r: any) => r.profiles?.member_code)
+      .filter(Boolean);
+
+    const followers: string[] = (bwdRes.data ?? [])
+      .map((r: any) => r.profiles?.member_code)
+      .filter(Boolean);
+
+    return { following, followers };
+  } catch (e) {
+    log.error("follows.readFollowGraphV2", e, { myUid });
+    return { following: [], followers: [] };
+  }
+}
+

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { supabase } from "./lib/supabase";
 
 const MONO = "'Geist Mono', 'IBM Plex Mono', ui-monospace, monospace";
 const BODY = "'Geist', 'Inter', system-ui, sans-serif";
@@ -19,9 +20,14 @@ export function UpgradeModal({ C, userId, userEmail, stripeCustomerId, onCustome
     setLoading(true);
     setError("");
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error("Not signed in");
       const res = await fetch("/api/stripe-checkout", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({ userId, email: userEmail, stripeCustomerId }),
       });
       if (!res.ok) {

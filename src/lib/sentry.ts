@@ -1,31 +1,40 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 // TRADR · Sentry init
 //
-// No-op until VITE_SENTRY_DSN is set in Vercel environment variables AND
-// @sentry/react is added to package.json dependencies.
+// @sentry/react is an optional peer — imported dynamically so the build
+// succeeds even when the package is not installed locally.
+// Activates only when VITE_SENTRY_DSN is set in Vercel env vars.
 //
-// To enable:
-//   1. npm install @sentry/react
-//   2. Add VITE_SENTRY_DSN=https://...@sentry.io/... in Vercel dashboard
-//   3. Replace this file with a static import of @sentry/react
+// To enable in production:
+//   Vercel -> Settings -> Environment Variables -> VITE_SENTRY_DSN = <your DSN>
+//
+// To enable locally:
+//   echo "VITE_SENTRY_DSN=https://...@sentry.io/..." >> .env.local
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export async function initSentry(): Promise<void> {
+export function initSentry(): void {
   const dsn = import.meta.env.VITE_SENTRY_DSN as string | undefined;
-  if (!dsn) return;
+  if (!dsn) return; // No-op unless DSN is configured
 
-  try {
-    // Dynamically import so the build succeeds without the package installed.
-    const Sentry = await import(/* @vite-ignore */ "@sentry/react");
+  // Dynamic import keeps the build green when @sentry/react is not installed.
+  // Vercel installs it via package.json on every deploy.
+  import("@sentry/react").then((Sentry) => {
     Sentry.init({
       dsn,
       environment: import.meta.env.MODE,
-      tracesSampleRate: 0.1,
+      release: import.meta.env.VITE_APP_VERSION,
+      tracesSampleRate: 0.05,
       replaysSessionSampleRate: 0,
       replaysOnErrorSampleRate: 1.0,
+      integrations: [
+        Sentry.browserTracingIntegration(),
+      ],
+      beforeSend(event: any) {
+        if (window.location.hostname === "localhost") return null;
+        return event;
+      },
     });
-    (window as any).Sentry = Sentry;
-  } catch (e) {
-    // @sentry/react not installed or DSN invalid — silently swallow.
-  }
+  }).catch(() => {
+    // @sentry/react not installed - Sentry disabled, app continues normally
+  });
 }

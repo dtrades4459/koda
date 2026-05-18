@@ -4,7 +4,7 @@ import { onStorageError } from "./lib/storage";
 import { log } from "./lib/log";
 import { isFlagOn } from "./lib/flags";
 import { subscribeToCircle } from "./data/circles";
-import { subscribeToFollows } from "./data/follows";
+import { subscribeToFollows, followUserV2, unfollowUserV2, readFollowGraphV2 } from "./data/follows";
 import { getProfile, upsertProfile } from "./data/profile";
 import {
   tradovateAuth,
@@ -25,6 +25,9 @@ import { FriendsFeed } from "./FriendsFeed";
 import { MiniSparkline, PnLChart, MonthlyPnLChart, WinRateChart, TradeDurationChart, NetDailyPnLChart, DailyCumulativePnLChart, TradeStatCards, AvgStatsCards, DailyInsights, CalendarView, DrawdownCurve, SessionHeatmap, TimeOfDayChart, DayOfWeekChart, MAEMFEChart, generateInsights } from "./charts";
 import { CsvImportPanel } from "./CsvImportPanel";
 import { ProfileModal } from "./ProfileModal";
+import { SettingsScreen } from "./SettingsScreen";
+import { LogTradeScreen } from "./LogTradeScreen";
+import { SESSIONS, BIAS, EMOTION_TAGS, getEmotionTags, EMPTY_TRADE } from "./tradeConstants";
 import { TourOverlay, OnboardingFlow } from "./OnboardingFlow";
 import type { OnboardingData } from "./OnboardingFlow";
 import { UpgradeModal } from "./UpgradeModal";
@@ -72,12 +75,6 @@ function getAllStrategiesMap(): Record<string, StrategyDef> {
 // Seed shared.tsx's stratCode with built-in strategies on module load.
 // (Extra strategies are added later by loadAll / saveCustomStrategies.)
 setSharedStrategiesMap(getAllStrategiesMap());
-const SESSIONS = ["London","New York","Asia","London/NY Overlap","Pre-Market","After Hours"];
-const BIAS = ["Bullish","Bearish","Neutral"];
-const OUTCOMES = ["Win","Loss","Breakeven"];
-// Text reaction markers — no emoji.
-const REACTIONS = ["FIRE","GEM","UP","TARGET","PAIN","MIND"];
-const TABS = ["home","log","history","stats","circles"];
 
 // ─── DEFAULT PROFILE ─────────────────────────────────────────────────────────
 const DEF_PROFILE: Profile = {
@@ -96,28 +93,10 @@ const DEF_PROFILE: Profile = {
   socialLinks: {},
   plan: "free",
 };
+const OUTCOMES = ["Win","Loss","Breakeven"];
+const REACTIONS = ["FIRE","GEM","UP","TARGET","PAIN","MIND"];
+const TABS = ["home","log","history","stats","circles"];
 
-
-
-// ─── EMOTION TAGS ─────────────────────────────────────────────────────────────
-const EMOTION_TAGS = [
-  { id: "disciplined", label: "Disciplined", color: "#00C96B" },
-  { id: "patient",     label: "Patient",     color: "#00C96B" },
-  { id: "fomo",        label: "FOMO",        color: "#FF3D00" },
-  { id: "revenge",     label: "Revenge",     color: "#FF3D00" },
-  { id: "overtrading", label: "Overtrading", color: "#FF3D00" },
-  { id: "hesitated",   label: "Hesitated",   color: "#BCBCB4" },
-  { id: "earlyexit",   label: "Early Exit",  color: "#BCBCB4" },
-  { id: "movedsl",     label: "Moved SL",    color: "#BCBCB4" },
-  { id: "chased",      label: "Chased",      color: "#BCBCB4" },
-];
-
-function getEmotionTags(emotions: string | string[] | undefined): string[] {
-  if (!emotions) return [];
-  if (Array.isArray(emotions)) return emotions;
-  const lower = emotions.toLowerCase();
-  return EMOTION_TAGS.filter(t => lower.includes(t.id) || lower.includes(t.label.toLowerCase())).map(t => t.id);
-}
 
 // ─── THEME ────────────────────────────────────────────────────────────────────
 // TRADR OS design system — OKLCH-based palette, Geist type, glass surfaces.
@@ -196,9 +175,6 @@ function calcRR(e: any, s: any, t: any): string {
   if (!isFinite(rr) || rr > 100) return "";
   return rr.toFixed(2);
 }
-
-// ─── EMPTY TRADE ─────────────────────────────────────────────────────────────
-const EMPTY_TRADE: Partial<Trade> = { date: new Date().toISOString().split("T")[0], pair: "", session: "", bias: "", strategy: "", setup: "", entryPrice: "", slPrice: "", tpPrice: "", rr: "", outcome: "", pnl: "", pnlDollar: "", entryTime: "", exitTime: "", direction: "", notes: "", emotions: "", screenshot: "", mae: "", mfe: "", ruleAdherence: null, comments: [], reactions: {} };
 
 // ─── RESPONSIVE HOOK ─────────────────────────────────────────────────────────
 // Breakpoint at 900px matches the login page. Returns true on desktop/tablet-landscape.
@@ -689,6 +665,15 @@ export default function Tradr({ user }: { user?: any } = {}) {
         }
         if (legacyFr) {
           try { (JSON.parse(legacyFr.value) || []).forEach((c: string) => followersSet.add(c)); } catch {}
+        }
+
+        // ── V2 merge: read from public.follows when flag is on ────────────
+        if (isFlagOn("newFollows") && user?.id) {
+          try {
+            const v2Graph = await readFollowGraphV2(user.id);
+            v2Graph.following.forEach((c: string) => followingSet.add(c));
+            v2Graph.followers.forEach((c: string) => followersSet.add(c));
+          } catch (e) { log.error("loadAll.follows.v2", e); }
         }
 
         setFollowing(Array.from(followingSet));
@@ -1590,8 +1575,13 @@ export default function Tradr({ user }: { user?: any } = {}) {
     // Optimistic local state
     setFollowing([...following, target]);
     const edge = { follower: mc, target, at: new Date().toISOString() };
+    // ── Legacy KV write (always) ──────────────────────────────────────────────
     try { await (window as any).storage.set(`tradr_follow_${mc}_${target}`, JSON.stringify(edge), true); } catch {}
     try { await (window as any).storage.set(`tradr_follower_${target}_${mc}`, JSON.stringify(edge), true); } catch {}
+    // ── V2 dual-write (behind flag) ───────────────────────────────────────────
+    if (isFlagOn("newFollows") && profile.uid) {
+      followUserV2(profile.uid, target).catch(e => log.error("followUser.v2", e));
+    }
     showToast("Following");
   }
   async function unfollowUser(code: string) {
@@ -1599,9 +1589,13 @@ export default function Tradr({ user }: { user?: any } = {}) {
     if (!target) return;
     const mc = getMyCode();
     setFollowing(following.filter(c => c !== target));
-    // Delete both edges. We own both, so RLS lets us through.
+    // ── Legacy KV delete (always) ─────────────────────────────────────────────
     try { await (window as any).storage.delete(`tradr_follow_${mc}_${target}`, true); } catch {}
     try { await (window as any).storage.delete(`tradr_follower_${target}_${mc}`, true); } catch {}
+    // ── V2 dual-write (behind flag) ───────────────────────────────────────────
+    if (isFlagOn("newFollows") && profile.uid) {
+      unfollowUserV2(profile.uid, target).catch(e => log.error("unfollowUser.v2", e));
+    }
     showToast("Unfollowed");
   }
   // ── Data export ──────────────────────────────────────────────────────────
@@ -2628,8 +2622,14 @@ export default function Tradr({ user }: { user?: any } = {}) {
                           <button
                             onClick={async () => {
                               try {
+                                const { data: { session: _sess } } = await supabase.auth.getSession();
+                                if (!_sess?.access_token) throw new Error("Not signed in");
                                 const r = await fetch("/api/stripe-portal", {
-                                  method: "POST", headers: { "Content-Type": "application/json" },
+                                  method: "POST",
+                                  headers: {
+                                    "Content-Type": "application/json",
+                                    "Authorization": `Bearer ${_sess.access_token}`,
+                                  },
                                   body: JSON.stringify({ stripeCustomerId: profile.stripeCustomerId }),
                                 });
                                 const { url } = await r.json();
@@ -2928,358 +2928,51 @@ export default function Tradr({ user }: { user?: any } = {}) {
 
               {/* SETTINGS */}
               {homeSection === "settings" && (
-                <div style={{ marginTop: "clamp(24px, 5vw, 40px)", display: "flex", flexDirection: "column", gap: "0" }}>
-
-                  {/* ── User card ── */}
-                  <div style={{ margin: "0 0 20px", borderRadius: "22px", padding: "18px", background: C.panel, border: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: "14px" }}>
-                    <div onClick={() => document.getElementById("avatarInput")?.click()} style={{ cursor: "pointer" }}>
-                      <AvatarCircle name={profile.name} avatar={profileDraft.avatar || profile.avatar} size={50} color={C.text} C={C} />
-                    </div>
-                    <input id="avatarInput" type="file" accept="image/jpeg,image/png" onChange={handleAvatarUpload} style={{ display: "none" }} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontFamily: DISPLAY, fontSize: "15px", fontWeight: 600, color: C.text }}>{profile.name || "—"}</div>
-                      <div style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, marginTop: "2px" }}>
-                        {profile.handle || "@—"} · {profile.plan === "pro" || profile.plan === "elite" ? "Pro plan" : "Free plan"}
-                      </div>
-                      {(profile.plan === "pro" || profile.plan === "elite") && (
-                        <div style={{ marginTop: "6px", display: "inline-flex", padding: "2px 8px", borderRadius: "999px", background: (C as any).liveSoft ?? "rgba(100,220,180,0.08)", color: (C as any).live ?? C.green, fontFamily: MONO, fontSize: "9px", fontWeight: 700, letterSpacing: "0.12em", border: `1px solid color-mix(in oklch, ${(C as any).live ?? C.green} 30%, transparent)` }}>● PRO PLAN</div>
-                      )}
-                    </div>
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke={C.muted} strokeWidth="1.3" strokeLinecap="round"/></svg>
-                  </div>
-
-                  {/* ── Account section ── */}
-                  <div style={{ padding: "0 2px 8px", fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.16em", textTransform: "uppercase" }}>Account</div>
-                  <div style={{ borderRadius: "22px", background: C.panel, border: `1px solid ${C.border}`, overflow: "hidden", marginBottom: "4px" }}>
-                    {/* Edit profile row */}
-                    <div onClick={() => { setProfileDraft({ ...profile }); setEditingProfile(!editingProfile); }} style={{ display: "flex", alignItems: "center", gap: "14px", padding: "14px 18px", borderBottom: `1px solid ${C.border}`, cursor: "pointer" }}>
-                      <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: (C as any).accentSoft ?? C.panel, border: `1px solid ${C.border2}`, color: C.accent, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M10 10a3 3 0 1 0 0-6a3 3 0 0 0 0 6zM4 17c0-3 3-5 6-5s6 2 6 5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontFamily: DISPLAY, fontSize: "14px", fontWeight: 600, color: C.text }}>Edit profile</div>
-                        <div style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, marginTop: "2px" }}>Name, handle, avatar, bio</div>
-                      </div>
-                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d={editingProfile ? "M3 9l4-4 4 4" : "M5 3l4 4-4 4"} stroke={C.muted} strokeWidth="1.3" strokeLinecap="round"/></svg>
-                    </div>
-                    {/* Inline edit form */}
-                    {editingProfile && (
-                      <div style={{ padding: "18px", borderBottom: `1px solid ${C.border}`, display: "flex", flexDirection: "column", gap: "14px", background: C.panel }}>
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
-                          <div><label style={lbl}>Name</label><input value={profileDraft.name} onChange={e => setProfileDraft({ ...profileDraft, name: e.target.value })} style={inp} /></div>
-                          <div><label style={lbl}>Handle</label><input value={profileDraft.handle} onChange={e => setProfileDraft({ ...profileDraft, handle: e.target.value })} style={inp} /></div>
-                        </div>
-                        <div><label style={lbl}>Bio</label><textarea value={profileDraft.bio} onChange={e => setProfileDraft({ ...profileDraft, bio: e.target.value })} rows={2} style={{ ...inp, resize: "vertical", lineHeight: 1.6 }} /></div>
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
-                          <div><label style={lbl}>Broker</label><input value={profileDraft.broker} onChange={e => setProfileDraft({ ...profileDraft, broker: e.target.value })} placeholder="IC Markets" style={inp} /></div>
-                          <div><label style={lbl}>Timezone</label><input value={profileDraft.timezone} onChange={e => setProfileDraft({ ...profileDraft, timezone: e.target.value })} style={inp} /></div>
-                        </div>
-                        <div><label style={lbl}>Circle alias <span style={{ color: C.dim }}>(3–12 chars)</span></label><input value={profileDraft.alias || ""} onChange={e => { const v = e.target.value.replace(/[^a-zA-Z0-9]/g, "").toUpperCase().slice(0, 12); setProfileDraft({ ...profileDraft, alias: v }); }} placeholder="e.g. DYLON-PRO" style={{ ...inp, fontFamily: MONO, letterSpacing: "0.08em" }} /></div>
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
-                          <div><label style={lbl}>Target R:R</label><input type="number" value={profileDraft.targetRR} onChange={e => setProfileDraft({ ...profileDraft, targetRR: e.target.value })} style={inp} /></div>
-                          <div><label style={lbl}>Max Trades/Day</label><input type="number" value={profileDraft.maxTradesPerDay} onChange={e => setProfileDraft({ ...profileDraft, maxTradesPerDay: e.target.value })} style={inp} /></div>
-                          <div><label style={lbl}>Max Daily Loss (R)</label><input type="number" step="0.5" value={profileDraft.maxDailyLoss || ""} onChange={e => setProfileDraft({ ...profileDraft, maxDailyLoss: e.target.value })} placeholder="e.g. 3" style={inp} /></div>
-                        </div>
-                        <button onClick={async () => {
-                          const name = (profileDraft.name || "").trim();
-                          const handle = (profileDraft.handle || "").trim();
-                          if (!name) { showToast("Name can't be empty"); return; }
-                          if (!handle) { showToast("Handle can't be empty"); return; }
-                          const normNew = normaliseHandle(handle);
-                          const normOld = normaliseHandle(profile.handle || "");
-                          if (normNew !== normOld) {
-                            const taken = await isHandleTaken(handle);
-                            if (taken) { showToast(`@${normNew} is already taken`); return; }
-                          }
-                          await saveProfile({ ...profileDraft, name, handle });
-                          setEditingProfile(false);
-                          showToast("Profile saved");
-                        }} style={{
-                          display: "flex", alignItems: "center", justifyContent: "space-between",
-                          background: C.text, color: C.bg, border: "none", borderRadius: "14px",
-                          padding: "5px 6px 5px 20px", fontSize: "14px", fontWeight: 600,
-                          cursor: "pointer", width: "100%", fontFamily: BODY, marginTop: "4px",
-                        }}>
-                          <span>Save profile</span>
-                          <span style={{ width: "36px", height: "36px", borderRadius: "999px", background: (C as any).live ?? C.green, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="#0A0A0A" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                          </span>
-                        </button>
-                      </div>
-                    )}
-                    {/* Plan & Billing */}
-                    <div onClick={() => { if (profile.plan !== "pro" && profile.plan !== "elite") setShowUpgrade(true); }} style={{ display: "flex", alignItems: "center", gap: "14px", padding: "14px 18px", borderBottom: `1px solid ${C.border}`, cursor: "pointer" }}>
-                      <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: `color-mix(in oklch, ${(C as any).live ?? C.green} 14%, transparent)`, border: `1px solid ${C.border2}`, color: (C as any).live ?? C.green, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M3 5h14v10H3zM3 8h14M6 12h3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontFamily: DISPLAY, fontSize: "14px", fontWeight: 600, color: C.text }}>Plan & Billing</div>
-                        <div style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, marginTop: "2px" }}>
-                          {profile.plan === "pro" || profile.plan === "elite" ? "Pro · $24.99/mo" : "Free plan · Upgrade to unlock all"}
-                        </div>
-                      </div>
-                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke={C.muted} strokeWidth="1.3" strokeLinecap="round"/></svg>
-                    </div>
-                    {/* Appearance / Dark mode */}
-                    <div style={{ display: "flex", alignItems: "center", gap: "14px", padding: "14px 18px" }}>
-                      <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: (C as any).accentSoft ?? C.panel, border: `1px solid ${C.border2}`, color: C.accent, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M10 2v3M10 15v3M3 10h3M14 10h3M5.5 5.5l-2-2M14.5 5.5l2-2M5.5 14.5l-2 2M14.5 14.5l2 2M10 7a3 3 0 1 1 0 6 3 3 0 0 1 0-6z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontFamily: DISPLAY, fontSize: "14px", fontWeight: 600, color: C.text }}>Appearance</div>
-                        <div style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, marginTop: "2px" }}>Dark mode</div>
-                      </div>
-                      <button onClick={toggleDark} style={{ width: "38px", height: "22px", borderRadius: "999px", border: "none", cursor: "pointer", background: darkMode ? (C as any).live ?? C.green : C.border2, position: "relative", transition: "background 0.2s", boxShadow: darkMode ? `0 0 0 3px color-mix(in oklch, ${(C as any).live ?? C.green} 22%, transparent)` : "none", flexShrink: 0 }}>
-                        <div style={{ position: "absolute", top: "2px", left: darkMode ? "18px" : "2px", width: "18px", height: "18px", borderRadius: "50%", background: "#fff", boxShadow: "0 1px 2px rgba(0,0,0,0.2)", transition: "left 0.2s" }} />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* ── Text size ── */}
-                  <div style={{ margin: "16px 0 4px", padding: "0 2px 8px", fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.16em", textTransform: "uppercase" }}>Text Size</div>
-                  <div style={{ borderRadius: "16px", background: C.panel, border: `1px solid ${C.border}`, padding: "14px 16px", marginBottom: "4px" }}>
-                    <div style={{ display: "flex", gap: "8px" }}>
-                      {([["S", 0.85], ["M", 1.0], ["L", 1.15], ["XL", 1.3]] as [string, number][]).map(([label, scale]) => (
-                        <button key={label} onClick={() => setFontScale(scale)} style={{ flex: 1, padding: "10px 4px", border: `1px solid ${fontScale === scale ? C.text : C.border2}`, borderRadius: "10px", background: fontScale === scale ? C.text : "transparent", color: fontScale === scale ? C.bg : C.muted, fontSize: label === "S" ? "11px" : label === "M" ? "13px" : label === "L" ? "15px" : "17px", fontFamily: BODY, fontWeight: 600, cursor: "pointer", transition: "all 0.15s" }}>{label}</button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* ── Privacy & Data ── */}
-                  <div style={{ margin: "16px 0 8px", padding: "0 2px", fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.16em", textTransform: "uppercase" }}>Privacy & Data</div>
-                  <div style={{ borderRadius: "22px", background: C.panel, border: `1px solid ${C.border}`, overflow: "hidden", marginBottom: "4px" }}>
-                    {/* Public trades toggle */}
-                    <div style={{ display: "flex", alignItems: "center", gap: "14px", padding: "14px 18px", borderBottom: `1px solid ${C.border}` }}>
-                      <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: `color-mix(in oklch, ${C.green} 12%, transparent)`, border: `1px solid ${C.border2}`, color: C.green, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M10 3l6 3v4c0 4-2.5 6.5-6 7-3.5-.5-6-3-6-7V6z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontFamily: DISPLAY, fontSize: "14px", fontWeight: 600, color: C.text }}>Public trades</div>
-                        <div style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, marginTop: "2px" }}>Visible on your profile</div>
-                      </div>
-                      <button onClick={() => { const next = !profile.publicTrades; saveProfile({ ...profile, publicTrades: next }); }} style={{ width: "38px", height: "22px", borderRadius: "999px", border: "none", cursor: "pointer", background: profile.publicTrades ? (C as any).live ?? C.green : C.border2, position: "relative", transition: "background 0.2s", flexShrink: 0 }}>
-                        <div style={{ position: "absolute", top: "2px", left: profile.publicTrades ? "18px" : "2px", width: "18px", height: "18px", borderRadius: "50%", background: "#fff", boxShadow: "0 1px 2px rgba(0,0,0,0.2)", transition: "left 0.2s" }} />
-                      </button>
-                    </div>
-                    {/* Copy mentor link */}
-                    {profile.publicTrades && (
-                      <div style={{ display: "flex", alignItems: "center", gap: "14px", padding: "14px 18px", borderBottom: `1px solid ${C.border}` }}>
-                        <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: (C as any).accentSoft ?? C.panel, border: `1px solid ${C.border2}`, color: C.accent, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                          <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M8 4H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4M12 2h6v6M10 10L18 2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                        </div>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontFamily: DISPLAY, fontSize: "14px", fontWeight: 600, color: C.text }}>Share with mentor</div>
-                          <div style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, marginTop: "2px" }}>Copy your public profile link</div>
-                        </div>
-                        <button onClick={() => { const handle = (profile.handle || "").replace(/^@/, ""); const url = `https://tradrjournal.xyz/@${handle}`; navigator.clipboard?.writeText(url).then(() => showToast("Link copied!")).catch(() => showToast("Link: " + url)); }} style={{ background: "transparent", border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "5px 12px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.06em", color: C.muted }}>Copy</button>
-                      </div>
-                    )}
-                    {/* Export CSV */}
-                    <div onClick={() => { if (isFlagOn("paywall") && profile.plan !== "pro" && profile.plan !== "elite") { setShowUpgrade(true); return; } exportCSV(); }} style={{ display: "flex", alignItems: "center", gap: "14px", padding: "14px 18px", borderBottom: `1px solid ${C.border}`, cursor: "pointer" }}>
-                      <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: (C as any).accentSoft ?? C.panel, border: `1px solid ${C.border2}`, color: C.accent, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M10 3v10M6 9l4 4 4-4M3 16h14" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontFamily: DISPLAY, fontSize: "14px", fontWeight: 600, color: C.text }}>Data export</div>
-                        <div style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, marginTop: "2px" }}>CSV + JSON of all trades</div>
-                      </div>
-                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke={C.muted} strokeWidth="1.3" strokeLinecap="round"/></svg>
-                    </div>
-                    {/* Delete account */}
-                    <div style={{ padding: "14px 18px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-                        <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: `color-mix(in oklch, ${C.red} 12%, transparent)`, border: `1px solid ${C.border2}`, color: C.red, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                          <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M5 5h10v10H5zM8 8l4 4M12 8l-4 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                        </div>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontFamily: DISPLAY, fontSize: "14px", fontWeight: 600, color: C.red }}>Delete account</div>
-                          <div style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, marginTop: "2px" }}>Permanent · cannot be undone</div>
-                        </div>
-                      </div>
-                      <div style={{ marginTop: "12px", display: "flex", flexDirection: "column", gap: "8px" }}>
-                        <input value={deleteConfirm} onChange={e => setDeleteConfirm(e.target.value)} placeholder="Type DELETE to confirm" style={{ padding: "11px 14px", background: "transparent", border: `1px solid ${deleteConfirm.toUpperCase() === "DELETE" ? C.red : C.border2}`, borderRadius: "10px", color: C.text, fontFamily: MONO, fontSize: "12px", letterSpacing: "0.04em", outline: "none" }} />
-                        <button onClick={deleteAccount} disabled={deletingAccount || deleteConfirm.toUpperCase() !== "DELETE"} style={{ padding: "11px", border: `1px solid ${deleteConfirm.toUpperCase() === "DELETE" ? C.red : C.border2}`, borderRadius: "10px", background: "transparent", color: deleteConfirm.toUpperCase() === "DELETE" ? C.red : C.muted, cursor: deleteConfirm.toUpperCase() === "DELETE" ? "pointer" : "not-allowed", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", opacity: deletingAccount ? 0.6 : 1, transition: "all 0.2s" }}>
-                          {deletingAccount ? "Deleting…" : "Delete My Account"}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* ── Support ── */}
-                  <div style={{ margin: "16px 0 8px", padding: "0 2px", fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.16em", textTransform: "uppercase" }}>Support</div>
-                  <div style={{ borderRadius: "22px", background: C.panel, border: `1px solid ${C.border}`, overflow: "hidden", marginBottom: "4px" }}>
-                    <div onClick={() => setFeedbackOpen(true)} style={{ display: "flex", alignItems: "center", gap: "14px", padding: "14px 18px", borderBottom: `1px solid ${C.border}`, cursor: "pointer" }}>
-                      <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: (C as any).accentSoft ?? C.panel, border: `1px solid ${C.border2}`, color: C.accent, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M10 4a6 6 0 1 1 0 12a6 6 0 0 1 0-12zM10 7v4M10 14v.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontFamily: DISPLAY, fontSize: "14px", fontWeight: 600, color: C.text }}>Send feedback</div>
-                        <div style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, marginTop: "2px" }}>Direct to founder · 24h reply</div>
-                      </div>
-                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke={C.muted} strokeWidth="1.3" strokeLinecap="round"/></svg>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "14px", padding: "14px 18px" }}>
-                      <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: (C as any).accentSoft ?? C.panel, border: `1px solid ${C.border2}`, color: C.accent, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M10 4l1.5 5h5l-4 3 1.5 5-4-3-4 3 1.5-5-4-3h5z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontFamily: DISPLAY, fontSize: "14px", fontWeight: 600, color: C.text }}>Rate TRADR OS</div>
-                        <div style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, marginTop: "2px" }}>App Store</div>
-                      </div>
-                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke={C.muted} strokeWidth="1.3" strokeLinecap="round"/></svg>
-                    </div>
-                  </div>
-
-                  {/* Footer */}
-                  <div style={{ textAlign: "center", padding: "24px 0 8px", fontFamily: MONO, fontSize: "10px", color: C.dim, letterSpacing: "0.12em" }}>
-                    TRADR OS v1.0 · {new Date().getFullYear()}
-                  </div>
-                  <div style={{ display: "flex", gap: "16px", justifyContent: "center", paddingBottom: "8px" }}>
-                    <a href="/privacy.html" target="_blank" rel="noopener" style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.08em", textDecoration: "none" }}>Privacy</a>
-                    <a href="/terms.html" target="_blank" rel="noopener" style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.08em", textDecoration: "none" }}>Terms</a>
-                  </div>
-                </div>
+                <SettingsScreen
+                  C={C}
+                  profile={profile}
+                  profileDraft={profileDraft}
+                  setProfileDraft={setProfileDraft}
+                  editingProfile={editingProfile}
+                  setEditingProfile={setEditingProfile}
+                  darkMode={darkMode}
+                  toggleDark={toggleDark}
+                  fontScale={fontScale}
+                  setFontScale={setFontScale}
+                  deleteConfirm={deleteConfirm}
+                  setDeleteConfirm={setDeleteConfirm}
+                  deletingAccount={deletingAccount}
+                  handleAvatarUpload={handleAvatarUpload}
+                  normaliseHandle={normaliseHandle}
+                  isHandleTaken={isHandleTaken}
+                  saveProfile={saveProfile}
+                  showToast={showToast}
+                  exportCSV={exportCSV}
+                  deleteAccount={deleteAccount}
+                  setShowUpgrade={setShowUpgrade}
+                  setFeedbackOpen={setFeedbackOpen}
+                  isFlagOn={isFlagOn}
+                />
               )}
             </div>
           )}
 
           {/* ══════════════════════════ LOG TRADE ══════════════════════════ */}
           {view === "log" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "18px", marginTop: "clamp(16px, 4vw, 28px)" }}>
-              <SectionKicker label={editId ? "EDIT TRADE" : "NEW TRADE"} C={C} />
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-                <div><label style={lbl}>Date</label><input type="date" name="date" value={form.date} onChange={handleChange} style={inp} /></div>
-                <div><label style={lbl}>Pair / Instrument</label><input name="pair" value={form.pair} onChange={handleChange} placeholder="EURUSD" style={inp} /></div>
-              </div>
-              <div>
-                <label style={lbl}>Strategy</label>
-                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "8px" }}>
-                  {allStrategyNames.map((s: string) => <StrategyPill key={s} name={s} selected={form.strategy === s} onClick={() => setForm((f: any) => ({ ...f, strategy: form.strategy === s ? "" : s, setup: "" }))} C={C} />)}
-                </div>
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-                <div><label style={lbl}>Session</label><select name="session" value={form.session} onChange={handleChange} style={sel}><option value="">Select</option>{SESSIONS.map(s => <option key={s}>{s}</option>)}</select></div>
-                <div><label style={lbl}>Bias</label><select name="bias" value={form.bias} onChange={handleChange} style={sel}><option value="">Select</option>{BIAS.map(b => <option key={b}>{b}</option>)}</select></div>
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px" }}>
-                <div><label style={lbl}>Entry Time</label><input type="time" name="entryTime" value={form.entryTime || ""} onChange={handleChange} style={inp} /></div>
-                <div><label style={lbl}>Exit Time</label><input type="time" name="exitTime" value={form.exitTime || ""} onChange={handleChange} style={inp} /></div>
-                <div><label style={lbl}>Direction</label><select name="direction" value={form.direction || ""} onChange={handleChange} style={sel}><option value="">Select</option><option>Long</option><option>Short</option></select></div>
-              </div>
-              <div>
-                <label style={lbl}>Setup {form.strategy && <span style={{ color: C.muted, marginLeft: "6px" }}>· {stratCode(form.strategy)}</span>}</label>
-                <select name="setup" value={form.setup} onChange={handleChange} style={sel}>
-                  <option value="">Select setup</option>
-                  {(form.strategy ? _allStratMap[form.strategy]?.setups || [] : allSetups).map((s: string) => <option key={s}>{s}</option>)}
-                </select>
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))", gap: "12px" }}>
-                <div><label style={lbl}>Entry</label><input type="number" name="entryPrice" value={form.entryPrice} onChange={handleChange} placeholder="0.00" style={inp} /></div>
-                <div><label style={lbl}>Stop Loss</label><input type="number" name="slPrice" value={form.slPrice} onChange={handleChange} placeholder="0.00" style={inp} /></div>
-                <div><label style={lbl}>Take Profit</label><input type="number" name="tpPrice" value={form.tpPrice} onChange={handleChange} placeholder="0.00" style={inp} /></div>
-              </div>
-              {form.rr && (
-                <div style={{ borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}`, padding: "14px 0", display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                  <span style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase" }}>Calculated R:R</span>
-                  <span style={{ fontFamily: DISPLAY, fontSize: "22px", color: C.text, fontWeight: 500, letterSpacing: "-0.02em" }}>{form.rr}R</span>
-                </div>
-              )}
-              {/* Outcome — SegBtn style */}
-              <div>
-                <label style={lbl}>Outcome</label>
-                <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
-                  {(["Win", "Loss", "Breakeven"] as const).map(o => {
-                    const active = form.outcome === o;
-                    const col = o === "Win" ? C.green : o === "Loss" ? C.red : C.muted;
-                    return (
-                      <button key={o} type="button"
-                        onClick={() => setForm((f: any) => ({ ...f, outcome: active ? "" : o }))}
-                        style={{
-                          flex: 1, padding: "12px 8px", borderRadius: "12px", cursor: "pointer",
-                          fontFamily: MONO, fontSize: "10px", letterSpacing: "0.08em", textTransform: "uppercase",
-                          border: `1px solid ${active ? col : C.border2}`,
-                          background: active ? `color-mix(in oklch, ${col} 16%, transparent)` : "transparent",
-                          color: active ? col : C.muted, fontWeight: active ? 600 : 400,
-                          transition: "all 0.15s",
-                        }}>{o === "Breakeven" ? "BE" : o}</button>
-                    );
-                  })}
-                </div>
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-                <div><label style={lbl}>P&L (R)</label><input type="number" name="pnl" value={form.pnl} onChange={handleChange} placeholder="+2.5 or -1" style={inp} /></div>
-                <div><label style={lbl}>P&L ($)</label><input type="number" name="pnlDollar" value={form.pnlDollar} onChange={handleChange} placeholder="e.g. +320" style={inp} /></div>
-              </div>
-              <div><label style={lbl}>Notes</label><textarea name="notes" value={form.notes} onChange={handleChange} placeholder="What did price do? Why did you enter?" rows={3} style={{ ...inp, resize: "vertical", lineHeight: 1.6 }} /></div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
-                <div>
-                  <label style={lbl}>MAE — Max adverse excursion <span style={{ color: C.dim }}>(R)</span></label>
-                  <input name="mae" type="number" step="0.01" value={form.mae || ""} onChange={handleChange} placeholder="e.g. 0.8" style={inp} />
-                </div>
-                <div>
-                  <label style={lbl}>MFE — Max favourable excursion <span style={{ color: C.dim }}>(R)</span></label>
-                  <input name="mfe" type="number" step="0.01" value={form.mfe || ""} onChange={handleChange} placeholder="e.g. 3.2" style={inp} />
-                </div>
-              </div>
-              <div>
-                <label style={lbl}>Emotional State</label>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginTop: "8px" }}>
-                  {EMOTION_TAGS.map(tag => {
-                    const active = getEmotionTags(form.emotions).includes(tag.id);
-                    return (
-                      <button key={tag.id} type="button"
-                        onClick={() => {
-                          const current = getEmotionTags(form.emotions);
-                          const next = active ? current.filter(t => t !== tag.id) : [...current, tag.id];
-                          setForm((f: any) => ({ ...f, emotions: next }));
-                        }}
-                        style={{ background: active ? tag.color + "22" : "transparent", color: active ? tag.color : C.muted, border: `1px solid ${active ? tag.color : C.border2}`, borderRadius: "999px", padding: "6px 14px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.08em", textTransform: "uppercase", transition: "all 0.15s ease" }}>
-                        {tag.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-              <div>
-                <label style={lbl}>Screenshot</label>
-                {form.screenshot ? (
-                  <div style={{ position: "relative", marginTop: "6px" }}>
-                    <img src={form.screenshot} alt="screenshot" style={{ width: "100%", border: `1px solid ${C.border}`, display: "block", maxHeight: "200px", objectFit: "cover" }} />
-                    <button onClick={() => removeScreenshot(null)}
-                      style={{ position: "absolute", top: "8px", right: "8px", background: C.bg, border: `1px solid ${C.border2}`, borderRadius: "999px", color: C.text, padding: "4px 10px", cursor: "pointer", fontSize: "10px", fontFamily: MONO, letterSpacing: "0.08em" }}>REMOVE</button>
-                  </div>
-                ) : (
-                  <label htmlFor="ssUpload" style={{ display: "flex", alignItems: "center", justifyContent: "center", border: `1px dashed ${C.border2}`, padding: "20px", cursor: "pointer", color: C.muted, fontSize: "12px", fontFamily: MONO, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: "8px" }}>
-                    Upload screenshot
-                    <input id="ssUpload" type="file" accept="image/jpeg,image/png" onChange={e => handleScreenshotUpload(e, null)} />
-                  </label>
-                )}
-              </div>
-              {/* TealArrowBtn save */}
-              {(() => {
-                const enabled = !!(form.pair && form.date && form.outcome && !savingTrade);
-                const live = (C as any).live ?? "oklch(0.84 0.14 175)";
-                return (
-                  <button onClick={submitTrade} disabled={savingTrade || !(form.pair && form.date && form.outcome)}
-                    style={{
-                      display: "flex", alignItems: "center", justifyContent: "space-between",
-                      background: enabled ? C.text : C.panel2,
-                      color: enabled ? C.bg : C.muted, border: "none", borderRadius: "14px",
-                      padding: "5px 6px 5px 20px", fontSize: "14px", fontWeight: 600,
-                      cursor: enabled ? "pointer" : "not-allowed", width: "100%",
-                      fontFamily: BODY, marginTop: "8px", opacity: enabled ? 1 : 0.6, transition: "opacity 0.2s",
-                    }}>
-                    <span>{savingTrade ? "Saving…" : editId ? "Update trade" : "Save trade"}</span>
-                    <span style={{ width: "36px", height: "36px", borderRadius: "999px", background: enabled ? live : C.muted, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                        <path d="M3 8h10M9 4l4 4-4 4" stroke={enabled ? "#0A0A0A" : C.bg} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </span>
-                  </button>
-                );
-              })()}
-              {editId && <button onClick={() => { setForm(EMPTY_TRADE); setEditId(null); setView("history"); }} style={pillGhost}>CANCEL EDIT</button>}
-            </div>
+            <LogTradeScreen
+              C={C}
+              form={form} setForm={setForm}
+              editId={editId} setEditId={setEditId}
+              handleChange={handleChange}
+              handleScreenshotUpload={handleScreenshotUpload}
+              removeScreenshot={removeScreenshot}
+              submitTrade={submitTrade}
+              savingTrade={savingTrade}
+              allStrategyNames={allStrategyNames}
+              _allStratMap={_allStratMap}
+              allSetups={allSetups}
+              setView={setView}
+            />
           )}
 
           {/* ══════════════════════════ HISTORY ══════════════════════════ */}

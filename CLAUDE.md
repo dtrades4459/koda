@@ -287,7 +287,7 @@ On success: sets `feedbackSent(true)`, button turns green and shows "Sent! ✓",
 ### Competitive roadmap (from `COMPETITIVE_ANALYSIS.md` — May 2026)
 
 Key competitors: TraderSync ($30–80/mo), Tradezella ($29–89/mo), Edgewonk ($197/yr), TradesViz ($0–30/mo).
-TRADR target pricing: Free tier · Pro $5.99/mo · Elite $9.99/mo.
+TRADR target pricing: Free tier · Pro $24.99/mo.
 
 **Sprint 1 — Close the core gap**
 - [ ] Wire Tradovate auto-import UI — `api/tradovate.ts` proxy is already built; need account connect screen + fill → trade sync

@@ -1,0 +1,78 @@
+# CodeRabbit configuration for TRADR OS
+# https://coderabbit.ai/docs/configure
+
+language: "en-US"
+tone_instructions: "Be direct and concise. Focus on correctness, security, and trader-facing impact. Skip praise."
+early_access: false
+
+reviews:
+  profile: "chill"         # assertive | chill
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: false
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - main
+
+  path_filters:
+    - "!**/*.md"
+    - "!**/uploads/**"
+    - "!**/.claude/**"
+
+  path_instructions:
+    - path: "api/**"
+      instructions: |
+        This is a Vercel serverless API route. Check for:
+        - JWT auth via supabase.auth.getUser(token) on every non-OPTIONS route
+        - ALLOWED_ORIGINS Set used in cors() — never wildcard
+        - export const config = { runtime: "nodejs" } (NOT nodejs20.x)
+        - No credentials, tokens, or secrets in response bodies or logs
+        - Rate limiting for public endpoints (see api/feedback.ts pattern)
+
+    - path: "src/TRADR.tsx"
+      instructions: |
+        This is a 4000+ line monolith. Flag any new inline business logic that belongs
+        in src/data/ or a new component file. Watch for:
+        - Feature flag gating: new v2 paths must be behind isFlagOn("flagName")
+        - Dual-write pattern: KV write always, v2 write only when flag on
+        - log.error() instead of bare console.error/console.log
+        - No new state variables for features that already have a dedicated component
+
+    - path: "src/data/**"
+      instructions: |
+        Data layer modules. Check:
+        - All Supabase calls have .maybeSingle() not .single() (single() throws on no row)
+        - Errors logged via log.error(), never swallowed silently
+        - v2 functions use supabase client directly, not window.storage
+        - RLS is relied upon — never manually filter by uid client-side as the only guard
+
+    - path: "supabase/migrations/**"
+      instructions: |
+        SQL migrations. Must be idempotent (IF NOT EXISTS / OR REPLACE / drop if exists + recreate).
+        Check RLS: every table needs enable row level security + at least one policy.
+        Check indexes on foreign keys and prefix-query columns.
+        Never ALTER a column type that has live data without a migration strategy comment.
+
+    - path: "src/lib/flags.ts"
+      instructions: |
+        Feature flag system. window.tradrFlags must only be exposed under
+        import.meta.env.DEV — Vite dead-code-eliminates it in production.
+        New flags added to DEFAULT_ON must have a comment explaining what they gate
+        and when they'll be cleaned up.
+
+    - path: "src/CsvImportPanel.tsx"
+      instructions: |
+        CSV import panel. Check:
+        - detectBroker() covers any newly added broker preset
+        - rowToTrade() maps all fields in CSV_PRESETS including exitPrice and qty
+        - Dedup fingerprint in tradeKey() includes exitPrice if present
+        - No alert() or window.confirm() — use inline error state
+
+  abort_on_close: true
+
+chat:
+  auto_reply: true
