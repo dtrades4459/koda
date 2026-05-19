@@ -1775,7 +1775,7 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
     const alreadyReacted = myFeedReactions.has(key);
     setMyFeedReactions(prev => {
       const next = new Set(prev);
-      alreadyReacted ? next.delete(key) : next.add(key);
+      if (alreadyReacted) { next.delete(key); } else { next.add(key); }
       return next;
     });
     setFriendFeed((p: any) => p.map((item: any) => {
@@ -2047,22 +2047,7 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
             </div>
           </div>
           {/* Desktop nav is in the sidebar — masthead just shows the logo/handle */}
-          {false && (
-            <nav style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "20px", borderTop: `0.5px solid ${C.border}`, paddingTop: "12px", paddingBottom: "12px" }}>
-              <div style={{ display: "flex", gap: "24px", overflowX: "auto", minWidth: 0 }}>
-                {NAV_TABS.map(tab => (
-                  <button key={tab.id} onClick={() => setView(tab.id)}
-                    style={{ background: "none", border: "none", padding: 0, color: view === tab.id ? C.text : C.dim, cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.14em", textTransform: "uppercase", borderBottom: view === tab.id ? `1px solid ${C.text}` : "1px solid transparent", paddingBottom: "3px", whiteSpace: "nowrap", transition: "color 0.12s ease" }}>
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                {(() => { const s = subNavFor(view); return s ? <SubNavDropdown sections={s.sections} value={s.value} onChange={s.onChange} C={C} /> : null; })()}
-                <GearButton onClick={() => { setView("home"); setHomeSection("settings"); }} active={view === "home" && homeSection === "settings"} C={C} />
-              </div>
-            </nav>
-          )}
+          {/* Desktop nav hidden — preserved for future reference */}
         </header>
 
         {/* ── CONTENT — desktop: sidebar+main grid; mobile: single column ── */}

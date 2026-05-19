@@ -1,0 +1,32 @@
+name: broker-sync
+
+# Runs every 5 minutes and hits the sync endpoint.
+# This replaces the Vercel Cron (which requires a Pro plan for sub-daily schedules).
+# The repo is public so GitHub Actions minutes are free with no monthly cap.
+#
+# Required GitHub secret:
+#   CRON_SECRET — same value as the CRON_SECRET env var in Vercel
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  # Allow manual trigger from the Actions tab for debugging
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+
+    steps:
+      - name: Trigger broker sync
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X GET "https://tradrjournal.xyz/api/cron/sync" \
+            -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
+            --max-time 180)
+          echo "Response status: $STATUS"
+          if [ "$STATUS" -lt 200 ] || [ "$STATUS" -ge 300 ]; then
+            echo "Sync endpoint returned $STATUS — failing the job"
+            exit 1
+          fi

@@ -45,7 +45,7 @@ interface SyncEvent {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function relativeTime(iso: string | null): string {
+function _relativeTime(iso: string | null): string {
   if (!iso) return "—";
   const diff = Date.now() - new Date(iso).getTime();
   const s = Math.floor(diff / 1000);
@@ -69,7 +69,7 @@ const STATUS_COLOR: Record<string, string> = {
   paused:       "#6b7280",
 };
 
-const STATUS_LABEL: Record<string, string> = {
+const _STATUS_LABEL: Record<string, string> = {
   connected:    "Live",
   syncing:      "Syncing…",
   error:        "Error",
@@ -79,7 +79,7 @@ const STATUS_LABEL: Record<string, string> = {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function StatusDot({ status }: { status: string }) {
+function _StatusDot({ status }: { status: string }) {
   const col = STATUS_COLOR[status] ?? "#6b7280";
   return (
     <span style={{
@@ -130,9 +130,9 @@ export function DataSourcesScreen({
 }: DataSourcesScreenProps) {
 
   // ── State ─────────────────────────────────────────────────────────────────
-  const [connections, setConnections] = useState<BrokerConn[]>([]);
+  const [_connections, setConnections] = useState<BrokerConn[]>([]);
   const [syncEvents,  setSyncEvents]  = useState<SyncEvent[]>([]);
-  const [loadingConns, setLoadingConns] = useState(true);
+  const [_loadingConns, setLoadingConns] = useState(true);
   const [loadingAudit, setLoadingAudit] = useState(true);
 
   // Connect modal
@@ -148,7 +148,7 @@ export function DataSourcesScreen({
   const [disconnecting, setDisconnecting] = useState(false);
 
   // Manual sync state
-  const [syncing, setSyncing] = useState(false);
+  const [_syncing, setSyncing] = useState(false);
 
   // CSV panel visibility
   const [showCsv, setShowCsv] = useState(false);
@@ -239,7 +239,7 @@ export function DataSourcesScreen({
     }
   }
 
-  async function handleManualSync() {
+  async function _handleManualSync() {
     setSyncing(true);
     try {
       const r = await fetch("/api/cron/sync", {
@@ -314,11 +314,11 @@ export function DataSourcesScreen({
           </div>
         </div>
         {/* Sync Now button — re-enable when live sync ships */}
-        {false && connections.length > 0 && (
+        {/* false && connections.length > 0 && (
           <button style={btn("primary")} onClick={handleManualSync} disabled={syncing}>
             {syncing ? "Syncing…" : "↺ Sync Now"}
           </button>
-        )}
+        ) */}
       </div>
 
       {/* ── LIVE CONNECTIONS — COMING SOON ── */}
@@ -370,70 +370,20 @@ export function DataSourcesScreen({
       </div>
 
       {/* ── DUMMY SECTION BELOW (hidden — preserved for when live sync ships) ── */}
-      {false && connections.length === 0 ? (
+      {/* Connections list hidden until live sync ships — kept for reference:
+      connections.length === 0 ? (
         <div style={{ ...card, color: C.muted ?? "#888", fontSize: 14, textAlign: "center", padding: "22px 16px" }}>
-          No broker connected yet.<br />
-          <span style={{ fontSize: 12 }}>Trades will auto-import every 5 minutes once connected.</span>
+          No broker connected yet.
+          Trades will auto-import every 5 minutes once connected.
         </div>
-      ) : false && (
+      ) : (
         connections.map(conn => (
-          <div key={conn.id} style={{ ...card, display: "flex", flexDirection: "column", gap: 8 }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <StatusDot status={conn.sync_status} />
-                <div>
-                  <span style={{ fontWeight: 600, color: C.text ?? "#e2e8f0", fontSize: 15 }}>
-                    {conn.account_name ?? conn.account_id ?? "Tradovate"}
-                  </span>
-                  <span style={{
-                    marginLeft: 8, fontSize: 11, fontFamily: MONO, fontWeight: 600,
-                    color: conn.env === "live" ? "#22c55e" : "#f59e0b",
-                    background: conn.env === "live" ? "#22c55e18" : "#f59e0b18",
-                    padding: "2px 6px", borderRadius: 4,
-                  }}>
-                    {conn.env.toUpperCase()}
-                  </span>
-                </div>
-              </div>
-              <button
-                style={{ ...btn("ghost"), fontSize: 12, padding: "5px 11px", color: "#ef4444" }}
-                onClick={() => setPendingDisconnect(conn.id)}
-              >
-                Disconnect
-              </button>
-            </div>
-
-            <div style={{ display: "flex", gap: 20, fontSize: 12, color: C.muted ?? "#888", fontFamily: MONO }}>
-              <span>
-                Status:&nbsp;
-                <span style={{ color: STATUS_COLOR[conn.sync_status] ?? "#888", fontWeight: 600 }}>
-                  {STATUS_LABEL[conn.sync_status] ?? conn.sync_status}
-                </span>
-              </span>
-              <span>Last sync: {relativeTime(conn.last_sync_at)}</span>
-            </div>
-
-            {conn.sync_status === "error" && conn.sync_error && (
-              <div style={{
-                fontSize: 12, fontFamily: MONO, color: "#ef4444",
-                background: "#ef444418", borderRadius: 6, padding: "6px 10px",
-              }}>
-                {conn.sync_error}
-              </div>
-            )}
-          </div>
+          ...conn cards...
         ))
-      )}
+      ) */}
 
       {/* ── ADD BROKER BUTTON — hidden until live sync ships ── */}
-      {false && (
-        <button
-          style={{ ...btn("ghost"), width: "100%", justifyContent: "center", marginBottom: 24, padding: "11px 16px" }}
-          onClick={() => { setShowConnect(true); setConnectError(""); }}
-        >
-          + Connect Tradovate Account
-        </button>
-      )}
+      {/* Connect button hidden until live sync ships */}
 
       {/* ── CSV IMPORT ── */}
       <SectionHeader C={C}>CSV Import</SectionHeader>
