@@ -24,6 +24,7 @@ import { TradingCircles } from "./TradingCircles";
 import { FriendsFeed } from "./FriendsFeed";
 import { MiniSparkline, PnLChart, MonthlyPnLChart, WinRateChart, TradeDurationChart, NetDailyPnLChart, DailyCumulativePnLChart, TradeStatCards, AvgStatsCards, DailyInsights, CalendarView, DrawdownCurve, SessionHeatmap, TimeOfDayChart, DayOfWeekChart, MAEMFEChart, generateInsights } from "./charts";
 import { CsvImportPanel } from "./CsvImportPanel";
+import { DataSourcesScreen } from "./DataSourcesScreen";
 import { ProfileModal } from "./ProfileModal";
 import { SettingsScreen } from "./SettingsScreen";
 import { LogTradeScreen } from "./LogTradeScreen";
@@ -447,6 +448,15 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
   const [friendMsg, setFriendMsg] = useState("");
   const [toast, setToast] = useState<any>(null);
   const [homeSection, setHomeSection] = useState("feed");
+  // Supabase JWT access token — used by DataSourcesScreen for broker API calls.
+  const [accessToken, setAccessToken] = useState("");
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setAccessToken(data.session?.access_token ?? ""));
+    const { data: { subscription: _atSub } } = supabase.auth.onAuthStateChange((_, sess) =>
+      setAccessToken(sess?.access_token ?? "")
+    );
+    return () => _atSub.unsubscribe();
+  }, []);
   const [circleLatestMsgs, setCircleLatestMsgs] = useState<Record<string, any>>({});
   const [activeStrategy, setActiveStrategy] = useState(STRATEGY_NAMES[0]);
   const [stratChecklists, setStratChecklists] = useState<any>(() => Object.fromEntries(STRATEGY_NAMES.map(s => [s, STRATEGIES[s].checklist.map((t: string, i: number) => ({ id: i + 1, text: t }))])));
@@ -1894,6 +1904,7 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
     { id: "circles", label: "Circles" },
     { id: "ai", label: "Execution" },
     { id: "rules", label: "Rules" },
+    { id: "sync", label: "Sync" },
   ];
   const STATS_SECTIONS = [
     { id: "overview", label: "Overview" },
@@ -2934,6 +2945,20 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
                     : <button onClick={() => setAddingRule(true)} style={{ ...pillGhost, alignSelf: "flex-start" }}>+ ADD RULE</button>
                   }
                 </div>
+              )}
+
+              {/* SYNC / DATA SOURCES */}
+              {homeSection === "sync" && (
+                <DataSourcesScreen
+                  C={C}
+                  supabase={supabase}
+                  userId={profile.uid ?? user?.id ?? ""}
+                  accessToken={accessToken}
+                  existingTrades={trades}
+                  allStrategyNames={getAllStrategyNames()}
+                  onTradesImported={handleCsvImport}
+                  showToast={showToast}
+                />
               )}
 
               {/* SETTINGS */}
@@ -4153,6 +4178,7 @@ function HomeSectionTabs({ homeSection, setHomeSection, C }: any) {
     { id: "analytics", label: "Analytics" },
     { id: "ai", label: "Execution" },
     { id: "rules", label: "Rules" },
+    { id: "sync", label: "Sync" },
   ];
   return (
     <div style={{ display: "flex", gap: "22px", fontFamily: MONO, fontSize: "11px", letterSpacing: "0.08em", textTransform: "uppercase", borderBottom: `1px solid ${C.border}`, paddingBottom: "10px", overflowX: "auto", flexWrap: "wrap" }}>

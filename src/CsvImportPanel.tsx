@@ -62,10 +62,21 @@ function autoDetectMapping(headers: string[]): Record<string, string> {
 function detectBroker(headers: string[]): string | null {
   const h = new Set(headers.map(s => s.toLowerCase().trim()));
   const has = (patterns: RegExp[]) => headers.some(col => patterns.some(p => p.test(col)));
+  // NinjaTrader 8 — "Instrument" + "Entry time" / "Entry price" + "Direction"
+  if (h.has("instrument") && (h.has("entry time") || h.has("entry price")) && h.has("direction")) return "ninjatrader8";
+  if (h.has("instrument") && h.has("entry time") && (h.has("profit") || h.has("net profit"))) return "ninjatrader8";
+  // TopstepX — "Instrument" + "Entry Date" + "Side" + "Net P&L"
+  if (h.has("instrument") && h.has("entry date") && (h.has("side") || h.has("net p&l"))) return "topstepx";
+  // FTMO / MT5 — "Open Time" + "Close Price" + "Volume" + "Symbol" (Close Price distinguishes from MT4)
+  if ((h.has("open time") || h.has("open_time")) && (h.has("close price") || h.has("stop loss")) && h.has("volume")) return "ftmo_mt5";
+  // Rithmic
   if (has([/net.*p.?l/i, /buy.*fill.*price/i, /sell.*fill.*price/i])) return "rithmic";
   if (h.has("net p&l") || h.has("buy fill price") || h.has("buy fill time")) return "rithmic";
+  // Tradovate
   if ((h.has("b/s") || h.has("buy time")) && (h.has("p&l") || h.has("p / l"))) return "tradovate";
+  // TradingView
   if (h.has("profit") && (h.has("date/time") || h.has("datetime")) && h.has("type")) return "tradingview";
+  // MT4 (fallback — "S / L" or "Stop Loss" without Close Price)
   if ((h.has("open time") || h.has("open_time")) && (h.has("s / l") || h.has("stop loss"))) return "mt4";
   return null;
 }
@@ -279,6 +290,79 @@ const CSV_PRESETS: Record<string, { label: string; hint: string; mapping: Record
     label: "MT4 / MT5",
     hint: "MetaTrader account history export",
     mapping: { pair: "Symbol", date: "Open Time", bias: "Type", pnl: "Profit", entryPrice: "Open Price", slPrice: "S / L", tpPrice: "T / P", notes: "Comment" },
+  },
+  ninjatrader8: {
+    label: "NinjaTrader 8",
+    hint: "NinjaTrader 8 Trade Performance export (Account Performance Report → Export → CSV)",
+    mapping: {
+      pair:       "Instrument",
+      date:       "Entry time",
+      bias:       "Direction",
+      pnl:        "Profit",
+      entryPrice: "Entry price",
+      exitPrice:  "Exit price",
+      qty:        "Qty",
+      notes:      "Entry name",
+    },
+    fallbacks: {
+      pair:       ["Market", "Symbol"],
+      date:       ["Entry Time", "Entry Date", "Time"],
+      bias:       ["Action", "Side", "Type"],
+      pnl:        ["Net profit", "Net Profit", "P&L"],
+      entryPrice: ["Entry Price", "Open Price"],
+      exitPrice:  ["Exit Price", "Close Price"],
+      qty:        ["Quantity", "Size", "Contracts"],
+      notes:      ["Exit name", "Comment", "Setup"],
+    },
+  },
+  topstepx: {
+    label: "TopstepX",
+    hint: "TopstepX Combine or Funded account trade history CSV export",
+    mapping: {
+      pair:       "Instrument",
+      date:       "Entry Date",
+      bias:       "Side",
+      pnl:        "Net P&L",
+      entryPrice: "Entry Price",
+      exitPrice:  "Exit Price",
+      qty:        "Size",
+    },
+    fallbacks: {
+      pair:       ["Symbol", "Market", "Contract"],
+      date:       ["Entry DateTime", "Entry Time", "Open Time", "Date"],
+      bias:       ["Direction", "Type", "Buy/Sell"],
+      pnl:        ["P&L", "Profit", "Net Profit", "Gain/Loss"],
+      entryPrice: ["Open Price", "Fill Price", "Buy Fill Price"],
+      exitPrice:  ["Close Price", "Sell Fill Price"],
+      qty:        ["Quantity", "Contracts", "Volume", "Lots"],
+    },
+  },
+  ftmo_mt5: {
+    label: "FTMO / MT5",
+    hint: "FTMO or any MT5 broker — Account History → Save as Report → open in Excel → save as CSV",
+    mapping: {
+      pair:       "Symbol",
+      date:       "Open Time",
+      bias:       "Type",
+      pnl:        "Profit",
+      entryPrice: "Open Price",
+      exitPrice:  "Close Price",
+      slPrice:    "Stop Loss",
+      tpPrice:    "Take Profit",
+      qty:        "Volume",
+      notes:      "Comment",
+    },
+    fallbacks: {
+      date:       ["Time", "Open time", "Entry Time", "Open_Time"],
+      bias:       ["Direction", "Side", "Action"],
+      pnl:        ["Net Profit", "P&L", "Gain"],
+      entryPrice: ["Price", "Entry Price"],
+      exitPrice:  ["Close Price", "Exit Price"],
+      slPrice:    ["S / L", "SL", "S/L"],
+      tpPrice:    ["T / P", "TP", "T/P"],
+      qty:        ["Lots", "Size", "Contracts", "Lot"],
+      notes:      ["comment", "Memo"],
+    },
   },
 };
 
