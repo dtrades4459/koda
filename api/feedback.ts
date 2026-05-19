@@ -62,10 +62,9 @@ async function checkRateLimit(ip: string): Promise<boolean> {
   }
 
   // Upsert the updated counter (fire-and-forget; don't block the response)
-  db.from("shared_kv")
+  void db.from("shared_kv")
     .upsert({ key, value: JSON.stringify({ count, resetAt }) })
-    .then(() => {})
-    .catch(() => {});
+    .then(() => {}, () => {});
 
   return true;
 }

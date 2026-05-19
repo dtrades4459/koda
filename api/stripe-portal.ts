@@ -98,7 +98,7 @@ export default async function handler(req: any, res: any) {
       return res.status(403).json({ error: "Forbidden" });
     }
 
-    const s = new Stripe(process.env.STRIPE_SECRET_KEY as string, { apiVersion: "2024-11-20.acacia" as Stripe.LatestApiVersion });
+    const s = new Stripe(process.env.STRIPE_SECRET_KEY as string, { apiVersion: "2024-11-20.acacia" as any });
     const session = await s.billingPortal.sessions.create({
       customer: stripeCustomerId,
       return_url: APP_URL,

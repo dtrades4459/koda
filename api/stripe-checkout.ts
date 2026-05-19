@@ -41,7 +41,7 @@ function cors(req: any, res: any) {
 
 function stripe() {
   if (!process.env.STRIPE_SECRET_KEY) throw new Error("STRIPE_SECRET_KEY not set");
-  return new Stripe(process.env.STRIPE_SECRET_KEY as string, { apiVersion: "2024-11-20.acacia" as Stripe.LatestApiVersion });
+  return new Stripe(process.env.STRIPE_SECRET_KEY as string, { apiVersion: "2024-11-20.acacia" as any });
 }
 
 // Service-role client — used for reads/writes that bypass RLS (webhook, server-side only)
