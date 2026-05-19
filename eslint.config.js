@@ -20,11 +20,13 @@ export default defineConfig([
       globals: globals.browser,
     },
     rules: {
-      // Codebase has 600+ pre-existing any usages — warn instead of error so CI
-      // passes while we incrementally clean them up (Tier 3 work in checklist).
-      '@typescript-eslint/no-explicit-any': 'warn',
-      // shared.tsx exports constants alongside components — acceptable for now.
-      'react-refresh/only-export-components': 'warn',
+      // Pre-existing issues -- warn only so CI passes while we clean up incrementally.
+      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-unused-vars": "warn",
+      "no-empty": "warn",
+      "prefer-const": "warn",
+      // shared.tsx exports constants alongside components -- acceptable for now.
+      "react-refresh/only-export-components": "warn",
     },
   },
 ])

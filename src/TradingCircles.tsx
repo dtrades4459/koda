@@ -531,7 +531,7 @@ export function TradingCircles({ myCircles, circlesView, setCirclesView, activeC
                               </div>
                               {!isMe && (
                                 <div style={{ display: "flex", gap: "8px" }}>
-                                  <button onClick={(e) => { e.stopPropagation(); isFollowing ? unfollowUser(entry.memberCode) : followUser(entry.memberCode); }}
+                                  <button onClick={(e) => { e.stopPropagation(); if (isFollowing) { unfollowUser(entry.memberCode); } else { followUser(entry.memberCode); } }}
                                     style={{ background: isFollowing ? "transparent" : C.text, color: isFollowing ? C.muted : C.bg, border: `1px solid ${isFollowing ? C.border2 : C.text}`, borderRadius: "999px", padding: "8px 18px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", flex: 1 }}>
                                     {isFollowing ? "✓ Following" : "+ Follow"}
                                   </button>

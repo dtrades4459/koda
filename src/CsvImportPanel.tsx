@@ -137,9 +137,10 @@ function normalizeDate(s: string): string {
   if (!s) return new Date().toISOString().split("T")[0];
   const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
   if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
-  const slash = s.match(/^(\d{1,2})[\/.](\d{1,2})[\/.](\d{2,4})/);
+  const slash = s.match(/^(\d{1,2})[/.](\d{1,2})[/.](\d{2,4})/);
   if (slash) {
-    let [_, a, b, y] = slash;
+    const [, a, b] = slash;
+    let y = slash[3];
     if (y.length === 2) y = "20" + y;
     const aN = parseInt(a), bN = parseInt(b);
     const mm = aN > 12 ? bN : aN;
