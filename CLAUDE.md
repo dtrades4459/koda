@@ -53,9 +53,12 @@ A trading journal PWA for retail traders. Users log trades, track stats (P&L, wi
 | `src/data/trades.ts` | v2 typed CRUD against `public.trades`. Behind `newTrades` flag when ready. |
 | `src/data/profile.ts` | v2 typed CRUD against `public.profiles`. Behind `newProfile` flag when ready. |
 | `src/data/bootstrap.ts` | v2 parallel typed loader. Will replace `loadAll()` when flags flip. |
-| `src/main.tsx` | Mounts React, installs storage shim, calls `initSentry()`. |
-| `api/broker/connect.ts` | **NEW** POST /api/broker/connect — authenticates with Tradovate, encrypts tokens, upserts broker_connections. |
-| `api/broker/disconnect.ts` | **NEW** POST /api/broker/disconnect — deletes connection (user_id guard). |
+| `src/LotSizeCalculator.tsx` | **NEW** Futures-only position size calculator — floating ⚖️ button, bottom-sheet modal, 16 contracts. |
+| `src/BetaGate.tsx` | **NEW** Closed-beta password wall — shown before auth if `VITE_BETA_PASSWORD` is set. Unlock persists in localStorage. |
+| `src/lib/posthog.ts` | **NEW** PostHog analytics wrapper — `initPostHog`, `phIdentify`, `phCapture`, `phReset`. No-op if key not set. |
+| `src/main.tsx` | Mounts React, installs storage shim, calls `initSentry()` and `initPostHog()`. |
+| `api/broker/connect.ts` | POST /api/broker/connect — authenticates with Tradovate, encrypts tokens, upserts broker_connections. |
+| `api/broker/disconnect.ts` | POST /api/broker/disconnect — deletes connection (user_id guard). |
 | `api/cron/sync.ts` | **NEW** GET (cron, every 5 min) + POST (manual) — FIFO fill matching, token refresh, idempotent trade upsert. |
 | `api/lib/cryptoUtils.ts` | **NEW** AES-256-GCM encrypt/decrypt for broker token storage. Requires `TRADR_ENCRYPTION_KEY`. |
 | `api/lib/supabaseAdmin.ts` | **NEW** Service-role Supabase client + JWT verifier for serverless functions. |
@@ -146,6 +149,9 @@ All must be set in Vercel dashboard → Settings → Environment Variables (Prod
 | `STRIPE_WEBHOOK_SECRET` | Stripe webhook secret |
 | `STRIPE_PRICE_ID` | Stripe Pro price ID |
 | `VITE_SENTRY_DSN` | Optional — leave blank to disable Sentry |
+| `VITE_POSTHOG_KEY` | PostHog project API key (`phc_...`). Leave blank to disable analytics. |
+| `VITE_POSTHOG_HOST` | PostHog host — `https://eu.i.posthog.com` (EU cloud) or `https://us.i.posthog.com` (US). |
+| `VITE_BETA_PASSWORD` | Closed-beta invite code. If set, shows BetaGate before auth. Leave blank to disable the gate. |
 
 > ⚠️ Never commit real credential values to CLAUDE.md or any tracked file. This file is in a public git repo.
 
@@ -204,8 +210,11 @@ Home tab has sub-nav: Overview · Circles · Execution · Rules · **Sync** · S
 - Custom domain tradrjournal.xyz live via GoDaddy DNS → Vercel
 - PWA manifest, icons, iOS/Android installable
 - Stripe billing (Free / Pro / Elite) — checkout, portal, webhook, JWT plan claim
-- **Tradovate live sync** — connect account, encrypted token storage, 5-min Vercel Cron, FIFO fill→trade matching, idempotent upsert, token auto-refresh, manual sync trigger, sync audit log
+- **Tradovate live sync** — connect account, encrypted token storage, 5-min Vercel Cron, FIFO fill→trade matching, idempotent upsert, token auto-refresh, manual sync trigger, sync audit log. ⚠️ Live broker UI hidden behind "Coming Soon" banner — requires Tradovate partner/API credentials.
 - **CSV import** — 7 broker presets with auto-detection: Tradovate, Rithmic, TradingView, MT4/MT5, NinjaTrader 8, TopstepX, FTMO/MT5. Analytics reveal, session auto-tagging, saved templates, dedup.
+- **Lot Size Calculator** — futures-only position sizer. Floating ⚖️ button bottom-left, bottom-sheet modal. 16 contracts (ES, MES, NQ, MNQ, RTY, M2K, YM, MYM, CL, MCL, GC, MGC, SI, NG, ZN, ZB). Risk by % of balance or fixed $. Outputs: contracts, actual risk, stop ticks, stop points, risk/contract.
+- **PostHog analytics** — `posthog-js` installed, init in `main.tsx`, EU cloud (`eu.i.posthog.com`). Key events: `trade_logged`, `trade_edited`, `csv_imported`, `calculator_opened`, user identified on load, reset on sign-out. Requires `VITE_POSTHOG_KEY` + `VITE_POSTHOG_HOST` in Vercel.
+- **Beta access wall** — `BetaGate.tsx` shown before auth when `VITE_BETA_PASSWORD` is set. Matches platform aesthetic (warm dark palette, IBM Plex Mono, editorial style). Unlock stored in localStorage (`tradr_beta_unlocked`). Existing users unaffected until env var is set.
 
 ---
 
@@ -265,6 +274,10 @@ Both `tradrjournal.xyz` and `www.tradrjournal.xyz` verified and live in Vercel.
 | Fragment crash in TradingCircles | Stray `</>` inserted by Python rfind in wrong component — removed |
 | Unterminated string in CSV export | Literal newline inside join — changed to `"\\n"` |
 | TRADR.tsx truncated to 0 bytes | OneDrive write race condition. Always use Python atomic write: write to `.tmp`, then `os.replace()`. Recovered via git. |
+| `Stripe.LatestApiVersion` TS error | Removed in Stripe SDK v22 — replace `as Stripe.LatestApiVersion` with `as any` in `api/stripe-checkout.ts` and `api/stripe-portal.ts`. |
+| Supabase `.catch()` TS error | Query builder returns `PromiseLike`, not `Promise` — replace `.then(() => {}).catch(() => {})` with `.then(() => {}, () => {})` (api/feedback.ts). |
+| git `index.lock` on OneDrive | Sandbox can't delete lock file via bash. User must run `Remove-Item .git\index.lock -Force` in their own PowerShell terminal. |
+| Vercel not auto-deploying | Pushes to feature branches create Preview deploys only. Merge to `main` for Production. If `git push` says "Everything up-to-date", trigger manual redeploy in Vercel → Deployments (uncheck build cache). |
 
 ---
 
@@ -359,10 +372,22 @@ import { getAdminClient, getUserIdFromJwt } from "../lib/supabaseAdmin";
 Key competitors: TraderSync ($30–80/mo), Tradezella ($29–89/mo), Edgewonk ($197/yr), TradesViz ($0–30/mo).
 TRADR target pricing: Free tier · Pro $24.99/mo.
 
+**Tech stack (May 2026)**
+- Vercel — hosting + serverless + cron
+- GitHub — source control, auto-deploys to Vercel on push to `main`
+- Supabase — database, auth, storage
+- Sentry — error monitoring (wired, needs `VITE_SENTRY_DSN`)
+- PostHog — product analytics (wired, needs `VITE_POSTHOG_KEY` + `VITE_POSTHOG_HOST`)
+- Stripe — billing (Free / Pro / Elite)
+- Figma — UI/UX design
+
 **Sprint 1 — Close the core gap**
 - [x] Tradovate live sync — connect screen, fill→trade, 5-min cron ✓
 - [x] CSV import — Rithmic, NinjaTrader 8, TopstepX, FTMO/MT5 presets ✓
 - [x] Session time-of-day heatmap + day-of-week breakdown ✓
+- [x] Lot Size Calculator — futures-only, floating button, 16 contracts ✓
+- [x] PostHog analytics — wired, key events captured ✓
+- [x] Beta access wall — BetaGate component, env-var controlled ✓
 - [ ] Review Inbox — publish draft trades from auto-sync
 
 **Sprint 2 — Psychology + Prop Firm**
