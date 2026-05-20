@@ -94,16 +94,18 @@ export function AvatarCircle({ name, avatar, size = 40, color, onClick, C }: any
   const col = color || (C?.text ?? "#EDEDE8");
   const border = C?.border2 ?? "#3A3A34";
   const bg = C?.panel ?? "#161614";
+  const orb1 = C?.orb1 ?? "oklch(0.55 0.22 252)";
+  const orb2 = C?.orb2 ?? "oklch(0.45 0.20 268)";
   const style: React.CSSProperties = { width: size, height: size, borderRadius: "50%", border: `1px solid ${border}`, flexShrink: 0, cursor: onClick ? "pointer" : "default", display: "flex", alignItems: "center", justifyContent: "center", objectFit: "cover" };
   const safeAvatar = avatar && (avatar.startsWith("data:image/") || avatar.startsWith("https://")) ? avatar : null;
   // Emoji avatar: short string that isn't a URL or data URI
   const isEmoji = avatar && !safeAvatar && avatar.length <= 8;
   if (safeAvatar) return <img src={safeAvatar} alt="av" style={style} onClick={onClick} />;
   return (
-    <div style={{ ...style, background: bg }} onClick={onClick}>
+    <div style={{ ...style, background: isEmoji ? bg : `linear-gradient(135deg, ${orb1}, ${orb2})` }} onClick={onClick}>
       {isEmoji
         ? <span style={{ fontSize: size * 0.5, lineHeight: 1 }}>{avatar}</span>
-        : <span style={{ fontSize: size * 0.34, color: col, letterSpacing: "0.04em", fontFamily: MONO }}>{initials}</span>
+        : <span style={{ fontSize: size * 0.34, color: col, letterSpacing: "0.04em", fontFamily: MONO, mixBlendMode: "overlay" as React.CSSProperties["mixBlendMode"] }}>{initials}</span>
       }
     </div>
   );

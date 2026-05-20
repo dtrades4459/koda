@@ -28,6 +28,7 @@ import { DataSourcesScreen } from "./DataSourcesScreen";
 import { ProfileModal } from "./ProfileModal";
 import { SettingsScreen } from "./SettingsScreen";
 import { LogTradeScreen } from "./LogTradeScreen";
+import { ReviewInboxScreen } from "./ReviewInboxScreen";
 import { SESSIONS, BIAS, EMOTION_TAGS, getEmotionTags, EMPTY_TRADE } from "./tradeConstants";
 import { TourOverlay, OnboardingFlow } from "./OnboardingFlow";
 import type { OnboardingData } from "./OnboardingFlow";
@@ -400,7 +401,29 @@ function PositionSizeCalc({ C, inp, profile, saveProfile }: any) {
 
 export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" | "pro" | "elite" } = {}) {
   const [trades, setTrades] = useState<Trade[]>([]);
+  const [draftCount, setDraftCount] = useState(0);
   const [view, setView] = useState("home");
+  const [viewHistory, setViewHistory] = useState<string[]>([]);
+
+  // navigateTo — push current view to history, then switch
+  function navigateTo(v: string) {
+    setViewHistory(h => [...h, view]);
+    setView(v);
+  }
+  // goBack — pop history stack
+  function goBack() {
+    setViewHistory(h => {
+      if (h.length === 0) return h;
+      const prev = h[h.length - 1];
+      setView(prev);
+      return h.slice(0, -1);
+    });
+  }
+  // primaryNav — top-level tab switches clear history
+  function primaryNav(v: string) {
+    setViewHistory([]);
+    setView(v);
+  }
   // ── Circles state ──────────────────────────────────────────────
   const [myCircles, setMyCircles] = useState<Circle[]>([]);
   const [circlesView, setCirclesView] = useState<string>("browse");
@@ -810,6 +833,18 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
       liveSubs.clear();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, profile.uid]);
+
+  // Load draft trade count for inbox badge
+  useEffect(() => {
+    if (loading || !profile.uid) return;
+    supabase
+      .from("trades")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", profile.uid)
+      .eq("review_status", "draft")
+      .then(({ count }) => setDraftCount(count ?? 0))
+      .catch(() => {});
   }, [loading, profile.uid]);
 
   async function loadAll() {
@@ -1399,10 +1434,11 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
     phCapture(editId ? "trade_edited" : "trade_logged", { outcome: base.outcome, pair: base.pair, total_trades: u.length });
     showToast("Trade saved");
     setTimeout(() => setSavingTrade(false), 1500);
-    setView("history");
+    // Go back if we have history, otherwise land on journal
+    setViewHistory(h => { if (h.length > 0) { setView(h[h.length - 1]); return h.slice(0, -1); } setView("history"); return h; });
   }
 
-  function editTrade(t: any) { setForm(t); setEditId(t.id); setView("log"); }
+  function editTrade(t: any) { setForm(t); setEditId(t.id); navigateTo("log"); }
   async function deleteTrade(id: any) { await saveTrades(trades.filter(t => t.id !== id)); setConfirmDelete(null); showToast("Trade deleted"); }
   async function toggleReaction(tid: any, reaction: any) {
     const myCode = getMyCode();
@@ -2005,13 +2041,24 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
         .tradr-app input[type=date]::-webkit-calendar-picker-indicator{filter:${darkMode ? "invert(0.7)" : "invert(0.3)"};}
         .tradr-app select option{background:${C.panel};color:${C.text};}
         .tradr-app button:hover:not(:disabled){opacity:0.88;}
-        .tradr-app button:active:not(:disabled){transform:scale(0.99);}
-        .row-hvr{cursor:pointer;transition:opacity 0.15s;}
+        .tradr-app button:active:not(:disabled){transform:scale(0.98);}
+        .row-hvr{cursor:pointer;transition:background 0.15s,opacity 0.15s;}
         .row-hvr:hover{opacity:0.75;}
         .check-row:hover .ca{opacity:1!important;}
         @media(hover:none){.ca{opacity:1!important;}}
-        @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}@keyframes livePulse{0%,100%{transform:scale(1);opacity:0.4}50%{transform:scale(2.2);opacity:0}}
+        @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes livePulse{0%,100%{transform:scale(1);opacity:0.4}50%{transform:scale(2.2);opacity:0}}
+        @keyframes orbDrift{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(10px,-8px) scale(1.06)}66%{transform:translate(-8px,5px) scale(0.95)}}
+        @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+        @keyframes checkPop{0%{transform:scale(1)}40%{transform:scale(1.18)}70%{transform:scale(0.94)}100%{transform:scale(1)}}
+        @keyframes fadeSlideUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
         .fade-in{animation:rise 0.25s ease;}
+        .stagger-item:nth-child(1){animation:fadeSlideUp 0.32s ease both;animation-delay:0.04s}
+        .stagger-item:nth-child(2){animation:fadeSlideUp 0.32s ease both;animation-delay:0.09s}
+        .stagger-item:nth-child(3){animation:fadeSlideUp 0.32s ease both;animation-delay:0.14s}
+        .stagger-item:nth-child(4){animation:fadeSlideUp 0.32s ease both;animation-delay:0.19s}
+        .stagger-item:nth-child(5){animation:fadeSlideUp 0.32s ease both;animation-delay:0.24s}
+        .stagger-item:nth-child(n+6){animation:fadeSlideUp 0.32s ease both;animation-delay:0.28s}
         input[type=file]{display:none;}
       `}</style>
 
@@ -2022,11 +2069,28 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
         {/* ── MASTHEAD ── */}
         <header style={{ padding: isDesktop ? "16px 40px 0" : "10px 20px 10px", borderBottom: `1px solid ${C.border}`, position: "sticky", top: 0, background: C.bg, zIndex: 10, backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", paddingBottom: isDesktop ? "14px" : 0 }}>
-            {/* Logo: mark + TRADR wordmark + OS tag */}
+            {/* Left: back button when history exists, otherwise logo */}
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <TrMark size={isDesktop ? 24 : 22} bg={C.panel} />
-              <span style={{ fontFamily: DISPLAY, fontSize: isDesktop ? "15px" : "14px", fontWeight: 600, letterSpacing: "0.22em", color: C.text, lineHeight: 1 }}>TRADR</span>
-              <span style={{ fontFamily: MONO, fontWeight: 500, fontSize: "9px", letterSpacing: "0.16em", color: C.text2, padding: "2px 5px", borderRadius: "4px", border: `1px solid ${C.border2}`, lineHeight: 1 }}>OS</span>
+              {viewHistory.length > 0 ? (
+                <button onClick={goBack} style={{
+                  display: "flex", alignItems: "center", gap: "6px",
+                  background: "transparent", border: "none",
+                  color: C.text, cursor: "pointer", padding: "4px 0",
+                  fontFamily: MONO, fontSize: "11px", letterSpacing: "0.06em",
+                  minHeight: "34px",
+                }}>
+                  <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M13 4l-6 6 6 6"/>
+                  </svg>
+                  <span style={{ textTransform: "uppercase", letterSpacing: "0.1em", fontSize: "10px" }}>Back</span>
+                </button>
+              ) : (
+                <>
+                  <TrMark size={isDesktop ? 24 : 22} bg={C.panel} />
+                  <span style={{ fontFamily: DISPLAY, fontSize: isDesktop ? "15px" : "14px", fontWeight: 600, letterSpacing: "0.22em", color: C.text, lineHeight: 1 }}>TRADR</span>
+                  <span style={{ fontFamily: MONO, fontWeight: 500, fontSize: "9px", letterSpacing: "0.16em", color: C.text2, padding: "2px 5px", borderRadius: "4px", border: `1px solid ${C.border2}`, lineHeight: 1 }}>OS</span>
+                </>
+              )}
             </div>
             {/* Right: handle + sign out */}
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -2059,7 +2123,7 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
                   const sn = subNavFor(tab.id); const ia = view === tab.id;
                   return (
                     <div key={tab.id}>
-                      <button onClick={()=>setView(tab.id)} style={{ display:"flex", alignItems:"center", gap:"10px", width:"100%", background:ia?C.panel:"transparent", border:"none", borderLeft:ia?`2px solid ${C.text}`:"2px solid transparent", padding:"10px 22px", cursor:"pointer", fontFamily:MONO, fontSize:"11px", letterSpacing:"0.1em", textTransform:"uppercase", color:ia?C.text:C.dim, textAlign:"left", transition:"all 0.12s ease" }}>
+                      <button onClick={()=>primaryNav(tab.id)} style={{ display:"flex", alignItems:"center", gap:"10px", width:"100%", background:ia?C.panel:"transparent", border:"none", borderLeft:ia?`2px solid ${C.text}`:"2px solid transparent", padding:"10px 22px", cursor:"pointer", fontFamily:MONO, fontSize:"11px", letterSpacing:"0.1em", textTransform:"uppercase", color:ia?C.text:C.dim, textAlign:"left", transition:"all 0.12s ease" }}>
                         <svg width="16" height="16" viewBox="0 0 20 20" fill="none" style={{ opacity: ia ? 1 : 0.55, flexShrink: 0 }}>
                           <path d={(tab as any).path} stroke="currentColor" strokeWidth="1.35" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
@@ -2118,21 +2182,26 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
                     const orb2 = (C as any).orb2 ?? "oklch(0.45 0.20 268)";
                     const orb3 = (C as any).orb3 ?? "oklch(0.68 0.18 175)";
                     return (
-                      <section style={{ marginTop: "clamp(16px, 4vw, 28px)" }}>
+                      <section style={{ marginTop: "clamp(16px, 4vw, 28px)", position: "relative" }}>
+                        {/* Page-level ambient orbs — behind everything */}
+                        <div style={{ position: "absolute", top: -40, left: -80, width: 380, height: 380, borderRadius: "50%", pointerEvents: "none", background: `radial-gradient(circle, ${orb1}, transparent 70%)`, opacity: 0.18, zIndex: 0, animation: "orbDrift 14s ease-in-out infinite" }} />
+                        <div style={{ position: "absolute", top: 100, right: -100, width: 280, height: 280, borderRadius: "50%", pointerEvents: "none", background: `radial-gradient(circle, ${orb2}, transparent 70%)`, opacity: 0.12, zIndex: 0, animation: "orbDrift 18s ease-in-out infinite reverse" }} />
+
                         {/* Hero card */}
                         <div style={{
                           position: "relative", borderRadius: "24px", padding: "22px 22px 20px",
                           background: (C as any).surfaceGlass ?? C.panel,
                           backdropFilter: "blur(20px) saturate(160%)",
                           WebkitBackdropFilter: "blur(20px) saturate(160%)",
-                          border: `1px solid ${C.border2}`, overflow: "hidden",
+                          border: `1px solid ${C.border2}`, overflow: "hidden", zIndex: 1,
                         }}>
-                          {/* Iridescent corner glow */}
+                          {/* Iridescent corner glow — animated */}
                           <div style={{
                             position: "absolute", top: -70, left: -70, width: 220, height: 220,
                             borderRadius: "50%", pointerEvents: "none",
                             background: `conic-gradient(from 200deg at 50% 50%, ${orb3}, ${orb1}, ${orb2}, ${orb3})`,
-                            filter: "blur(40px)", opacity: 0.45, zIndex: 0,
+                            filter: "blur(40px)", opacity: 0.5, zIndex: 0,
+                            animation: "orbDrift 10s ease-in-out infinite",
                           }}/>
                           {/* Ghost "EDGE" stencil */}
                           <div style={{
@@ -2170,8 +2239,9 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
                             <div style={{ fontFamily: DISPLAY, fontSize: "clamp(52px, 13vw, 78px)", fontWeight: 700, letterSpacing: "-0.04em", lineHeight: 0.92, color: C.text, marginBottom: "8px" }}>
                               {valStr}{!isDollar && <span style={{ color: C.muted, fontStyle: "italic", fontWeight: 500 }}>R</span>}
                             </div>
-                            {/* Subtitle */}
-                            <div style={{ fontFamily: BODY, fontSize: "13px", color: C.text2 }}>
+                            {/* Subtitle with live dot */}
+                            <div style={{ fontFamily: BODY, fontSize: "13px", color: C.text2, display: "flex", alignItems: "center", gap: "6px" }}>
+                              <span style={{ width: 6, height: 6, borderRadius: "50%", background: live, boxShadow: `0 0 8px ${live}`, flexShrink: 0, display: "inline-block" }} />
                               {tradeCount === 0
                                 ? <span style={{ color: C.muted }}>{isWeek ? "No trades logged this week." : "No trades logged yet."}</span>
                                 : <><span style={{ color: valPos ? C.green : C.red }}>{valPos ? "Up" : "Down"}</span> over {tradeCount} trade{tradeCount !== 1 ? "s" : ""}{isWeek ? " this week" : " all time"}.</>
@@ -2210,21 +2280,28 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
                         {/* QuickAction chip row */}
                         <div style={{ display: "flex", gap: "8px", marginTop: "12px", overflowX: "auto", paddingBottom: "2px" }}>
                           {[
-                            { label: "Log Trade", icon: "M5 4h10v12H5zM7 7h6M7 10h6M7 13h4", action: () => setView("log") },
-                            { label: "Journal", icon: "M4 4h12v12H4zM7 8h6M7 11h6M7 14h3", action: () => setView("history") },
-                            { label: "Stats", icon: "M3 16V9M9 16V3M15 16v-5M18 16H2", action: () => setView("stats") },
-                            { label: "Circles", icon: "M5 8a3 3 0 1 1 6 0 3 3 0 0 1-6 0zM12.5 11a3 3 0 0 1 4.5 2.5M3 17c0-2.5 2-3.8 5-3.8s5 1.3 5 3.8", action: () => setView("circles") },
+                            { label: "Log Trade", icon: "M10 4v12M4 10h12", action: () => navigateTo("log"), primary: true },
+                            { label: "Journal", icon: "M4 4h12v12H4zM7 8h6M7 11h6M7 14h3", action: () => navigateTo("history"), primary: false },
+                            { label: "Stats", icon: "M3 16V9M9 16V3M15 16v-5M18 16H2", action: () => navigateTo("stats"), primary: false },
+                            { label: "Circles", icon: "M5 8a3 3 0 1 1 6 0 3 3 0 0 1-6 0zM12.5 11a3 3 0 0 1 4.5 2.5M3 17c0-2.5 2-3.8 5-3.8s5 1.3 5 3.8", action: () => navigateTo("circles"), primary: false },
                           ].map(chip => (
                             <button key={chip.label} onClick={chip.action} style={{
+                              position: "relative",
                               display: "flex", alignItems: "center", gap: "6px",
-                              background: "transparent", border: `1px solid ${C.border2}`,
-                              borderRadius: "999px", padding: "9px 14px", minHeight: "40px",
+                              background: chip.primary ? C.text : "transparent",
+                              border: `1px solid ${chip.primary ? C.text : C.border2}`,
+                              borderRadius: "999px", padding: "9px 16px", minHeight: "40px",
                               cursor: "pointer", fontFamily: MONO, fontSize: "10px",
-                              letterSpacing: "0.08em", color: C.text2, whiteSpace: "nowrap",
-                              flexShrink: 0,
+                              letterSpacing: "0.08em",
+                              color: chip.primary ? C.bg : C.text2,
+                              whiteSpace: "nowrap", flexShrink: 0,
+                              transition: "opacity 0.15s, transform 0.15s",
                             }}>
+                              {chip.primary && (
+                                <span style={{ position: "absolute", top: 7, right: 7, width: 5, height: 5, borderRadius: "50%", background: live, boxShadow: `0 0 6px ${live}` }} />
+                              )}
                               <svg width="13" height="13" viewBox="0 0 20 20" fill="none">
-                                <path d={chip.icon} stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                                <path d={chip.icon} stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
                               </svg>
                               {chip.label}
                             </button>
@@ -2257,7 +2334,7 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
                           You've hit your max daily loss of {maxLoss}R. Step away, review your trades, and come back tomorrow.
                         </div>
                         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                          <button onClick={() => setView("stats")}
+                          <button onClick={() => navigateTo("stats")}
                             style={{ background: "transparent", border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "8px 16px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", color: C.text2 }}>
                             Review Today
                           </button>
@@ -2454,8 +2531,8 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
                         RECENT TRADES
                       </div>
                       <div style={{ borderTop: `1px solid ${C.border}`, marginTop: "12px" }}>
-                        {trades.slice(0, 5).map(t => (
-                          <div key={t.id} className="row-hvr" onClick={() => editTrade(t)}
+                        {trades.slice(0, 5).map((t, _i) => (
+                          <div key={t.id} className="row-hvr stagger-item" onClick={() => editTrade(t)}
                             style={{ display: "grid", gridTemplateColumns: "1fr auto auto auto", alignItems: "center", gap: "12px", padding: "14px 0", borderBottom: `1px solid ${C.border}` }}>
                             <div>
                               <div style={{ fontFamily: MONO, fontSize: "13px", color: C.text, letterSpacing: "0.04em" }}>{t.pair || "—"}</div>
@@ -2468,7 +2545,7 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
                         ))}
                       </div>
                       {trades.length > 5 && (
-                        <button onClick={() => setView("history")}
+                        <button onClick={() => navigateTo("history")}
                           style={{ ...pillGhost, width: "100%", marginTop: "16px" }}>
                           VIEW ALL {trades.length} TRADES →
                         </button>
@@ -2785,7 +2862,7 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
                             <button onClick={() => setCalDayTrades(null)} style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "12px" }}>close</button>
                           </div>
                           {calDayTrades.trades.map((t: any) => (
-                            <div key={t.id} className="row-hvr" onClick={() => { setView("history"); setExpandedId(t.id); }}
+                            <div key={t.id} className="row-hvr" onClick={() => { navigateTo("history"); setExpandedId(t.id); }}
                               style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: `1px solid ${C.border}` }}>
                               <span style={{ fontFamily: MONO, fontSize: "12px", color: C.text }}>{t.pair}</span>
                               <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
@@ -2854,7 +2931,7 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
                     <div style={{ textAlign: "center", padding: "40px 0", color: C.muted, fontSize: "13px" }}>
                       <div style={{ fontSize: "28px", marginBottom: "12px" }}>◆</div>
                       You haven't joined any circles yet.<br />
-                      <span style={{ color: C.accent, cursor: "pointer" }} onClick={() => setView("circles")}>Browse Circles →</span>
+                      <span style={{ color: C.accent, cursor: "pointer" }} onClick={() => navigateTo("circles")}>Browse Circles →</span>
                     </div>
                   ) : (
                     <div style={{ display: "flex", flexDirection: "column", gap: "2px", borderTop: `1px solid ${C.border}` }}>
@@ -2867,7 +2944,7 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
                         return (
                           <div
                             key={circle.code}
-                            onClick={() => { setActiveCircle(circle); setCirclesView("detail"); setView("circles"); }}
+                            onClick={() => { setActiveCircle(circle); setCirclesView("detail"); navigateTo("circles"); }}
                             style={{
                               display: "flex", alignItems: "center", gap: "14px",
                               padding: "16px 0", borderBottom: `1px solid ${C.border}`,
@@ -2985,8 +3062,36 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
             </div>
           )}
 
+          {/* ══════════════════════════ REVIEW INBOX ══════════════════════ */}
+          {view === "inbox" && (
+            <ReviewInboxScreen
+              userId={profile.uid ?? ""}
+              trades={trades}
+              saveTrades={saveTrades}
+              onCountChange={setDraftCount}
+              C={C as Record<string, string>}
+              navigateTo={navigateTo}
+            />
+          )}
+
           {/* ══════════════════════════ LOG TRADE ══════════════════════════ */}
           {view === "log" && (
+            <>
+              {draftCount > 0 && (
+                <div style={{ margin: "16px 20px 0", background: `color-mix(in oklch, ${C.green ?? "#22c55e"} 10%, ${C.panel})`, border: `1px solid color-mix(in oklch, ${C.green ?? "#22c55e"} 30%, transparent)`, borderRadius: "10px", padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
+                  <div>
+                    <span style={{ fontFamily: MONO, fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", color: C.green ?? "#22c55e", fontWeight: 700 }}>
+                      {draftCount} trade{draftCount !== 1 ? "s" : ""} ready to review
+                    </span>
+                    <p style={{ fontFamily: BODY, fontSize: "12px", color: C.text2 ?? C.muted, marginTop: "2px" }}>
+                      Auto-synced from your broker — publish to your journal
+                    </p>
+                  </div>
+                  <button onClick={() => navigateTo("inbox")} style={{ flexShrink: 0, fontFamily: MONO, fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", background: C.green ?? "#22c55e", color: "#0A0A0A", border: "none", borderRadius: "999px", padding: "8px 14px", cursor: "pointer", fontWeight: 700, whiteSpace: "nowrap" }}>
+                    Review →
+                  </button>
+                </div>
+              )}
             <LogTradeScreen
               C={C}
               form={form} setForm={setForm}
@@ -2999,8 +3104,9 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
               allStrategyNames={allStrategyNames}
               _allStratMap={_allStratMap}
               allSetups={allSetups}
-              setView={setView}
+              setView={navigateTo}
             />
+            </>
           )}
 
           {/* ══════════════════════════ HISTORY ══════════════════════════ */}
@@ -3052,7 +3158,7 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
                     <div style={{ fontFamily: BODY, fontSize: "13px", color: C.muted, lineHeight: 1.6, marginBottom: "28px" }}>
                       Every edge starts with data. Log your first trade.
                     </div>
-                    <button onClick={() => setView("log")} style={pillPrimary(true)}>
+                    <button onClick={() => navigateTo("log")} style={pillPrimary(true)}>
                       Log a trade →
                     </button>
                   </div>
@@ -3064,11 +3170,11 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
                 )
               ) : (
                 <div style={{ borderRadius: "18px", overflow: "hidden", border: `1px solid ${C.border}`, background: C.panel }}>
-                  {filteredTrades.map(t => {
+                  {filteredTrades.map((t, _ti) => {
                     const expanded = expandedId === t.id;
                     const commentText = commentInputs[t.id] || "";
                     return (
-                      <div key={t.id} style={{ borderBottom: `1px solid ${C.border}` }}>
+                      <div key={t.id} className="stagger-item" style={{ borderBottom: `1px solid ${C.border}` }}>
                         <div className="row-hvr" onClick={() => setExpandedId(expanded ? null : t.id)}
                           style={{ padding: "12px 14px", minHeight: "56px", cursor: "pointer", display: "flex", alignItems: "center", gap: "12px" }}>
                           {/* Instrument badge */}
@@ -3548,7 +3654,7 @@ ${recentTrades.map((t:any)=>`<tr><td>${t.date}</td><td>${t.pair||"—"}</td><td>
                         <button onClick={() => setCalDayTrades(null)} style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "12px" }}>close</button>
                       </div>
                       {calDayTrades.trades.map((t: any) => (
-                        <div key={t.id} className="row-hvr" onClick={() => { setView("history"); setExpandedId(t.id); }}
+                        <div key={t.id} className="row-hvr" onClick={() => { navigateTo("history"); setExpandedId(t.id); }}
                           style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: `1px solid ${C.border}` }}>
                           <span style={{ fontFamily: MONO, fontSize: "12px", color: C.text }}>{t.pair}</span>
                           <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
@@ -3938,34 +4044,58 @@ ${recentTrades.map((t:any)=>`<tr><td>${t.date}</td><td>${t.pair||"—"}</td><td>
 
         {/* ── BOTTOM NAV — floating glass pill (mobile only) ── */}
         {!isDesktop && (
-          <div style={{ position: "fixed", bottom: "calc(16px + env(safe-area-inset-bottom))", left: "50%", transform: "translateX(-50%)", width: "calc(100% - 32px)", maxWidth: "440px", zIndex: 30 }}>
-            <div style={{ display: "flex", padding: "5px", background: (C as any).surfaceGlass ?? C.panel, backdropFilter: "blur(28px) saturate(180%)", WebkitBackdropFilter: "blur(28px) saturate(180%)", borderRadius: "999px", border: `1px solid ${C.border2}`, boxShadow: `0 8px 32px ${C.shadow}` }}>
+          <div style={{ position: "fixed", bottom: "calc(16px + env(safe-area-inset-bottom))", left: "50%", transform: "translateX(-50%)", width: "calc(100% - 32px)", maxWidth: "460px", zIndex: 30 }}>
+            <div style={{ display: "flex", alignItems: "center", padding: "5px", background: (C as any).surfaceGlass ?? C.panel, backdropFilter: "blur(28px) saturate(180%)", WebkitBackdropFilter: "blur(28px) saturate(180%)", borderRadius: "999px", border: `1px solid ${C.border2}`, boxShadow: `0 16px 40px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.14), inset 0 1px 0 rgba(255,255,255,0.04)` }}>
               {NAV_TABS.map(tab => {
                 const active = view === tab.id;
                 return (
-                  <button key={tab.id} onClick={() => setView(tab.id)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "3px", padding: "8px 4px", borderRadius: "999px", background: active ? C.text : "transparent", color: active ? C.bg : C.muted, border: "none", cursor: "pointer", transition: "background 0.2s, color 0.2s", minHeight: "48px" }}>
-                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none" style={{ flexShrink: 0 }}>
-                      <path d={(tab as any).path} stroke="currentColor" strokeWidth="1.35" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
+                  <button key={tab.id} onClick={() => primaryNav(tab.id)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "3px", padding: "8px 4px", borderRadius: "999px", background: active ? C.text : "transparent", color: active ? C.bg : C.muted, border: "none", cursor: "pointer", transition: "background 0.2s, color 0.2s", minHeight: "48px" }}>
+                    <div style={{ position: "relative", display: "flex" }}>
+                      <svg width="18" height="18" viewBox="0 0 20 20" fill="none" style={{ flexShrink: 0 }}>
+                        <path d={(tab as any).path} stroke="currentColor" strokeWidth="1.35" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      {tab.id === "log" && draftCount > 0 && (
+                        <span style={{ position: "absolute", top: "-3px", right: "-5px", background: C.green ?? "#22c55e", color: "#0A0A0A", borderRadius: "999px", fontSize: "8px", fontFamily: MONO, fontWeight: 700, minWidth: "14px", height: "14px", display: "flex", alignItems: "center", justifyContent: "center", padding: "0 3px", lineHeight: 1 }}>
+                          {draftCount > 9 ? "9+" : draftCount}
+                        </span>
+                      )}
+                    </div>
                     <span style={{ fontSize: "9px", fontFamily: MONO, letterSpacing: "0.06em", fontWeight: active ? 600 : 400 }}>{tab.label}</span>
                   </button>
                 );
               })}
+              {/* Calculator — teal accent pill embedded in nav */}
+              <button
+                onClick={() => { setShowCalc(true); phCapture("calculator_opened"); }}
+                title="Position Size Calculator"
+                style={{ flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "3px", padding: "8px 10px", borderRadius: "999px", background: `color-mix(in oklch, ${(C as any).live ?? "oklch(0.84 0.14 175)"} 18%, transparent)`, color: (C as any).live ?? "oklch(0.84 0.14 175)", border: `1px solid color-mix(in oklch, ${(C as any).live ?? "oklch(0.84 0.14 175)"} 30%, transparent)`, cursor: "pointer", minHeight: "48px", transition: "opacity 0.15s" }}>
+                {/* Scale/balance SVG icon */}
+                <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="10" y1="3" x2="10" y2="17"/>
+                  <line x1="2" y1="17" x2="18" y2="17"/>
+                  <path d="M2 9l4 5 4-5"/>
+                  <path d="M18 9l-4 5-4-5"/>
+                  <line x1="6" y1="9" x2="14" y2="9"/>
+                </svg>
+                <span style={{ fontSize: "9px", fontFamily: MONO, letterSpacing: "0.06em" }}>Size</span>
+              </button>
             </div>
           </div>
         )}
 
-        {/* ── Lot Size Calculator floating button ── */}
-        <button
-          onClick={() => { setShowCalc(true); phCapture("calculator_opened"); }}
-          style={{ position: "fixed", bottom: isDesktop ? "28px" : "calc(44px + env(safe-area-inset-bottom) + 16px)", left: "16px", zIndex: 998, background: C.accent ?? "#7c3aed", color: "#fff", border: "none", borderRadius: "999px", padding: "12px 18px", minHeight: "44px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", boxShadow: "0 2px 12px rgba(0,0,0,0.35)", display: "flex", alignItems: "center", gap: "6px" }}>
-          <span style={{ fontSize: 16, lineHeight: 1 }}>⚖️</span> Size
-        </button>
+        {/* ── Lot Size Calculator — desktop floating button only ── */}
+        {isDesktop && (
+          <button
+            onClick={() => { setShowCalc(true); phCapture("calculator_opened"); }}
+            style={{ position: "fixed", bottom: "28px", left: "16px", zIndex: 998, background: (C as any).live ?? "oklch(0.84 0.14 175)", color: "#0A0A0A", border: "none", borderRadius: "999px", padding: "12px 18px", minHeight: "44px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", boxShadow: `0 2px 16px color-mix(in oklch, ${(C as any).live ?? "oklch(0.84 0.14 175)"} 40%, transparent)`, display: "flex", alignItems: "center", gap: "6px" }}>
+            <span style={{ fontSize: 16, lineHeight: 1 }}>⚖️</span> Size
+          </button>
+        )}
 
         {/* ── Feedback floating button ── */}
         <button
           onClick={() => setFeedbackOpen(true)}
-          style={{ position: "fixed", bottom: isDesktop ? "28px" : "calc(44px + env(safe-area-inset-bottom) + 16px)", right: "16px", zIndex: 998, background: C.text, color: C.bg, border: "none", borderRadius: "999px", padding: "12px 20px", minHeight: "44px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", boxShadow: "0 2px 12px rgba(0,0,0,0.25)", display: "flex", alignItems: "center" }}>
+          style={{ position: "fixed", bottom: isDesktop ? "28px" : "calc(44px + env(safe-area-inset-bottom) + 24px)", right: "16px", zIndex: 998, background: C.text, color: C.bg, border: "none", borderRadius: "999px", padding: "12px 20px", minHeight: "44px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", boxShadow: "0 2px 12px rgba(0,0,0,0.25)", display: "flex", alignItems: "center" }}>
           Feedback
         </button>
 
