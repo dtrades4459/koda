@@ -28,6 +28,7 @@ import { DataSourcesScreen } from "./DataSourcesScreen";
 import { ProfileModal } from "./ProfileModal";
 import { SettingsScreen } from "./SettingsScreen";
 import { LogTradeScreen } from "./LogTradeScreen";
+import { ReviewInboxScreen } from "./ReviewInboxScreen";
 import { SESSIONS, BIAS, EMOTION_TAGS, getEmotionTags, EMPTY_TRADE } from "./tradeConstants";
 import { TourOverlay, OnboardingFlow } from "./OnboardingFlow";
 import type { OnboardingData } from "./OnboardingFlow";
@@ -400,6 +401,7 @@ function PositionSizeCalc({ C, inp, profile, saveProfile }: any) {
 
 export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" | "pro" | "elite" } = {}) {
   const [trades, setTrades] = useState<Trade[]>([]);
+  const [draftCount, setDraftCount] = useState(0);
   const [view, setView] = useState("home");
   const [viewHistory, setViewHistory] = useState<string[]>([]);
 
@@ -831,6 +833,18 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
       liveSubs.clear();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, profile.uid]);
+
+  // Load draft trade count for inbox badge
+  useEffect(() => {
+    if (loading || !profile.uid) return;
+    supabase
+      .from("trades")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", profile.uid)
+      .eq("review_status", "draft")
+      .then(({ count }) => setDraftCount(count ?? 0))
+      .catch(() => {});
   }, [loading, profile.uid]);
 
   async function loadAll() {
@@ -3048,8 +3062,36 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
             </div>
           )}
 
+          {/* ══════════════════════════ REVIEW INBOX ══════════════════════ */}
+          {view === "inbox" && (
+            <ReviewInboxScreen
+              userId={profile.uid ?? ""}
+              trades={trades}
+              saveTrades={saveTrades}
+              onCountChange={setDraftCount}
+              C={C as Record<string, string>}
+              navigateTo={navigateTo}
+            />
+          )}
+
           {/* ══════════════════════════ LOG TRADE ══════════════════════════ */}
           {view === "log" && (
+            <>
+              {draftCount > 0 && (
+                <div style={{ margin: "16px 20px 0", background: `color-mix(in oklch, ${C.green ?? "#22c55e"} 10%, ${C.panel})`, border: `1px solid color-mix(in oklch, ${C.green ?? "#22c55e"} 30%, transparent)`, borderRadius: "10px", padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
+                  <div>
+                    <span style={{ fontFamily: MONO, fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", color: C.green ?? "#22c55e", fontWeight: 700 }}>
+                      {draftCount} trade{draftCount !== 1 ? "s" : ""} ready to review
+                    </span>
+                    <p style={{ fontFamily: BODY, fontSize: "12px", color: C.text2 ?? C.muted, marginTop: "2px" }}>
+                      Auto-synced from your broker — publish to your journal
+                    </p>
+                  </div>
+                  <button onClick={() => navigateTo("inbox")} style={{ flexShrink: 0, fontFamily: MONO, fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", background: C.green ?? "#22c55e", color: "#0A0A0A", border: "none", borderRadius: "999px", padding: "8px 14px", cursor: "pointer", fontWeight: 700, whiteSpace: "nowrap" }}>
+                    Review →
+                  </button>
+                </div>
+              )}
             <LogTradeScreen
               C={C}
               form={form} setForm={setForm}
@@ -3064,6 +3106,7 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
               allSetups={allSetups}
               setView={navigateTo}
             />
+            </>
           )}
 
           {/* ══════════════════════════ HISTORY ══════════════════════════ */}
@@ -4007,9 +4050,16 @@ ${recentTrades.map((t:any)=>`<tr><td>${t.date}</td><td>${t.pair||"—"}</td><td>
                 const active = view === tab.id;
                 return (
                   <button key={tab.id} onClick={() => primaryNav(tab.id)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "3px", padding: "8px 4px", borderRadius: "999px", background: active ? C.text : "transparent", color: active ? C.bg : C.muted, border: "none", cursor: "pointer", transition: "background 0.2s, color 0.2s", minHeight: "48px" }}>
-                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none" style={{ flexShrink: 0 }}>
-                      <path d={(tab as any).path} stroke="currentColor" strokeWidth="1.35" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
+                    <div style={{ position: "relative", display: "flex" }}>
+                      <svg width="18" height="18" viewBox="0 0 20 20" fill="none" style={{ flexShrink: 0 }}>
+                        <path d={(tab as any).path} stroke="currentColor" strokeWidth="1.35" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      {tab.id === "log" && draftCount > 0 && (
+                        <span style={{ position: "absolute", top: "-3px", right: "-5px", background: C.green ?? "#22c55e", color: "#0A0A0A", borderRadius: "999px", fontSize: "8px", fontFamily: MONO, fontWeight: 700, minWidth: "14px", height: "14px", display: "flex", alignItems: "center", justifyContent: "center", padding: "0 3px", lineHeight: 1 }}>
+                          {draftCount > 9 ? "9+" : draftCount}
+                        </span>
+                      )}
+                    </div>
                     <span style={{ fontSize: "9px", fontFamily: MONO, letterSpacing: "0.06em", fontWeight: active ? 600 : 400 }}>{tab.label}</span>
                   </button>
                 );
@@ -4386,4 +4436,7 @@ function ConfluenceTracker({ checkItems, checkedCount, totalItems, isChecked, ac
             </div>
           </div>
         </div>
-   
+      )}
+    </div>
+  );
+}
