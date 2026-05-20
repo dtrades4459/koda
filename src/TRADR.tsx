@@ -869,7 +869,42 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
     // Trades
     try {
       const parsed = t ? JSON.parse(t.value) : null;
-      setTrades(Array.isArray(parsed) ? parsed : []);
+      const loadedTrades: Trade[] = Array.isArray(parsed) ? parsed : [];
+      setTrades(loadedTrades);
+      // Lazy migration: migrate any base64 screenshots to Supabase Storage
+      // Fire-and-forget — does not block the rest of loadAll.
+      const uid = user?.id;
+      if (uid) {
+        const toMigrate = loadedTrades.filter(tr =>
+          typeof tr.screenshot === "string" && tr.screenshot.startsWith("data:")
+        );
+        if (toMigrate.length > 0) {
+          (async () => {
+            let updated = [...loadedTrades];
+            let changed = false;
+            for (const tr of toMigrate) {
+              try {
+                const res = await fetch(tr.screenshot!);
+                const blob = await res.blob();
+                const storagePath = `${uid}/${Date.now()}_migrate_${tr.id}.jpg`;
+                const { error } = await supabase.storage
+                  .from("trade-screenshots")
+                  .upload(storagePath, blob, { contentType: "image/jpeg", upsert: false });
+                if (error) continue;
+                const { data: urlData } = supabase.storage
+                  .from("trade-screenshots")
+                  .getPublicUrl(storagePath);
+                updated = updated.map(x => x.id === tr.id ? { ...x, screenshot: urlData.publicUrl } : x);
+                changed = true;
+              } catch { /* skip — will retry next session */ }
+            }
+            if (changed) {
+              setTrades(updated);
+              await (window as any).storage.set("tradr_trades", JSON.stringify(updated));
+            }
+          })();
+        }
+      }
     } catch (e) { log.error("loadAll.trades", e); setTrades([]); }
 
     // Profile (v2 → KV fallback)
@@ -1532,8 +1567,25 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
     const file = e.target.files?.[0]; if (!file) return;
     if (file.size > 5 * 1024 * 1024) { showToast("Avatar too large — max 5MB"); return; }
     if (!file.type.startsWith("image/")) { showToast("File must be an image"); return; }
-    const compressed = await compressImage(file, 300);
-    setProfileDraft((d: any) => ({ ...d, avatar: compressed }));
+    showToast("Uploading avatar…");
+    try {
+      const compressed = await compressImage(file, 300);
+      const res = await fetch(compressed);
+      const blob = await res.blob();
+      const uid = profile?.uid || user?.id || "anon";
+      const path = `${uid}/avatars/avatar_${Date.now()}.jpg`;
+      const { error } = await supabase.storage.from("trade-screenshots").upload(path, blob, { contentType: "image/jpeg", upsert: true });
+      if (error) throw error;
+      const { data: urlData } = supabase.storage.from("trade-screenshots").getPublicUrl(path);
+      setProfileDraft((d: any) => ({ ...d, avatar: urlData.publicUrl }));
+      showToast("Avatar updated");
+    } catch (err) {
+      log.error("avatar.upload", err);
+      // Fall back to base64 so the user still sees their new avatar
+      const compressed = await compressImage(file, 300);
+      setProfileDraft((d: any) => ({ ...d, avatar: compressed }));
+      showToast("Saved locally (Storage unavailable)");
+    }
   }
 
   // Checklist helpers
