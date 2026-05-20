@@ -224,6 +224,7 @@ function StrategyEditor({ draft, setDraft, onSave, onCancel, isEdit, C, inp, lbl
               <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: "5px", background: C.panel2 ?? C.bg, border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "4px 10px 4px 12px", fontFamily: MONO, fontSize: "10px", color: C.text2 ?? C.muted, letterSpacing: "0.06em" }}>
                 {s}
                 <button
+                  aria-label={`Remove setup ${s}`}
                   onClick={() => setDraft((d) => ({ ...d, setups: d.setups.filter((_: string, j: number) => j !== i) }))}
                   style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, padding: 0, fontSize: "13px", lineHeight: 1, display: "flex", alignItems: "center" }}>
                   ×
@@ -3058,7 +3059,7 @@ export default function Tradr({ user, jwtPlan }: { user?: User; jwtPlan?: "free"
                         onKeyDown={e => { if (e.key === "Enter") addRule(); if (e.key === "Escape") { setAddingRule(false); setNewRuleText(""); } }}
                         placeholder="New rule..." style={{ ...inp, flex: 1 }} />
                       <button onClick={addRule} style={{ ...pillPrimary(!!newRuleText.trim()), width: "auto", padding: "10px 16px" }}>Add</button>
-                      <button onClick={() => { setAddingRule(false); setNewRuleText(""); }} style={{ ...pillGhost, padding: "10px 14px" }}>X</button>
+                      <button aria-label="Cancel" onClick={() => { setAddingRule(false); setNewRuleText(""); }} style={{ ...pillGhost, padding: "10px 14px" }}>X</button>
                     </div>
                     : <button onClick={() => setAddingRule(true)} style={{ ...pillGhost, alignSelf: "flex-start" }}>+ ADD RULE</button>
                   }
@@ -3292,7 +3293,7 @@ export default function Tradr({ user, jwtPlan }: { user?: User; jwtPlan?: "free"
                             {/* Screenshot */}
                             {t.screenshot ? (
                               <div style={{ marginBottom: "16px", position: "relative" }}>
-                                <img src={t.screenshot} alt="chart" style={{ width: "100%", border: `1px solid ${C.border}`, display: "block", maxHeight: "220px", objectFit: "cover" }} />
+                                <img src={t.screenshot} alt="chart" loading="lazy" style={{ width: "100%", border: `1px solid ${C.border}`, display: "block", maxHeight: "220px", objectFit: "cover" }} />
                                 <div style={{ position: "absolute", top: "8px", right: "8px", display: "flex", gap: "6px" }}>
                                   <label htmlFor={`ss-${t.id}`} style={{ background: C.bg, border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "4px 10px", fontSize: "10px", color: C.text, cursor: "pointer", fontFamily: MONO, letterSpacing: "0.08em" }}>REPLACE
                                     <input id={`ss-${t.id}`} type="file" accept="image/jpeg,image/png" onChange={e => handleScreenshotUpload(e, t.id)} /></label>
@@ -3351,7 +3352,7 @@ export default function Tradr({ user, jwtPlan }: { user?: User; jwtPlan?: "free"
                                       <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
                                         <span style={{ fontFamily: MONO, fontSize: "9px", color: C.dim, letterSpacing: "0.04em" }}>{c.ts}</span>
                                         {(c.author === profile.name || c.author === "You") && (
-                                          <button onClick={() => deleteComment(t.id, c.id)} style={{ background: "none", border: "none", color: C.dim, fontSize: "10px", cursor: "pointer", fontFamily: MONO }}>x</button>
+                                          <button aria-label="Delete comment" onClick={() => deleteComment(t.id, c.id)} style={{ background: "none", border: "none", color: C.dim, fontSize: "10px", cursor: "pointer", fontFamily: MONO }}>x</button>
                                         )}
                                       </div>
                                     </div>
@@ -3882,7 +3883,7 @@ ${recentTrades.map((t:any)=>`<tr><td>${t.date}</td><td>${t.pair||"—"}</td><td>
                         onKeyDown={e => { if (e.key === "Enter") addCheckItem(); if (e.key === "Escape") { setAddingCheck(false); setNewCheckText(""); } }}
                         placeholder="New condition..." style={{ ...inp, flex: 1 }} />
                       <button onClick={addCheckItem} style={{ ...pillPrimary(!!newCheckText.trim()), width: "auto", padding: "10px 16px" }}>Add</button>
-                      <button onClick={() => { setAddingCheck(false); setNewCheckText(""); }} style={{ ...pillGhost, padding: "10px 14px" }}>X</button>
+                      <button aria-label="Cancel" onClick={() => { setAddingCheck(false); setNewCheckText(""); }} style={{ ...pillGhost, padding: "10px 14px" }}>X</button>
                     </div>
                     : <button onClick={() => setAddingCheck(true)} style={{ ...pillGhost, alignSelf: "flex-start" }}>+ ADD CONDITION</button>
                   }
@@ -3928,7 +3929,7 @@ ${recentTrades.map((t:any)=>`<tr><td>${t.date}</td><td>${t.pair||"—"}</td><td>
                         onKeyDown={e => { if (e.key === "Enter") addRule(); if (e.key === "Escape") { setAddingRule(false); setNewRuleText(""); } }}
                         placeholder="New rule..." style={{ ...inp, flex: 1 }} />
                       <button onClick={addRule} style={{ ...pillPrimary(!!newRuleText.trim()), width: "auto", padding: "10px 16px" }}>Add</button>
-                      <button onClick={() => { setAddingRule(false); setNewRuleText(""); }} style={{ ...pillGhost, padding: "10px 14px" }}>X</button>
+                      <button aria-label="Cancel" onClick={() => { setAddingRule(false); setNewRuleText(""); }} style={{ ...pillGhost, padding: "10px 14px" }}>X</button>
                     </div>
                     : <button onClick={() => setAddingRule(true)} style={{ ...pillGhost, alignSelf: "flex-start" }}>+ ADD RULE</button>
                   }
@@ -4498,13 +4499,4 @@ function ConfluenceTracker({ checkItems, checkedCount, totalItems, isChecked, ac
                     </div>
                     <span style={{ fontFamily: BODY, fontSize: "13px", color: isReq ? C.text : C.text2, flex: 1, lineHeight: 1.5 }}>{item.text}</span>
                     <span style={{ fontFamily: MONO, fontSize: "10px", color: isReq ? C.text : C.muted, letterSpacing: "0.08em", textTransform: "uppercase" }}>{isReq ? "Required" : "Optional"}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
+ 
