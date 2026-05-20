@@ -2005,13 +2005,24 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
         .tradr-app input[type=date]::-webkit-calendar-picker-indicator{filter:${darkMode ? "invert(0.7)" : "invert(0.3)"};}
         .tradr-app select option{background:${C.panel};color:${C.text};}
         .tradr-app button:hover:not(:disabled){opacity:0.88;}
-        .tradr-app button:active:not(:disabled){transform:scale(0.99);}
-        .row-hvr{cursor:pointer;transition:opacity 0.15s;}
+        .tradr-app button:active:not(:disabled){transform:scale(0.98);}
+        .row-hvr{cursor:pointer;transition:background 0.15s,opacity 0.15s;}
         .row-hvr:hover{opacity:0.75;}
         .check-row:hover .ca{opacity:1!important;}
         @media(hover:none){.ca{opacity:1!important;}}
-        @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}@keyframes livePulse{0%,100%{transform:scale(1);opacity:0.4}50%{transform:scale(2.2);opacity:0}}
+        @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes livePulse{0%,100%{transform:scale(1);opacity:0.4}50%{transform:scale(2.2);opacity:0}}
+        @keyframes orbDrift{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(10px,-8px) scale(1.06)}66%{transform:translate(-8px,5px) scale(0.95)}}
+        @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+        @keyframes checkPop{0%{transform:scale(1)}40%{transform:scale(1.18)}70%{transform:scale(0.94)}100%{transform:scale(1)}}
+        @keyframes fadeSlideUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
         .fade-in{animation:rise 0.25s ease;}
+        .stagger-item:nth-child(1){animation:fadeSlideUp 0.32s ease both;animation-delay:0.04s}
+        .stagger-item:nth-child(2){animation:fadeSlideUp 0.32s ease both;animation-delay:0.09s}
+        .stagger-item:nth-child(3){animation:fadeSlideUp 0.32s ease both;animation-delay:0.14s}
+        .stagger-item:nth-child(4){animation:fadeSlideUp 0.32s ease both;animation-delay:0.19s}
+        .stagger-item:nth-child(5){animation:fadeSlideUp 0.32s ease both;animation-delay:0.24s}
+        .stagger-item:nth-child(n+6){animation:fadeSlideUp 0.32s ease both;animation-delay:0.28s}
         input[type=file]{display:none;}
       `}</style>
 
@@ -2118,21 +2129,26 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
                     const orb2 = (C as any).orb2 ?? "oklch(0.45 0.20 268)";
                     const orb3 = (C as any).orb3 ?? "oklch(0.68 0.18 175)";
                     return (
-                      <section style={{ marginTop: "clamp(16px, 4vw, 28px)" }}>
+                      <section style={{ marginTop: "clamp(16px, 4vw, 28px)", position: "relative" }}>
+                        {/* Page-level ambient orbs — behind everything */}
+                        <div style={{ position: "absolute", top: -40, left: -80, width: 380, height: 380, borderRadius: "50%", pointerEvents: "none", background: `radial-gradient(circle, ${orb1}, transparent 70%)`, opacity: 0.18, zIndex: 0, animation: "orbDrift 14s ease-in-out infinite" }} />
+                        <div style={{ position: "absolute", top: 100, right: -100, width: 280, height: 280, borderRadius: "50%", pointerEvents: "none", background: `radial-gradient(circle, ${orb2}, transparent 70%)`, opacity: 0.12, zIndex: 0, animation: "orbDrift 18s ease-in-out infinite reverse" }} />
+
                         {/* Hero card */}
                         <div style={{
                           position: "relative", borderRadius: "24px", padding: "22px 22px 20px",
                           background: (C as any).surfaceGlass ?? C.panel,
                           backdropFilter: "blur(20px) saturate(160%)",
                           WebkitBackdropFilter: "blur(20px) saturate(160%)",
-                          border: `1px solid ${C.border2}`, overflow: "hidden",
+                          border: `1px solid ${C.border2}`, overflow: "hidden", zIndex: 1,
                         }}>
-                          {/* Iridescent corner glow */}
+                          {/* Iridescent corner glow — animated */}
                           <div style={{
                             position: "absolute", top: -70, left: -70, width: 220, height: 220,
                             borderRadius: "50%", pointerEvents: "none",
                             background: `conic-gradient(from 200deg at 50% 50%, ${orb3}, ${orb1}, ${orb2}, ${orb3})`,
-                            filter: "blur(40px)", opacity: 0.45, zIndex: 0,
+                            filter: "blur(40px)", opacity: 0.5, zIndex: 0,
+                            animation: "orbDrift 10s ease-in-out infinite",
                           }}/>
                           {/* Ghost "EDGE" stencil */}
                           <div style={{
@@ -2170,8 +2186,9 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
                             <div style={{ fontFamily: DISPLAY, fontSize: "clamp(52px, 13vw, 78px)", fontWeight: 700, letterSpacing: "-0.04em", lineHeight: 0.92, color: C.text, marginBottom: "8px" }}>
                               {valStr}{!isDollar && <span style={{ color: C.muted, fontStyle: "italic", fontWeight: 500 }}>R</span>}
                             </div>
-                            {/* Subtitle */}
-                            <div style={{ fontFamily: BODY, fontSize: "13px", color: C.text2 }}>
+                            {/* Subtitle with live dot */}
+                            <div style={{ fontFamily: BODY, fontSize: "13px", color: C.text2, display: "flex", alignItems: "center", gap: "6px" }}>
+                              <span style={{ width: 6, height: 6, borderRadius: "50%", background: live, boxShadow: `0 0 8px ${live}`, flexShrink: 0, display: "inline-block" }} />
                               {tradeCount === 0
                                 ? <span style={{ color: C.muted }}>{isWeek ? "No trades logged this week." : "No trades logged yet."}</span>
                                 : <><span style={{ color: valPos ? C.green : C.red }}>{valPos ? "Up" : "Down"}</span> over {tradeCount} trade{tradeCount !== 1 ? "s" : ""}{isWeek ? " this week" : " all time"}.</>
@@ -2210,21 +2227,28 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
                         {/* QuickAction chip row */}
                         <div style={{ display: "flex", gap: "8px", marginTop: "12px", overflowX: "auto", paddingBottom: "2px" }}>
                           {[
-                            { label: "Log Trade", icon: "M5 4h10v12H5zM7 7h6M7 10h6M7 13h4", action: () => setView("log") },
-                            { label: "Journal", icon: "M4 4h12v12H4zM7 8h6M7 11h6M7 14h3", action: () => setView("history") },
-                            { label: "Stats", icon: "M3 16V9M9 16V3M15 16v-5M18 16H2", action: () => setView("stats") },
-                            { label: "Circles", icon: "M5 8a3 3 0 1 1 6 0 3 3 0 0 1-6 0zM12.5 11a3 3 0 0 1 4.5 2.5M3 17c0-2.5 2-3.8 5-3.8s5 1.3 5 3.8", action: () => setView("circles") },
+                            { label: "Log Trade", icon: "M10 4v12M4 10h12", action: () => setView("log"), primary: true },
+                            { label: "Journal", icon: "M4 4h12v12H4zM7 8h6M7 11h6M7 14h3", action: () => setView("history"), primary: false },
+                            { label: "Stats", icon: "M3 16V9M9 16V3M15 16v-5M18 16H2", action: () => setView("stats"), primary: false },
+                            { label: "Circles", icon: "M5 8a3 3 0 1 1 6 0 3 3 0 0 1-6 0zM12.5 11a3 3 0 0 1 4.5 2.5M3 17c0-2.5 2-3.8 5-3.8s5 1.3 5 3.8", action: () => setView("circles"), primary: false },
                           ].map(chip => (
                             <button key={chip.label} onClick={chip.action} style={{
+                              position: "relative",
                               display: "flex", alignItems: "center", gap: "6px",
-                              background: "transparent", border: `1px solid ${C.border2}`,
-                              borderRadius: "999px", padding: "9px 14px", minHeight: "40px",
+                              background: chip.primary ? C.text : "transparent",
+                              border: `1px solid ${chip.primary ? C.text : C.border2}`,
+                              borderRadius: "999px", padding: "9px 16px", minHeight: "40px",
                               cursor: "pointer", fontFamily: MONO, fontSize: "10px",
-                              letterSpacing: "0.08em", color: C.text2, whiteSpace: "nowrap",
-                              flexShrink: 0,
+                              letterSpacing: "0.08em",
+                              color: chip.primary ? C.bg : C.text2,
+                              whiteSpace: "nowrap", flexShrink: 0,
+                              transition: "opacity 0.15s, transform 0.15s",
                             }}>
+                              {chip.primary && (
+                                <span style={{ position: "absolute", top: 7, right: 7, width: 5, height: 5, borderRadius: "50%", background: live, boxShadow: `0 0 6px ${live}` }} />
+                              )}
                               <svg width="13" height="13" viewBox="0 0 20 20" fill="none">
-                                <path d={chip.icon} stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                                <path d={chip.icon} stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
                               </svg>
                               {chip.label}
                             </button>
@@ -2454,8 +2478,8 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
                         RECENT TRADES
                       </div>
                       <div style={{ borderTop: `1px solid ${C.border}`, marginTop: "12px" }}>
-                        {trades.slice(0, 5).map(t => (
-                          <div key={t.id} className="row-hvr" onClick={() => editTrade(t)}
+                        {trades.slice(0, 5).map((t, _i) => (
+                          <div key={t.id} className="row-hvr stagger-item" onClick={() => editTrade(t)}
                             style={{ display: "grid", gridTemplateColumns: "1fr auto auto auto", alignItems: "center", gap: "12px", padding: "14px 0", borderBottom: `1px solid ${C.border}` }}>
                             <div>
                               <div style={{ fontFamily: MONO, fontSize: "13px", color: C.text, letterSpacing: "0.04em" }}>{t.pair || "—"}</div>
@@ -3064,11 +3088,11 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
                 )
               ) : (
                 <div style={{ borderRadius: "18px", overflow: "hidden", border: `1px solid ${C.border}`, background: C.panel }}>
-                  {filteredTrades.map(t => {
+                  {filteredTrades.map((t, _ti) => {
                     const expanded = expandedId === t.id;
                     const commentText = commentInputs[t.id] || "";
                     return (
-                      <div key={t.id} style={{ borderBottom: `1px solid ${C.border}` }}>
+                      <div key={t.id} className="stagger-item" style={{ borderBottom: `1px solid ${C.border}` }}>
                         <div className="row-hvr" onClick={() => setExpandedId(expanded ? null : t.id)}
                           style={{ padding: "12px 14px", minHeight: "56px", cursor: "pointer", display: "flex", alignItems: "center", gap: "12px" }}>
                           {/* Instrument badge */}
@@ -3938,8 +3962,8 @@ ${recentTrades.map((t:any)=>`<tr><td>${t.date}</td><td>${t.pair||"—"}</td><td>
 
         {/* ── BOTTOM NAV — floating glass pill (mobile only) ── */}
         {!isDesktop && (
-          <div style={{ position: "fixed", bottom: "calc(16px + env(safe-area-inset-bottom))", left: "50%", transform: "translateX(-50%)", width: "calc(100% - 32px)", maxWidth: "440px", zIndex: 30 }}>
-            <div style={{ display: "flex", padding: "5px", background: (C as any).surfaceGlass ?? C.panel, backdropFilter: "blur(28px) saturate(180%)", WebkitBackdropFilter: "blur(28px) saturate(180%)", borderRadius: "999px", border: `1px solid ${C.border2}`, boxShadow: `0 8px 32px ${C.shadow}` }}>
+          <div style={{ position: "fixed", bottom: "calc(16px + env(safe-area-inset-bottom))", left: "50%", transform: "translateX(-50%)", width: "calc(100% - 32px)", maxWidth: "460px", zIndex: 30 }}>
+            <div style={{ display: "flex", alignItems: "center", padding: "5px", background: (C as any).surfaceGlass ?? C.panel, backdropFilter: "blur(28px) saturate(180%)", WebkitBackdropFilter: "blur(28px) saturate(180%)", borderRadius: "999px", border: `1px solid ${C.border2}`, boxShadow: `0 16px 40px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.14), inset 0 1px 0 rgba(255,255,255,0.04)` }}>
               {NAV_TABS.map(tab => {
                 const active = view === tab.id;
                 return (
@@ -3951,21 +3975,38 @@ ${recentTrades.map((t:any)=>`<tr><td>${t.date}</td><td>${t.pair||"—"}</td><td>
                   </button>
                 );
               })}
+              {/* Calculator — teal accent pill embedded in nav */}
+              <button
+                onClick={() => { setShowCalc(true); phCapture("calculator_opened"); }}
+                title="Position Size Calculator"
+                style={{ flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "3px", padding: "8px 10px", borderRadius: "999px", background: `color-mix(in oklch, ${(C as any).live ?? "oklch(0.84 0.14 175)"} 18%, transparent)`, color: (C as any).live ?? "oklch(0.84 0.14 175)", border: `1px solid color-mix(in oklch, ${(C as any).live ?? "oklch(0.84 0.14 175)"} 30%, transparent)`, cursor: "pointer", minHeight: "48px", transition: "opacity 0.15s" }}>
+                {/* Scale/balance SVG icon */}
+                <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="10" y1="3" x2="10" y2="17"/>
+                  <line x1="2" y1="17" x2="18" y2="17"/>
+                  <path d="M2 9l4 5 4-5"/>
+                  <path d="M18 9l-4 5-4-5"/>
+                  <line x1="6" y1="9" x2="14" y2="9"/>
+                </svg>
+                <span style={{ fontSize: "9px", fontFamily: MONO, letterSpacing: "0.06em" }}>Size</span>
+              </button>
             </div>
           </div>
         )}
 
-        {/* ── Lot Size Calculator floating button ── */}
-        <button
-          onClick={() => { setShowCalc(true); phCapture("calculator_opened"); }}
-          style={{ position: "fixed", bottom: isDesktop ? "28px" : "calc(44px + env(safe-area-inset-bottom) + 16px)", left: "16px", zIndex: 998, background: C.accent ?? "#7c3aed", color: "#fff", border: "none", borderRadius: "999px", padding: "12px 18px", minHeight: "44px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", boxShadow: "0 2px 12px rgba(0,0,0,0.35)", display: "flex", alignItems: "center", gap: "6px" }}>
-          <span style={{ fontSize: 16, lineHeight: 1 }}>⚖️</span> Size
-        </button>
+        {/* ── Lot Size Calculator — desktop floating button only ── */}
+        {isDesktop && (
+          <button
+            onClick={() => { setShowCalc(true); phCapture("calculator_opened"); }}
+            style={{ position: "fixed", bottom: "28px", left: "16px", zIndex: 998, background: (C as any).live ?? "oklch(0.84 0.14 175)", color: "#0A0A0A", border: "none", borderRadius: "999px", padding: "12px 18px", minHeight: "44px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", boxShadow: `0 2px 16px color-mix(in oklch, ${(C as any).live ?? "oklch(0.84 0.14 175)"} 40%, transparent)`, display: "flex", alignItems: "center", gap: "6px" }}>
+            <span style={{ fontSize: 16, lineHeight: 1 }}>⚖️</span> Size
+          </button>
+        )}
 
         {/* ── Feedback floating button ── */}
         <button
           onClick={() => setFeedbackOpen(true)}
-          style={{ position: "fixed", bottom: isDesktop ? "28px" : "calc(44px + env(safe-area-inset-bottom) + 16px)", right: "16px", zIndex: 998, background: C.text, color: C.bg, border: "none", borderRadius: "999px", padding: "12px 20px", minHeight: "44px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", boxShadow: "0 2px 12px rgba(0,0,0,0.25)", display: "flex", alignItems: "center" }}>
+          style={{ position: "fixed", bottom: isDesktop ? "28px" : "calc(44px + env(safe-area-inset-bottom) + 24px)", right: "16px", zIndex: 998, background: C.text, color: C.bg, border: "none", borderRadius: "999px", padding: "12px 20px", minHeight: "44px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", boxShadow: "0 2px 12px rgba(0,0,0,0.25)", display: "flex", alignItems: "center" }}>
           Feedback
         </button>
 
@@ -4243,70 +4284,4 @@ function ConfluenceTracker({ checkItems, checkedCount, totalItems, isChecked, ac
           <div style={{ background: statusCol, height: "1px", width: `${pct}%`, transition: "width 0.35s ease" }} />
           <div style={{ position: "absolute", top: "-3px", bottom: "-3px", left: `${Math.round((minCount / totalItems) * 100)}%`, width: "1px", background: C.text }} />
         </div>
-        <div style={{ display: "flex", justifyContent: "space-between", marginTop: "6px", fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.04em" }}>
-          <span>{pct}% MET</span>
-          <span>THRESHOLD {Math.round((minCount / totalItems) * 100)}%</span>
-        </div>
-        {required.length > 0 && (
-          <div style={{ marginTop: "14px", paddingTop: "14px", borderTop: `1px solid ${C.border}` }}>
-            <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.1em", marginBottom: "8px" }}>MUST-HAVES</div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "14px", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.04em" }}>
-              {required.map((rid: any) => {
-                const item = checkItems.find((i: any) => i.id === rid);
-                if (!item) return null;
-                const met = isChecked(rid);
-                return (
-                  <span key={rid} style={{ color: met ? C.green : C.red }}>
-                    {met ? "✓" : "✕"} {stratShort(item.text)}
-                  </span>
-                );
-              })}
-            </div>
-          </div>
-        )}
-        <button onClick={() => setEditMode(!editMode)} style={{ ...pillGhost, marginTop: "16px", width: "100%" }}>
-          {editMode ? "CLOSE SETTINGS" : "ENTRY RULE SETTINGS"}
-        </button>
-      </div>
-
-      {editMode && (
-        <div style={{ padding: "4px 0 20px", marginBottom: "4px" }}>
-          <SectionKicker label={`ENTRY RULES — ${stratShort(activeStrategy).toUpperCase()}`} C={C} />
-          <div style={{ marginTop: "18px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px", alignItems: "baseline" }}>
-              <label style={{ fontFamily: BODY, fontSize: "13px", color: C.text }}>Minimum confluences to enter</label>
-              <span style={{ fontFamily: MONO, fontSize: "13px", color: C.text, letterSpacing: "0.04em" }}>{minCount} / {totalItems}</span>
-            </div>
-            <input type="range" min={1} max={totalItems} value={minCount} onChange={e => setMin(e.target.value)}
-              style={{ width: "100%", accentColor: C.text, cursor: "pointer" }} />
-            <div style={{ display: "flex", justifyContent: "space-between", marginTop: "4px", fontFamily: MONO, fontSize: "9px", color: C.dim, letterSpacing: "0.06em" }}>
-              <span>1 LENIENT</span>
-              <span>{totalItems} STRICT</span>
-            </div>
-          </div>
-          <div style={{ marginTop: "24px" }}>
-            <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", marginBottom: "8px" }}>MARK AS REQUIRED</div>
-            <div style={{ fontFamily: BODY, fontSize: "12px", color: C.muted, marginBottom: "14px", lineHeight: 1.55 }}>
-              Toggle any confluence as required — the clear-to-enter signal only fires if these are checked, regardless of minimum count.
-            </div>
-            <div style={{ borderTop: `1px solid ${C.border}` }}>
-              {checkItems.map((item: any) => {
-                const isReq = required.includes(item.id);
-                return (
-                  <div key={item.id} onClick={() => toggleRequired(item.id)}
-                    style={{ display: "flex", alignItems: "center", gap: "14px", padding: "12px 0", borderBottom: `1px solid ${C.border}`, cursor: "pointer" }}>
-                    <div style={{ width: "16px", height: "16px", borderRadius: "50%", border: `1px solid ${isReq ? C.text : C.border2}`, background: isReq ? C.text : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      {isReq && <span style={{ color: C.bg, fontSize: "9px", lineHeight: 1 }}>✓</span>}
-                    </div>
-                    <span style={{ fontFamily: BODY, fontSize: "13px", color: isReq ? C.text : C.text2, flex: 1, lineHeight: 1.5 }}>{item.text}</span>
-                    <span style={{ fontFamily: MONO, fontSize: "10px", color: isReq ? C.text : C.muted, letterSpacing: "0.08em", textTransform: "uppercase" }}>{isReq ? "Required" : "Optional"}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
+        <div style={{ displ

@@ -223,7 +223,7 @@ export function LogTradeScreen({
           fontFamily: BODY, marginTop: "8px", opacity: enabled ? 1 : 0.6, transition: "opacity 0.2s",
         }}>
         <span>{savingTrade ? "Saving…" : editId ? "Update trade" : "Save trade"}</span>
-        <span style={{ width: "36px", height: "36px", borderRadius: "999px", background: enabled ? live : C.muted, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        <span style={{ width: "36px", height: "36px", borderRadius: "999px", background: enabled ? live : C.muted, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: enabled ? `0 0 0 4px color-mix(in oklch, ${live} 25%, transparent)` : "none", transition: "box-shadow 0.2s" }}>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <path d="M3 8h10M9 4l4 4-4 4" stroke={enabled ? "#0A0A0A" : C.bg} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
