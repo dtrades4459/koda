@@ -2613,7 +2613,7 @@ export default function Tradr({ user, jwtPlan }: { user?: User; jwtPlan?: "free"
                     const thisWeekItems = friendFeed.filter((item) => item.date >= weekStartStr);
                     if (!thisWeekItems.length) return null;
                     const counted = thisWeekItems.map((item) => {
-                      const total = Object.values(item.reactions || {}).reduce((s: number, v) => =>
+                      const total = Object.values(item.reactions || {}).reduce((s: number, v) =>
                         s + (typeof v === "number" ? v : Array.isArray(v) ? v.length : 0), 0);
                       return { ...item, _rxTotal: total };
                     });
@@ -4497,4 +4497,14 @@ function ConfluenceTracker({ checkItems, checkedCount, totalItems, isChecked, ac
                       {isReq && <span style={{ color: C.bg, fontSize: "9px", lineHeight: 1 }}>✓</span>}
                     </div>
                     <span style={{ fontFamily: BODY, fontSize: "13px", color: isReq ? C.text : C.text2, flex: 1, lineHeight: 1.5 }}>{item.text}</span>
-                    <span style={{ fontFamily: MONO, fontSize: "10px", color: isReq ? C.text : C.muted, letterSpacing: "0.08em", textTransform: "uppercase" }}>{isReq ? "Required" : "Optiona
+                    <span style={{ fontFamily: MONO, fontSize: "10px", color: isReq ? C.text : C.muted, letterSpacing: "0.08em", textTransform: "uppercase" }}>{isReq ? "Required" : "Optional"}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
