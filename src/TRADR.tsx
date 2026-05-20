@@ -1971,11 +1971,29 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
   };
 
   if (loading) return (
-    <div style={{ minHeight: "100vh", background: DARK.bg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "16px" }}>
-      <TrMark size={64} bg={DARK.panel} />
+    <div style={{ minHeight: "100vh", background: DARK.bg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "20px" }}>
+      <style>{`
+        @keyframes splashPulse{0%,100%{transform:scale(1);opacity:0.18}50%{transform:scale(1.55);opacity:0}}
+        @keyframes splashBreath{0%,100%{opacity:0.3;transform:scale(0.92)}50%{opacity:1;transform:scale(1)}}
+        @keyframes splashDot{0%,80%,100%{opacity:0.2;transform:scale(0.7)}40%{opacity:1;transform:scale(1)}}
+      `}</style>
+      {/* Pulse ring behind logo */}
+      <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ position: "absolute", width: "96px", height: "96px", borderRadius: "50%", border: `1.5px solid ${DARK.text}`, animation: "splashPulse 2s ease-in-out infinite" }} />
+        <div style={{ animation: "splashBreath 2.4s ease-in-out infinite" }}>
+          <TrMark size={64} bg={DARK.panel} />
+        </div>
+      </div>
+      {/* Wordmark */}
       <div style={{ display: "flex", alignItems: "baseline", gap: "8px" }}>
         <span style={{ fontFamily: DISPLAY, fontWeight: 600, fontSize: "18px", letterSpacing: "0.22em", color: DARK.text }}>TRADR</span>
         <span style={{ fontFamily: MONO, fontWeight: 500, fontSize: "9px", letterSpacing: "0.16em", color: DARK.text2, padding: "2px 5px", borderRadius: "4px", border: `1px solid ${DARK.border2}`, lineHeight: 1 }}>OS</span>
+      </div>
+      {/* Breathing dots */}
+      <div style={{ display: "flex", gap: "6px" }}>
+        {[0, 1, 2].map(i => (
+          <span key={i} style={{ width: "5px", height: "5px", borderRadius: "50%", background: DARK.text, display: "inline-block", animation: `splashDot 1.2s ease-in-out infinite`, animationDelay: `${i * 0.2}s` }} />
+        ))}
       </div>
     </div>
   );
@@ -2248,8 +2266,8 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
                               }
                             </div>
 
-                            {/* Stats triplet */}
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0", marginTop: "18px", borderTop: `1px solid ${C.border}` }}>
+                            {/* Stats triplet — only meaningful once there are trades */}
+                            {total > 0 && <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0", marginTop: "18px", borderTop: `1px solid ${C.border}` }}>
                               {[
                                 { label: "WIN RATE", value: `${winRate}%`, color: null },
                                 { label: "AVG R:R", value: avgRR === "—" ? "—" : `${avgRR}R`, color: null },
@@ -2265,7 +2283,7 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
                                   )}
                                 </div>
                               ))}
-                            </div>
+                            </div>}
 
                             {/* Record line */}
                             {total > 0 && (
@@ -2478,6 +2496,29 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
                       </button>
                     )}
                   </section>
+
+                  {/* Zero-state CTA — shown instead of charts when user has no trades */}
+                  {trades.length === 0 && (
+                    <section style={{ marginTop: "clamp(32px, 6vw, 48px)", textAlign: "center", padding: "0 8px" }}>
+                      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "16px", padding: "40px 24px", background: C.panel, border: `1px solid ${C.border}`, borderRadius: "16px" }}>
+                        <TrMark size={52} bg={C.bg} />
+                        <div>
+                          <p style={{ fontFamily: DISPLAY, fontSize: "20px", fontWeight: 700, color: C.text, letterSpacing: "-0.02em", marginBottom: "8px" }}>Your edge starts here</p>
+                          <p style={{ fontFamily: BODY, fontSize: "13px", color: C.muted, lineHeight: 1.6, maxWidth: "260px", margin: "0 auto" }}>
+                            Log your first trade and TRADR will start tracking your P&amp;L, win rate, and patterns.
+                          </p>
+                        </div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "10px", width: "100%", maxWidth: "240px" }}>
+                          <button onClick={() => navigateTo("log")} style={{ background: C.text, color: C.bg, border: "none", borderRadius: "999px", padding: "13px 24px", fontFamily: MONO, fontSize: "11px", letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: 700, cursor: "pointer" }}>
+                            Log your first trade →
+                          </button>
+                          <button onClick={() => navigateTo("sync")} style={{ background: "transparent", color: C.muted, border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "11px 24px", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer" }}>
+                            Or import from CSV
+                          </button>
+                        </div>
+                      </div>
+                    </section>
+                  )}
 
                   {/* Equity curve */}
                   {trades.length > 1 && (
