@@ -401,6 +401,27 @@ function PositionSizeCalc({ C, inp, profile, saveProfile }: any) {
 export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" | "pro" | "elite" } = {}) {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [view, setView] = useState("home");
+  const [viewHistory, setViewHistory] = useState<string[]>([]);
+
+  // navigateTo — push current view to history, then switch
+  function navigateTo(v: string) {
+    setViewHistory(h => [...h, view]);
+    setView(v);
+  }
+  // goBack — pop history stack
+  function goBack() {
+    setViewHistory(h => {
+      if (h.length === 0) return h;
+      const prev = h[h.length - 1];
+      setView(prev);
+      return h.slice(0, -1);
+    });
+  }
+  // primaryNav — top-level tab switches clear history
+  function primaryNav(v: string) {
+    setViewHistory([]);
+    setView(v);
+  }
   // ── Circles state ──────────────────────────────────────────────
   const [myCircles, setMyCircles] = useState<Circle[]>([]);
   const [circlesView, setCirclesView] = useState<string>("browse");
@@ -1399,10 +1420,11 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
     phCapture(editId ? "trade_edited" : "trade_logged", { outcome: base.outcome, pair: base.pair, total_trades: u.length });
     showToast("Trade saved");
     setTimeout(() => setSavingTrade(false), 1500);
-    setView("history");
+    // Go back if we have history, otherwise land on journal
+    setViewHistory(h => { if (h.length > 0) { setView(h[h.length - 1]); return h.slice(0, -1); } setView("history"); return h; });
   }
 
-  function editTrade(t: any) { setForm(t); setEditId(t.id); setView("log"); }
+  function editTrade(t: any) { setForm(t); setEditId(t.id); navigateTo("log"); }
   async function deleteTrade(id: any) { await saveTrades(trades.filter(t => t.id !== id)); setConfirmDelete(null); showToast("Trade deleted"); }
   async function toggleReaction(tid: any, reaction: any) {
     const myCode = getMyCode();
@@ -2033,11 +2055,28 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
         {/* ── MASTHEAD ── */}
         <header style={{ padding: isDesktop ? "16px 40px 0" : "10px 20px 10px", borderBottom: `1px solid ${C.border}`, position: "sticky", top: 0, background: C.bg, zIndex: 10, backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", paddingBottom: isDesktop ? "14px" : 0 }}>
-            {/* Logo: mark + TRADR wordmark + OS tag */}
+            {/* Left: back button when history exists, otherwise logo */}
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <TrMark size={isDesktop ? 24 : 22} bg={C.panel} />
-              <span style={{ fontFamily: DISPLAY, fontSize: isDesktop ? "15px" : "14px", fontWeight: 600, letterSpacing: "0.22em", color: C.text, lineHeight: 1 }}>TRADR</span>
-              <span style={{ fontFamily: MONO, fontWeight: 500, fontSize: "9px", letterSpacing: "0.16em", color: C.text2, padding: "2px 5px", borderRadius: "4px", border: `1px solid ${C.border2}`, lineHeight: 1 }}>OS</span>
+              {viewHistory.length > 0 ? (
+                <button onClick={goBack} style={{
+                  display: "flex", alignItems: "center", gap: "6px",
+                  background: "transparent", border: "none",
+                  color: C.text, cursor: "pointer", padding: "4px 0",
+                  fontFamily: MONO, fontSize: "11px", letterSpacing: "0.06em",
+                  minHeight: "34px",
+                }}>
+                  <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M13 4l-6 6 6 6"/>
+                  </svg>
+                  <span style={{ textTransform: "uppercase", letterSpacing: "0.1em", fontSize: "10px" }}>Back</span>
+                </button>
+              ) : (
+                <>
+                  <TrMark size={isDesktop ? 24 : 22} bg={C.panel} />
+                  <span style={{ fontFamily: DISPLAY, fontSize: isDesktop ? "15px" : "14px", fontWeight: 600, letterSpacing: "0.22em", color: C.text, lineHeight: 1 }}>TRADR</span>
+                  <span style={{ fontFamily: MONO, fontWeight: 500, fontSize: "9px", letterSpacing: "0.16em", color: C.text2, padding: "2px 5px", borderRadius: "4px", border: `1px solid ${C.border2}`, lineHeight: 1 }}>OS</span>
+                </>
+              )}
             </div>
             {/* Right: handle + sign out */}
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -2070,7 +2109,7 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
                   const sn = subNavFor(tab.id); const ia = view === tab.id;
                   return (
                     <div key={tab.id}>
-                      <button onClick={()=>setView(tab.id)} style={{ display:"flex", alignItems:"center", gap:"10px", width:"100%", background:ia?C.panel:"transparent", border:"none", borderLeft:ia?`2px solid ${C.text}`:"2px solid transparent", padding:"10px 22px", cursor:"pointer", fontFamily:MONO, fontSize:"11px", letterSpacing:"0.1em", textTransform:"uppercase", color:ia?C.text:C.dim, textAlign:"left", transition:"all 0.12s ease" }}>
+                      <button onClick={()=>primaryNav(tab.id)} style={{ display:"flex", alignItems:"center", gap:"10px", width:"100%", background:ia?C.panel:"transparent", border:"none", borderLeft:ia?`2px solid ${C.text}`:"2px solid transparent", padding:"10px 22px", cursor:"pointer", fontFamily:MONO, fontSize:"11px", letterSpacing:"0.1em", textTransform:"uppercase", color:ia?C.text:C.dim, textAlign:"left", transition:"all 0.12s ease" }}>
                         <svg width="16" height="16" viewBox="0 0 20 20" fill="none" style={{ opacity: ia ? 1 : 0.55, flexShrink: 0 }}>
                           <path d={(tab as any).path} stroke="currentColor" strokeWidth="1.35" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
@@ -2227,10 +2266,10 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
                         {/* QuickAction chip row */}
                         <div style={{ display: "flex", gap: "8px", marginTop: "12px", overflowX: "auto", paddingBottom: "2px" }}>
                           {[
-                            { label: "Log Trade", icon: "M10 4v12M4 10h12", action: () => setView("log"), primary: true },
-                            { label: "Journal", icon: "M4 4h12v12H4zM7 8h6M7 11h6M7 14h3", action: () => setView("history"), primary: false },
-                            { label: "Stats", icon: "M3 16V9M9 16V3M15 16v-5M18 16H2", action: () => setView("stats"), primary: false },
-                            { label: "Circles", icon: "M5 8a3 3 0 1 1 6 0 3 3 0 0 1-6 0zM12.5 11a3 3 0 0 1 4.5 2.5M3 17c0-2.5 2-3.8 5-3.8s5 1.3 5 3.8", action: () => setView("circles"), primary: false },
+                            { label: "Log Trade", icon: "M10 4v12M4 10h12", action: () => navigateTo("log"), primary: true },
+                            { label: "Journal", icon: "M4 4h12v12H4zM7 8h6M7 11h6M7 14h3", action: () => navigateTo("history"), primary: false },
+                            { label: "Stats", icon: "M3 16V9M9 16V3M15 16v-5M18 16H2", action: () => navigateTo("stats"), primary: false },
+                            { label: "Circles", icon: "M5 8a3 3 0 1 1 6 0 3 3 0 0 1-6 0zM12.5 11a3 3 0 0 1 4.5 2.5M3 17c0-2.5 2-3.8 5-3.8s5 1.3 5 3.8", action: () => navigateTo("circles"), primary: false },
                           ].map(chip => (
                             <button key={chip.label} onClick={chip.action} style={{
                               position: "relative",
@@ -2281,7 +2320,7 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
                           You've hit your max daily loss of {maxLoss}R. Step away, review your trades, and come back tomorrow.
                         </div>
                         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                          <button onClick={() => setView("stats")}
+                          <button onClick={() => navigateTo("stats")}
                             style={{ background: "transparent", border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "8px 16px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", color: C.text2 }}>
                             Review Today
                           </button>
@@ -2492,7 +2531,7 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
                         ))}
                       </div>
                       {trades.length > 5 && (
-                        <button onClick={() => setView("history")}
+                        <button onClick={() => navigateTo("history")}
                           style={{ ...pillGhost, width: "100%", marginTop: "16px" }}>
                           VIEW ALL {trades.length} TRADES →
                         </button>
@@ -2809,7 +2848,7 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
                             <button onClick={() => setCalDayTrades(null)} style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "12px" }}>close</button>
                           </div>
                           {calDayTrades.trades.map((t: any) => (
-                            <div key={t.id} className="row-hvr" onClick={() => { setView("history"); setExpandedId(t.id); }}
+                            <div key={t.id} className="row-hvr" onClick={() => { navigateTo("history"); setExpandedId(t.id); }}
                               style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: `1px solid ${C.border}` }}>
                               <span style={{ fontFamily: MONO, fontSize: "12px", color: C.text }}>{t.pair}</span>
                               <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
@@ -2878,7 +2917,7 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
                     <div style={{ textAlign: "center", padding: "40px 0", color: C.muted, fontSize: "13px" }}>
                       <div style={{ fontSize: "28px", marginBottom: "12px" }}>◆</div>
                       You haven't joined any circles yet.<br />
-                      <span style={{ color: C.accent, cursor: "pointer" }} onClick={() => setView("circles")}>Browse Circles →</span>
+                      <span style={{ color: C.accent, cursor: "pointer" }} onClick={() => navigateTo("circles")}>Browse Circles →</span>
                     </div>
                   ) : (
                     <div style={{ display: "flex", flexDirection: "column", gap: "2px", borderTop: `1px solid ${C.border}` }}>
@@ -2891,7 +2930,7 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
                         return (
                           <div
                             key={circle.code}
-                            onClick={() => { setActiveCircle(circle); setCirclesView("detail"); setView("circles"); }}
+                            onClick={() => { setActiveCircle(circle); setCirclesView("detail"); navigateTo("circles"); }}
                             style={{
                               display: "flex", alignItems: "center", gap: "14px",
                               padding: "16px 0", borderBottom: `1px solid ${C.border}`,
@@ -3023,7 +3062,7 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
               allStrategyNames={allStrategyNames}
               _allStratMap={_allStratMap}
               allSetups={allSetups}
-              setView={setView}
+              setView={navigateTo}
             />
           )}
 
@@ -3076,7 +3115,7 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
                     <div style={{ fontFamily: BODY, fontSize: "13px", color: C.muted, lineHeight: 1.6, marginBottom: "28px" }}>
                       Every edge starts with data. Log your first trade.
                     </div>
-                    <button onClick={() => setView("log")} style={pillPrimary(true)}>
+                    <button onClick={() => navigateTo("log")} style={pillPrimary(true)}>
                       Log a trade →
                     </button>
                   </div>
@@ -3572,7 +3611,7 @@ ${recentTrades.map((t:any)=>`<tr><td>${t.date}</td><td>${t.pair||"—"}</td><td>
                         <button onClick={() => setCalDayTrades(null)} style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "12px" }}>close</button>
                       </div>
                       {calDayTrades.trades.map((t: any) => (
-                        <div key={t.id} className="row-hvr" onClick={() => { setView("history"); setExpandedId(t.id); }}
+                        <div key={t.id} className="row-hvr" onClick={() => { navigateTo("history"); setExpandedId(t.id); }}
                           style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: `1px solid ${C.border}` }}>
                           <span style={{ fontFamily: MONO, fontSize: "12px", color: C.text }}>{t.pair}</span>
                           <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
@@ -3967,7 +4006,7 @@ ${recentTrades.map((t:any)=>`<tr><td>${t.date}</td><td>${t.pair||"—"}</td><td>
               {NAV_TABS.map(tab => {
                 const active = view === tab.id;
                 return (
-                  <button key={tab.id} onClick={() => setView(tab.id)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "3px", padding: "8px 4px", borderRadius: "999px", background: active ? C.text : "transparent", color: active ? C.bg : C.muted, border: "none", cursor: "pointer", transition: "background 0.2s, color 0.2s", minHeight: "48px" }}>
+                  <button key={tab.id} onClick={() => primaryNav(tab.id)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "3px", padding: "8px 4px", borderRadius: "999px", background: active ? C.text : "transparent", color: active ? C.bg : C.muted, border: "none", cursor: "pointer", transition: "background 0.2s, color 0.2s", minHeight: "48px" }}>
                     <svg width="18" height="18" viewBox="0 0 20 20" fill="none" style={{ flexShrink: 0 }}>
                       <path d={(tab as any).path} stroke="currentColor" strokeWidth="1.35" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
@@ -4347,7 +4386,4 @@ function ConfluenceTracker({ checkItems, checkedCount, totalItems, isChecked, ac
             </div>
           </div>
         </div>
-      )}
-    </div>
-  );
-}
+   
