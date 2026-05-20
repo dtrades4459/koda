@@ -3066,7 +3066,7 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
                   userId={profile.uid ?? user?.id ?? ""}
                   accessToken={accessToken}
                   existingTrades={trades}
-                  allStrategyNames={getAllStrategyNames()}
+                  allStrategyNames={allStrategyNames}
                   onTradesImported={handleCsvImport}
                   showToast={showToast}
                 />
