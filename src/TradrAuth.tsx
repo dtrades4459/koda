@@ -8,24 +8,24 @@ import { BetaGate, betaEnabled, isBetaUnlocked } from "./BetaGate";
 // ─── THEME ────────────────────────────────────────────────────────────────────
 // Warm editorial palette, inspired by dvdrod.com + oddritualgolf.com.
 const C = {
-  bg: "#0C0C0B",        // warm near-black
-  panel: "#161614",     // warm surface
-  panel2: "#1E1E1B",    // warm raised surface
-  border: "#2A2A26",    // hairline
-  border2: "#3A3A34",   // focused hairline
-  text: "#EDEDE8",      // warm off-white
-  text2: "#BCBCB4",     // warm mid
-  muted: "#8A8A82",     // warm muted
-  dim: "#55554F",       // warm dim
-  accent: "#EDEDE8",    // primary CTA (text-colored — stark/editorial)
-  blue: "#89cff0",      // TRADR brand accent (used sparingly)
-  green: "#00C96B",     // gain
-  red: "#FF3D00",       // loss
+  bg: "#0A0A0B",
+  panel: "#131317",
+  panel2: "#1A1A20",
+  border: "rgba(255,255,255,0.07)",
+  border2: "rgba(255,255,255,0.13)",
+  text: "#F2F2EE",
+  text2: "#A6A6A2",
+  muted: "#65655F",
+  dim: "#45453F",
+  accent: "#F2F2EE",
+  blue: "oklch(0.74 0.16 250)",
+  green: "oklch(0.78 0.18 152)",
+  red: "oklch(0.70 0.21 25)",
 };
 
-const DISPLAY = "'Syne', 'Inter', system-ui, sans-serif";
-const BODY = "'Inter', system-ui, sans-serif";
-const MONO = "'IBM Plex Mono', ui-monospace, monospace";
+const DISPLAY = "'Geist', 'Inter', system-ui, sans-serif";
+const BODY = "'Geist', 'Inter', system-ui, sans-serif";
+const MONO = "'Geist Mono', 'IBM Plex Mono', ui-monospace, monospace";
 
 // ─── STYLES ───────────────────────────────────────────────────────────────────
 const inp: React.CSSProperties = {
