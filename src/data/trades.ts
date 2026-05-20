@@ -160,3 +160,16 @@ export async function deleteTrade(userId: string, id: number): Promise<boolean> 
   }
   return true;
 }
+
+export async function deleteTradeByClientId(userId: string, clientId: string): Promise<boolean> {
+  const { error } = await supabase
+    .from("trades")
+    .delete()
+    .eq("user_id", userId)
+    .eq("client_id", clientId);
+  if (error) {
+    log.error("trades.deleteTradeByClientId", error, { userId, clientId });
+    return false;
+  }
+  return true;
+}

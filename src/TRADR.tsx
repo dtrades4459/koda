@@ -6,6 +6,7 @@ import { isFlagOn } from "./lib/flags";
 import { subscribeToCircle } from "./data/circles";
 import { subscribeToFollows, followUserV2, unfollowUserV2, readFollowGraphV2 } from "./data/follows";
 import { getProfile, upsertProfile } from "./data/profile";
+import { upsertTrade as upsertTradeV2, deleteTradeByClientId as deleteTradeV2ByClientId } from "./data/trades";
 import {
   tradovateAuth,
   tradovateRefresh,
@@ -1047,13 +1048,45 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
     showToast("Strategy deleted");
   }
 
+  // Convert app Trade (strings, single screenshot) → v2 upsert shape
+  function appTradeToV2Payload(t: Trade, uid: string) {
+    const parseNum = (v: string | undefined) => { const n = parseFloat(v ?? ""); return isFinite(n) ? n : undefined; };
+    const outcome = t.outcome === "win" || t.outcome === "loss" || t.outcome === "be" ? t.outcome : "be";
+    return {
+      userId: uid,
+      clientId: String(t.id),
+      pair: t.pair,
+      side: t.direction ?? undefined,
+      date: t.date,
+      session: t.session ?? undefined,
+      strategy: t.strategy,
+      setup: t.setup ?? undefined,
+      outcome: outcome as "win" | "loss" | "be",
+      entryPrice: parseNum(t.entryPrice),
+      slPrice: parseNum(t.slPrice),
+      tpPrice: parseNum(t.tpPrice),
+      pnl: parseNum(t.pnl) ?? 0,
+      rr: parseNum(t.rr),
+      notes: t.notes ?? undefined,
+      screenshots: t.screenshot ? [t.screenshot] : [],
+      reactions: t.reactions ?? {},
+    };
+  }
+
   async function saveTrades(u: Trade[]) {
     setTrades(u);
+    // Always write KV — safety net + fast reads during migration window
     try {
       await (window as any).storage.set("tradr_trades", JSON.stringify(u));
     } catch (e) {
-      log.error("saveTrades", e);
-      // storage.ts already shows a toast via onStorageError; just log here.
+      log.error("saveTrades.kv", e);
+    }
+    // Dual-write to v2 public.trades when flag is on
+    if (isFlagOn("newTrades") && user?.id) {
+      const uid = user.id;
+      // Fire-and-forget parallel upserts — do not block KV write
+      Promise.all(u.map(t => upsertTradeV2(appTradeToV2Payload(t, uid))))
+        .catch(e => log.error("saveTrades.v2", e));
     }
   }
   async function handleCsvImport(newTrades: any[]) {
@@ -1474,7 +1507,15 @@ export default function Tradr({ user, jwtPlan }: { user?: any; jwtPlan?: "free" 
   }
 
   function editTrade(t: any) { setForm(t); setEditId(t.id); navigateTo("log"); }
-  async function deleteTrade(id: any) { await saveTrades(trades.filter(t => t.id !== id)); setConfirmDelete(null); showToast("Trade deleted"); }
+  async function deleteTrade(id: any) {
+    await saveTrades(trades.filter(t => t.id !== id));
+    // Also remove from v2 when flag is on
+    if (isFlagOn("newTrades") && user?.id) {
+      deleteTradeV2ByClientId(user.id, String(id)).catch(e => log.error("deleteTrade.v2", e));
+    }
+    setConfirmDelete(null);
+    showToast("Trade deleted");
+  }
   async function toggleReaction(tid: any, reaction: any) {
     const myCode = getMyCode();
     const u = trades.map((t: any) => {

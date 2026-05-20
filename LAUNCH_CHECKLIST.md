@@ -74,11 +74,11 @@
 - **Why:** Base64 screenshots embedded in the trade blob means your entire trade history is one massive JSON object. 50 trades with screenshots = potential megabytes loaded on every session start.
 
 ### 2.6 Complete the v2 Trades Data Migration
-- [ ] Verify `public.trades` table exists and has the v2 schema (run migration 002 if not confirmed)
-- [ ] Test the `newTrades` flag path: `localStorage.tradr_flags = '{"newTrades":true}'; location.reload()` — log a trade, verify it appears in `select * from public.trades`
-- [ ] Fix any bugs found in the v2 write path
-- [ ] Flip the `newTrades` flag to on by default in `src/lib/flags.ts`
-- [ ] Keep the KV fallback for reads-only for 2 weeks, then remove it
+- [x] Verify `public.trades` table exists and has the v2 schema (run migration 002 if not confirmed)
+- [x] Test the `newTrades` flag path: `localStorage.tradr_flags = '{"newTrades":true}'; location.reload()` — log a trade, verify it appears in `select * from public.trades`
+- [x] Fix any bugs found in the v2 write path
+- [x] Flip the `newTrades` flag to on by default in `src/lib/flags.ts`
+- [x] Keep the KV fallback for reads-only for 2 weeks, then remove it
 - **Why:** All trades currently stored as one JSON blob per user. Write conflicts, size limits, and data loss risk increase with every trade logged.
 
 ### 2.7 Fix the N+1 Leaderboard Query
