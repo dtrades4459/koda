@@ -91,7 +91,7 @@ export function LotSizeCalculator({ C, onClose }: LotSizeCalculatorProps) {
   const inp: React.CSSProperties = {
     width: "100%", padding: "10px 12px", borderRadius: 10,
     border: `1px solid ${C.border ?? "#333"}`,
-    background: C.surface2 ?? "#2a2a3e",
+    background: C.panel2 ?? "#1A1A20",
     color: C.text ?? "#e2e8f0",
     fontFamily: BODY, fontSize: 14, boxSizing: "border-box",
     outline: "none",
@@ -106,7 +106,7 @@ export function LotSizeCalculator({ C, onClose }: LotSizeCalculatorProps) {
   const tabBtn = (active: boolean, accent?: string): React.CSSProperties => ({
     flex: 1, padding: "9px 0", border: "none", borderRadius: 9, cursor: "pointer",
     fontFamily: BODY, fontSize: 13, fontWeight: 600, transition: "background 0.15s",
-    background: active ? (accent ?? C.accent ?? "#7c3aed") : (C.surface2 ?? "#2a2a3e"),
+    background: active ? (accent ?? C.accent ?? "oklch(0.74 0.16 250)") : (C.panel2 ?? "#1A1A20"),
     color: active ? "#fff" : (C.muted ?? "#888"),
   });
 
@@ -118,13 +118,13 @@ export function LotSizeCalculator({ C, onClose }: LotSizeCalculatorProps) {
     <div
       style={{
         position: "fixed", inset: 0, zIndex: 1100,
-        background: "rgba(0,0,0,0.65)",
+        background: "rgba(0,0,0,0.72)",
         display: "flex", alignItems: "flex-end", justifyContent: "center",
       }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div style={{
-        background: C.card ?? "#1a1a2e",
+        background: C.panel ?? "#131317",
         width: "100%", maxWidth: 460,
         borderRadius: "22px 22px 0 0",
         padding: "22px 20px 40px",
@@ -217,9 +217,9 @@ export function LotSizeCalculator({ C, onClose }: LotSizeCalculatorProps) {
         {/* ── Result ── */}
         {calc && "error" in calc && calc.error ? (
           <div style={{
-            background: "#ef444415", border: "1px solid #ef444430",
+            background: "rgba(255,80,60,0.08)", border: "1px solid rgba(255,80,60,0.2)",
             borderRadius: 12, padding: "12px 14px",
-            color: "#ef4444", fontFamily: MONO, fontSize: 13,
+            color: C.red ?? "oklch(0.70 0.21 25)", fontFamily: MONO, fontSize: 13,
           }}>
             {calc.error}
           </div>
@@ -227,9 +227,9 @@ export function LotSizeCalculator({ C, onClose }: LotSizeCalculatorProps) {
         ) : calc && "contracts" in calc ? (
           <div style={{
             background: (calc.contracts ?? 0) > 0
-              ? `${C.accent ?? "#7c3aed"}18`
+              ? `${C.accent ?? "oklch(0.74 0.16 250)"}18`
               : "#6b728018",
-            border: `1px solid ${(calc.contracts ?? 0) > 0 ? (C.accent ?? "#7c3aed") + "33" : "#6b728033"}`,
+            border: `1px solid ${(calc.contracts ?? 0) > 0 ? (C.accent ?? "oklch(0.74 0.16 250)") + "33" : "#6b728033"}`,
             borderRadius: 16, padding: "20px 16px",
           }}>
             {/* Main numbers */}
@@ -238,7 +238,7 @@ export function LotSizeCalculator({ C, onClose }: LotSizeCalculatorProps) {
                 <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.1em", color: C.muted ?? "#888", marginBottom: 6 }}>CONTRACTS</div>
                 <div style={{
                   fontSize: 44, fontWeight: 800, fontFamily: MONO, lineHeight: 1,
-                  color: (calc.contracts ?? 0) > 0 ? (C.accent ?? "#7c3aed") : (C.muted ?? "#888"),
+                  color: (calc.contracts ?? 0) > 0 ? (C.accent ?? "oklch(0.74 0.16 250)") : (C.muted ?? "#888"),
                 }}>
                   {calc.contracts}
                 </div>
@@ -281,7 +281,7 @@ export function LotSizeCalculator({ C, onClose }: LotSizeCalculatorProps) {
 
         ) : (
           <div style={{
-            background: C.surface2 ?? "#2a2a3e", borderRadius: 14,
+            background: C.panel2 ?? "#1A1A20", borderRadius: 14,
             padding: "22px 16px", textAlign: "center",
             color: C.muted ?? "#888", fontFamily: MONO, fontSize: 12, lineHeight: 1.6,
           }}>
