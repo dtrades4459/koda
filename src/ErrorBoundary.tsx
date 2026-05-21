@@ -25,7 +25,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: { componentStack: string }) {
-    console.error("[TRADR] Uncaught error:", error, info.componentStack);
+    console.error("[Kōda OS] Uncaught error:", error, info.componentStack);
     this.setState({ info: info.componentStack ?? "" });
   }
 
@@ -54,7 +54,7 @@ export class ErrorBoundary extends Component<Props, State> {
             color: C.text,
             marginBottom: "48px",
           }}>
-            TRADR<span style={{ color: C.blue }}>.</span>
+            Kōda<span style={{ color: C.blue }}> OS</span>
           </div>
 
           {/* Error kicker */}

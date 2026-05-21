@@ -53,7 +53,7 @@ export default async function handler(req: any, res: any) {
     .filter(Boolean).join(" · ") || "Anonymous";
 
   const text = [
-    "📬 *New TRADR Feedback*", "",
+    "📬 *New Kōda OS Feedback*", "",
     `👤 ${who}`, "",
     `💬 ${feedback.trim()}`, "",
     `🕐 ${new Date().toLocaleString("en-GB", { timeZone: "Europe/London", dateStyle: "short", timeStyle: "short" })}`,
