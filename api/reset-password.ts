@@ -18,6 +18,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { createClient } from "@supabase/supabase-js";
+import { checkRateLimit, getClientIp } from "./lib/rateLimit";
 
 export const config = { runtime: "nodejs" };
 
@@ -45,6 +46,11 @@ export default async function handler(req: any, res: any) {
   cors(req, res);
   if (req.method === "OPTIONS") return res.status(200).end();
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+
+  // ── Rate limit: 5 requests per 10 minutes per IP ────────────────────────────
+  const ip = getClientIp(req);
+  const allowed = await checkRateLimit("reset_password", ip, { limit: 5, windowMs: 600_000 });
+  if (!allowed) return res.status(429).json({ error: "Too many requests — try again later" });
 
   const { username } = req.body as { username?: string };
   if (!username?.trim()) return res.status(400).json({ error: "username required" });
