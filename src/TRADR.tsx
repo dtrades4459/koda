@@ -3413,6 +3413,19 @@ export default function Tradr({ user, jwtPlan }: { user?: User; jwtPlan?: "free"
                   isEdit={!!editingStrategy} C={C} inp={inp} lbl={lbl}
                 />
               )}
+              {!showStrategyEditor && (
+                <div style={{ borderRadius: "22px", padding: "16px 18px", background: C.panel, border: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: "12px" }}>
+                  <div style={{ width: "48px", height: "48px", borderRadius: "14px", background: `color-mix(in oklch, ${C.accent} 14%, transparent)`, border: `1px solid ${C.border2}`, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: MONO, fontSize: "13px", fontWeight: 600, color: C.accent, flexShrink: 0 }}>
+                    {stratShort(activeStrategy)}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontFamily: DISPLAY, fontSize: "15px", fontWeight: 600, color: C.text }}>{activeStrategy}</div>
+                    <div style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, marginTop: "2px" }}>
+                      {checkItems.length} conditions · {ruleItems.length} rules
+                    </div>
+                  </div>
+                </div>
+              )}
               {!isDesktop && (
                 <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "8px", paddingBottom: "10px", borderBottom: `1px solid ${C.border}`, marginTop: "4px" }}>
                   <SubNavDropdown sections={CHECKLIST_SECTIONS} value={checklistTab} onChange={setChecklistTab} C={C} />
@@ -3428,16 +3441,16 @@ export default function Tradr({ user, jwtPlan }: { user?: User; jwtPlan?: "free"
                     stratThresholds={stratThresholds} saveStratThresholds={saveStratThresholds}
                     inp={inp} pillGhost={pillGhost}
                   />
-                  <div style={{ borderTop: `1px solid ${C.border}` }}>
-                    {checkItems.map((item: { id: number; text: string }) => {
+                  <div style={{ borderRadius: "22px", overflow: "hidden", border: `1px solid ${C.border}`, background: C.panel }}>
+                    {checkItems.map((item: { id: number; text: string }, _ci: number) => {
                       const ch = isChecked(item.id);
                       return (
-                        <div key={item.id} className="check-row" style={{ borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: "14px", minHeight: "52px" }}>
-                          {/* 44×44 touch target wrapping the 18px visual circle */}
+                        <div key={item.id} className="check-row" style={{ borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: "12px", minHeight: "52px", padding: "0 16px" }}>
+                          {/* 44×44 touch target wrapping the 20px Kōda circle */}
                           <div onClick={() => toggleCheck(item.id)}
-                            style={{ width: "44px", height: "44px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
-                            <div style={{ width: "18px", height: "18px", borderRadius: "50%", border: `1px solid ${ch ? C.text : C.border2}`, background: ch ? C.text : "transparent", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s" }}>
-                              {ch && <span style={{ color: C.bg, fontSize: "10px", lineHeight: 1 }}>✓</span>}
+                            style={{ width: "44px", height: "44px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, margin: "0 -6px" }}>
+                            <div style={{ width: "20px", height: "20px", borderRadius: "999px", border: `1px solid ${ch ? C.green : C.border2}`, background: ch ? `color-mix(in oklch, ${C.green} 18%, transparent)` : "transparent", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s", color: ch ? C.green : C.muted, fontSize: "10px" }}>
+                              ✓
                             </div>
                           </div>
                           {editingCheckItem === item.id
@@ -3462,7 +3475,7 @@ export default function Tradr({ user, jwtPlan }: { user?: User; jwtPlan?: "free"
                       <button onClick={addCheckItem} style={{ ...pillPrimary(!!newCheckText.trim()), width: "auto", padding: "10px 16px" }}>Add</button>
                       <button aria-label="Cancel" onClick={() => { setAddingCheck(false); setNewCheckText(""); }} style={{ ...pillGhost, padding: "10px 14px" }}>X</button>
                     </div>
-                    : <button onClick={() => setAddingCheck(true)} style={{ ...pillGhost, alignSelf: "flex-start" }}>+ ADD CONDITION</button>
+                    : <button onClick={() => setAddingCheck(true)} style={{ border: `1px dashed ${C.border2}`, borderRadius: "999px", padding: "14px 22px", textAlign: "center", fontFamily: BODY, fontSize: "13px", fontWeight: 500, color: C.text, background: "none", cursor: "pointer", width: "100%" }}>+ Add condition</button>
                   }
                   {checkedCount > 0 && <button onClick={resetChecklist} style={{ ...pillGhost, alignSelf: "flex-start" }}>↺ RESET CHECKLIST</button>}
 
@@ -3481,13 +3494,13 @@ export default function Tradr({ user, jwtPlan }: { user?: User; jwtPlan?: "free"
 
               {checklistTab === "rules" && (
                 <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-                  <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase" }}>
-                    Read before every {stratShort(activeStrategy)} session.
+                  <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.16em", textTransform: "uppercase" }}>
+                    Hard rules · {stratShort(activeStrategy)} · enforced at save
                   </div>
-                  <div style={{ borderTop: `1px solid ${C.border}` }}>
+                  <div style={{ borderRadius: "22px", overflow: "hidden", border: `1px solid ${C.border}`, background: C.panel }}>
                     {ruleItems.map((rule: { id: number; text: string }, idx: number) => (
-                      <div key={rule.id} className="check-row" style={{ minHeight: "52px", borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: "14px", padding: "8px 0" }}>
-                        <span style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, letterSpacing: "0.08em", minWidth: "24px" }}>{String(idx + 1).padStart(2, "0")}</span>
+                      <div key={rule.id} className="check-row" style={{ minHeight: "52px", borderBottom: idx < ruleItems.length - 1 ? `1px solid ${C.border}` : "none", display: "flex", alignItems: "center", gap: "12px", padding: "0 16px" }}>
+                        <span style={{ width: "20px", height: "20px", borderRadius: "999px", background: `color-mix(in oklch, ${C.green} 18%, transparent)`, border: `1px solid ${C.green}`, display: "flex", alignItems: "center", justifyContent: "center", color: C.green, fontSize: "10px", flexShrink: 0 }}>✓</span>
                         {editingRule === rule.id
                           ? <EditInline val={rule.text} onSave={(t: string) => saveEditRule(rule.id, t)} onCancel={() => setEditingRule(null)} C={C} />
                           : <>
@@ -3508,7 +3521,7 @@ export default function Tradr({ user, jwtPlan }: { user?: User; jwtPlan?: "free"
                       <button onClick={addRule} style={{ ...pillPrimary(!!newRuleText.trim()), width: "auto", padding: "10px 16px" }}>Add</button>
                       <button aria-label="Cancel" onClick={() => { setAddingRule(false); setNewRuleText(""); }} style={{ ...pillGhost, padding: "10px 14px" }}>X</button>
                     </div>
-                    : <button onClick={() => setAddingRule(true)} style={{ ...pillGhost, alignSelf: "flex-start" }}>+ ADD RULE</button>
+                    : <button onClick={() => setAddingRule(true)} style={{ border: `1px dashed ${C.border2}`, borderRadius: "999px", padding: "14px 22px", textAlign: "center", fontFamily: BODY, fontSize: "13px", fontWeight: 500, color: C.text, background: "none", cursor: "pointer", width: "100%" }}>+ Add rule</button>
                   }
                 </div>
               )}

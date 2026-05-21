@@ -76,10 +76,13 @@ function draftToTrade(row: DraftRow, baseId: number): Trade {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function ReviewInboxScreen({ userId, trades, saveTrades, onCountChange, C, navigateTo }: ReviewInboxScreenProps) {
-  const [drafts, setDrafts]         = useState<DraftRow[]>([]);
-  const [loading, setLoading]       = useState(true);
-  const [acting, setActing]         = useState<Set<string>>(new Set()); // row IDs currently processing
+  const [drafts, setDrafts]               = useState<DraftRow[]>([]);
+  const [loading, setLoading]             = useState(true);
+  const [acting, setActing]               = useState<Set<string>>(new Set());
   const [publishingAll, setPublishingAll] = useState(false);
+
+  const orb1 = C.orb1 ?? "oklch(0.55 0.22 252)";
+  const cardBg = `color-mix(in srgb, ${C.text} 3%, transparent)`;
 
   // ── Load drafts ────────────────────────────────────────────────────────────
 
@@ -119,7 +122,6 @@ export function ReviewInboxScreen({ userId, trades, saveTrades, onCountChange, C
         .eq("user_id", userId);
       if (error) throw error;
 
-      // Add to KV journal
       const maxId = trades.reduce((m, t) => Math.max(m, t.id), 0);
       const newTrade = draftToTrade(row, maxId + 1);
       await saveTrades([newTrade, ...trades]);
@@ -171,7 +173,6 @@ export function ReviewInboxScreen({ userId, trades, saveTrades, onCountChange, C
         .eq("user_id", userId);
       if (error) throw error;
 
-      // Convert all to Trade objects with sequential IDs
       const maxId = trades.reduce((m, t) => Math.max(m, t.id), 0);
       const newTrades = drafts.map((row, i) => draftToTrade(row, maxId + 1 + i));
       await saveTrades([...newTrades, ...trades]);
@@ -185,193 +186,199 @@ export function ReviewInboxScreen({ userId, trades, saveTrades, onCountChange, C
     }
   }
 
-  // ── Styles ─────────────────────────────────────────────────────────────────
-
-  const card: React.CSSProperties = {
-    background: C.panel,
-    border: `1px solid ${C.border}`,
-    borderRadius: "12px",
-    padding: "16px",
-    marginBottom: "10px",
-    display: "flex",
-    flexDirection: "column",
-    gap: "10px",
-  };
-
-  const btnBase: React.CSSProperties = {
-    border: "none",
-    borderRadius: "999px",
-    fontFamily: MONO,
-    fontSize: "10px",
-    letterSpacing: "0.1em",
-    textTransform: "uppercase" as const,
-    cursor: "pointer",
-    padding: "7px 14px",
-    fontWeight: 600,
-    transition: "opacity 0.15s",
-  };
-
-  const btnPublish: React.CSSProperties = {
-    ...btnBase,
-    background: C.text,
-    color: C.bg,
-  };
-
-  const btnSkip: React.CSSProperties = {
-    ...btnBase,
-    background: "transparent",
-    color: C.muted ?? "#888",
-    border: `1px solid ${C.border2 ?? C.border}`,
-  };
-
-  const btnPublishAll: React.CSSProperties = {
-    ...btnBase,
-    background: C.green ?? "#22c55e",
-    color: "#0A0A0A",
-    fontSize: "11px",
-    padding: "10px 20px",
-  };
-
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <div style={{ padding: "20px 20px 40px", fontFamily: BODY, maxWidth: "480px", margin: "0 auto" }}>
+    <div style={{ position: "relative", fontFamily: BODY, maxWidth: "480px", margin: "0 auto" }}>
 
-      {/* Header */}
-      <div style={{ marginBottom: "24px" }}>
-        <p style={{ fontFamily: MONO, fontSize: "10px", letterSpacing: "0.14em", textTransform: "uppercase", color: C.muted ?? "#888", marginBottom: "6px" }}>
-          Sync · Review Inbox
-        </p>
-        <h1 style={{ fontFamily: DISPLAY, fontSize: "22px", fontWeight: 700, color: C.text, letterSpacing: "-0.02em", lineHeight: 1.2 }}>
-          {loading ? "Loading…" : drafts.length === 0 ? "All caught up" : `${drafts.length} trade${drafts.length !== 1 ? "s" : ""} to review`}
-        </h1>
-        <p style={{ fontSize: "13px", color: C.muted ?? "#888", marginTop: "6px", lineHeight: 1.5 }}>
-          {drafts.length === 0 && !loading
-            ? "Auto-synced trades will appear here for you to publish to your journal."
-            : "Auto-synced from your broker. Publish trades you want in your journal, skip the rest."}
-        </p>
-      </div>
+      {/* Orb bloom */}
+      <div style={{
+        position: "absolute", top: 0, right: -60, width: 280, height: 280,
+        borderRadius: "50%", pointerEvents: "none", zIndex: 0,
+        background: `radial-gradient(circle, ${orb1} 0%, transparent 65%)`,
+        filter: "blur(70px)",
+        opacity: C.bg?.startsWith("#0") || C.bg?.startsWith("#1") ? 0.35 : 0.2,
+      }} />
 
-      {/* Publish All */}
-      {drafts.length > 1 && (
-        <div style={{ marginBottom: "20px" }}>
-          <button
-            style={{ ...btnPublishAll, opacity: publishingAll ? 0.5 : 1 }}
-            onClick={publishAll}
-            disabled={publishingAll}
-          >
-            {publishingAll ? "Publishing…" : `Publish All ${drafts.length} Trades`}
-          </button>
+      <div style={{ position: "relative", zIndex: 1, padding: "20px 0 40px" }}>
+
+        {/* Header */}
+        <div style={{ marginBottom: "24px" }}>
+          <div style={{ fontFamily: MONO, fontSize: "10px", letterSpacing: "0.16em", textTransform: "uppercase" as const, color: C.muted, marginBottom: "6px" }}>
+            Sync · Review Inbox
+          </div>
+          <div style={{ fontFamily: DISPLAY, fontSize: "24px", fontWeight: 500, color: C.text, letterSpacing: "-0.02em", lineHeight: 1.15 }}>
+            {loading
+              ? "Loading…"
+              : drafts.length === 0
+              ? "All caught up"
+              : `${drafts.length} trade${drafts.length !== 1 ? "s" : ""} to review`}
+          </div>
+          <div style={{ fontSize: "13px", color: C.muted, marginTop: "6px", lineHeight: 1.5, fontFamily: BODY }}>
+            {drafts.length === 0 && !loading
+              ? "Auto-synced trades will appear here for you to publish to your journal."
+              : "Auto-synced from your broker. Publish trades you want in your journal, skip the rest."}
+          </div>
         </div>
-      )}
 
-      {/* Loading skeleton */}
-      {loading && (
-        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-          {[1, 2, 3].map(i => (
-            <div key={i} style={{ ...card, opacity: 0.4, minHeight: "88px" }} />
-          ))}
-        </div>
-      )}
-
-      {/* Empty state */}
-      {!loading && drafts.length === 0 && (
-        <div style={{ textAlign: "center", padding: "48px 0" }}>
-          <div style={{ fontSize: "36px", marginBottom: "12px" }}>✓</div>
-          <p style={{ fontFamily: MONO, fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", color: C.muted ?? "#888" }}>
-            Inbox empty
-          </p>
-          <button
-            style={{ ...btnBase, background: "transparent", border: `1px solid ${C.border2 ?? C.border}`, color: C.text, marginTop: "20px" }}
-            onClick={() => navigateTo("log")}
-          >
-            ← Back to Log
-          </button>
-        </div>
-      )}
-
-      {/* Draft trade cards */}
-      {!loading && drafts.map(row => {
-        const pnl    = parseFloat(String(row.pnl ?? 0));
-        const pnlPos = pnl >= 0;
-        const busy   = acting.has(row.id);
-
-        return (
-          <div key={row.id} style={{ ...card, opacity: busy ? 0.5 : 1 }}>
-
-            {/* Top row: symbol + direction + P&L */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <span style={{ fontFamily: DISPLAY, fontSize: "16px", fontWeight: 700, color: C.text, letterSpacing: "-0.01em" }}>
-                  {row.pair}
-                </span>
-                {row.side && (
-                  <span style={{
-                    fontFamily: MONO, fontSize: "9px", letterSpacing: "0.1em",
-                    fontWeight: 700, textTransform: "uppercase",
-                    color: row.side === "long" ? (C.green ?? "#22c55e") : (C.red ?? "#ef4444"),
-                    background: row.side === "long"
-                      ? `color-mix(in oklch, ${C.green ?? "#22c55e"} 15%, transparent)`
-                      : `color-mix(in oklch, ${C.red ?? "#ef4444"} 15%, transparent)`,
-                    padding: "2px 7px", borderRadius: "4px",
-                  }}>
-                    {row.side}
-                  </span>
-                )}
-                <span style={{
-                  fontFamily: MONO, fontSize: "9px", letterSpacing: "0.08em",
-                  color: C.muted ?? "#888",
-                  textTransform: "uppercase",
-                  background: `color-mix(in oklch, ${C.muted ?? "#888"} 12%, transparent)`,
-                  padding: "2px 6px", borderRadius: "4px",
-                }}>
-                  {row.broker ?? "broker"}
-                </span>
-              </div>
-              <span style={{
-                fontFamily: MONO, fontSize: "15px", fontWeight: 700,
-                fontVariantNumeric: "tabular-nums",
-                color: outcomeColor(row.outcome, C),
+        {/* Publish All */}
+        {drafts.length > 1 && (
+          <div style={{ marginBottom: "20px" }}>
+            <button
+              onClick={publishAll}
+              disabled={publishingAll}
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "center", gap: "10px",
+                width: "100%", padding: "14px 22px", borderRadius: "999px",
+                background: C.green ?? "oklch(0.78 0.18 152)", color: "#0A0A0A",
+                border: "none", cursor: "pointer",
+                fontFamily: MONO, fontSize: "11px", fontWeight: 700, letterSpacing: "0.1em",
+                textTransform: "uppercase" as const,
+                opacity: publishingAll ? 0.55 : 1,
               }}>
-                {pnlPos ? "+" : ""}{pnl.toFixed(2)}
-              </span>
-            </div>
-
-            {/* Date + notes */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
-              <span style={{ fontFamily: MONO, fontSize: "11px", color: C.muted ?? "#888" }}>
-                {row.date}
-                {row.entry_price != null && (
-                  <span style={{ marginLeft: "10px" }}>@ {row.entry_price}</span>
-                )}
-              </span>
-              {row.notes && (
-                <span style={{ fontSize: "12px", color: C.text2 ?? C.muted, lineHeight: 1.4, opacity: 0.75 }}>
-                  {row.notes}
+              {publishingAll ? "Publishing…" : `Publish all ${drafts.length} trades`}
+              {!publishingAll && (
+                <span style={{ width: "26px", height: "26px", borderRadius: "999px", background: "#0A0A0A", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+                    <path d="M3 7l3 3 5-6" stroke={C.green ?? "#22c55e"} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
                 </span>
               )}
-            </div>
-
-            {/* Actions */}
-            <div style={{ display: "flex", gap: "8px", marginTop: "2px" }}>
-              <button
-                style={{ ...btnPublish, opacity: busy ? 0.5 : 1 }}
-                onClick={() => publishOne(row)}
-                disabled={busy}
-              >
-                {busy ? "…" : "Publish"}
-              </button>
-              <button
-                style={{ ...btnSkip, opacity: busy ? 0.5 : 1 }}
-                onClick={() => skipOne(row)}
-                disabled={busy}
-              >
-                Skip
-              </button>
-            </div>
+            </button>
           </div>
-        );
-      })}
+        )}
+
+        {/* Loading skeletons */}
+        {loading && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            {[1, 2, 3].map(i => (
+              <div key={i} style={{ borderRadius: "22px", background: C.panel, border: `1px solid ${C.border}`, height: "96px", opacity: 0.35 + i * 0.1 }} />
+            ))}
+          </div>
+        )}
+
+        {/* Empty state */}
+        {!loading && drafts.length === 0 && (
+          <div style={{ textAlign: "center", padding: "56px 0 24px" }}>
+            <div style={{
+              width: "56px", height: "56px", borderRadius: "999px", margin: "0 auto 16px",
+              background: `color-mix(in oklch, ${C.green} 18%, transparent)`,
+              border: `1px solid ${C.green}`,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              color: C.green, fontSize: "22px",
+            }}>✓</div>
+            <div style={{ fontFamily: DISPLAY, fontSize: "18px", fontWeight: 500, color: C.text, marginBottom: "6px" }}>Inbox empty</div>
+            <div style={{ fontFamily: BODY, fontSize: "13px", color: C.muted, lineHeight: 1.5, marginBottom: "24px" }}>
+              New broker fills will appear here automatically.
+            </div>
+            <button
+              onClick={() => navigateTo("log")}
+              style={{ background: "none", border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "8px 20px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase" as const, color: C.muted }}>
+              ← Back to Log
+            </button>
+          </div>
+        )}
+
+        {/* Draft trade cards */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+          {!loading && drafts.map(row => {
+            const pnl    = parseFloat(String(row.pnl ?? 0));
+            const pnlPos = pnl >= 0;
+            const busy   = acting.has(row.id);
+            const isWin  = row.outcome === "win";
+            const isLoss = row.outcome === "loss";
+            const outClr = outcomeColor(row.outcome, C);
+            const side   = row.side ? row.side.toUpperCase() : null;
+
+            return (
+              <div key={row.id}
+                style={{ borderRadius: "22px", padding: "16px", background: C.panel, border: `1px solid ${C.border}`, opacity: busy ? 0.5 : 1, display: "flex", flexDirection: "column", gap: "12px", transition: "opacity 0.15s" }}>
+
+                {/* Trade row */}
+                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                  {/* Symbol badge */}
+                  <div style={{
+                    width: "44px", height: "44px", borderRadius: "12px", flexShrink: 0,
+                    background: isWin
+                      ? `color-mix(in oklch, ${C.green} 14%, transparent)`
+                      : isLoss
+                      ? `color-mix(in oklch, ${C.red} 14%, transparent)`
+                      : "rgba(128,128,128,0.08)",
+                    color: outClr,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontFamily: MONO, fontWeight: 600, fontSize: "11px",
+                    border: `1px solid ${C.border2}`,
+                  }}>
+                    {row.pair.slice(0, 3).toUpperCase()}
+                  </div>
+
+                  {/* Meta */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "3px" }}>
+                      <span style={{ fontFamily: DISPLAY, fontSize: "14px", fontWeight: 600, color: C.text }}>{row.pair}</span>
+                      {side && (
+                        <span style={{
+                          padding: "1px 6px", borderRadius: "4px", fontSize: "9px",
+                          letterSpacing: "0.10em", fontFamily: MONO, fontWeight: 700,
+                          background: side === "LONG"
+                            ? `color-mix(in oklch, ${C.green} 14%, transparent)`
+                            : `color-mix(in oklch, ${C.red} 14%, transparent)`,
+                          color: side === "LONG" ? C.green : C.red,
+                        }}>{side}</span>
+                      )}
+                      <span style={{
+                        fontFamily: MONO, fontSize: "8px", letterSpacing: "0.08em",
+                        color: C.muted, background: cardBg,
+                        padding: "1px 5px", borderRadius: "4px",
+                      }}>
+                        {row.broker ?? "broker"}
+                      </span>
+                    </div>
+                    <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted }}>
+                      {row.date}
+                      {row.entry_price != null && <span style={{ marginLeft: "8px" }}>@ {row.entry_price}</span>}
+                      {row.strategy && <span style={{ marginLeft: "8px" }}>· {row.strategy}</span>}
+                    </div>
+                  </div>
+
+                  {/* P&L */}
+                  <div style={{ textAlign: "right", flexShrink: 0 }}>
+                    <div style={{ fontFamily: MONO, fontSize: "16px", fontWeight: 700, color: outClr, fontVariantNumeric: "tabular-nums" }}>
+                      {pnlPos ? "+" : ""}{pnl.toFixed(2)}
+                    </div>
+                    <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, marginTop: "2px", textTransform: "uppercase" as const, letterSpacing: "0.06em" }}>
+                      {row.outcome}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Notes */}
+                {row.notes && (
+                  <div style={{ fontFamily: BODY, fontSize: "12px", color: C.muted, lineHeight: 1.45, padding: "0 2px" }}>
+                    {row.notes}
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <button
+                    onClick={() => publishOne(row)}
+                    disabled={busy}
+                    style={{ background: C.text, color: C.bg, border: "none", borderRadius: "999px", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase" as const, cursor: "pointer", padding: "8px 16px", fontWeight: 600, opacity: busy ? 0.5 : 1 }}>
+                    {busy ? "…" : "Publish"}
+                  </button>
+                  <button
+                    onClick={() => skipOne(row)}
+                    disabled={busy}
+                    style={{ background: "transparent", color: C.muted, border: `1px solid ${C.border2}`, borderRadius: "999px", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase" as const, cursor: "pointer", padding: "8px 16px", fontWeight: 600, opacity: busy ? 0.5 : 1 }}>
+                    Skip
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }
