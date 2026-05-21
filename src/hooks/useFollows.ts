@@ -3,22 +3,30 @@
 //
 // Owns:  following[], followers[], followerProfiles[]
 //        followUser(), unfollowUser()
-//        syncFollows useEffect (per-row KV + v2 flag merge + Realtime sub)
+//        syncFollows useEffect (per-row KV + Realtime sub)
+//
+// Data source: per-row shared_kv edges (two rows per follow edge, both
+// owned by the follower so RLS never blocks a second writer).
+//   tradr_follow_<me>_<target>      — enumerates who I follow
+//   tradr_follower_<me>_<follower>  — enumerates who follows me
+//
+// V2 (public.follows) migration is tracked behind the 'newFollows' flag.
+// That path is intentionally removed here to avoid a 3-source merge on
+// every load. Wire it back in when the flag is ready to flip globally.
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { useState, useEffect, useRef } from "react";
 import { storage } from "../lib/storage";
 import { log } from "../lib/log";
-import { isFlagOn } from "../lib/flags";
 import {
   subscribeToFollows,
-  followUserV2,
-  unfollowUserV2,
-  readFollowGraphV2,
   migrateLegacyFollows,
+  followUser as kvFollowUser,
+  unfollowUser as kvUnfollowUser,
+  followKeys,
 } from "../data/follows";
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+// ── Types ───────────────────────────────────────────────────────────────────────────────
 
 export interface FollowerProfile {
   code: string;
@@ -29,34 +37,30 @@ export interface FollowerProfile {
 interface UseFollowsParams {
   /** True while the initial data load is still in flight — defers sync until false. */
   loading: boolean;
-  /**
-   * Supabase auth user ID — pass `user?.id` rather than the full User object
-   * so the hook's effect dep stays stable.
-   */
-  userId: string | undefined;
   /** Returns the current user's short trading code. */
   getMyCode: () => string;
-  /** Profile uid — used as the v2 write key. */
+  /** Profile uid — used for the Realtime channel key. */
   uid: string | undefined;
   /** Toast callback. */
   showToast: (msg: string) => void;
 }
 
-// ── Hook ──────────────────────────────────────────────────────────────────────
+// ── Hook ──────────────────────────────────────────────────────────────────────────────
 
-export function useFollows({ loading, userId, getMyCode, uid, showToast }: UseFollowsParams) {
-  const [following, setFollowing] = useState<string[]>([]);
-  const [followers, setFollowers] = useState<string[]>([]);
+/** One-time legacy migration per browser — guarded by localStorage flag. */
+const MIGRATION_FLAG = "tradr_follows_migrated_v1";
+
+export function useFollows({ loading, getMyCode, uid, showToast }: UseFollowsParams) {
+  const [following, setFollowing]           = useState<string[]>([]);
+  const [followers, setFollowers]           = useState<string[]>([]);
   const [followerProfiles, setFollowerProfiles] = useState<FollowerProfile[]>([]);
 
-  // ── Stable refs — avoids stale-closure issues in the interval / Realtime sub ─
+  // ── Stable refs ────────────────────────────────────────────────────────────────────
   const syncFollowsRef = useRef<() => void>(() => {});
-  const getMyCodeRef = useRef(getMyCode);
+  const getMyCodeRef   = useRef(getMyCode);
   getMyCodeRef.current = getMyCode;
-  const userIdRef = useRef(userId);
-  userIdRef.current = userId;
 
-  // ── Sync effect ─────────────────────────────────────────────────────────────
+  // ── Sync effect ───────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (loading) return;
     if (!uid) return;
@@ -66,45 +70,31 @@ export function useFollows({ loading, userId, getMyCode, uid, showToast }: UseFo
     async function syncFollows() {
       const mc = getMyCodeRef.current();
       try {
-        // Canonical source: per-row edges. Each follow writes TWO rows,
-        // both owned by the follower, so RLS never blocks a second writer.
+        // Two parallel reads — both sides of the edge, both owned by us.
         const [followRows, followerRows] = await Promise.all([
-          storage.listByPrefix(`tradr_follow_${mc}_`),
-          storage.listByPrefix(`tradr_follower_${mc}_`),
+          storage.listByPrefix(followKeys.followPrefix(mc)),
+          storage.listByPrefix(followKeys.followerPrefix(mc)),
         ]);
         if (!alive) return;
 
-        const followingSet = new Set<string>();
-        const followersSet = new Set<string>();
+        const followingSet  = new Set<string>();
+        const followersSet  = new Set<string>();
+        const profiles: FollowerProfile[] = [];
 
-        for (const row of (followRows || [])) {
-          const target = String(row.key).slice(`tradr_follow_${mc}_`.length);
+        for (const row of followRows || []) {
+          const target = String(row.key).slice(followKeys.followPrefix(mc).length);
           if (target) followingSet.add(target);
         }
 
-        const profiles: FollowerProfile[] = [];
-        for (const row of (followerRows || [])) {
-          const follower = String(row.key).slice(`tradr_follower_${mc}_`.length);
-          if (follower) {
-            followersSet.add(follower);
-            try {
-              const edge = JSON.parse(row.value || "{}");
-              profiles.push({ code: follower, name: edge.name || follower, handle: edge.handle || "" });
-            } catch {
-              profiles.push({ code: follower, name: follower, handle: "" });
-            }
-          }
-        }
-
-        // V2 merge: read from public.follows when flag is on.
-        const currentUserId = userIdRef.current;
-        if (isFlagOn("newFollows") && currentUserId) {
+        for (const row of followerRows || []) {
+          const follower = String(row.key).slice(followKeys.followerPrefix(mc).length);
+          if (!follower) continue;
+          followersSet.add(follower);
           try {
-            const v2Graph = await readFollowGraphV2(currentUserId);
-            v2Graph.following.forEach((c: string) => followingSet.add(c));
-            v2Graph.followers.forEach((c: string) => followersSet.add(c));
-          } catch (e) {
-            log.error("useFollows.v2", e);
+            const edge = JSON.parse(row.value || "{}");
+            profiles.push({ code: follower, name: edge.name || follower, handle: edge.handle || "" });
+          } catch {
+            profiles.push({ code: follower, name: follower, handle: "" });
           }
         }
 
@@ -117,19 +107,24 @@ export function useFollows({ loading, userId, getMyCode, uid, showToast }: UseFo
     syncFollowsRef.current = syncFollows;
     syncFollowsRef.current();
 
-    migrateLegacyFollows(getMyCodeRef.current()).catch(() => {});
+    // One-time legacy migration per browser — skip if already done.
+    if (!localStorage.getItem(MIGRATION_FLAG)) {
+      migrateLegacyFollows(getMyCodeRef.current())
+        .then(() => localStorage.setItem(MIGRATION_FLAG, "1"))
+        .catch(() => {});
+    }
 
     const unsub = subscribeToFollows(getMyCodeRef.current(), () => syncFollowsRef.current());
-    const id = setInterval(() => syncFollowsRef.current(), 120_000);
+    const id    = setInterval(() => syncFollowsRef.current(), 120_000);
 
     return () => {
       alive = false;
       clearInterval(id);
-      try { unsub(); } catch { /* ignore */ }
+      try { unsub(); } catch { /* noop */ }
     };
-  }, [loading, uid]); // getMyCode + userId accessed via refs — stable dep array
+  }, [loading, uid]);
 
-  // ── Follow / unfollow mutations ──────────────────────────────────────────────
+  // ── Follow / unfollow mutations ────────────────────────────────────────────────────────
 
   async function followUser(code: string) {
     const target = code.trim().toUpperCase();
@@ -140,11 +135,10 @@ export function useFollows({ loading, userId, getMyCode, uid, showToast }: UseFo
 
     setFollowing(prev => [...prev, target]);
 
-    const edge = { follower: mc, target, at: new Date().toISOString() };
-    try { await storage.set(`tradr_follow_${mc}_${target}`, JSON.stringify(edge), true); } catch { /* ignore */ }
-    try { await storage.set(`tradr_follower_${target}_${mc}`, JSON.stringify(edge), true); } catch { /* ignore */ }
-    if (isFlagOn("newFollows") && uid) {
-      followUserV2(uid, target).catch(e => log.error("followUser.v2", e));
+    try {
+      await kvFollowUser({ myCode: mc, target });
+    } catch (e) {
+      log.error("useFollows.followUser", e, { target });
     }
     showToast("Following");
   }
@@ -156,10 +150,10 @@ export function useFollows({ loading, userId, getMyCode, uid, showToast }: UseFo
 
     setFollowing(prev => prev.filter(c => c !== target));
 
-    try { await storage.delete(`tradr_follow_${mc}_${target}`, true); } catch { /* ignore */ }
-    try { await storage.delete(`tradr_follower_${target}_${mc}`, true); } catch { /* ignore */ }
-    if (isFlagOn("newFollows") && uid) {
-      unfollowUserV2(uid, target).catch(e => log.error("unfollowUser.v2", e));
+    try {
+      await kvUnfollowUser({ myCode: mc, target });
+    } catch (e) {
+      log.error("useFollows.unfollowUser", e, { target });
     }
     showToast("Unfollowed");
   }

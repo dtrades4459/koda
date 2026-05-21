@@ -1051,7 +1051,6 @@ export default function Tradr({ user, jwtPlan }: { user?: User; jwtPlan?: "free"
   // ── Follow system ───────────────────────────────────────────────────────
   const { following, followers, followerProfiles, followUser, unfollowUser } = useFollows({
     loading,
-    userId: user?.id,
     getMyCode,
     uid: profile.uid,
     showToast,
