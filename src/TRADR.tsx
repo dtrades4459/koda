@@ -32,6 +32,7 @@ import { UpgradeModal } from "./UpgradeModal";
 import { LotSizeCalculator } from "./LotSizeCalculator";
 import { phIdentify, phCapture, phReset } from "./lib/posthog";
 import EvalAccountScreen from "./EvalAccountScreen";
+import { DARK, LIGHT, makeStyles } from "./theme";
 
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
 
@@ -63,69 +64,7 @@ const TABS = ["home","log","stats","history","circles"];
 
 
 // ─── THEME ────────────────────────────────────────────────────────────────────
-// TRADR OS design system — OKLCH-based palette, Geist type, glass surfaces.
-const DARK = {
-  // Core surfaces
-  bg: "#0A0A0B",
-  panel: "#131317",
-  panel2: "#1A1A20",
-  border: "rgba(255,255,255,0.07)",
-  border2: "rgba(255,255,255,0.13)",
-  // Text
-  text: "#F2F2EE",
-  text2: "#A6A6A2",
-  muted: "#65655F",
-  dim: "#45453F",
-  // Accents
-  accent: "oklch(0.74 0.16 250)",    // electric blue — links, highlights
-  accentSoft: "oklch(0.74 0.16 250 / 0.16)",
-  live: "oklch(0.84 0.14 175)",      // mint/teal — "go" CTAs
-  liveSoft: "oklch(0.84 0.14 175 / 0.18)",
-  // Outcome
-  green: "oklch(0.78 0.18 152)",
-  red: "oklch(0.70 0.21 25)",
-  // Glass/bloom
-  surfaceGlass: "rgba(20,20,26,0.72)",
-  orb1: "oklch(0.55 0.22 252)",
-  orb2: "oklch(0.45 0.20 268)",
-  orb3: "oklch(0.68 0.18 175)",
-  // Legacy compat
-  blue: "oklch(0.74 0.16 250)",
-  yellow: "#65655F",
-  inputBg: "transparent",
-  shadow: "rgba(0,0,0,0.45)",
-};
-const LIGHT = {
-  // Core surfaces
-  bg: "#F4F2ED",
-  panel: "#FFFFFF",
-  panel2: "#FAFAF6",
-  border: "rgba(10,10,10,0.07)",
-  border2: "rgba(10,10,10,0.14)",
-  // Text
-  text: "#0A0A0A",
-  text2: "#55554F",
-  muted: "#9A9890",
-  dim: "#C0BEB6",
-  // Accents
-  accent: "oklch(0.55 0.18 252)",
-  accentSoft: "oklch(0.55 0.18 252 / 0.10)",
-  live: "oklch(0.62 0.14 175)",
-  liveSoft: "oklch(0.62 0.14 175 / 0.12)",
-  // Outcome
-  green: "oklch(0.55 0.18 152)",
-  red: "oklch(0.55 0.22 25)",
-  // Glass/bloom
-  surfaceGlass: "rgba(244,242,237,0.75)",
-  orb1: "oklch(0.78 0.14 252)",
-  orb2: "oklch(0.72 0.12 268)",
-  orb3: "oklch(0.78 0.10 175)",
-  // Legacy compat
-  blue: "oklch(0.55 0.18 252)",
-  yellow: "#9A9890",
-  inputBg: "transparent",
-  shadow: "rgba(0,0,0,0.08)",
-};
+// DARK + LIGHT theme tokens live in src/theme.ts
 
 // calcRR, calcWinRate, calcStreak, calcWeeklyPnL, calcTotalPnL imported from ./lib/stats
 
@@ -1257,62 +1196,8 @@ export default function Tradr({ user, jwtPlan }: { user?: User; jwtPlan?: "free"
   const _allStratMap = getAllStrategiesMap();
   const allSetups = allStrategyNames.flatMap((s: string) => _allStratMap[s]?.setups || []).filter((v: string, i: number, a: string[]) => a.indexOf(v) === i);
 
-  // ─── SHARED STYLES (editorial) ─────────────────────────────────────────────
-  const inp: React.CSSProperties = {
-    background: "transparent",
-    border: "none",
-    borderBottom: `1px solid ${C.border2}`,
-    borderRadius: 0,
-    color: C.text,
-    padding: "12px 0",
-    minHeight: "44px",
-    fontSize: "16px",
-    width: "100%",
-    outline: "none",
-    fontFamily: BODY,
-    boxSizing: "border-box",
-    letterSpacing: "0.01em",
-  };
-  const sel: React.CSSProperties = { ...inp, cursor: "pointer" };
-  const lbl: React.CSSProperties = {
-    fontSize: "11px",
-    color: C.muted,
-    letterSpacing: "0.06em",
-    marginBottom: "4px",
-    display: "block",
-    fontFamily: MONO,
-    textTransform: "uppercase",
-  };
-  const pillPrimary = (enabled = true): React.CSSProperties => ({
-    background: enabled ? C.text : "transparent",
-    color: enabled ? C.bg : C.muted,
-    border: enabled ? "none" : `1px solid ${C.border2}`,
-    borderRadius: "999px",
-    padding: "14px 20px",
-    fontSize: "13px",
-    letterSpacing: "0.02em",
-    cursor: enabled ? "pointer" : "not-allowed",
-    fontFamily: BODY,
-    width: "100%",
-    transition: "opacity 0.15s, transform 0.15s",
-  });
-  const pillGhost: React.CSSProperties = {
-    background: "transparent",
-    color: C.text,
-    border: `1px solid ${C.border2}`,
-    borderRadius: "999px",
-    padding: "12px 18px",
-    minHeight: "44px",
-    fontSize: "12px",
-    letterSpacing: "0.04em",
-    cursor: "pointer",
-    fontFamily: MONO,
-    textTransform: "uppercase",
-    transition: "opacity 0.15s",
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-  };
+  // ─── SHARED STYLES — generated from theme.ts ─────────────────────────────
+  const { inp, sel, lbl, pillPrimary, pillGhost } = makeStyles(C);
 
   const NAV_TABS = [
     { id: "home",    label: "Home",    path: "M3 10l7-7 7 7v8a1 1 0 01-1 1H4a1 1 0 01-1-1z" },
