@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 // ═══════════════════════════════════════════════════════════════════════════════
-// TRADR OS · Service Worker
+// Kōda OS · Service Worker
 //
 // Strategy summary:
 //   Static assets (JS/CSS/fonts/icons) → CacheFirst (versioned, safe to cache)

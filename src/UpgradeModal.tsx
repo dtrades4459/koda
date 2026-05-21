@@ -100,7 +100,7 @@ export function UpgradeModal({ C, userId, userEmail, stripeCustomerId, onCustome
             fontFamily: MONO, fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase",
           }}>
             <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: live, boxShadow: `0 0 6px ${live}` }}/>
-            TRADR OS · PRO
+            KŌDA OS · PRO
           </div>
 
           {/* Headline */}

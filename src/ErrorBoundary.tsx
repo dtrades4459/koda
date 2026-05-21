@@ -34,7 +34,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
     return (
       <div style={{
-        minHeight: "100vh",
+        minHeight: "100dvh",
         background: C.bg,
         display: "flex",
         alignItems: "center",

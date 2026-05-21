@@ -1,7 +1,7 @@
 html, body {
   margin: 0;
   padding: 0;
-  background: #080808;
+  background: #0A0A0B;
   color: #e5e7eb;
   min-height: 100vh;
   min-height: 100dvh;
@@ -18,3 +18,31 @@ input, textarea, select {
 }
 /* Hide scrollbars but keep scrolling */
 ::-webkit-scrollbar { width: 0; height: 0; }
+
+/* ─── F1: Motion system (12 keyframes) ─── */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes kSlideIn   { from { opacity:0; transform:translateY(12px) } to { opacity:1; transform:none } }
+  @keyframes kSlideOut  { from { opacity:1; transform:none } to { opacity:0; transform:translateY(-8px) } }
+  @keyframes kFadeIn    { from { opacity:0 } to { opacity:1 } }
+  @keyframes kFadeOut   { from { opacity:1 } to { opacity:0 } }
+  @keyframes kScaleIn   { from { opacity:0; transform:scale(0.92) } to { opacity:1; transform:none } }
+  @keyframes kScaleOut  { from { opacity:1; transform:none } to { opacity:0; transform:scale(0.92) } }
+  @keyframes kPop       { 0% { transform:scale(1) } 50% { transform:scale(1.12) } 100% { transform:scale(1) } }
+  @keyframes kShake     { 0%,100% { transform:translateX(0) } 25% { transform:translateX(-4px) } 75% { transform:translateX(4px) } }
+  @keyframes kPulse     { 0%,100% { opacity:1 } 50% { opacity:0.55 } }
+  @keyframes kSpin      { from { transform:rotate(0deg) } to { transform:rotate(360deg) } }
+  @keyframes kGlow      { 0%,100% { filter:drop-shadow(0 0 4px currentColor) } 50% { filter:drop-shadow(0 0 14px currentColor) } }
+  @keyframes kConfetti  { 0% { opacity:1; transform:translateY(0) rotate(0) } 100% { opacity:0; transform:translateY(-80px) rotate(360deg) } }
+}
+
+/* F13: reduced-motion override — collapse all to instant opacity transitions */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Legacy keyframe kept for backward compat */
+@keyframes rise { from { opacity:0; transform:translateY(8px) } to { opacity:1; transform:none } }

@@ -27,6 +27,18 @@ export function getEmotionTags(emotions: string | string[] | undefined): string[
   return EMOTION_TAGS.filter(t => lower.includes(t.id) || lower.includes(t.label.toLowerCase())).map(t => t.id);
 }
 
+export const MISTAKE_TAGS = [
+  "None",
+  "Chased entry",
+  "Moved stop",
+  "Oversized",
+  "Revenge trade",
+  "Cut winner early",
+  "Held loser too long",
+  "Broke a rule",
+  "Other",
+] as const;
+
 export const EMPTY_TRADE: Partial<Trade> = {
   date: new Date().toISOString().split("T")[0],
   pair: "", session: "", bias: "", strategy: "", setup: "",
@@ -34,6 +46,6 @@ export const EMPTY_TRADE: Partial<Trade> = {
   outcome: "", pnl: "", pnlDollar: "",
   entryTime: "", exitTime: "", direction: "",
   notes: "", emotions: "", screenshot: "",
-  mae: "", mfe: "", ruleAdherence: null,
+  mae: "", mfe: "", ruleAdherence: null, mistake: null,
   comments: [], reactions: {},
 };

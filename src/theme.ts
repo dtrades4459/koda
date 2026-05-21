@@ -25,7 +25,7 @@ export const DARK = {
   dim: "#45453F",
   // Accents
   accent: "oklch(0.74 0.16 250)",    // electric blue — links, highlights
-  accentSoft: "oklch(0.74 0.16 250 / 0.16)",
+  accentSoft: "oklch(0.74 0.16 250 / 0.18)",
   live: "oklch(0.84 0.14 175)",      // mint/teal — "go" CTAs
   liveSoft: "oklch(0.84 0.14 175 / 0.18)",
   // Outcome
@@ -54,7 +54,7 @@ export const LIGHT = {
   text: "#0A0A0A",
   text2: "#55554F",
   muted: "#9A9890",
-  dim: "#C0BEB6",
+  dim: "rgba(10,10,10,0.20)",
   // Accents
   accent: "oklch(0.55 0.18 252)",
   accentSoft: "oklch(0.55 0.18 252 / 0.10)",

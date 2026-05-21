@@ -331,7 +331,7 @@ function parseOAuthError(): string {
 function LandingPage({ onSuccess }: { onSuccess: () => void }) {
   const [oauthError] = useState(() => parseOAuthError());
   return (
-    <div className="tradr-landing" style={{ minHeight: "100vh", background: C.bg, color: C.text, fontFamily: BODY, position: "relative", overflow: "hidden" }}>
+    <div className="tradr-landing" style={{ minHeight: "100dvh", background: C.bg, color: C.text, fontFamily: BODY, position: "relative", overflow: "hidden" }}>
       <style>{`
         *{box-sizing:border-box;margin:0;padding:0;}
         html,body{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}
@@ -485,7 +485,7 @@ const PULSE_CSS = "@keyframes tradr-pulse{0%,100%{opacity:1;transform:scale(1)}5
 
 function LoadingScreen() {
   return (
-    <div style={{ minHeight: "100vh", background: C.bg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "20px" }}>
+    <div style={{ minHeight: "100dvh", background: C.bg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "20px" }}>
       <style dangerouslySetInnerHTML={{ __html: PULSE_CSS }} />
       <div style={{ animation: "tradr-pulse 1.8s ease-in-out infinite" }}>
         <TrMark size={80} />

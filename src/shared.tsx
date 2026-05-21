@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import type { StrategyDef } from "./types";
+import type { Theme } from "./theme";
 
 // ─── FONT STACKS (duplicated from TRADR.tsx for standalone use) ──────────────
 export const MONO = "'Geist Mono', 'IBM Plex Mono', ui-monospace, monospace";
@@ -51,6 +52,22 @@ export function outcomeLetter(outcome: string) {
 }
 
 // ─── TR MARK ─────────────────────────────────────────────────────────────────
+export function TradrMark({ size = 28, color = "currentColor", strokeWidth = 1.6 }: {
+  size?: number; color?: string; strokeWidth?: number;
+}) {
+  const w = size;
+  const h = size * 0.80;
+  return (
+    <svg width={w} height={h} viewBox="0 0 100 80" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: "block", flexShrink: 0 }}>
+      <path d="M8 8 L8 72 L40 40 Z" stroke={color} strokeWidth={strokeWidth} strokeLinejoin="miter" fill="none" />
+      <path d="M28 8 L28 72 L60 40 Z" stroke={color} strokeWidth={strokeWidth} strokeLinejoin="miter" fill="none" />
+      <path d="M48 8 L48 72 L80 40 Z" stroke={color} strokeWidth={strokeWidth} strokeLinejoin="miter" fill="none" />
+      <path d="M68 8 L68 72 L100 40 Z" stroke={color} strokeWidth={strokeWidth} strokeLinejoin="miter" fill="none" />
+    </svg>
+  );
+}
+
+/** @deprecated Use TradrMark instead — kept for backward compat */
 export function TrMark({ size = 28, bg = "#0C0C0B" }: { size?: number; bg?: string }) {
   return (
     <svg width={size} height={size} viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style={{ display: "block", flexShrink: 0 }}>
@@ -77,13 +94,114 @@ export function CrownIcon({ size = 13, color = "currentColor" }: { size?: number
   );
 }
 
-// ─── TOAST ───────────────────────────────────────────────────────────────────
+// ─── TOAST SYSTEM ────────────────────────────────────────────────────────────
+// Legacy single-message toast (kept for backward compat)
 export function Toast({ message, onDone, C }: any) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { const t = setTimeout(onDone, 2200); return () => clearTimeout(t); }, []);
   return (
-    <div style={{ position: "fixed", bottom: "calc(52px + env(safe-area-inset-bottom))", left: "50%", transform: "translateX(-50%)", zIndex: 1000, animation: "rise 0.25s ease", background: C.panel, border: `0.5px solid ${C.border2}`, borderRadius: "999px", padding: "9px 18px", fontSize: "10px", color: C.text2, whiteSpace: "nowrap", letterSpacing: "0.10em", fontFamily: MONO, textTransform: "uppercase" }}>
+    <div style={{ position: "fixed", bottom: "calc(52px + env(safe-area-inset-bottom))", left: "50%", transform: "translateX(-50%)", zIndex: 1000, animation: "kSlideIn 0.38s cubic-bezier(.2,.8,.2,1)", background: C.panel, border: `0.5px solid ${C.border2}`, borderRadius: "999px", padding: "9px 18px", fontSize: "10px", color: C.text2, whiteSpace: "nowrap", letterSpacing: "0.10em", fontFamily: MONO, textTransform: "uppercase" }}>
       {message}
+    </div>
+  );
+}
+
+// ─── TOAST V2 (4 kinds, stacked, auto-dismiss) ─────────────────────────────
+export type ToastKind = "success" | "info" | "warn" | "error";
+export interface ToastItem {
+  id: number;
+  kind: ToastKind;
+  title: string;
+  body?: string;
+  ts: number;
+}
+
+const TOAST_ACCENT: Record<ToastKind, string> = {
+  success: "oklch(0.78 0.18 152)",
+  info: "oklch(0.74 0.16 250)",
+  warn: "oklch(0.80 0.16 85)",
+  error: "oklch(0.70 0.21 25)",
+};
+
+const TOAST_ICONS: Record<ToastKind, string> = {
+  success: "M5 12l4 4L19 7",
+  info: "M12 8v4m0 4h.01M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18z",
+  warn: "M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z",
+  error: "M18 6L6 18M6 6l12 12",
+};
+
+function ToastCard({ item, onDismiss, C }: { item: ToastItem; onDismiss: (id: number) => void; C: Theme }) {
+  const accentColor = TOAST_ACCENT[item.kind];
+  const autoDismiss = item.kind === "success" || item.kind === "info";
+
+  useEffect(() => {
+    if (!autoDismiss) return;
+    const t = setTimeout(() => onDismiss(item.id), 3000);
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const timeStr = new Date(item.ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+  return (
+    <div style={{
+      display: "flex", alignItems: "flex-start", gap: 10,
+      padding: "10px 14px", borderRadius: 14,
+      background: C.panel, border: `1px solid ${C.border}`,
+      boxShadow: `0 8px 24px ${C.shadow}`,
+      animation: "kSlideIn 0.38s cubic-bezier(.2,.8,.2,1)",
+      position: "relative", overflow: "hidden", minWidth: 260, maxWidth: 360,
+      cursor: autoDismiss ? "default" : "pointer",
+    }} onClick={autoDismiss ? undefined : () => onDismiss(item.id)}>
+      {/* Left accent bar */}
+      <div style={{
+        position: "absolute", left: 0, top: 0, bottom: 0, width: 3,
+        background: accentColor, borderRadius: "3px 0 0 3px",
+      }} />
+      {/* Icon chip */}
+      <div style={{
+        width: 28, height: 28, borderRadius: 999, flexShrink: 0,
+        background: `color-mix(in oklch, ${accentColor} 16%, transparent)`,
+        display: "flex", alignItems: "center", justifyContent: "center",
+      }}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+          <path d={TOAST_ICONS[item.kind]} stroke={accentColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </div>
+      {/* Content */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 12, fontWeight: 600, color: C.text, fontFamily: BODY, lineHeight: 1.3 }}>
+          {item.title}
+        </div>
+        {item.body && (
+          <div style={{ fontSize: 11, color: C.text2, fontFamily: BODY, marginTop: 2, lineHeight: 1.35 }}>
+            {item.body}
+          </div>
+        )}
+      </div>
+      {/* Timestamp */}
+      <span style={{ fontSize: 9, color: C.muted, fontFamily: MONO, letterSpacing: "0.08em", flexShrink: 0, marginTop: 2 }}>
+        {timeStr}
+      </span>
+    </div>
+  );
+}
+
+/** Stacked toast container — render at app root */
+export function ToastStack({ toasts, onDismiss, C }: {
+  toasts: ToastItem[]; onDismiss: (id: number) => void; C: Theme;
+}) {
+  if (!toasts.length) return null;
+  return (
+    <div style={{
+      position: "fixed", bottom: "calc(72px + env(safe-area-inset-bottom))",
+      left: "50%", transform: "translateX(-50%)",
+      zIndex: 1100, display: "flex", flexDirection: "column-reverse", gap: 8,
+      pointerEvents: "auto",
+    }}>
+      {toasts.slice(-4).map(t => (
+        <ToastCard key={t.id} item={t} onDismiss={onDismiss} C={C} />
+      ))}
     </div>
   );
 }
@@ -264,5 +382,354 @@ export function GearButton({ onClick, active, C }: any) {
         <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
       </svg>
     </button>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ATOMS — Kōda visual system components
+// Ported from koda-screens.jsx design reference (May 2026 redesign).
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ─── GLASS ORB ──────────────────────────────────────────────────────────────
+// Soft radial bloom anchored off-canvas. Use sparingly — one per screen max.
+export function GlassOrb({ C, top, left, right, bottom, size = 320, color, opacity = 0.5 }: {
+  C: Theme; top?: number | string; left?: number | string; right?: number | string; bottom?: number | string;
+  size?: number; color?: string; opacity?: number;
+}) {
+  return (
+    <div style={{
+      position: "absolute", top, left, right, bottom,
+      width: size, height: size, borderRadius: "50%",
+      background: `radial-gradient(circle at 50% 50%, ${color || C.orb1} 0%, transparent 65%)`,
+      filter: "blur(40px)", opacity, pointerEvents: "none", zIndex: 0,
+    }} />
+  );
+}
+
+// ─── CORNER GLOW ────────────────────────────────────────────────────────────
+// Iridescent conic-gradient blob inside glass cards.
+export function CornerGlow({ C, corner = "tl", opacity = 0.55 }: {
+  C: Theme; corner?: "tl" | "tr" | "bl" | "br"; opacity?: number;
+}) {
+  const posMap: Record<string, React.CSSProperties> = {
+    tl: { top: -60, left: -60 },
+    tr: { top: -60, right: -60 },
+    bl: { bottom: -60, left: -60 },
+    br: { bottom: -60, right: -60 },
+  };
+  return (
+    <div style={{
+      position: "absolute", ...posMap[corner], width: 220, height: 220,
+      borderRadius: "50%", pointerEvents: "none",
+      background: `conic-gradient(from 200deg at 50% 50%, ${C.orb3}, ${C.accent}, ${C.orb2}, ${C.orb3})`,
+      filter: "blur(40px)", opacity, zIndex: 0,
+    }} />
+  );
+}
+
+// ─── GHOST WORD ─────────────────────────────────────────────────────────────
+// Ultra-display stenciled word behind hero blocks — editorial heft.
+export function GhostWord({ word = "EDGE", C, isDark = true, fontSize = 200, bottom, top, left, right, align = "left" }: {
+  word?: string; C: Theme; isDark?: boolean; fontSize?: number;
+  bottom?: number | string; top?: number | string; left?: number | string; right?: number | string;
+  align?: "left" | "center" | "right";
+}) {
+  return (
+    <div style={{
+      position: "absolute", top, bottom, left, right,
+      pointerEvents: "none", overflow: "hidden",
+      width: "100%", textAlign: align, lineHeight: 0.9, zIndex: 0,
+    }}>
+      <span style={{
+        fontFamily: DISPLAY, fontWeight: 700,
+        fontSize, letterSpacing: "-0.04em",
+        background: isDark
+          ? "linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.01))"
+          : "linear-gradient(180deg, rgba(10,10,10,0.12), rgba(10,10,10,0.02))",
+        WebkitBackgroundClip: "text", backgroundClip: "text",
+        WebkitTextFillColor: "transparent", color: "transparent",
+        WebkitTextStroke: isDark ? "1px rgba(255,255,255,0.06)" : "1px rgba(10,10,10,0.08)",
+      } as React.CSSProperties}>{word}</span>
+    </div>
+  );
+}
+
+// ─── TICK MOTIF ─────────────────────────────────────────────────────────────
+// Scattered candle/tick marks as decorative background pattern.
+export function TickMotif({ C, opacity = 0.4, density = 8 }: {
+  C: Theme; opacity?: number; density?: number;
+}) {
+  const items: Array<{ x: number; y: number; k: number; sz: number; i: number }> = [];
+  for (let i = 0; i < density; i++) {
+    items.push({
+      x: (i * 137 % 92) + 4,
+      y: (i * 71 % 80) + 8,
+      k: i % 4,
+      sz: 14 + (i % 3) * 6,
+      i,
+    });
+  }
+  const syms = ["ES", "NQ", "CL", "GC"];
+  return (
+    <div style={{ position: "absolute", inset: 0, pointerEvents: "none", opacity, zIndex: 0, overflow: "hidden" }}>
+      {items.map(({ x, y, k, sz, i }) => (
+        <div key={i} style={{
+          position: "absolute",
+          left: `${x}%`, top: `${y}%`,
+          transform: `rotate(${(i * 23) % 30 - 15}deg)`,
+          color: C.text2, fontFamily: MONO,
+          fontSize: sz * 0.5, letterSpacing: "0.08em",
+        }}>
+          {k === 0 && <span>+{((i + 1) * 0.3).toFixed(1)}R</span>}
+          {k === 1 && (
+            <svg width={sz} height={sz * 1.4} viewBox="0 0 20 28">
+              <line x1="10" y1="2" x2="10" y2="26" stroke="currentColor" strokeWidth="0.8" />
+              <rect x="6" y="8" width="8" height="10" stroke="currentColor" strokeWidth="0.8" fill="none" />
+            </svg>
+          )}
+          {k === 2 && <span style={{ fontSize: sz * 0.6 }}>{"▲"}</span>}
+          {k === 3 && <span>{syms[i % 4]}</span>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── TEAL ARROW BUTTON ──────────────────────────────────────────────────────
+// Mint circular CTA — "go" action.
+export function TealArrowBtn({ C, size = 36, onClick }: {
+  C: Theme; size?: number; onClick?: () => void;
+}) {
+  return (
+    <div onClick={onClick} style={{
+      width: size, height: size, borderRadius: 999,
+      background: C.live,
+      display: "flex", alignItems: "center", justifyContent: "center",
+      boxShadow: `0 0 0 4px color-mix(in oklch, ${C.live} 25%, transparent)`,
+      flexShrink: 0, cursor: onClick ? "pointer" : "default",
+    }}>
+      <svg width={size * 0.45} height={size * 0.45} viewBox="0 0 16 16" fill="none">
+        <path d="M3 8h10M9 4l4 4-4 4" stroke="#0A0A0A" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </div>
+  );
+}
+
+// ─── FLOATING INPUT ─────────────────────────────────────────────────────────
+// Label-floats-up input with mono kicker label.
+export function FloatingInput({ C, label, value, placeholder, action, onChange }: {
+  C: Theme; label: string; value?: string; placeholder?: string;
+  action?: React.ReactNode; onChange?: (v: string) => void;
+}) {
+  return (
+    <div style={{
+      display: "flex", alignItems: "center", gap: 8,
+      padding: "10px 8px 10px 16px",
+      borderRadius: 14,
+      background: "color-mix(in srgb, currentColor 4%, transparent)",
+      border: `1px solid ${C.border2}`,
+      position: "relative",
+    }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{
+          fontFamily: MONO, fontSize: 9,
+          letterSpacing: "0.16em", color: C.muted,
+          textTransform: "uppercase", marginBottom: 2,
+        }}>{label}</div>
+        {onChange ? (
+          <input
+            value={value || ""}
+            placeholder={placeholder}
+            onChange={e => onChange(e.target.value)}
+            style={{
+              fontFamily: BODY, fontSize: 14,
+              color: C.text, fontWeight: 500,
+              background: "transparent", border: "none", outline: "none",
+              width: "100%", padding: 0,
+            }}
+          />
+        ) : (
+          <div style={{
+            fontFamily: BODY, fontSize: 14,
+            color: value ? C.text : C.muted, fontWeight: 500,
+          }}>{value || placeholder}</div>
+        )}
+      </div>
+      {action}
+    </div>
+  );
+}
+
+// ─── PILL ───────────────────────────────────────────────────────────────────
+// Active/inactive chip — for filters, tags, segmented controls.
+export function Pill({ C, active, children, onClick, size = "md", style }: {
+  C: Theme; active?: boolean; children: React.ReactNode; onClick?: () => void;
+  size?: "sm" | "md"; style?: React.CSSProperties;
+}) {
+  const pad = size === "sm" ? "6px 12px" : "8px 16px";
+  const fs = size === "sm" ? 11 : 13;
+  return (
+    <div onClick={onClick} style={{
+      padding: pad, borderRadius: 999,
+      background: active ? C.text : "transparent",
+      color: active ? C.bg : C.text2,
+      border: active ? `1px solid ${C.text}` : `1px solid ${C.border2}`,
+      fontSize: fs, fontWeight: 500, fontFamily: BODY,
+      letterSpacing: "0.01em", cursor: onClick ? "pointer" : "default",
+      whiteSpace: "nowrap", display: "inline-flex", alignItems: "center",
+      ...style,
+    }}>{children}</div>
+  );
+}
+
+// ─── CARD ───────────────────────────────────────────────────────────────────
+// Glass-or-solid card with consistent radius (24px).
+export function Card({ C, children, style, glass = false, pad = 18 }: {
+  C: Theme; children: React.ReactNode; style?: React.CSSProperties;
+  glass?: boolean; pad?: number;
+}) {
+  return (
+    <div style={{
+      borderRadius: 24,
+      background: glass ? C.surfaceGlass : C.panel,
+      backdropFilter: glass ? "blur(20px) saturate(140%)" : undefined,
+      WebkitBackdropFilter: glass ? "blur(20px) saturate(140%)" : undefined,
+      border: `1px solid ${C.border}`,
+      padding: pad,
+      position: "relative",
+      overflow: "hidden",
+      ...style,
+    }}>{children}</div>
+  );
+}
+// ─── KICKER ─────────────────────────────────────────────────────────────────
+// Mono 10px uppercase section label.
+export function Kicker({ C, children, color }: {
+  C: Theme; children: React.ReactNode; color?: string;
+}) {
+  return (
+    <div style={{
+      fontFamily: MONO, fontSize: 10, fontWeight: 500,
+      letterSpacing: "0.16em", textTransform: "uppercase",
+      color: color || C.muted,
+    }}>{children}</div>
+  );
+}
+
+// ─── DELTA ──────────────────────────────────────────────────────────────────
+// +/-% chip with arrow, coloured by sign.
+export function Delta({ C, value, dollars }: {
+  C: Theme; value: number; dollars?: string;
+}) {
+  const positive = value > 0;
+  const c = positive ? C.green : C.red;
+  return (
+    <span style={{
+      display: "inline-flex", alignItems: "center", gap: 4,
+      padding: "3px 8px", borderRadius: 999,
+      background: `color-mix(in oklch, ${c} 14%, transparent)`,
+      color: c, fontSize: 11, fontWeight: 600,
+      fontFamily: MONO,
+    }}>
+      <span style={{ fontSize: 9 }}>{positive ? "\u25b2" : "\u25bc"}</span>
+      {positive ? "+" : ""}{value}%
+      {dollars !== undefined && <span style={{ opacity: 0.7, marginLeft: 2 }}>({dollars})</span>}
+    </span>
+  );
+}
+
+// ─── SCREEN HEADER ──────────────────────────────────────────────────────────
+// Wordmark + right actions (bell + avatar) masthead.
+export function ScreenHeader({ C, right }: {
+  C: Theme; right?: React.ReactNode;
+}) {
+  return (
+    <div style={{
+      display: "flex", alignItems: "center", justifyContent: "space-between",
+      padding: "8px 22px 6px", position: "relative", zIndex: 2,
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <TradrMark size={22} color={C.text} />
+        <span style={{
+          fontFamily: DISPLAY, fontWeight: 600, fontSize: 14,
+          letterSpacing: "0.22em", color: C.text,
+        }}>K&#333;da</span>
+        <span style={{
+          fontFamily: MONO, fontWeight: 500, fontSize: 9,
+          letterSpacing: "0.16em", color: C.text,
+          padding: "2px 5px", borderRadius: 4,
+          border: `1px solid ${C.border2}`, lineHeight: 1,
+        }}>OS</span>
+      </div>
+      {right && <div style={{ display: "flex", gap: 8 }}>{right}</div>}
+    </div>
+  );
+}
+
+// ─── ICON BUTTON ────────────────────────────────────────────────────────────
+// 36x36 round panel button with SVG icon.
+const ICON_PATHS: Record<string, string> = {
+  bell: "M10 3.5a4.5 4.5 0 0 1 4.5 4.5v3l1.2 2.4H4.3L5.5 11V8A4.5 4.5 0 0 1 10 3.5Zm-1.5 10.5h3a1.5 1.5 0 0 1-3 0Z",
+  back: "M12 4L6 10l6 6",
+  plus: "M10 5v10M5 10h10",
+  search: "M9 4.5a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9ZM12.5 12.5L15 15",
+};
+
+export function IconButton({ C, icon, onClick }: {
+  C: Theme; icon: string; onClick?: () => void;
+}) {
+  return (
+    <div onClick={onClick} style={{
+      width: 36, height: 36, borderRadius: 999,
+      background: C.panel, border: `1px solid ${C.border}`,
+      display: "flex", alignItems: "center", justifyContent: "center",
+      cursor: onClick ? "pointer" : "default", flexShrink: 0,
+    }}>
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <path d={ICON_PATHS[icon] || ""} stroke={C.text} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      </svg>
+    </div>
+  );
+}
+
+
+// ─── EMPTY STATE ────────────────────────────────────────────────────────────
+// Reusable branded empty state: icon, headline, body, optional CTA.
+export function EmptyState({ C, icon, headline, body, cta, onCta }: {
+  C: Theme; icon: string; headline: string; body: string;
+  cta?: string; onCta?: () => void;
+}) {
+  return (
+    <div style={{
+      textAlign: "center", padding: "60px 20px", position: "relative",
+      overflow: "hidden",
+    }}>
+      {/* Ghost watermark */}
+      <div style={{
+        position: "absolute", bottom: -12, right: -4, pointerEvents: "none",
+        fontFamily: DISPLAY, fontWeight: 700, fontSize: 80, lineHeight: 0.85,
+        letterSpacing: "-0.05em", opacity: 0.03, color: C.text,
+      }}>EDGE</div>
+
+      <div style={{ fontSize: 36, marginBottom: 16, filter: "grayscale(0.3)" }}>{icon}</div>
+      <div style={{
+        fontFamily: DISPLAY, fontSize: "clamp(18px, 4vw, 22px)",
+        fontWeight: 500, fontStyle: "italic", color: C.text2,
+        letterSpacing: "-0.02em", marginBottom: 8, lineHeight: 1.2,
+      }}>{headline}</div>
+      <div style={{
+        fontFamily: BODY, fontSize: 13, color: C.muted,
+        lineHeight: 1.6, maxWidth: "32ch", margin: "0 auto",
+      }}>{body}</div>
+      {cta && onCta && (
+        <button onClick={onCta} style={{
+          marginTop: 24, background: C.text, color: C.bg,
+          border: "none", borderRadius: 999, padding: "12px 24px",
+          cursor: "pointer", fontFamily: MONO, fontSize: 10,
+          letterSpacing: "0.1em", textTransform: "uppercase",
+          fontWeight: 500,
+        }}>{cta}</button>
+      )}
+    </div>
   );
 }

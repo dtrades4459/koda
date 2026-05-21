@@ -15,7 +15,8 @@ import { STRATEGIES, STRATEGY_NAMES, getAllStrategiesMap, addExtraStrategies } f
 import { useTradovate } from "./hooks/useTradovate";
 
 import type { TradeComment, ReactionMap, Trade, Profile, CircleMember, Circle, Insight, StrategyDef } from "./types";
-import { AvatarCircle, Badge, SectionKicker, StrategyPill, StrategySelect, SubNavDropdown, GearButton, Toast, TrMark, CrownIcon, outcomeColor, outcomeLetter, stratCode, stratShort, compressImage, MONO, BODY, DISPLAY } from "./shared";
+import { AvatarCircle, Badge, SectionKicker, StrategyPill, StrategySelect, SubNavDropdown, GearButton, Toast, ToastStack, TrMark, TradrMark, CrownIcon, GlassOrb, CornerGlow, GhostWord, TickMotif, TealArrowBtn, Pill, Card, Kicker, Delta, ScreenHeader, IconButton, FloatingInput, EmptyState, outcomeColor, outcomeLetter, stratCode, stratShort, compressImage, MONO, BODY, DISPLAY } from "./shared";
+import type { ToastKind, ToastItem } from "./shared";
 import { TradingCircles } from "./TradingCircles";
 import { FriendsFeed } from "./FriendsFeed";
 import { MiniSparkline, PnLChart, MonthlyPnLChart, WinRateChart, TradeDurationChart, NetDailyPnLChart, DailyCumulativePnLChart, TradeStatCards, AvgStatsCards, DailyInsights, CalendarView, DrawdownCurve, SessionHeatmap, TimeOfDayChart, DayOfWeekChart, MAEMFEChart, generateInsights } from "./charts";
@@ -199,6 +200,26 @@ function StrategyEditor({ draft, setDraft, onSave, onCancel, isEdit, C, inp, lbl
 
 // ─── Position Size Calculator ────────────────────────────────────────────────
 
+// ─── Viewport tier hook (4 breakpoints) ─────────────────────────────────────
+type ViewportTier = "phone" | "tablet" | "desktop" | "wide";
+function getViewportTier(): ViewportTier {
+  if (typeof window === "undefined") return "phone";
+  const w = window.innerWidth;
+  if (w >= 1600) return "wide";
+  if (w >= 1024) return "desktop";
+  if (w >= 640) return "tablet";
+  return "phone";
+}
+function useViewport(): ViewportTier {
+  const [tier, setTier] = useState<ViewportTier>(getViewportTier);
+  useEffect(() => {
+    const onResize = () => setTier(getViewportTier());
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+  return tier;
+}
+
 export default function Tradr({ user, jwtPlan }: { user?: User; jwtPlan?: "free" | "pro" | "elite" } = {}) {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [draftCount, setDraftCount] = useState(0);
@@ -227,6 +248,7 @@ export default function Tradr({ user, jwtPlan }: { user?: User; jwtPlan?: "free"
   // ── Circles state + actions managed by useCircles (wired below after stats) ─
   const [darkMode, setDarkMode] = useState(true);
   const isDesktop = useIsDesktop(900);
+  const viewport = useViewport();
   const C: typeof DARK = darkMode ? DARK : LIGHT;
   const [form, setForm] = useState<Partial<Trade>>(EMPTY_TRADE);
   const [editId, setEditId] = useState<number | null>(null);
@@ -253,6 +275,17 @@ export default function Tradr({ user, jwtPlan }: { user?: User; jwtPlan?: "free"
   const [feedbackSending, setFeedbackSending] = useState(false);
   const [feedbackSent, setFeedbackSent] = useState(false);
   const [toast, setToast] = useState<any>(null);
+  // ── Toast v2 (stacked, 4 kinds) ──
+  const [toastsV2, setToastsV2] = useState<ToastItem[]>([]);
+  const toastIdRef = useRef(0);
+  const showToastV2 = useCallback((kind: ToastKind, title: string, body?: string) => {
+    const id = ++toastIdRef.current;
+    setToastsV2(prev => [...prev, { id, kind, title, body, ts: Date.now() }]);
+    setTimeout(() => setToastsV2(prev => prev.filter(t => t.id !== id)), 6000);
+  }, []);
+  const dismissToast = useCallback((id: number) => {
+    setToastsV2(prev => prev.filter(t => t.id !== id));
+  }, []);
   const [homeSection, setHomeSection] = useState("feed");
   // Supabase JWT access token — used by DataSourcesScreen for broker API calls.
   const [accessToken, setAccessToken] = useState("");
@@ -1239,7 +1272,7 @@ export default function Tradr({ user, jwtPlan }: { user?: User; jwtPlan?: "free"
   };
 
   if (loading) return (
-    <div style={{ minHeight: "100vh", background: DARK.bg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "20px" }}>
+    <div style={{ minHeight: "100dvh", background: DARK.bg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "20px" }}>
       <style>{`
         @keyframes splashPulse{0%,100%{transform:scale(1);opacity:0.18}50%{transform:scale(1.55);opacity:0}}
         @keyframes splashBreath{0%,100%{opacity:0.3;transform:scale(0.92)}50%{opacity:1;transform:scale(1)}}
@@ -1317,7 +1350,7 @@ export default function Tradr({ user, jwtPlan }: { user?: User; jwtPlan?: "free"
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: C.bg, color: C.text, fontFamily: BODY, transition: "background 0.2s, color 0.2s" }}>
+    <div style={{ minHeight: "100dvh", background: C.bg, color: C.text, fontFamily: BODY, transition: "background 0.2s, color 0.2s" }}>
       <style>{`
         *{box-sizing:border-box;margin:0;padding:0;}
         html,body{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}
@@ -1348,9 +1381,20 @@ export default function Tradr({ user, jwtPlan }: { user?: User; jwtPlan?: "free"
         input[type=file]{display:none;}
       `}</style>
 
-      {/* ── PAGE FRAME (responsive: 480px canvas on mobile, up to 960px on desktop) ── */}
+      {/* ── PAGE FRAME (responsive: 4-tier viewport scaling) ── */}
       <div className="tradr-app" ref={swipeRef}
-        style={{ maxWidth: isDesktop ? "1280px" : "480px", margin: "0 auto", paddingBottom: isDesktop ? "32px" : "96px", minHeight: "100vh", background: C.bg, borderLeft: `1px solid ${C.border}`, borderRight: `1px solid ${C.border}` }}>
+        style={{
+          width: "100%",
+          maxWidth: viewport === "phone" ? "none" : viewport === "tablet" ? "720px" : viewport === "desktop" ? "1440px" : "1680px",
+          margin: "0 auto",
+          paddingLeft: "clamp(16px, 4vw, 48px)",
+          paddingRight: "clamp(16px, 4vw, 48px)",
+          paddingBottom: viewport === "phone" || viewport === "tablet" ? "96px" : "32px",
+          minHeight: "100dvh",
+          background: C.bg,
+          borderLeft: viewport === "desktop" ? `1px solid ${C.border}` : "none",
+          borderRight: viewport === "desktop" ? `1px solid ${C.border}` : "none",
+        }}>
 
         {/* ── MASTHEAD ── */}
         <header style={{ padding: isDesktop ? "16px 40px 0" : "10px 20px 10px", borderBottom: `1px solid ${C.border}`, position: "sticky", top: 0, background: C.bg, zIndex: 10, backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}>
@@ -1401,9 +1445,9 @@ export default function Tradr({ user, jwtPlan }: { user?: User; jwtPlan?: "free"
         </header>
 
         {/* ── CONTENT — desktop: sidebar+main grid; mobile: single column ── */}
-        <div style={{ display:isDesktop?"grid":"block", gridTemplateColumns:isDesktop?"220px 1fr":undefined }} className="fade-in" key={view}>
+        <div style={{ display:isDesktop?"grid":"block", gridTemplateColumns: viewport === "wide" ? "260px 1fr" : isDesktop ? "220px 1fr" : undefined }} className="fade-in" key={view}>
           {isDesktop && (
-            <aside style={{ borderRight:`1px solid ${C.border}`, padding:"24px 0 32px", position:"sticky", top:"64px", height:"calc(100vh - 64px)", overflowY:"auto", display:"flex", flexDirection:"column" }}>
+            <aside style={{ borderRight:`1px solid ${C.border}`, padding:"24px 0 32px", position:"sticky", top:"64px", height:"calc(100dvh - 64px)", overflowY:"auto", display:"flex", flexDirection:"column" }}>
               <div style={{ flex:1 }}>
                 {NAV_TABS.map(tab => {
                   const sn = subNavFor(tab.id); const ia = view === tab.id;
@@ -2522,6 +2566,12 @@ export default function Tradr({ user, jwtPlan }: { user?: User; jwtPlan?: "free"
                               </label>
                             )}
                             {t.notes && <div style={{ fontSize: "14px", color: C.text, lineHeight: 1.65, marginBottom: "14px", borderLeft: `1px solid ${C.border2}`, paddingLeft: "14px", fontFamily: BODY }}>{t.notes}</div>}
+                            {t.mistake && t.mistake !== "None" && (
+                              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: "16px" }}>
+                                <span style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.08em" }}>MISTAKE</span>
+                                <span style={{ background: `color-mix(in oklch, ${C.red} 14%, transparent)`, color: C.red, border: `1px solid color-mix(in oklch, ${C.red} 25%, transparent)`, borderRadius: "999px", padding: "3px 10px", fontFamily: MONO, fontSize: "9px", letterSpacing: "0.08em", textTransform: "uppercase" }}>{t.mistake}</span>
+                              </div>
+                            )}
                             {getEmotionTags(t.emotions).length > 0 && (
                               <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "16px" }}>
                                 {getEmotionTags(t.emotions).map(id => {
@@ -2674,7 +2724,7 @@ ${recentTrades.map((t:any)=>`<tr><td>${t.date}</td><td>${t.pair||"—"}</td><td>
                 </div>
               )}
 
-              {statsTab === "overview" && total === 0 && <div style={{ textAlign: "center", padding: "60px 0", color: C.muted, fontSize: "13px", fontStyle: "italic" }}>Log trades to see stats.</div>}
+              {statsTab === "overview" && total === 0 && <EmptyState C={C} icon="&#128202;" headline="Your stats live here." body="Log your first trade and watch your edge emerge — win rate, R-multiples, streaks, and more." cta="Log a trade →" onCta={() => navigateTo("log")} />}
 
               {statsTab === "overview" && total > 0 && (
                 <>
@@ -3072,6 +3122,34 @@ ${recentTrades.map((t:any)=>`<tr><td>${t.date}</td><td>${t.pair||"—"}</td><td>
                             ))}
                           </div>
                         )}
+                      </div>
+                    );
+                  })()}
+
+                  {/* ── Mistake Breakdown ── */}
+                  {(() => {
+                    const withMistake = trades.filter(t => t.mistake && t.mistake !== "None");
+                    if (!withMistake.length) return null;
+                    const counts: Record<string, number> = {};
+                    withMistake.forEach(t => { counts[t.mistake!] = (counts[t.mistake!] || 0) + 1; });
+                    const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+                    return (
+                      <div style={{ marginBottom: "24px" }}>
+                        <SectionKicker label="MISTAKE FREQUENCY" C={C} />
+                        <div style={{ marginTop: "14px", display: "flex", flexDirection: "column", gap: "6px" }}>
+                          {sorted.map(([mistake, count]) => {
+                            const pct = Math.round((count / trades.length) * 100);
+                            return (
+                              <div key={mistake} style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                <span style={{ fontFamily: MONO, fontSize: "10px", color: C.red, letterSpacing: "0.06em", textTransform: "uppercase", minWidth: "130px" }}>{mistake}</span>
+                                <div style={{ flex: 1, height: "4px", borderRadius: "2px", background: C.border2, overflow: "hidden" }}>
+                                  <div style={{ width: `${pct}%`, minWidth: "2px", height: "100%", borderRadius: "2px", background: C.red, transition: "width 0.4s ease" }} />
+                                </div>
+                                <span style={{ fontFamily: MONO, fontSize: "10px", color: C.muted }}>{count}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
                     );
                   })()}
@@ -3508,7 +3586,7 @@ ${recentTrades.map((t:any)=>`<tr><td>${t.date}</td><td>${t.pair||"—"}</td><td>
         {showLiveModal && (
           <div style={{ position: "fixed", inset: 0, zIndex: 9998, background: "rgba(0,0,0,0.65)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}
             onClick={() => setShowLiveModal(false)}>
-            <div style={{ background: C.bg, borderRadius: "20px 20px 0 0", width: "100%", maxWidth: "520px", padding: "10px 24px calc(40px + env(safe-area-inset-bottom))", maxHeight: "92vh", overflowY: "auto" }}
+            <div style={{ background: C.bg, borderRadius: "20px 20px 0 0", width: "100%", maxWidth: "clamp(0px, 100%, min(560px, 92vw))", padding: "10px 24px calc(40px + env(safe-area-inset-bottom))", maxHeight: "92vh", overflowY: "auto" }}
               onClick={e => e.stopPropagation()}>
               <div style={{ width: "36px", height: "4px", background: C.border2, borderRadius: "2px", margin: "14px auto 28px" }} />
 
@@ -3649,7 +3727,7 @@ ${recentTrades.map((t:any)=>`<tr><td>${t.date}</td><td>${t.pair||"—"}</td><td>
         {feedbackOpen && (
           <div style={{ position: "fixed", inset: 0, zIndex: 9998, background: "rgba(0,0,0,0.65)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}
             onClick={() => setFeedbackOpen(false)}>
-            <div style={{ background: C.bg, borderRadius: "20px 20px 0 0", width: "100%", maxWidth: "520px", padding: "10px 24px 40px" }}
+            <div style={{ background: C.bg, borderRadius: "20px 20px 0 0", width: "100%", maxWidth: "clamp(0px, 100%, min(560px, 92vw))", padding: "10px 24px 40px" }}
               onClick={e => e.stopPropagation()}>
               <div style={{ width: "36px", height: "4px", background: C.border2, borderRadius: "2px", margin: "14px auto 24px" }} />
               <div style={{ fontFamily: DISPLAY, fontSize: "20px", fontWeight: 500, color: C.text, marginBottom: "6px" }}>Send feedback</div>
@@ -3703,6 +3781,7 @@ ${recentTrades.map((t:any)=>`<tr><td>${t.date}</td><td>${t.pair||"—"}</td><td>
           <LotSizeCalculator C={C} onClose={() => setShowCalc(false)} />
         )}
         {toast && <Toast message={toast} onDone={() => setToast(null)} C={C} />}
+        <ToastStack toasts={toastsV2} onDismiss={dismissToast} C={C} />
       </div>
     </div>
   );

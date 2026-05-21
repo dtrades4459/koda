@@ -39,6 +39,7 @@ export interface Trade {
   mae?: string;
   mfe?: string;
   ruleAdherence?: boolean | null;
+  mistake?: string | null;
   source?: string;
 }
 

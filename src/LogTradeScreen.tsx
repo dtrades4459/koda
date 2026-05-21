@@ -9,7 +9,7 @@
 import React from "react";
 import type { Trade } from "./types";
 import { SectionKicker, StrategyPill, MONO, BODY, DISPLAY } from "./shared";
-import { SESSIONS, BIAS, EMOTION_TAGS, getEmotionTags } from "./tradeConstants";
+import { SESSIONS, BIAS, EMOTION_TAGS, MISTAKE_TAGS, getEmotionTags } from "./tradeConstants";
 
 export interface LogTradeScreenProps {
   C: Record<string, string>;
@@ -192,6 +192,27 @@ export function LogTradeScreen({
               CLEAR
             </button>
           )}
+        </div>
+      </div>
+
+      {/* Mistake Tag — optional, chip picker */}
+      <div>
+        <label style={lbl}>Mistake (optional)</label>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "8px" }}>
+          {MISTAKE_TAGS.map(tag => {
+            const active = form.mistake === tag;
+            return (
+              <button key={tag} type="button"
+                onClick={() => setForm((f: any) => ({ ...f, mistake: active ? null : tag }))}
+                style={{
+                  padding: "7px 14px", borderRadius: "999px", cursor: "pointer",
+                  fontFamily: MONO, fontSize: "10px", letterSpacing: "0.06em", textTransform: "uppercase",
+                  border: `1px solid ${active ? C.red : C.border2}`,
+                  background: active ? `color-mix(in oklch, ${C.red} 14%, transparent)` : "transparent",
+                  color: active ? C.red : C.muted, fontWeight: active ? 600 : 400, transition: "all 0.15s",
+                }}>{tag}</button>
+            );
+          })}
         </div>
       </div>
 

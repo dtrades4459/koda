@@ -1,13 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <!-- Full bleed background — required for maskable icons -->
-  <rect width="512" height="512" fill="#080808"/>
-  <!-- Safe zone: inner 80% (51.2px padding each side) — scale content down -->
-  <g transform="translate(51.2,51.2) scale(0.8)">
-    <g fill="none" stroke="#EDEDE8" stroke-width="13.75" stroke-linejoin="miter" stroke-linecap="square">
-      <polygon points="52,118 189,256 52,394"/>
-      <polygon points="143,118 280,256 143,394"/>
-      <polygon points="234,118 371,256 234,394"/>
-      <polygon points="325,118 462,256 325,394"/>
-    </g>
+  <rect width="512" height="512" fill="#0A0A0B"/>
+  <g fill="none" stroke="#EDEDE8" stroke-width="8" stroke-linejoin="miter" transform="translate(96,128)">
+    <polygon points="0,0 80,128 0,256"/>
+    <polygon points="60,0 140,128 60,256"/>
+    <polygon points="120,0 200,128 120,256"/>
+    <polygon points="180,0 260,128 180,256"/>
   </g>
 </svg>
