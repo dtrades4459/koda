@@ -24,6 +24,7 @@ export const config = { runtime: "nodejs" };
 
 import { tryDecrypt, encrypt } from "../lib/cryptoUtils";
 import { getAdminClient, getUserIdFromJwt } from "../lib/supabaseAdmin";
+import { checkRateLimit, getClientIp } from "../lib/rateLimit";
 
 // ── Tradovate endpoints ───────────────────────────────────────────────────────
 const DEMO_BASE = "https://demo.tradovateapi.com/v1";
@@ -341,6 +342,13 @@ export default async function handler(req: any, res: any) {
   if (req.method === "POST") {
     const userId = await getUserIdFromJwt(req.headers["authorization"]);
     if (!userId) return res.status(401).json({ error: "Not authenticated" });
+
+    // Rate limit: 10 manual syncs per 10 minutes per user-authenticated IP.
+    // JWT auth already prevents unauthenticated abuse; this caps resource usage
+    // from a single user hammering the sync button.
+    const ip = getClientIp(req);
+    const allowed = await checkRateLimit("manual_sync", ip, { limit: 10, windowMs: 600_000 });
+    if (!allowed) return res.status(429).json({ error: "Too many sync requests — try again in a few minutes" });
 
     const { data: conns, error } = await admin
       .from("broker_connections")

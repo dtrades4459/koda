@@ -12,62 +12,9 @@
 //   SUPABASE_SERVICE_ROLE_KEY  Supabase → Settings → API → service_role key
 // ═══════════════════════════════════════════════════════════════════════════════
 
-import { createClient } from "@supabase/supabase-js";
-
 export const config = { runtime: "nodejs" };
 
-const RATE_LIMIT = 5;       // max requests
-const RATE_WINDOW = 60_000; // per 60 seconds
-
-// Stable 8-char hex derived from the IP — we don't want to store raw IPs.
-function hashIp(ip: string): string {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < ip.length; i++) {
-    h ^= ip.charCodeAt(i);
-    h = (h * 0x01000193) >>> 0;
-  }
-  return h.toString(16).padStart(8, "0");
-}
-
-// Check + increment rate limit counter stored in Supabase shared_kv.
-// Returns true if the request is allowed.
-async function checkRateLimit(ip: string): Promise<boolean> {
-  const db = createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-  const key = `tradr_rl_feedback_${hashIp(ip)}`;
-  const now = Date.now();
-
-  const { data } = await db
-    .from("shared_kv")
-    .select("value")
-    .eq("key", key)
-    .maybeSingle();
-
-  let count = 1;
-  let resetAt = now + RATE_WINDOW;
-
-  if (data?.value) {
-    try {
-      const parsed = JSON.parse(data.value);
-      if (now < parsed.resetAt) {
-        // Still in the current window
-        if (parsed.count >= RATE_LIMIT) return false;
-        count = parsed.count + 1;
-        resetAt = parsed.resetAt;
-      }
-      // else: window expired, start fresh (count=1, new resetAt)
-    } catch { /* malformed — start fresh */ }
-  }
-
-  // Upsert the updated counter (fire-and-forget; don't block the response)
-  void db.from("shared_kv")
-    .upsert({ key, value: JSON.stringify({ count, resetAt }) })
-    .then(() => {}, () => {});
-
-  return true;
-}
+import { checkRateLimit, getClientIp } from "./lib/rateLimit";
 
 // ── CORS ─────────────────────────────────────────────────────────────────────
 const ALLOWED_ORIGINS = new Set([
@@ -91,10 +38,8 @@ export default async function handler(req: any, res: any) {
   if (req.method === "OPTIONS") return res.status(200).end();
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
-  const ip = (req.headers["x-forwarded-for"] as string | undefined)
-    ?.split(",")[0].trim() || "unknown";
-
-  const allowed = await checkRateLimit(ip);
+  const ip = getClientIp(req);
+  const allowed = await checkRateLimit("feedback", ip, { limit: 5, windowMs: 60_000 });
   if (!allowed) return res.status(429).json({ error: "Too many requests" });
 
   const { feedback, name, handle } = req.body || {};
