@@ -1339,6 +1339,7 @@ export default function Tradr({ user, jwtPlan }: { user?: User; jwtPlan?: "free"
     { id: "circles", label: "Circles" },
     { id: "ai", label: "Execution" },
     { id: "rules", label: "Rules" },
+    { id: "checklist", label: "Checklist" },
     { id: "sync", label: "Sync" },
   ];
   const STATS_SECTIONS = [
@@ -1355,7 +1356,7 @@ export default function Tradr({ user, jwtPlan }: { user?: User; jwtPlan?: "free"
     { id: "rules", label: "Rules" },
   ];
   const subNavFor = (v: string) => {
-    if (v === "home") return { sections: HOME_SECTIONS, value: homeSection, onChange: setHomeSection };
+    if (v === "home") return { sections: HOME_SECTIONS, value: homeSection, onChange: (s: string) => { if (s === "checklist") navigateTo("checklist"); else setHomeSection(s); } };
     if (v === "stats") return { sections: STATS_SECTIONS, value: statsTab, onChange: setStatsTab };
     if (v === "checklist") return { sections: CHECKLIST_SECTIONS, value: checklistTab, onChange: setChecklistTab };
     return null;
@@ -1566,7 +1567,7 @@ export default function Tradr({ user, jwtPlan }: { user?: User; jwtPlan?: "free"
               {/* Section sub-nav dropdown — mobile only; desktop uses the dropdown in the top-nav */}
               {!isDesktop && (
                 <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "8px", paddingBottom: "10px", borderBottom: `0.5px solid ${C.border}` }}>
-                  <SubNavDropdown sections={HOME_SECTIONS} value={homeSection} onChange={setHomeSection} C={C} />
+                  <SubNavDropdown sections={HOME_SECTIONS} value={homeSection} onChange={s => { if (s === "checklist") navigateTo("checklist"); else setHomeSection(s); }} C={C} />
                   <GearButton onClick={() => setHomeSection("settings")} active={homeSection === "settings"} C={C} />
                 </div>
               )}
@@ -2965,6 +2966,87 @@ ${recentTrades.map((t:any)=>`<tr><td>${t.date}</td><td>${t.pair||"—"}</td><td>
                     ))}
                   </div>
 
+                  {/* ── Discipline score card ── */}
+                  {(() => {
+                    const month = new Date().toISOString().slice(0, 7);
+                    const monthTrades = trades.filter(t => t.date?.startsWith(month));
+                    const tagged = monthTrades.filter(t => t.ruleAdherence !== null && t.ruleAdherence !== undefined);
+                    if (tagged.length < 3) return null;
+                    const followedPct = Math.round(tagged.filter(t => t.ruleAdherence === true).length / tagged.length * 100);
+                    const grade = followedPct >= 80 ? "Excellent" : followedPct >= 60 ? "Good" : followedPct >= 40 ? "Needs work" : "Struggling";
+                    const gradeColor = followedPct >= 80 ? C.green : followedPct >= 60 ? C.accent : followedPct >= 40 ? (C as any).warn ?? "#f59e0b" : C.red;
+                    return (
+                      <div style={{ borderRadius: "22px", padding: "18px 20px", background: C.panel, border: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: "16px" }}>
+                        <div style={{ width: "48px", height: "48px", borderRadius: "50%", border: `3px solid ${gradeColor}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          <span style={{ fontFamily: DISPLAY, fontSize: "15px", fontWeight: 700, color: gradeColor }}>{followedPct}%</span>
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "4px" }}>Discipline · This month</div>
+                          <div style={{ fontFamily: BODY, fontSize: "13px", color: C.text, lineHeight: 1.5 }}>
+                            You followed your rules on <strong style={{ color: gradeColor }}>{followedPct}%</strong> of trades — <span style={{ color: C.muted }}>{grade}.</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* ── Prop firm progress ── */}
+                  {profile.propFirmMode && profile.propFirmBalance && (
+                    (() => {
+                      const bal = profile.propFirmBalance!;
+                      const target = profile.propFirmProfitTarget ?? 0;
+                      const dailyLimit = profile.propFirmDailyLossLimit ?? 0;
+                      const maxDD = profile.propFirmMaxDrawdown ?? 0;
+                      const totalPnlDollarNum = trades.reduce((a, t) => a + (parseFloat(t.pnlDollar as string) || 0), 0);
+                      const today = new Date().toISOString().split("T")[0];
+                      const todayPnl = trades.filter(t => t.date === today).reduce((a, t) => a + (parseFloat(t.pnlDollar as string) || 0), 0);
+                      const targetPct = target > 0 ? Math.min(100, Math.round((Math.max(0, totalPnlDollarNum) / target) * 100)) : 0;
+                      const ddPct = maxDD > 0 ? Math.min(100, Math.round((Math.abs(Math.min(0, totalPnlDollarNum)) / maxDD) * 100)) : 0;
+                      const dailyPct = dailyLimit > 0 ? Math.min(100, Math.round((Math.abs(Math.min(0, todayPnl)) / dailyLimit) * 100)) : 0;
+                      return (
+                        <div style={{ borderRadius: "22px", padding: "18px 20px", background: C.panel, border: `1px solid ${C.border}` }}>
+                          <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "14px" }}>Eval Account · ${bal.toLocaleString()}</div>
+                          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                            {target > 0 && (
+                              <div>
+                                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "5px" }}>
+                                  <span style={{ fontFamily: MONO, fontSize: "10px", color: C.muted }}>Profit target</span>
+                                  <span style={{ fontFamily: MONO, fontSize: "10px", color: C.green }}>${Math.max(0, totalPnlDollarNum).toFixed(0)} / ${target.toLocaleString()}</span>
+                                </div>
+                                <div style={{ height: "6px", borderRadius: "3px", background: C.border2, overflow: "hidden" }}>
+                                  <div style={{ width: `${targetPct}%`, height: "100%", borderRadius: "3px", background: C.green, transition: "width 0.4s ease" }} />
+                                </div>
+                              </div>
+                            )}
+                            {dailyLimit > 0 && (
+                              <div>
+                                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "5px" }}>
+                                  <span style={{ fontFamily: MONO, fontSize: "10px", color: C.muted }}>Daily loss limit</span>
+                                  <span style={{ fontFamily: MONO, fontSize: "10px", color: dailyPct > 75 ? C.red : C.muted }}>${Math.abs(Math.min(0, todayPnl)).toFixed(0)} / ${dailyLimit.toLocaleString()}</span>
+                                </div>
+                                <div style={{ height: "6px", borderRadius: "3px", background: C.border2, overflow: "hidden" }}>
+                                  <div style={{ width: `${dailyPct}%`, height: "100%", borderRadius: "3px", background: dailyPct > 75 ? C.red : (C as any).warn ?? "#f59e0b", transition: "width 0.4s ease" }} />
+                                </div>
+                              </div>
+                            )}
+                            {maxDD > 0 && (
+                              <div>
+                                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "5px" }}>
+                                  <span style={{ fontFamily: MONO, fontSize: "10px", color: C.muted }}>Max drawdown</span>
+                                  <span style={{ fontFamily: MONO, fontSize: "10px", color: ddPct > 75 ? C.red : C.muted }}>${Math.abs(Math.min(0, totalPnlDollarNum)).toFixed(0)} / ${maxDD.toLocaleString()}</span>
+                                </div>
+                                <div style={{ height: "6px", borderRadius: "3px", background: C.border2, overflow: "hidden" }}>
+                                  <div style={{ width: `${ddPct}%`, height: "100%", borderRadius: "3px", background: ddPct > 75 ? C.red : (C as any).warn ?? "#f59e0b", transition: "width 0.4s ease" }} />
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          <button onClick={() => setHomeSection("settings")} style={{ marginTop: "12px", background: "transparent", border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "5px 12px", cursor: "pointer", fontFamily: MONO, fontSize: "9px", letterSpacing: "0.1em", color: C.muted, textTransform: "uppercase" }}>Edit targets</button>
+                        </div>
+                      );
+                    })()
+                  )}
+
                   {/* ── Session breakdown (compact) ── */}
                   {Object.entries(sessionStats).length > 0 && (
                     <div style={{ borderRadius: "22px", overflow: "hidden", border: `1px solid ${C.border}`, background: C.panel }}>
@@ -3102,6 +3184,68 @@ ${recentTrades.map((t:any)=>`<tr><td>${t.date}</td><td>${t.pair||"—"}</td><td>
 
               {statsTab === "psychology" && (
                 <section>
+                  {/* ── Discipline / Rule adherence stats ── */}
+                  {(() => {
+                    const tagged = trades.filter(t => t.ruleAdherence !== null && t.ruleAdherence !== undefined);
+                    if (!tagged.length) return null;
+                    const followed = tagged.filter(t => t.ruleAdherence === true);
+                    const broke = tagged.filter(t => t.ruleAdherence === false);
+                    const followedPct = Math.round((followed.length / tagged.length) * 100);
+                    const wrFollowed = followed.length ? Math.round(followed.filter(t => t.outcome === "Win").length / followed.length * 100) : null;
+                    const wrBroke = broke.length ? Math.round(broke.filter(t => t.outcome === "Win").length / broke.length * 100) : null;
+                    const avgPnlFollowed = followed.length ? followed.reduce((a, t) => a + (parseFloat(t.pnl as string) || 0), 0) / followed.length : null;
+                    const avgPnlBroke = broke.length ? broke.reduce((a, t) => a + (parseFloat(t.pnl as string) || 0), 0) / broke.length : null;
+                    const month = new Date().toISOString().slice(0, 7);
+                    const monthTagged = tagged.filter(t => t.date?.startsWith(month));
+                    const monthPct = monthTagged.length ? Math.round(monthTagged.filter(t => t.ruleAdherence === true).length / monthTagged.length * 100) : null;
+                    return (
+                      <div style={{ marginBottom: "24px" }}>
+                        <SectionKicker label="RULE ADHERENCE" C={C} />
+                        {/* Score card */}
+                        <div style={{ marginTop: "14px", padding: "18px", borderRadius: "16px", border: `1px solid ${C.border}`, background: `color-mix(in oklch, ${followedPct >= 70 ? C.green : followedPct >= 50 ? C.accent : C.red} 8%, ${C.panel})` }}>
+                          <div style={{ display: "flex", alignItems: "baseline", gap: "8px", marginBottom: "6px" }}>
+                            <span style={{ fontFamily: DISPLAY, fontSize: "36px", fontWeight: 700, color: followedPct >= 70 ? C.green : followedPct >= 50 ? C.accent : C.red, letterSpacing: "-0.02em" }}>{followedPct}%</span>
+                            <span style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase" }}>rules followed · {tagged.length} trades</span>
+                          </div>
+                          {monthPct !== null && (
+                            <div style={{ fontFamily: BODY, fontSize: "13px", color: C.text, lineHeight: 1.5 }}>
+                              You followed your rules on <strong>{monthPct}%</strong> of trades this month.
+                            </div>
+                          )}
+                          {/* Progress bar */}
+                          <div style={{ height: "4px", borderRadius: "2px", background: C.border2, overflow: "hidden", marginTop: "12px" }}>
+                            <div style={{ width: `${followedPct}%`, height: "100%", borderRadius: "2px", background: followedPct >= 70 ? C.green : followedPct >= 50 ? C.accent : C.red, transition: "width 0.4s ease" }} />
+                          </div>
+                        </div>
+                        {/* Followed vs broke comparison */}
+                        {followed.length > 0 && broke.length > 0 && (
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginTop: "10px" }}>
+                            {[
+                              { label: "Rules followed", count: followed.length, wr: wrFollowed, avgPnl: avgPnlFollowed, color: C.green },
+                              { label: "Rules broken", count: broke.length, wr: wrBroke, avgPnl: avgPnlBroke, color: C.red },
+                            ].map(row => (
+                              <div key={row.label} style={{ padding: "14px", borderRadius: "12px", border: `1px solid ${C.border}`, background: C.panel }}>
+                                <div style={{ fontFamily: MONO, fontSize: "9px", color: row.color, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "8px" }}>{row.label}</div>
+                                <div style={{ display: "flex", gap: "12px" }}>
+                                  <div>
+                                    <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.1em", marginBottom: "3px" }}>WIN RATE</div>
+                                    <div style={{ fontFamily: DISPLAY, fontSize: "20px", fontWeight: 600, color: (row.wr ?? 0) >= 50 ? C.green : C.red }}>{row.wr !== null ? `${row.wr}%` : "—"}</div>
+                                  </div>
+                                  <div>
+                                    <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.1em", marginBottom: "3px" }}>AVG R</div>
+                                    <div style={{ fontFamily: DISPLAY, fontSize: "20px", fontWeight: 600, color: (row.avgPnl ?? 0) >= 0 ? C.green : C.red }}>{row.avgPnl !== null ? `${row.avgPnl >= 0 ? "+" : ""}${row.avgPnl.toFixed(2)}R` : "—"}</div>
+                                  </div>
+                                </div>
+                                <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, marginTop: "6px" }}>{row.count} trade{row.count !== 1 ? "s" : ""}</div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+
+                  {/* ── Emotion × Outcome ── */}
                   {(() => {
                     const tagStats = EMOTION_TAGS.map(tag => {
                       const tagged = trades.filter(t => getEmotionTags(t.emotions).includes(tag.id));

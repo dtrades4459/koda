@@ -233,6 +233,47 @@ export function SettingsScreen({
             <button onClick={() => { const handle = (profile.handle || "").replace(/^@/, ""); const url = `https://tradrjournal.xyz/@${handle}`; navigator.clipboard?.writeText(url).then(() => showToast("Link copied!")).catch(() => showToast("Link: " + url)); }} style={{ background: "transparent", border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "5px 12px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.06em", color: C.muted }}>Copy</button>
           </div>
         )}
+        {/* Prop firm / eval account */}
+        <div style={{ padding: "14px 18px", borderBottom: `1px solid ${C.border}` }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+            <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: (C as any).accentSoft ?? C.panel, border: `1px solid ${C.border2}`, color: C.accent, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M3 12l2-2 4 4 8-8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontFamily: DISPLAY, fontSize: "14px", fontWeight: 600, color: C.text }}>Prop firm / eval mode</div>
+              <div style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, marginTop: "2px" }}>Track evaluation targets on dashboard</div>
+            </div>
+            <button
+              onClick={() => saveProfile({ ...profile, propFirmMode: !profile.propFirmMode })}
+              style={{ width: "38px", height: "22px", borderRadius: "999px", border: "none", cursor: "pointer", background: profile.propFirmMode ? (C as any).live ?? C.green : C.border2, position: "relative", transition: "background 0.2s", flexShrink: 0 }}
+            >
+              <div style={{ position: "absolute", top: "2px", left: profile.propFirmMode ? "18px" : "2px", width: "18px", height: "18px", borderRadius: "50%", background: "#fff", boxShadow: "0 1px 2px rgba(0,0,0,0.2)", transition: "left 0.2s" }} />
+            </button>
+          </div>
+          {profile.propFirmMode && (
+            <div style={{ marginTop: "16px", display: "flex", flexDirection: "column", gap: "12px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                <div>
+                  <label style={lbl}>Starting balance ($)</label>
+                  <input type="number" value={profile.propFirmBalance ?? ""} onChange={e => saveProfile({ ...profile, propFirmBalance: parseFloat(e.target.value) || undefined })} placeholder="50000" style={inp} />
+                </div>
+                <div>
+                  <label style={lbl}>Profit target ($)</label>
+                  <input type="number" value={profile.propFirmProfitTarget ?? ""} onChange={e => saveProfile({ ...profile, propFirmProfitTarget: parseFloat(e.target.value) || undefined })} placeholder="3000" style={inp} />
+                </div>
+                <div>
+                  <label style={lbl}>Daily loss limit ($)</label>
+                  <input type="number" value={profile.propFirmDailyLossLimit ?? ""} onChange={e => saveProfile({ ...profile, propFirmDailyLossLimit: parseFloat(e.target.value) || undefined })} placeholder="1000" style={inp} />
+                </div>
+                <div>
+                  <label style={lbl}>Max drawdown ($)</label>
+                  <input type="number" value={profile.propFirmMaxDrawdown ?? ""} onChange={e => saveProfile({ ...profile, propFirmMaxDrawdown: parseFloat(e.target.value) || undefined })} placeholder="2500" style={inp} />
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Export CSV */}
         <div onClick={() => { if (isFlagOn("paywall") && profile.plan !== "pro" && profile.plan !== "elite") { setShowUpgrade(true); return; } exportCSV(); }} style={{ display: "flex", alignItems: "center", gap: "14px", padding: "14px 18px", borderBottom: `1px solid ${C.border}`, cursor: "pointer" }}>
           <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: (C as any).accentSoft ?? C.panel, border: `1px solid ${C.border2}`, color: C.accent, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>

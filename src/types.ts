@@ -64,6 +64,12 @@ export interface Profile {
   email?: string;
   maxDailyLoss?: string;
   accountBalance?: string;
+  // Prop firm / eval account mode
+  propFirmMode?: boolean;
+  propFirmBalance?: number;       // Starting balance ($)
+  propFirmProfitTarget?: number;  // Profit target ($)
+  propFirmDailyLossLimit?: number; // Max daily loss ($)
+  propFirmMaxDrawdown?: number;   // Max total drawdown ($)
 }
 
 export interface CircleMember {
