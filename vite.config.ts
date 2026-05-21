@@ -31,12 +31,18 @@ export default defineConfig({
 
       devOptions: {
         // Show the service worker in dev mode so you can test offline behaviour
-        // with Vite's dev server. Set to false if it causes confusion.
+        // with Vite dev server. Set to false if it causes confusion.
         enabled: true,
         type: "module",
       },
     }),
   ],
+  test: {
+    // Only pick up *.test.ts files inside src/ — exclude Playwright tests in tests/
+    include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
+    exclude: ["tests/**", "node_modules/**"],
+    environment: "node",
+  },
   build: {
     rollupOptions: {
       output: {

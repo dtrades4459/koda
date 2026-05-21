@@ -159,7 +159,7 @@ export function FriendsFeed({ friends, friendFeed, showAddFriend, setShowAddFrie
                         <div onClick={() => openProfile && item.authorHandle && openProfile(item.authorHandle)}
                           style={{ cursor: openProfile && item.authorHandle ? "pointer" : "default", width: "36px", height: "36px", borderRadius: "999px", background: `linear-gradient(135deg, ${orb1}, ${orb2})`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontFamily: DISPLAY, fontWeight: 600, fontSize: "11px", flexShrink: 0, overflow: "hidden" }}>
                           {item.authorAvatar && (item.authorAvatar.startsWith("data:") || item.authorAvatar.startsWith("http"))
-                            ? <img src={item.authorAvatar} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
+                            ? <img src={item.authorAvatar} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" loading="lazy" />
                             : (item.authorAvatar && item.authorAvatar.length <= 4 ? item.authorAvatar : initials)
                           }
                         </div>

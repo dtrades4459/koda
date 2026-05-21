@@ -29,10 +29,28 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          # Build needs *something* in these slots — they're validated at startup.
+          # Build needs *something* in these slots — they are validated at startup.
           # Real values live in Vercel; CI only verifies the bundle compiles.
           VITE_SUPABASE_URL: https://example.supabase.co
           VITE_SUPABASE_ANON_KEY: example-anon-key
+
+  test:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install
+        run: npm install
+
+      - name: Run unit tests
+        run: npm test
 
   e2e:
     name: Smoke test (E2E)

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { supabase } from "./lib/supabase";
 import type { User } from "@supabase/supabase-js";
 import { onStorageError, storage } from "./lib/storage";
+import { calcRR, calcWinRate, calcStreak, calcWeeklyPnL, calcTotalPnL } from "./lib/stats";
 import { log } from "./lib/log";
 import { isFlagOn } from "./lib/flags";
 import { useFollows } from "./hooks/useFollows";
@@ -125,18 +126,7 @@ const LIGHT = {
   shadow: "rgba(0,0,0,0.08)",
 };
 
-function calcRR(e: string, s: string, t: string): string {
-  const ev = parseFloat(e), sv = parseFloat(s), tv = parseFloat(t);
-  // Guard against missing inputs (NaN) and division-by-zero (entry === stop loss).
-  if (isNaN(ev) || isNaN(sv) || isNaN(tv)) return "";
-  const risk = Math.abs(ev - sv);
-  if (risk === 0) return ""; // entry === stop loss → undefined R:R
-  const reward = Math.abs(tv - ev);
-  const rr = reward / risk;
-  // Sanity-cap: anything above 100R is almost certainly a data error.
-  if (!isFinite(rr) || rr > 100) return "";
-  return rr.toFixed(2);
-}
+// calcRR, calcWinRate, calcStreak, calcWeeklyPnL, calcTotalPnL imported from ./lib/stats
 
 // ─── RESPONSIVE HOOK ─────────────────────────────────────────────────────────
 // Breakpoint at 900px matches the login page. Returns true on desktop/tablet-landscape.
@@ -1245,7 +1235,7 @@ export default function Tradr({ user, jwtPlan }: { user?: User; jwtPlan?: "free"
   const rrTrades = trades.filter(t => t.rr);
   const avgRR = rrTrades.length ? (rrTrades.reduce((a, t) => a + parseFloat(t.rr), 0) / rrTrades.length).toFixed(2) : "—";
   const pnlPos = parseFloat(totalPnL) >= 0;
-  const streak = (() => { if (!trades.length) return { type: null, count: 0 } as any; let count = 0, type: any = null; for (const t of trades) { if (t.outcome === "Win" || t.outcome === "Loss") { if (type === null) { type = t.outcome; count = 1; } else if (t.outcome === type) count++; else break; } }; return { type, count }; })();
+  const streak = calcStreak(trades);
   const stratStats = trades.reduce((acc: Record<string, { w: number; l: number; be: number; pnl: number; count: number }>, t: Trade) => { if (t.strategy) { if (!acc[t.strategy]) acc[t.strategy] = { w: 0, l: 0, be: 0, pnl: 0, count: 0 }; acc[t.strategy].count++; if (t.outcome === "Win") acc[t.strategy].w++; if (t.outcome === "Loss") acc[t.strategy].l++; if (t.outcome === "Breakeven") acc[t.strategy].be++; acc[t.strategy].pnl += parseFloat(t.pnl) || 0; } return acc; }, {});
 
   const sessionStats = trades.reduce((acc: Record<string, { w: number; l: number; pnl: number }>, t: Trade) => { if (t.session) { if (!acc[t.session]) acc[t.session] = { w: 0, l: 0, pnl: 0 }; if (t.outcome === "Win") acc[t.session].w++; if (t.outcome === "Loss") acc[t.session].l++; acc[t.session].pnl += parseFloat(t.pnl) || 0; } return acc; }, {});
@@ -2713,7 +2703,7 @@ export default function Tradr({ user, jwtPlan }: { user?: User; jwtPlan?: "free"
                                   const myCode = profile.code || "";
                                   const iMine = Array.isArray(raw) && raw.includes(myCode);
                                   return (
-                                    <button key={rx} onClick={() => toggleReaction(t.id, rx)}
+                                    <button key={rx} onClick={() => toggleReaction(t.id, rx)} aria-label={`React with ${rx}${count > 0 ? `, ${count}` : ""}`}
                                       style={{ background: iMine ? C.text : "transparent", color: iMine ? C.bg : C.text, border: `1px solid ${iMine ? C.text : C.border2}`, borderRadius: "999px", padding: "6px 12px", cursor: "pointer", fontSize: "10px", fontFamily: MONO, letterSpacing: "0.08em", display: "flex", alignItems: "center", gap: "6px" }}>
                                       <span>{rx}</span>
                                       {count > 0 && <span>{count}</span>}

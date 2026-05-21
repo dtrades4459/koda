@@ -200,7 +200,7 @@ export function LogTradeScreen({
         <label style={lbl}>Screenshot</label>
         {form.screenshot ? (
           <div style={{ position: "relative", marginTop: "6px" }}>
-            <img src={form.screenshot} alt="screenshot" style={{ width: "100%", border: `1px solid ${C.border}`, display: "block", maxHeight: "200px", objectFit: "cover" }} />
+            <img src={form.screenshot} alt="screenshot" style={{ width: "100%", border: `1px solid ${C.border}`, display: "block", maxHeight: "200px", objectFit: "cover" }} loading="lazy" />
             <button onClick={() => removeScreenshot(null)}
               style={{ position: "absolute", top: "8px", right: "8px", background: C.bg, border: `1px solid ${C.border2}`, borderRadius: "999px", color: C.text, padding: "4px 10px", cursor: "pointer", fontSize: "10px", fontFamily: MONO, letterSpacing: "0.08em" }}>REMOVE</button>
           </div>

@@ -100,7 +100,7 @@ export function AvatarCircle({ name, avatar, size = 40, color, onClick, C }: any
   const safeAvatar = avatar && (avatar.startsWith("data:image/") || avatar.startsWith("https://")) ? avatar : null;
   // Emoji avatar: short string that isn't a URL or data URI
   const isEmoji = avatar && !safeAvatar && avatar.length <= 8;
-  if (safeAvatar) return <img src={safeAvatar} alt="av" style={style} onClick={onClick} />;
+  if (safeAvatar) return <img src={safeAvatar} alt="av" style={style} onClick={onClick} loading="lazy" />;
   return (
     <div style={{ ...style, background: isEmoji ? bg : `linear-gradient(135deg, ${orb1}, ${orb2})` }} onClick={onClick}>
       {isEmoji
