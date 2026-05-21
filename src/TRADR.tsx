@@ -31,6 +31,7 @@ import type { OnboardingData } from "./OnboardingFlow";
 import { UpgradeModal } from "./UpgradeModal";
 import { LotSizeCalculator } from "./LotSizeCalculator";
 import { phIdentify, phCapture, phReset } from "./lib/posthog";
+import EvalAccountScreen from "./EvalAccountScreen";
 
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
 
@@ -1330,6 +1331,7 @@ export default function Tradr({ user, jwtPlan }: { user?: User; jwtPlan?: "free"
     { id: "rules", label: "Rules" },
     { id: "checklist", label: "Checklist" },
     { id: "sync", label: "Sync" },
+    ...(profile.propFirmMode ? [{ id: "eval", label: "Eval" }] : []),
   ];
   const STATS_SECTIONS = [
     { id: "overview", label: "Overview" },
@@ -2454,6 +2456,15 @@ export default function Tradr({ user, jwtPlan }: { user?: User; jwtPlan?: "free"
               )}
 
               {/* SETTINGS */}
+              {homeSection === "eval" && profile.propFirmMode && (
+                <EvalAccountScreen
+                  profile={profile}
+                  trades={trades}
+                  C={C}
+                  onEditTargets={() => setHomeSection("settings")}
+                />
+              )}
+
               {homeSection === "settings" && (
                 <SettingsScreen
                   C={C}
