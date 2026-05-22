@@ -10,6 +10,7 @@ import React from "react";
 import type { Profile } from "./types";
 import { AvatarCircle, Card, Kicker, MONO, BODY, DISPLAY } from "./shared";
 import type { Theme } from "./theme";
+import { supabase } from "./lib/supabase";
 
 export interface SettingsScreenProps {
   C: Record<string, string>;
@@ -89,7 +90,6 @@ export function SettingsScreen({
 
   async function openBillingPortal() {
     try {
-      const { supabase } = await import("./lib/supabase");
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) return;
       const res = await fetch("/api/stripe-portal", {
@@ -99,6 +99,7 @@ export function SettingsScreen({
       });
       if (!res.ok) { showToast("Couldn't open billing portal. Try again."); return; }
       const { url } = await res.json();
+      if (!url) { showToast("Couldn't open billing portal. Try again."); return; }
       window.location.href = url;
     } catch {
       showToast("Couldn't open billing portal. Try again.");
