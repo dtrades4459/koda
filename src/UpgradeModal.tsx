@@ -116,8 +116,8 @@ export function UpgradeModal({ C, userId, userEmail, stripeCustomerId, onCustome
         {/* Price */}
         <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", gap: "8px" }}>
           {/* Billing toggle */}
-          <div style={{ display: "flex", gap: "4px", background: "rgba(255,255,255,0.04)", borderRadius: "10px", padding: "3px", border: `1px solid rgba(255,255,255,0.08)`, marginBottom: "8px" }}>
-            {(["monthly", "annual"] as const).map(b => (
+          <div style={{ display: "flex", gap: "4px", background: "rgba(255,255,255,0.04)", borderRadius: "10px", padding: "3px", border: `1px solid rgba(255,255,255,0.08)`, marginBottom: "4px" }}>
+            {(["annual", "monthly"] as const).map(b => (
               <button key={b} onClick={() => setBilling(b)} style={{
                 flex: 1, padding: "7px 0",
                 background: billing === b ? live : "transparent",

@@ -10,7 +10,7 @@
 // Required Vercel environment variables:
 //   STRIPE_SECRET_KEY          sk_live_... or sk_test_...
 //   STRIPE_PRICE_ID_MONTHLY    price_... (£24.99/month recurring)
-//   STRIPE_PRICE_ID_ANNUAL     price_... (£199.99/year recurring)
+//   STRIPE_PRICE_ID_ANNUAL     price_... (£199/year recurring)
 //   STRIPE_PROMO_CODE_ID_K0DA  promo_... (Stripe promotion code object ID for K0DA)
 //   SUPABASE_URL               same value as VITE_SUPABASE_URL
 //   SUPABASE_SERVICE_ROLE_KEY  Supabase → Settings → API → service_role key
