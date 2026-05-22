@@ -42,6 +42,7 @@ export default defineConfig({
     include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
     exclude: ["tests/**", "node_modules/**"],
     environment: "jsdom",
+    setupFiles: ["@testing-library/jest-dom/vitest"],
   },
   build: {
     rollupOptions: {
