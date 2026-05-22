@@ -328,6 +328,7 @@ export default function Tradr({ user, jwtPlan }: { user?: User; jwtPlan?: "free"
   const [isImportingCsv, setIsImportingCsv] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const handleShowUpgrade = () => setShowUpgrade(true);
+  const userPlan = profile.plan ?? "free";
   // showPaywall: true after onboarding completes, OR when user returns from Stripe cancel (?paywall=1)
   const [showPaywall, setShowPaywall] = useState(
     () => typeof window !== "undefined" && new URLSearchParams(window.location.search).get("paywall") === "1"
@@ -2443,7 +2444,7 @@ export default function Tradr({ user, jwtPlan }: { user?: User; jwtPlan?: "free"
 
               {/* SETTINGS */}
               {homeSection === "eval" && profile.propFirmMode && (
-                <ProGate plan={profile.plan ?? "free"} C={C} onUpgrade={handleShowUpgrade} label="Prop firm mode — Pro feature">
+                <ProGate plan={userPlan} C={C} onUpgrade={handleShowUpgrade} label="Prop firm mode — Pro feature">
                   <EvalAccountScreen
                     profile={profile}
                     trades={trades}
@@ -2895,7 +2896,7 @@ export default function Tradr({ user, jwtPlan }: { user?: User; jwtPlan?: "free"
               {!isDesktop && (<>
                 <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "0 6px", position: "relative", zIndex: 2, flexWrap: "wrap" }}>
                   <SubNavDropdown sections={STATS_SECTIONS} value={statsTab} onChange={setStatsTab} C={C} />
-                  <ProGate plan={profile.plan ?? "free"} C={C} onUpgrade={handleShowUpgrade} label="PDF export — Pro feature">
+                  <ProGate plan={userPlan} C={C} onUpgrade={handleShowUpgrade} label="PDF export — Pro feature">
                     <button onClick={openExportPdf} style={{ background: "transparent", border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "6px 14px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.08em", textTransform: "uppercase" as const, color: C.muted, whiteSpace: "nowrap" as const }}>
                       Export PDF ↗
                     </button>
@@ -3028,8 +3029,8 @@ export default function Tradr({ user, jwtPlan }: { user?: User; jwtPlan?: "free"
                   </div>
 
                   {/* ── Discipline score card ── */}
-                  <ProGate plan={profile.plan ?? "free"} C={C} onUpgrade={handleShowUpgrade} label="Discipline score — Pro feature">
-                    <div>
+                  <ProGate plan={userPlan} C={C} onUpgrade={handleShowUpgrade} label="Discipline score — Pro feature">
+                    <div style={{ minHeight: "80px" }}>
                       {(() => {
                         const month = new Date().toISOString().slice(0, 7);
                         const monthTrades = trades.filter(t => t.date?.startsWith(month));
@@ -3392,7 +3393,7 @@ export default function Tradr({ user, jwtPlan }: { user?: User; jwtPlan?: "free"
           )}
 
               {statsTab === "heatmap" && (
-                <ProGate plan={profile.plan ?? "free"} C={C} onUpgrade={handleShowUpgrade} label="Session charts — Pro feature">
+                <ProGate plan={userPlan} C={C} onUpgrade={handleShowUpgrade} label="Session charts — Pro feature">
                   <section style={{ display:"flex", flexDirection:"column", gap:"32px" }}>
                     <div>
                       <SectionKicker label="P&L BY SESSION × DAY" C={C} />
@@ -3416,7 +3417,7 @@ export default function Tradr({ user, jwtPlan }: { user?: User; jwtPlan?: "free"
               )}
 
               {statsTab === "maemfe" && (
-                <ProGate plan={profile.plan ?? "free"} C={C} onUpgrade={handleShowUpgrade} label="MAE / MFE — Pro feature">
+                <ProGate plan={userPlan} C={C} onUpgrade={handleShowUpgrade} label="MAE / MFE — Pro feature">
                   <section>
                     <SectionKicker label="MAE vs MFE — TRADE EFFICIENCY" C={C} />
                     <div style={{ marginTop: "8px", fontFamily: BODY, fontSize: "12px", color: C.muted, lineHeight: 1.6, marginBottom: "16px" }}>
