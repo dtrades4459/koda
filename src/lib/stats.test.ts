@@ -4,7 +4,8 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { describe, it, expect } from "vitest";
-import { calcRR, calcWinRate, calcStreak, calcTotalPnL } from "./stats";
+import { calcRR, calcWinRate, calcStreak, calcTotalPnL, computeNetPnl } from "./stats";
+import type { Trade } from "../types";
 
 // ── calcRR ────────────────────────────────────────────────────────────────────
 
@@ -131,5 +132,24 @@ describe("calcTotalPnL", () => {
 
   it("handles numeric pnl values (not just strings)", () => {
     expect(calcTotalPnL([{ pnl: 1.5 as any }, { pnl: 2.5 as any }])).toBeCloseTo(4);
+  });
+});
+
+// ── computeNetPnl ─────────────────────────────────────────────────────────────
+
+describe("computeNetPnl", () => {
+  it("returns pnlDollar as number when no commission", () => {
+    const t = { pnlDollar: "500" } as Trade;
+    expect(computeNetPnl(t)).toBe(500);
+  });
+
+  it("subtracts commission from pnlDollar", () => {
+    const t = { pnlDollar: "500", commission: "12.50" } as Trade;
+    expect(computeNetPnl(t)).toBeCloseTo(487.5);
+  });
+
+  it("handles negative pnl with commission", () => {
+    const t = { pnlDollar: "-200", commission: "8" } as Trade;
+    expect(computeNetPnl(t)).toBeCloseTo(-208);
   });
 });

@@ -132,6 +132,21 @@ export function LogTradeScreen({
         </Card>
       </div>
 
+      {/* ── Commission / fees ── */}
+      <Card C={T} pad={16}>
+        <Kicker C={T}>Commission / fees</Kicker>
+        <input
+          type="number"
+          inputMode="decimal"
+          name="commission"
+          value={form.commission || ""}
+          onChange={e => setForm(f => ({ ...f, commission: e.target.value }))}
+          placeholder="0.00"
+          style={{ ...inp, fontFamily: DISPLAY, fontSize: 22, fontWeight: 500, borderBottom: "none", padding: "6px 0 0" }}
+        />
+        <p style={{ margin: "6px 0 0", fontSize: 11, color: C.muted }}>Deducted from P&L dollar to show net profit.</p>
+      </Card>
+
       {/* ── Strategy + Setup ── */}
       <Card C={T} pad={18}>
         <Kicker C={T}>Strategy</Kicker>

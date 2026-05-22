@@ -40,6 +40,7 @@ export interface Trade {
   mfe?: string;
   ruleAdherence?: boolean | null;
   mistake?: string | null;
+  commission?: string;
   source?: string;
 }
 

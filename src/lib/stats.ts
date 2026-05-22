@@ -87,3 +87,15 @@ export function calcWeeklyPnL(trades: Pick<Trade, "date" | "pnl">[]): number {
 export function calcTotalPnL(trades: Pick<Trade, "pnl">[]): number {
   return trades.reduce((sum, t) => sum + (parseFloat(t.pnl as string) || 0), 0);
 }
+
+// ── Net P&L (after commission) ────────────────────────────────────────────────
+
+/**
+ * Returns gross P&L dollar minus any commission/fee.
+ * When commission is absent or empty, returns pnlDollar as a number unchanged.
+ */
+export function computeNetPnl(trade: Pick<Trade, "pnlDollar" | "commission">): number {
+  const gross = parseFloat(trade.pnlDollar) || 0;
+  const fee   = parseFloat(trade.commission ?? "0") || 0;
+  return gross - fee;
+}
