@@ -8,13 +8,15 @@
 // → Returns { url, customerId }
 //
 // Required Vercel environment variables:
-//   STRIPE_SECRET_KEY          sk_live_... or sk_test_...
-//   STRIPE_PRICE_ID_MONTHLY    price_... (£24.99/month recurring)
-//   STRIPE_PRICE_ID_ANNUAL     price_... (£199/year recurring)
-//   STRIPE_PROMO_CODE_ID_K0DA  promo_... (Stripe promotion code object ID for K0DA)
-//   SUPABASE_URL               same value as VITE_SUPABASE_URL
-//   SUPABASE_SERVICE_ROLE_KEY  Supabase → Settings → API → service_role key
-//   APP_URL                    https://tradrjournal.xyz
+//   STRIPE_SECRET_KEY               sk_live_... or sk_test_...
+//   STRIPE_PRICE_ID_MONTHLY         price_... (£24.99/month recurring)
+//   STRIPE_PRICE_ID_ANNUAL          price_... (£199/year recurring)
+//   STRIPE_PROMO_CODE_ID_K0DA       promo_... (Stripe promotion code object ID for K0DA)
+//   STRIPE_PROMO_CODE_ID_FOUNDERS   promo_... (founders lifetime code — 100% off forever)
+//   STRIPE_PROMO_CODE_ID_BETA       promo_... (beta lifetime code — 100% off forever)
+//   SUPABASE_URL                    same value as VITE_SUPABASE_URL
+//   SUPABASE_SERVICE_ROLE_KEY       Supabase → Settings → API → service_role key
+//   APP_URL                         https://tradrjournal.xyz
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import Stripe from "stripe";
@@ -31,7 +33,9 @@ const APP_URL = process.env.APP_URL ?? "https://tradrjournal.xyz";
 // Known promo codes — validated server-side before applying Stripe discount.
 // Key = human-readable code (uppercase), value = env var that holds the Stripe promo_xxx ID.
 const PROMO_CODE_MAP: Record<string, string | undefined> = {
-  K0DA: process.env.STRIPE_PROMO_CODE_ID_K0DA,
+  K0DA:     process.env.STRIPE_PROMO_CODE_ID_K0DA,
+  FOUNDERS: process.env.STRIPE_PROMO_CODE_ID_FOUNDERS,
+  BETA:     process.env.STRIPE_PROMO_CODE_ID_BETA,
 };
 
 const ALLOWED_ORIGINS = new Set([
