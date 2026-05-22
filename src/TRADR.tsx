@@ -1406,6 +1406,7 @@ export default function Tradr({ user, jwtPlan }: { user?: User; jwtPlan?: "free"
         userEmail={profile.email ?? user?.email ?? ""}
         stripeCustomerId={profile.stripeCustomerId}
         cancelledFromStripe={_cancelledFromStripe}
+        isOnboarding={!_cancelledFromStripe}
         onSuccess={() => {
           window.history.replaceState({}, "", window.location.pathname);
           setShowPaywall(false);

@@ -27,6 +27,7 @@ export function PaywallScreen({
   userEmail,
   stripeCustomerId,
   cancelledFromStripe = false,
+  isOnboarding = false,
   onSuccess,
   onSkip,
 }: {
@@ -35,6 +36,7 @@ export function PaywallScreen({
   userEmail: string;
   stripeCustomerId?: string;
   cancelledFromStripe?: boolean;
+  isOnboarding?: boolean;
   onSuccess: () => void;
   onSkip: () => void;
 }) {
@@ -127,7 +129,7 @@ export function PaywallScreen({
             letterSpacing: "0.14em", textTransform: "uppercase",
           }}>
             <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: ACCENT, boxShadow: `0 0 8px ${ACCENT}` }} />
-            Kōda OS · Beta Launch
+            {isOnboarding ? "Step 3 of 3 — Choose your plan" : "Kōda OS · Beta Launch"}
           </div>
           <div style={{
             fontFamily: BODY, fontWeight: 700, fontSize: "26px",
@@ -195,7 +197,7 @@ export function PaywallScreen({
               fontFamily: BODY, fontWeight: 700, fontSize: "36px",
               letterSpacing: "-0.03em", color: text, lineHeight: 1,
             }}>
-              {billing === "monthly" ? "£24.99" : "£199.99"}
+              {billing === "monthly" ? "£24.99" : "£199"}
             </span>
             <span style={{ fontFamily: MONO, fontSize: "12px", color: muted }}>
               {billing === "monthly" ? "/month" : "/year"}
@@ -205,7 +207,7 @@ export function PaywallScreen({
             fontFamily: MONO, fontSize: "11px", marginBottom: "18px",
             color: billing === "annual" ? ACCENT : muted,
           }}>
-            {billing === "annual" ? "£16.67/mo — you save 33%" : "cancel any time"}
+            {billing === "annual" ? "£16.58/mo · save £100 vs monthly" : "cancel any time"}
           </div>
 
           {/* Features */}
