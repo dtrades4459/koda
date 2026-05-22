@@ -98,7 +98,9 @@ export function TradingCircles({ myCircles, circlesView, setCirclesView, activeC
         if (alive) setLeaderboard(entries);
       } catch {}
     }
-    const id = setInterval(refresh, 120_000);
+    const id = setInterval(() => {
+      if (document.visibilityState === "visible") refresh();
+    }, 120_000);
     let unsub = () => {};
     try { unsub = subscribeToCircle(activeCircle.code, () => { refresh(); }); } catch {}
     const chatChannel = supabase

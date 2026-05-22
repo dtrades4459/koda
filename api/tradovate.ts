@@ -70,9 +70,9 @@ export default async function handler(req: any, res: any) {
   const env    = (req.query.env as string | undefined) || "demo";
   const b      = base(env);
 
-  const appId      = process.env.TRADOVATE_APP_ID      ?? "TRADR";
-  const appVersion = process.env.TRADOVATE_APP_VERSION ?? "1.0";
-  const cid        = parseInt(process.env.TRADOVATE_CID ?? "0", 10);
+  const appId      = process.env.TRADOVATE_APP_ID      ?? "";
+  const appVersion = process.env.TRADOVATE_APP_VERSION ?? "";
+  const cid        = parseInt(process.env.TRADOVATE_CID ?? "", 10);
   const sec        = process.env.TRADOVATE_SEC         ?? "";
 
   // ── auth ─────────────────────────────────────────────────────────────────
@@ -82,8 +82,8 @@ export default async function handler(req: any, res: any) {
     const { name, password } = req.body ?? {};
     if (!name || !password)
       return res.status(400).json({ error: "name and password required" });
-    if (!cid || !sec)
-      return res.status(500).json({ error: "Tradovate app credentials not configured in Vercel env vars (TRADOVATE_CID / TRADOVATE_SEC)" });
+    if (!appId || !appVersion || !cid || !sec)
+      return res.status(500).json({ error: "Tradovate app credentials not configured (TRADOVATE_APP_ID / TRADOVATE_APP_VERSION / TRADOVATE_CID / TRADOVATE_SEC)" });
     const { status, data } = await proxy(
       `${b}/auth/accesstokenrequest`,
       "POST",

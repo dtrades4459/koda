@@ -728,7 +728,7 @@ export default function Tradr({ user, jwtPlan }: { user?: User; jwtPlan?: "free"
     circleLatestMsgs,
     isCreatingCircle, isJoiningCircle,
     saveMyCircles, myMemberRecord, readCircleMembers,
-    createCircle, joinCircle, kickMember, leaveCircle,
+    createCircle, joinCircle, joinCircleByCode, kickMember, leaveCircle,
     publishToCircle, fetchCircleLeaderboard,
   } = useCircles({
     loading,
@@ -1378,17 +1378,10 @@ export default function Tradr({ user, jwtPlan }: { user?: User; jwtPlan?: "free"
           };
           await saveProfile(updated);
           // Auto-join TRADR Global circle for every new user (silent — no error on failure).
-          if (TRADR_GLOBAL_CODE && !myCircles.find((c: Circle) => c.code === TRADR_GLOBAL_CODE)) {
-            try {
-              const res = await storage.get("tradr_circle_" + TRADR_GLOBAL_CODE, true);
-              if (res) {
-                const circle = JSON.parse(res.value);
-                const me = myMemberRecord();
-                await storage.set(`tradr_circle_member_${TRADR_GLOBAL_CODE}_${me.code}`, JSON.stringify(me), true);
-                const members = await readCircleMembers(TRADR_GLOBAL_CODE, [me]);
-                await saveMyCircles([...myCircles, { ...circle, members, isOwner: false }]);
-              }
-            } catch { /* silently ignore — circle may not exist yet */ }
+          // joinCircleByCode reads from myCirclesRef so it never sees stale closure state.
+          if (TRADR_GLOBAL_CODE) {
+            try { await joinCircleByCode(TRADR_GLOBAL_CODE); }
+            catch { /* silently ignore — circle may not exist yet */ }
           }
           setView("log");
           // Show the first-run tour unless they've already seen it

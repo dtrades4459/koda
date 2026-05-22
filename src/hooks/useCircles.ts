@@ -285,7 +285,9 @@ export function useCircles({
     reconcileSubs();
     // Reconcile every tick so newly-joined circles get a live channel without
     // waiting for a full reload. Cheap — Map lookups + a few subscribe calls.
-    const recId = setInterval(reconcileSubs, 30_000);
+    const recId = setInterval(() => {
+      if (document.visibilityState === "visible") reconcileSubs();
+    }, 30_000);
 
     return () => {
       alive = false;
@@ -365,6 +367,18 @@ export function useCircles({
     } finally {
       setIsJoiningCircle(false);
     }
+  }
+
+  /** Silent join by code — used by onboarding. Reads from ref to avoid stale closure. */
+  async function joinCircleByCode(code: string): Promise<void> {
+    if (myCirclesRef.current.find((c: Circle) => c.code === code)) return;
+    const res = await storage.get("tradr_circle_" + code, true);
+    if (!res) return;
+    const circle = JSON.parse(res.value);
+    const me = myMemberRecord();
+    await storage.set(`tradr_circle_member_${code}_${me.code}`, JSON.stringify(me), true);
+    const members = await readCircleMembers(code, [me]);
+    await saveMyCircles([...myCirclesRef.current, { ...circle, members, isOwner: false }] as Circle[]);
   }
 
   /** Circle owner removes a member via ban list (RLS-safe — owner writes a row they own). */
@@ -506,6 +520,7 @@ export function useCircles({
     // Actions
     createCircle,
     joinCircle,
+    joinCircleByCode,
     kickMember,
     leaveCircle,
     publishToCircle,
