@@ -449,48 +449,49 @@ export default function Tradr({ user, jwtPlan }: { user?: User; jwtPlan?: "free"
         : Promise.resolve(null),
     ]);
 
-    // Trades
+    // Trades — narrow the try to just the parse so migration code can't wipe
+    // already-set state via the catch.
+    let loadedTrades: Trade[] = [];
     try {
       const parsed = t ? JSON.parse(t.value) : null;
-      const loadedTrades: Trade[] = Array.isArray(parsed) ? parsed : [];
+      loadedTrades = Array.isArray(parsed) ? parsed : [];
       setTrades(loadedTrades);
-      // Lazy migration: migrate any base64 screenshots to Supabase Storage
-      // Fire-and-forget — does not block the rest of loadAll.
-      const uid = user?.id;
-      if (uid) {
-        const toMigrate = loadedTrades.filter(tr =>
-          typeof tr.screenshot === "string" && tr.screenshot.startsWith("data:")
-        );
-        if (toMigrate.length > 0) {
-          let migrationAlive = true;
-          (async () => {
-            let updated = [...loadedTrades];
-            let changed = false;
-            for (const tr of toMigrate) {
-              if (!migrationAlive) break;
-              try {
-                const res = await fetch(tr.screenshot!);
-                const blob = await res.blob();
-                const storagePath = `${uid}/${Date.now()}_migrate_${tr.id}.jpg`;
-                const { error } = await supabase.storage
-                  .from("trade-screenshots")
-                  .upload(storagePath, blob, { contentType: "image/jpeg", upsert: false });
-                if (error) continue;
-                const { data: urlData } = supabase.storage
-                  .from("trade-screenshots")
-                  .getPublicUrl(storagePath);
-                updated = updated.map(x => x.id === tr.id ? { ...x, screenshot: urlData.publicUrl } : x);
-                changed = true;
-              } catch { /* skip — will retry next session */ }
-            }
-            if (changed && migrationAlive) {
-              setTrades(updated);
-              await storage.set("tradr_trades", JSON.stringify(updated));
-            }
-          })();
-        }
-      }
     } catch (e) { log.error("loadAll.trades", e); setTrades([]); }
+
+    // Lazy migration: migrate any base64 screenshots to Supabase Storage
+    // Fire-and-forget — does not block the rest of loadAll.
+    const uid = user?.id;
+    if (uid && loadedTrades.length > 0) {
+      const toMigrate = loadedTrades.filter(tr =>
+        typeof tr.screenshot === "string" && tr.screenshot.startsWith("data:")
+      );
+      if (toMigrate.length > 0) {
+        (async () => {
+          let updated = [...loadedTrades];
+          let changed = false;
+          for (const tr of toMigrate) {
+            try {
+              const res = await fetch(tr.screenshot!);
+              const blob = await res.blob();
+              const storagePath = `${uid}/${Date.now()}_migrate_${tr.id}.jpg`;
+              const { error } = await supabase.storage
+                .from("trade-screenshots")
+                .upload(storagePath, blob, { contentType: "image/jpeg", upsert: false });
+              if (error) continue;
+              const { data: urlData } = supabase.storage
+                .from("trade-screenshots")
+                .getPublicUrl(storagePath);
+              updated = updated.map(x => x.id === tr.id ? { ...x, screenshot: urlData.publicUrl } : x);
+              changed = true;
+            } catch { /* skip — will retry next session */ }
+          }
+          if (changed) {
+            setTrades(updated);
+            await storage.set("tradr_trades", JSON.stringify(updated));
+          }
+        })();
+      }
+    }
 
     // Profile (v2 → KV fallback)
     try {
@@ -512,7 +513,8 @@ export default function Tradr({ user, jwtPlan }: { user?: User; jwtPlan?: "free"
         };
       }
       if (!p) {
-        p = pr ? JSON.parse(pr.value) : { ...DEF_PROFILE };
+        try { p = pr ? JSON.parse(pr.value) : null; } catch { /* corrupt profile blob */ }
+        p = p ?? { ...DEF_PROFILE };
       }
       if (user?.id && p.uid !== user.id) {
         p = { ...p, uid: user.id };
@@ -529,7 +531,11 @@ export default function Tradr({ user, jwtPlan }: { user?: User; jwtPlan?: "free"
       setProfile(p); setProfileDraft(p);
       // Identify user in PostHog so all events link to their account
       if (p.uid) phIdentify(p.uid, { handle: p.handle, plan: p.plan ?? "free" });
-    } catch (e) { log.error("loadAll.profile", e); }
+    } catch (e) {
+      log.error("loadAll.profile", e);
+      // Stamp uid so downstream features that gate on profile.uid still work
+      if (user?.id) setProfile(prev => ({ ...prev, uid: user.id! }));
+    }
 
     try { if (sc) setStratChecklists(JSON.parse(sc.value)); }
     catch (e) { log.error("loadAll.checklists", e); }
