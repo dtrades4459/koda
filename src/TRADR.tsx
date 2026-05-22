@@ -224,7 +224,6 @@ export default function Tradr({ user, jwtPlan }: { user?: User; jwtPlan?: "free"
   const [draftCount, setDraftCount] = useState(0);
   const [view, setView] = useState("home");
   const [viewHistory, setViewHistory] = useState<string[]>([]);
-  const lastGearTap = useRef<number>(0);
 
   // navigateTo — push current view to history, then switch
   function navigateTo(v: string) {
@@ -245,14 +244,11 @@ export default function Tradr({ user, jwtPlan }: { user?: User; jwtPlan?: "free"
     setViewHistory([]);
     setView(v);
   }
-  // handleGearTap — double-tap within 300ms goes back; single tap opens settings
+  // handleGearTap — toggle: tap to open settings, tap again to go back
   function handleGearTap() {
-    const now = Date.now();
-    if (now - lastGearTap.current < 300) {
-      lastGearTap.current = 0;
+    if (view === "home" && homeSection === "settings") {
       goBack();
     } else {
-      lastGearTap.current = now;
       if (view !== "home") setViewHistory(h => [...h, view]);
       setView("home");
       setHomeSection("settings");
@@ -1573,7 +1569,7 @@ export default function Tradr({ user, jwtPlan }: { user?: User; jwtPlan?: "free"
               {!isDesktop && (
                 <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "8px", paddingBottom: "10px", borderBottom: `0.5px solid ${C.border}` }}>
                   <SubNavDropdown sections={HOME_SECTIONS} value={homeSection} onChange={s => { if (s === "checklist") navigateTo("checklist"); else setHomeSection(s); }} C={C} />
-                  <GearButton onClick={() => setHomeSection("settings")} active={homeSection === "settings"} C={C} />
+                  <GearButton onClick={handleGearTap} active={homeSection === "settings"} C={C} />
                 </div>
               )}
 
