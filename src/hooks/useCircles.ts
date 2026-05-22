@@ -247,13 +247,13 @@ export function useCircles({
       if (!alive) return;
       const changed = JSON.stringify(refreshed) !== JSON.stringify(current);
       if (changed) {
-        // Merge: preserve circles joined since this sync started (not in `current`)
-        setMyCircles(prev => {
-          const refreshedCodes = new Set(refreshed.map((c: Circle) => c.code));
-          const addedSinceStart = prev.filter((c: Circle) => !refreshedCodes.has(c.code));
-          return [...refreshed, ...addedSinceStart];
-        });
-        try { await storage.set("tradr_circles", JSON.stringify(refreshed)); } catch {}
+        // Merge refreshed circles with any joined since this sync started.
+        // Use the ref (not closure state) for the latest value, then write
+        // the same merged array to both React state and KV so they stay in sync.
+        const refreshedCodes = new Set(refreshed.map((c: Circle) => c.code));
+        const merged = [...refreshed, ...myCirclesRef.current.filter((c: Circle) => !refreshedCodes.has(c.code))];
+        setMyCircles(merged);
+        try { await storage.set("tradr_circles", JSON.stringify(merged)); } catch {}
       }
     }
 

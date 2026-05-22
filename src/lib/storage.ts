@@ -171,9 +171,9 @@ const storage = {
     return cached;
   },
 
-  async set(key: string, value: string, shared: boolean = false): Promise<void> {
+  async set(key: string, value: string, shared: boolean = false): Promise<boolean> {
     writeCache(key, value, shared);
-    await remoteSet(key, value, shared);
+    return remoteSet(key, value, shared);
   },
 
   /**
