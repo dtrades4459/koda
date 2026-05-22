@@ -2871,6 +2871,25 @@ export default function Tradr({ user, jwtPlan }: { user?: User; jwtPlan?: "free"
                               </div>
                             )}
 
+                            {/* ── MAE / MFE card ── */}
+                            {(t.mae || t.mfe) && (
+                              <div style={{ margin: "0 2px", borderRadius: 22, padding: 18, background: C.panel, border: `1px solid ${C.border}` }}>
+                                <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.16em", color: C.muted, textTransform: "uppercase", marginBottom: 12 }}>Excursion</div>
+                                <div style={{ display: "flex", gap: "16px" }}>
+                                  {t.mae && (
+                                    <span style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.06em" }}>
+                                      MAE <span style={{ color: C.red }}>{t.mae}R</span>
+                                    </span>
+                                  )}
+                                  {t.mfe && (
+                                    <span style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.06em" }}>
+                                      MFE <span style={{ color: C.green }}>{t.mfe}R</span>
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
                             {/* ── Reactions card ── */}
                             <div style={{ margin: "0 2px", borderRadius: 22, padding: 18, background: C.panel, border: `1px solid ${C.border}` }}>
                               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
