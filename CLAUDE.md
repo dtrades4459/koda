@@ -462,7 +462,7 @@ TRADR target pricing: Free tier · Pro $24.99/mo.
 **Never push directly to `main`.** Use feature branches + PRs.
 
 ```powershell
-# From C:\Users\Dylon\OneDrive\Desktop\tradr
+# From C:\Dev\tradr
 git checkout -b feat/short-description
 git add .
 git commit -m "describe change"
