@@ -1517,7 +1517,11 @@ export default function Tradr({ user, jwtPlan }: { user?: User; jwtPlan?: "free"
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <IconButton C={C} icon="bell" />
               <button
-                onClick={() => { setView("home"); setHomeSection("settings"); }}
+                onClick={() => {
+                  if (view !== "home") setViewHistory(h => [...h, view]);
+                  setView("home");
+                  setHomeSection("settings");
+                }}
                 style={{ width: 36, height: 36, borderRadius: 999, background: `linear-gradient(135deg, ${C.orb1}, ${C.orb2})`, border: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontFamily: DISPLAY, fontWeight: 600, fontSize: 12, letterSpacing: "0.04em", cursor: "pointer", padding: 0 }}
                 title="Settings"
               >
