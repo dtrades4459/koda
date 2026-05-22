@@ -18,7 +18,7 @@ export function groupBySetup(trades: Pick<Trade, "strategy" | "outcome" | "pnl">
     const entry = map.get(s) ?? { wins: 0, count: 0, totalPnl: 0 };
     entry.count++;
     entry.totalPnl += pnl;
-    if (t.outcome === "Win" || t.outcome === "win") entry.wins++;
+    if (t.outcome === "Win") entry.wins++;
     map.set(s, entry);
   }
 

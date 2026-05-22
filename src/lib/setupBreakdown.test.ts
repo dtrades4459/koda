@@ -17,7 +17,7 @@ describe("groupBySetup", () => {
   });
 
   it("groups trades by strategy, sorted by total pnl desc", () => {
-    const trades = [t("ICT", "win", "2"), t("ICT", "loss", "-1"), t("Scalp", "win", "3")];
+    const trades = [t("ICT", "Win", "2"), t("ICT", "Loss", "-1"), t("Scalp", "Win", "3")];
     const result = groupBySetup(trades);
     expect(result).toHaveLength(2);
     expect(result[0].strategy).toBe("Scalp");
@@ -29,7 +29,7 @@ describe("groupBySetup", () => {
   });
 
   it("excludes rows with no strategy", () => {
-    const trades = [t("", "win", "1"), t("ICT", "win", "2")];
+    const trades = [t("", "Win", "1"), t("ICT", "Win", "2")];
     const result = groupBySetup(trades);
     expect(result).toHaveLength(1);
     expect(result[0].strategy).toBe("ICT");
