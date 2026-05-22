@@ -87,6 +87,24 @@ export function SettingsScreen({
     textTransform: "uppercase",
   };
 
+  async function openBillingPortal() {
+    try {
+      const { supabase } = await import("./lib/supabase");
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) return;
+      const res = await fetch("/api/stripe-portal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` },
+        body: JSON.stringify({ stripeCustomerId: profile.stripeCustomerId }),
+      });
+      if (!res.ok) { showToast("Couldn't open billing portal. Try again."); return; }
+      const { url } = await res.json();
+      window.location.href = url;
+    } catch {
+      showToast("Couldn't open billing portal. Try again.");
+    }
+  }
+
   return (
     <div style={{ padding: "12px 16px 0", display: "flex", flexDirection: "column", gap: 0, marginTop: "clamp(4px, 2vw, 12px)" }}>
 
@@ -203,6 +221,54 @@ export function SettingsScreen({
           <button onClick={toggleDark} style={{ width: "38px", height: "22px", borderRadius: "999px", border: "none", cursor: "pointer", background: darkMode ? (C as any).live ?? C.green : C.border2, position: "relative", transition: "background 0.2s", boxShadow: darkMode ? `0 0 0 3px color-mix(in oklch, ${(C as any).live ?? C.green} 22%, transparent)` : "none", flexShrink: 0 }}>
             <div style={{ position: "absolute", top: "2px", left: darkMode ? "18px" : "2px", width: "18px", height: "18px", borderRadius: "50%", background: "#fff", boxShadow: "0 1px 2px rgba(0,0,0,0.2)", transition: "left 0.2s" }} />
           </button>
+        </div>
+      </div>
+
+      {/* ── Subscription section ── */}
+      <div style={{ padding: "16px 4px 8px", fontFamily: MONO, fontSize: 10, color: C.muted, letterSpacing: "0.16em", textTransform: "uppercase" as const }}>Subscription</div>
+      <div style={{ borderRadius: "22px", background: C.panel, border: `1px solid ${C.border}`, overflow: "hidden", marginBottom: "4px" }}>
+        <div style={{ padding: "16px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
+          <div>
+            <div style={{ fontFamily: DISPLAY, fontSize: "14px", fontWeight: 600, color: C.text }}>
+              {(profile.plan === "pro" || profile.plan === "elite") ? "Pro" : "Free"}
+            </div>
+            <div style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, marginTop: "2px" }}>
+              {(profile.plan === "pro" || profile.plan === "elite")
+                ? "Full access · manage or cancel anytime"
+                : "Limited features · upgrade for full access"}
+            </div>
+          </div>
+          {(profile.plan === "pro" || profile.plan === "elite") ? (
+            <button
+              onClick={openBillingPortal}
+              style={{
+                padding: "8px 14px", background: "transparent",
+                border: `1px solid ${C.border2}`, borderRadius: "10px",
+                fontFamily: MONO, fontSize: "11px", color: C.text,
+                cursor: "pointer", letterSpacing: "0.06em",
+              }}
+            >
+              Manage billing
+            </button>
+          ) : (
+            <button
+              onClick={() => setShowUpgrade(true)}
+              style={{
+                padding: "10px 18px",
+                background: (C as any).live ?? "#4ade80",
+                border: "none", borderRadius: "12px",
+                fontFamily: MONO, fontSize: "11px", fontWeight: 700,
+                color: "#0A0A0A", cursor: "pointer",
+                letterSpacing: "0.06em", textTransform: "uppercase" as const,
+                whiteSpace: "nowrap" as const,
+              }}
+            >
+              Upgrade to Pro
+            </button>
+          )}
+        </div>
+        <div style={{ borderTop: `1px solid ${C.border}`, padding: "10px 18px", fontFamily: MONO, fontSize: "10px", color: (C as any).dim ?? C.muted, letterSpacing: "0.04em" }}>
+          Payments handled securely by Stripe
         </div>
       </div>
 
