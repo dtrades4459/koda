@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { supabase } from "./lib/supabase";
 import { SectionKicker, StrategyPill, Toast, stratCode, TradrMark, MONO, BODY, DISPLAY } from "./shared";
 import { KODA_GLOBAL_CODE } from "./hooks/useCircles";
-import { fetchActiveChallenge, fetchTrophies } from "./data/circlesChallenges";
+import { createChallenge, fetchActiveChallenge, fetchTrophies } from "./data/circlesChallenges";
 import type { CircleChallenge, ChallengeResult } from "./types";
 
 export function TradingCircles({ myCircles, circlesView, setCirclesView, activeCircle, setActiveCircle, circleForm, setCircleForm, circleJoinCode, setCircleJoinCode, circleMsg, setCircleMsg, createCircle, joinCircle, publishToCircle, fetchCircleLeaderboard, profile, getMyCode, showToast, wins, losses, total, winRate, totalPnL, pnlPos, weekPnL, weekPnLPos, weekPnLStr, avgRR, streak, STRATEGY_NAMES, C, inp, sel, lbl, pillPrimary, pillGhost, following, followUser, unfollowUser, kickMember, leaveCircle, openProfile, isJoiningCircle, isCreatingCircle, totalPnlDollar, hasDollarData }: any) {
@@ -19,6 +19,15 @@ export function TradingCircles({ myCircles, circlesView, setCirclesView, activeC
   const [activeChallenge, setActiveChallenge] = useState<CircleChallenge | null>(null);
   const [trophies, setTrophies] = useState<ChallengeResult[]>([]);
   const [trophiesLoading, setTrophiesLoading] = useState(false);
+  const [showChallengeSheet, setShowChallengeSheet] = useState(false);
+  const [challengeForm, setChallengeForm] = useState({
+    title: "",
+    metric: "r" as CircleChallenge["metric"],
+    duration: "7" as "3" | "7" | "14" | "30",
+  });
+  const [challengeCreating, setChallengeCreating] = useState(false);
+
+  const isPro = profile?.plan === "pro" || profile?.plan === "elite";
 
   const CIRCLE_EMOJIS = ["◆","▲","●","■","⬡","◈","△","○","□","✦"];
   const MEDALS = ["🥇","🥈","🥉"];
@@ -118,6 +127,29 @@ export function TradingCircles({ myCircles, circlesView, setCirclesView, activeC
     setLeaderboard(entries);
     setActiveChallenge(challenge);
     setLoadingLB(false);
+  }
+
+  async function createChallengeFromForm() {
+    if (!activeCircle || !challengeForm.title.trim() || challengeCreating) return;
+    setChallengeCreating(true);
+    const days = parseInt(challengeForm.duration);
+    const endsAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+    const result = await createChallenge(
+      activeCircle.code,
+      challengeForm.title.trim(),
+      challengeForm.metric,
+      endsAt,
+      getMyCode()
+    );
+    if (result) {
+      setActiveChallenge(result);
+      setShowChallengeSheet(false);
+      setChallengeForm({ title: "", metric: "r", duration: "7" });
+      showToast("Challenge started!");
+    } else {
+      showToast("Failed to start challenge");
+    }
+    setChallengeCreating(false);
   }
 
   useEffect(() => {
@@ -496,6 +528,30 @@ export function TradingCircles({ myCircles, circlesView, setCirclesView, activeC
             <button onClick={() => publishToCircle(activeCircle.code)} style={{ ...pillPrimary(true), width: "100%", padding: "14px 20px" }}>PUBLISH MY STATS →</button>
           </section>
 
+          {/* Active challenge strip */}
+          {activeChallenge && (
+            <div style={{
+              borderLeft: `2px solid ${C.accent ?? C.text2}`,
+              padding: "8px 12px",
+              background: "rgba(255,255,255,0.03)",
+              borderRadius: "0 8px 8px 0",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 12,
+            }}>
+              <div>
+                <div style={{ fontFamily: DISPLAY, fontSize: 13, fontWeight: 600, color: C.text }}>{activeChallenge.title}</div>
+                <div style={{ fontFamily: MONO, fontSize: 10, color: C.muted, marginTop: 2, letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                  {activeChallenge.metric} · challenge
+                </div>
+              </div>
+              <div style={{ fontFamily: MONO, fontSize: 11, fontWeight: 700, color: C.text2, letterSpacing: "0.05em", flexShrink: 0 }}>
+                {formatCountdown(activeChallenge.endsAt)}
+              </div>
+            </div>
+          )}
+
           {/* Tabs: Feed / Leaderboard / Chat / Members / Trophies */}
           <section>
             <div style={{ marginBottom: "20px" }}>
@@ -732,6 +788,20 @@ export function TradingCircles({ myCircles, circlesView, setCirclesView, activeC
                   <div style={{ fontFamily: MONO, fontSize: 11, color: C.muted, textAlign: "center", padding: 24 }}>Loading\u2026</div>
                 )}
 
+                {/* Start Challenge \u2014 Pro owners only, no active challenge running */}
+                {activeCircle?.isOwner && isPro && !activeChallenge && (
+                  <button
+                    onClick={() => setShowChallengeSheet(true)}
+                    style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 13px", background: C.panel, border: `1px solid ${C.border}`, borderRadius: 9, cursor: "pointer", marginBottom: 4, width: "100%" }}
+                  >
+                    <div style={{ textAlign: "left" }}>
+                      <div style={{ fontFamily: DISPLAY, fontSize: 13, fontWeight: 600, color: C.text }}>Start New Challenge</div>
+                      <div style={{ fontFamily: MONO, fontSize: 10, color: C.muted, marginTop: 2, letterSpacing: "0.08em", textTransform: "uppercase" }}>Pro \u00b7 Owner Only</div>
+                    </div>
+                    <div style={{ color: C.muted, fontSize: 14 }}>\u2192</div>
+                  </button>
+                )}
+
                 {activeChallenge && (
                   <>
                     <div style={{ fontFamily: MONO, fontSize: 9, fontWeight: 700, letterSpacing: "0.12em", color: C.muted, textTransform: "uppercase", padding: "4px 0 6px" }}>Active</div>
@@ -795,6 +865,71 @@ export function TradingCircles({ myCircles, circlesView, setCirclesView, activeC
               LINK copies a join URL \u00b7 SHARE sends a ready-made invite.
             </div>
           </section>
+        </div>
+      )}
+      {/* Challenge creation bottom sheet */}
+      {showChallengeSheet && (
+        <div
+          onClick={() => setShowChallengeSheet(false)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 50, display: "flex", alignItems: "flex-end", justifyContent: "center" }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{ width: "100%", maxWidth: 420, background: C.panel, borderRadius: "16px 16px 0 0", padding: "20px 16px 32px", border: `1px solid ${C.border2}`, borderBottom: "none" }}
+          >
+            <div style={{ fontFamily: DISPLAY, fontSize: 16, fontWeight: 600, color: C.text, marginBottom: 18 }}>Start Challenge</div>
+
+            {/* Title */}
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontFamily: MONO, fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", color: C.muted, marginBottom: 6, textTransform: "uppercase" }}>Title</div>
+              <input
+                placeholder="e.g. Best R This Week"
+                value={challengeForm.title}
+                onChange={e => setChallengeForm(f => ({ ...f, title: e.target.value }))}
+                style={{ ...inp, width: "100%" }}
+              />
+            </div>
+
+            {/* Metric */}
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontFamily: MONO, fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", color: C.muted, marginBottom: 6, textTransform: "uppercase" }}>Metric</div>
+              <select
+                value={challengeForm.metric}
+                onChange={e => setChallengeForm(f => ({ ...f, metric: e.target.value as CircleChallenge["metric"] }))}
+                style={{ ...sel, width: "100%" }}
+              >
+                <option value="r">R-Multiple</option>
+                <option value="dollar">$ P&L</option>
+                <option value="winrate">Win Rate</option>
+                <option value="trades">Most Trades</option>
+                <option value="avgr">Avg R</option>
+              </select>
+            </div>
+
+            {/* Duration */}
+            <div style={{ marginBottom: 22 }}>
+              <div style={{ fontFamily: MONO, fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", color: C.muted, marginBottom: 8, textTransform: "uppercase" }}>Duration</div>
+              <div style={{ display: "flex", gap: 6 }}>
+                {(["3","7","14","30"] as const).map(d => (
+                  <button
+                    key={d}
+                    onClick={() => setChallengeForm(f => ({ ...f, duration: d }))}
+                    style={{ flex: 1, padding: "8px 0", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer", border: `1px solid ${challengeForm.duration === d ? C.text : C.border}`, background: challengeForm.duration === d ? C.text : "transparent", color: challengeForm.duration === d ? C.bg : C.muted, fontFamily: MONO }}
+                  >
+                    {d}d
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <button
+              onClick={createChallengeFromForm}
+              disabled={!challengeForm.title.trim() || challengeCreating}
+              style={{ width: "100%", padding: "13px", background: C.text, border: "none", borderRadius: 10, color: C.bg, fontSize: 13, fontWeight: 600, cursor: "pointer", opacity: (!challengeForm.title.trim() || challengeCreating) ? 0.4 : 1, fontFamily: MONO }}
+            >
+              {challengeCreating ? "Starting…" : "Start Challenge"}
+            </button>
+          </div>
         </div>
       )}
     </div>
