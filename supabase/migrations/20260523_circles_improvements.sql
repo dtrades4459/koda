@@ -5,7 +5,7 @@
 CREATE TABLE IF NOT EXISTS public.circle_messages (
   id            uuid         PRIMARY KEY DEFAULT gen_random_uuid(),
   circle_code   text         NOT NULL,
-  sender_id     uuid         NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  sender_id     uuid         REFERENCES auth.users(id) ON DELETE SET NULL,
   sender_name   text         NOT NULL DEFAULT '',
   sender_handle text         NOT NULL DEFAULT '',
   sender_avatar text,
@@ -48,7 +48,14 @@ CREATE POLICY "circle_challenges_select" ON public.circle_challenges
   FOR SELECT TO authenticated USING (true);
 
 CREATE POLICY "circle_challenges_insert" ON public.circle_challenges
-  FOR INSERT TO authenticated WITH CHECK (true);
+  FOR INSERT TO authenticated
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.shared_kv
+      WHERE key = ('tradr_circle_' || circle_code)
+        AND owner_id = auth.uid()
+    )
+  );
 
 GRANT SELECT, INSERT, UPDATE ON public.circle_challenges TO service_role;
 
@@ -108,7 +115,12 @@ CREATE POLICY "circle_shared_trades_select" ON public.circle_shared_trades
 CREATE POLICY "circle_shared_trades_insert" ON public.circle_shared_trades
   FOR INSERT TO authenticated WITH CHECK (true);
 
--- Any member can react (update reactions column)
+-- Any member can react (update reactions column).
+-- V1 LIMITATION: author_code is a text code, not a uuid, so we cannot scope this
+-- policy to the author via auth.uid() without a schema change. The open UPDATE
+-- policy is intentional for v1 — the data layer (reactToSharedTrade) enforces
+-- that only the reactions field is ever written, and a full-row author-only update
+-- guard will require adding an author_uid uuid column in a future migration.
 CREATE POLICY "circle_shared_trades_update" ON public.circle_shared_trades
   FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
 
