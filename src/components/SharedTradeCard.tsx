@@ -3,7 +3,7 @@ import type { SharedTrade } from "../types";
 import { MONO } from "../shared";
 import type { Theme } from "../theme";
 
-const REACTIONS = ["🔥","💎","🎯","👍","💀","🤯"];
+const REACTIONS = ["🔥","💎","👍","🎯","💀","🤯"];
 
 interface Props {
   trade: SharedTrade;
