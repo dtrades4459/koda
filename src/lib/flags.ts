@@ -26,6 +26,7 @@ const STORAGE_KEY_OFF = "tradr_flags_off";
 const DEFAULT_ON: ReadonlySet<string> = new Set([
   "newProfile",  // dual-write + read from public.profiles (v2 schema)
   "newTrades",   // dual-write to public.trades (KV remains the read source for 2 weeks)
+  "paywall",     // enforce 20-trade cap + Pro feature gates for free users
 ]);
 
 let cache: Set<string> | null = null;
