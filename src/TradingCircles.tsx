@@ -100,48 +100,58 @@ export function TradingCircles({ myCircles, circlesView, setCirclesView, activeC
 
   async function loadFeed(circle: { code: string }) {
     setFeedLoading(true);
-    const [rawMessages, sharedTrades, rawChallenges] = await Promise.all([
-      supabase
-        .from("circle_messages")
-        .select("*")
-        .eq("circle_code", circle.code)
-        .order("created_at", { ascending: false })
-        .limit(50)
-        .then(r => r.data ?? []),
-      fetchSharedTrades(circle.code, 50),
-      supabase
-        .from("circle_challenges")
-        .select("*")
-        .eq("circle_code", circle.code)
-        .order("started_at", { ascending: false })
-        .limit(20)
-        .then(r => r.data ?? []),
-    ]);
+    let alive = true;
+    try {
+      const [rawMessages, sharedTrades, rawChallenges] = await Promise.all([
+        supabase
+          .from("circle_messages")
+          .select("*")
+          .eq("circle_code", circle.code)
+          .order("created_at", { ascending: false })
+          .limit(50)
+          .then(r => r.data ?? []),
+        fetchSharedTrades(circle.code, 50),
+        supabase
+          .from("circle_challenges")
+          .select("*")
+          .eq("circle_code", circle.code)
+          .order("started_at", { ascending: false })
+          .limit(20)
+          .then(r => r.data ?? []),
+      ]);
 
-    const items: FeedItem[] = [];
+      if (!alive) return;
 
-    for (const m of rawMessages) {
-      const msg = rowToCircleMessage(m as Record<string, unknown>);
-      const isJoin = msg.text.includes("joined the circle");
-      if (isJoin) {
-        items.push({ type: "member_joined", ts: msg.createdAt, data: { id: msg.id, text: msg.text } });
-      } else {
-        items.push({ type: "message", ts: msg.createdAt, data: msg });
+      const items: FeedItem[] = [];
+
+      for (const m of rawMessages) {
+        const msg = rowToCircleMessage(m as Record<string, unknown>);
+        const isJoin = msg.text.includes("joined the circle");
+        if (isJoin) {
+          items.push({ type: "member_joined", ts: msg.createdAt, data: { id: msg.id, text: msg.text } });
+        } else {
+          items.push({ type: "message", ts: msg.createdAt, data: msg });
+        }
       }
+
+      for (const t of sharedTrades) {
+        items.push({ type: "trade", ts: t.sharedAt, data: t });
+      }
+
+      for (const c of rawChallenges) {
+        const ch = rowToChallenge(c as Record<string, unknown>);
+        items.push({ type: "challenge_started", ts: ch.startedAt, data: ch });
+      }
+
+      items.sort((a, b) => new Date(b.ts).getTime() - new Date(a.ts).getTime());
+      setFeedItems(items);
+    } catch {
+      // network error — feed stays empty, loading clears
+    } finally {
+      if (alive) setFeedLoading(false);
     }
 
-    for (const t of sharedTrades) {
-      items.push({ type: "trade", ts: t.sharedAt, data: t });
-    }
-
-    for (const c of rawChallenges) {
-      const ch = rowToChallenge(c as Record<string, unknown>);
-      items.push({ type: "challenge_started", ts: ch.startedAt, data: ch });
-    }
-
-    items.sort((a, b) => new Date(b.ts).getTime() - new Date(a.ts).getTime());
-    setFeedItems(items);
-    setFeedLoading(false);
+    return () => { alive = false; };
   }
 
   async function sendFeedMessage() {
