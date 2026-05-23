@@ -139,11 +139,22 @@ export interface SharedTrade {
   reactions: Record<string, string[]>;
 }
 
+export interface CircleMessage {
+  id: string;
+  circleCode: string;
+  senderId: string | null;
+  senderName: string;
+  senderHandle: string;
+  senderAvatar: string | null;
+  text: string;
+  createdAt: string;
+}
+
 export type FeedItem =
   | { type: "trade";             ts: string; data: SharedTrade }
-  | { type: "message";           ts: string; data: { id: string; sender_name: string; sender_handle: string; sender_avatar: string | null; text: string; created_at: string } }
+  | { type: "message";           ts: string; data: CircleMessage }
   | { type: "challenge_started"; ts: string; data: CircleChallenge }
-  | { type: "member_joined";     ts: string; data: { text: string; id: string } };
+  | { type: "member_joined";     ts: string; data: { id: string; text: string } };
 
 export interface Insight {
   kicker: string;
