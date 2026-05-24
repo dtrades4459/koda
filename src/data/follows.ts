@@ -1,5 +1,5 @@
-// ═══════════════════════════════════════════════════════════════════════════════
-// TRADR · Follows data layer
+﻿// ═══════════════════════════════════════════════════════════════════════════════
+// Kōda · Follows data layer
 //
 // One-way follow graph backing the friends/feed loop. Two rows per follow,
 // both owned by the follower so neither write touches a row owned by anyone

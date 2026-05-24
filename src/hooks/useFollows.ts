@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// useFollows — follow-graph state + sync for TRADR
+// useFollows — follow-graph state + sync for Kōda
 //
 // Owns:  following[], followers[], followerProfiles[]
 //        followUser(), unfollowUser()

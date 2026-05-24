@@ -1,4 +1,4 @@
-// ═══════════════════════════════════════════════════════════════════════════════
+﻿// ═══════════════════════════════════════════════════════════════════════════════
 // useFeed — friend feed state + actions for Kōda
 //
 // Owns:  friends[]          — legacy code-based friend list (KV)
@@ -25,7 +25,7 @@ import { storage } from "../lib/storage";
 import { log } from "../lib/log";
 import type { Trade, Profile } from "../types";
 
-// ── Local utility (mirrors normaliseHandle in TRADR.tsx) ─────────────────────
+// ── Local utility (mirrors normaliseHandle in Koda.tsx) ─────────────────────
 
 function normaliseHandle(h: string): string {
   return h.replace(/^@/, "").toLowerCase().replace(/[^a-z0-9_]/g, "");

@@ -1,5 +1,5 @@
-// ═══════════════════════════════════════════════════════════════════════════════
-// TRADR · Circles data layer
+﻿// ═══════════════════════════════════════════════════════════════════════════════
+// Kōda · Circles data layer
 //
 // Circles are the USP. This module is the single funnel for every circle
 // read/write, so the per-row ownership pattern is enforced by the API surface

@@ -1,15 +1,15 @@
-import { useState, useEffect, useRef } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import type { StrategyDef } from "./types";
 import type { Theme } from "./theme";
 
-// ─── FONT STACKS (duplicated from TRADR.tsx for standalone use) ──────────────
+// ─── FONT STACKS (duplicated from Koda.tsx for standalone use) ──────────────
 export const MONO = "'Geist Mono', 'IBM Plex Mono', ui-monospace, monospace";
 export const BODY = "'Geist', 'Inter', system-ui, sans-serif";
 export const DISPLAY = "'Geist', 'Inter', system-ui, sans-serif";
 
 // ─── STRATEGY CODE HELPERS ───────────────────────────────────────────────────
 // Module-level mutable full strategies map (built-ins + custom).
-// TRADR.tsx calls setSharedStrategiesMap(getAllStrategiesMap()) whenever strategies
+// Koda.tsx calls setSharedStrategiesMap(getAllStrategiesMap()) whenever strategies
 // change (on load and after saveCustomStrategies). This keeps stratCode in sync.
 let _sharedStrategiesMap: Record<string, StrategyDef> = {};
 export function setSharedStrategiesMap(map: Record<string, StrategyDef>) {

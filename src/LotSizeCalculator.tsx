@@ -1,5 +1,5 @@
-// ═══════════════════════════════════════════════════════════════════════════════
-// TRADR · LotSizeCalculator  (Futures only)
+﻿// ═══════════════════════════════════════════════════════════════════════════════
+// Kōda · LotSizeCalculator  (Futures only)
 //
 // Floating modal — Quick Action accessible from any screen.
 // Takes: contract, balance, risk % or fixed $, entry price, stop loss price.

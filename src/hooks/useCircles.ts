@@ -1,4 +1,4 @@
-// ═══════════════════════════════════════════════════════════════════════════════
+﻿// ═══════════════════════════════════════════════════════════════════════════════
 // useCircles — circle membership state + sync for Kōda
 //
 // Owns:  myCircles[], circlesView, activeCircle, circleForm,
@@ -540,7 +540,7 @@ export function useCircles({
     circleLatestMsgs,
     isCreatingCircle,
     isJoiningCircle,
-    // Helpers exposed for use in TRADR.tsx (onboarding + loadAll)
+    // Helpers exposed for use in Koda.tsx (onboarding + loadAll)
     saveMyCircles,
     myMemberRecord,
     readCircleMembers,

@@ -1,5 +1,5 @@
-// ═══════════════════════════════════════════════════════════════════════════════
-// TRADR · BetaGate
+﻿// ═══════════════════════════════════════════════════════════════════════════════
+// Kōda · BetaGate
 //
 // Password-gated entry screen shown before sign-up/login during closed beta.
 // Set VITE_BETA_PASSWORD in Vercel env vars to enable the gate.
@@ -23,7 +23,7 @@ function unlock() {
   try { localStorage.setItem(STORAGE_KEY, "1"); } catch { /* ignore */ }
 }
 
-// ── Palette — matches DARK theme in TRADR.tsx ─────────────────────────────────
+// ── Palette — matches DARK theme in Koda.tsx ─────────────────────────────────
 const BG      = "#0A0A0B";
 const PANEL   = "#131317";
 const BORDER  = "rgba(255,255,255,0.07)";

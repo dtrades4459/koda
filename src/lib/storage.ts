@@ -1,7 +1,7 @@
-// ═══════════════════════════════════════════════════════════════════════════════
+﻿// ═══════════════════════════════════════════════════════════════════════════════
 // Kōda · window.storage shim
 //
-// The monolithic TRADR.tsx component uses a `window.storage` API shaped like:
+// The monolithic Koda.tsx component uses a `window.storage` API shaped like:
 //   await window.storage.get(key, shared?)      -> { value: string } | null
 //   await window.storage.set(key, value, shared?)
 //
@@ -24,7 +24,7 @@ let storageErrorCallback: StorageErrorCallback | null = null;
 
 /**
  * Register a callback that fires whenever a Supabase write fails.
- * TRADR.tsx uses this to show a user-visible toast instead of silently
+ * Koda.tsx uses this to show a user-visible toast instead of silently
  * logging to the console.
  */
 export function onStorageError(cb: StorageErrorCallback): void {

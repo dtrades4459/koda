@@ -363,9 +363,9 @@ export function TradingCircles({ myCircles, circlesView, setCirclesView, activeC
 
   function shareInviteLink(circle: any) {
     const url = `https://tradrjournal.xyz/?join=${circle.code}`;
-    const msg = `Join my TRADR circle "${circle.name}" → ${url}`;
+    const msg = `Join my Kōda circle "${circle.name}" → ${url}`;
     if (navigator.share) {
-      navigator.share({ title: "Join my TRADR circle", text: msg, url }).catch(() => {});
+      navigator.share({ title: "Join my Kōda circle", text: msg, url }).catch(() => {});
     } else {
       navigator.clipboard?.writeText(url);
       showToast("Invite link copied");
@@ -582,7 +582,7 @@ export function TradingCircles({ myCircles, circlesView, setCirclesView, activeC
             </div>
             <input value={circleJoinCode} onChange={e => setCircleJoinCode(e.target.value.toUpperCase())}
               onKeyDown={e => e.key === "Enter" && joinCircle()}
-              placeholder="TRADR-ABCD-EFGH"
+              placeholder="KODA-ABCD-EFGH"
               style={{ ...inp, textAlign: "center", fontFamily: MONO, fontSize: "22px", letterSpacing: "0.14em", padding: "16px 0" }} />
             <button onClick={joinCircle} disabled={isJoiningCircle || !circleJoinCode.trim()} style={{ ...pillPrimary(!!circleJoinCode.trim() && !isJoiningCircle), marginTop: "20px" }}>
               {isJoiningCircle ? "Joining…" : "Join →"}

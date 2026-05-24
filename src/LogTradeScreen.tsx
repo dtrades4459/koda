@@ -1,7 +1,7 @@
-// ═══════════════════════════════════════════════════════════════════════════════
-// TRADR · LogTradeScreen
+﻿// ═══════════════════════════════════════════════════════════════════════════════
+// Kōda · LogTradeScreen
 //
-// Extracted from TRADR.tsx — the "log" view (view === "log").
+// Extracted from Koda.tsx — the "log" view (view === "log").
 // Restyled to match koda-screens.jsx LogScreen design:
 //   Card-wrapped sections, SegBtn outcome, design-spec Save button.
 // All state lives in the parent Tradr component and is passed down as props.

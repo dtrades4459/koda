@@ -1,10 +1,10 @@
-// ═══════════════════════════════════════════════════════════════════════════════
-// TRADR · DataSourcesScreen
+﻿// ═══════════════════════════════════════════════════════════════════════════════
+// Kōda · DataSourcesScreen
 //
 // "Sync" tab — manage broker connections (Tradovate live sync) and CSV imports.
 //
 // Props surface:
-//   C              — colour palette from TRADR.tsx
+//   C              — colour palette from Koda.tsx
 //   supabase       — Supabase browser client (reads broker_connections + sync_events via RLS)
 //   userId         — authenticated user ID
 //   accessToken    — Supabase JWT (passed to /api/broker/connect + /api/cron/sync)

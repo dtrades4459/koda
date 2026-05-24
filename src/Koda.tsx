@@ -39,7 +39,7 @@ import { DARK, LIGHT, makeStyles } from "./theme";
 
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
 
-/** The TRADR Global circle — every new user auto-joins on onboarding completion. */
+/** The Kōda Global circle — every new user auto-joins on onboarding completion. */
 const TRADR_GLOBAL_CODE = "TRADRG-HB1U";
 
 // STRATEGIES, STRATEGY_NAMES, getAllStrategiesMap → src/data/strategies.ts
@@ -1394,7 +1394,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
             socialLinks: twitter.trim() ? { twitter: twitter.trim() } : profile.socialLinks,
           };
           await saveProfile(updated);
-          // Auto-join TRADR Global circle for every new user (silent — no error on failure).
+          // Auto-join Kōda Global circle for every new user (silent — no error on failure).
           if (TRADR_GLOBAL_CODE && !myCircles.find((c: Circle) => c.code === TRADR_GLOBAL_CODE)) {
             try {
               const res = await storage.get("tradr_circle_" + TRADR_GLOBAL_CODE, true);

@@ -1,7 +1,7 @@
-// ═══════════════════════════════════════════════════════════════════════════════
-// TRADR · SettingsScreen
+﻿// ═══════════════════════════════════════════════════════════════════════════════
+// Kōda · SettingsScreen
 //
-// Extracted from TRADR.tsx — Settings tab (homeSection === "settings").
+// Extracted from Koda.tsx — Settings tab (homeSection === "settings").
 // All state lives in the parent Tradr component and is passed down as props.
 // No behavior changes — this is a pure structural extraction.
 // ═══════════════════════════════════════════════════════════════════════════════
