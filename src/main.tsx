@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import TradrAuth from "./TradrAuth";
+import KodaAuth from "./KodaAuth";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { installStorage } from "./lib/storage";
 import { initSentry } from "./lib/sentry";
@@ -22,7 +22,7 @@ initPostHog();
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <ErrorBoundary>
-      <TradrAuth />
+      <KodaAuth />
     </ErrorBoundary>
   </React.StrictMode>
 );

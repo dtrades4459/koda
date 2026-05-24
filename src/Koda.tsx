@@ -242,7 +242,7 @@ function ProLock({ C, label, description, onUpgrade }: { C: Record<string, strin
   );
 }
 
-export default function Tradr({ user, jwtPlan }: { user?: User; jwtPlan?: "free" | "pro" | "elite" } = {}) {
+export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" | "pro" | "elite" } = {}) {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [draftCount, setDraftCount] = useState(0);
   const [view, setView] = useState("home");

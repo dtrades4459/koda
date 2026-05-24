@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "./lib/supabase";
 import { installStorage, clearStorageCache } from "./lib/storage";
 import type { Session } from "@supabase/supabase-js";
-import Tradr from "./TRADR";
+import Koda from "./Koda";
 import { BetaGate, betaEnabled, isBetaUnlocked } from "./BetaGate";
 import { DARK } from "./theme";
 import type { Theme } from "./theme";
@@ -583,7 +583,7 @@ function LoadingScreen() {
 }
 
 // ─── ROOT AUTH WRAPPER ──────────────────────────────────────────────────────────────────────────────
-export default function TradrAuth() {
+export default function KodaAuth() {
   const [session,      setSession]      = useState<Session | null | undefined>(undefined);
   const [betaUnlocked, setBetaUnlocked] = useState<boolean>(() => isBetaUnlocked());
 
@@ -605,5 +605,5 @@ export default function TradrAuth() {
   if (!session) return <LandingPage onSuccess={() => {}} />;
 
   const jwtPlan = (session.user.app_metadata?.plan ?? "free") as "free" | "pro" | "elite";
-  return <Tradr user={session.user} jwtPlan={jwtPlan} />;
+  return <Koda user={session.user} jwtPlan={jwtPlan} />;
 }
