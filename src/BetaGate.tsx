@@ -10,7 +10,7 @@
 import { useState } from "react";
 
 const BETA_PASSWORD = import.meta.env.VITE_BETA_PASSWORD as string | undefined;
-const STORAGE_KEY   = "tradr_beta_unlocked";
+const STORAGE_KEY   = "koda_beta_unlocked";
 
 export const betaEnabled = !!BETA_PASSWORD;
 

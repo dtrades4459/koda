@@ -355,7 +355,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
 
   const [showLiveModal, setShowLiveModal] = useState(false);
   const [fontScale, setFontScale] = useState<number>(() => {
-    try { return parseFloat(localStorage.getItem("tradr_font_scale") ?? "1") || 1; } catch { return 1; }
+    try { return parseFloat(localStorage.getItem("koda_font_scale") ?? "1") || 1; } catch { return 1; }
   });
 
   // Tradovate — state + handlers managed by useTradovate (wired below after saveTrades).
@@ -392,7 +392,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     // Use fontSize instead of zoom — zoom is non-standard and causes the
     // browser to shift fixed-position elements (including the bottom nav).
     document.documentElement.style.fontSize = `${fontScale * 100}%`;
-    try { localStorage.setItem("tradr_font_scale", String(fontScale)); } catch {}
+    try { localStorage.setItem("koda_font_scale", String(fontScale)); } catch {}
   }, [fontScale]);
 
   // ── Stripe return URL handler ───────────────────────────────────────────────
@@ -1367,7 +1367,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
 
   // Show onboarding for new users who haven't completed the flow yet.
   // Also check localStorage as a backup in case the Supabase write failed mid-onboarding.
-  const _localOnboarded = typeof window !== "undefined" && localStorage.getItem("tradr_onboarded") === "1";
+  const _localOnboarded = typeof window !== "undefined" && localStorage.getItem("koda_onboarded") === "1";
   if (!profile.onboarded && !_localOnboarded) {
     return (
       <OnboardingFlow
@@ -1376,7 +1376,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
         onComplete={async ({ name, handle, avatar, bio, twitter, instruments, strategy }: OnboardingData) => {
           // Set localStorage immediately so a refresh won't re-show onboarding
           // even if the Supabase write hasn't completed yet.
-          try { localStorage.setItem("tradr_onboarded", "1"); } catch {}
+          try { localStorage.setItem("koda_onboarded", "1"); } catch {}
           const cleanHandle = handle.trim() || `@${name.trim().toLowerCase().replace(/\s+/g, "")}`;
           const updated: Profile = {
             ...profile,
@@ -1409,7 +1409,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
           }
           setView("log");
           // Show the first-run tour unless they've already seen it
-          if (!localStorage.getItem("tradr_tour_done")) setShowTour(true);
+          if (!localStorage.getItem("koda_tour_done")) setShowTour(true);
         }}
       />
     );

@@ -64,7 +64,7 @@ export function TourOverlay({ C, onDone }: { C: any; onDone: () => void }) {
   const isLast = step === TOUR_STEPS.length - 1;
 
   function finish() {
-    try { localStorage.setItem("tradr_tour_done", "1"); } catch {}
+    try { localStorage.setItem("koda_tour_done", "1"); } catch {}
     onDone();
   }
 
