@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// TRADR · POST /api/trade-gate
+// Kōda · POST /api/trade-gate
 //
 // Server-side enforcement of the 20-trade limit for free-tier users.
 // Reads plan from JWT app_metadata (server-verified, not forgeable from client).

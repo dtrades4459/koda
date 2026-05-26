@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// TRADR · GET /api/cron/sync  (also accepts POST for manual triggers)
+// Kōda · GET /api/cron/sync  (also accepts POST for manual triggers)
 //
 // Called by Vercel Cron every 5 minutes (see vercel.json).
 // Also callable manually from the UI via POST with the user's JWT

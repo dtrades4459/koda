@@ -40,7 +40,7 @@ import { DARK, LIGHT, makeStyles } from "./theme";
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
 
 /** The Kōda Global circle — every new user auto-joins on onboarding completion. */
-const TRADR_GLOBAL_CODE = "TRADRG-HB1U";
+const LEGACY_GLOBAL_CODE = "TRADRG-HB1U";
 
 // STRATEGIES, STRATEGY_NAMES, getAllStrategiesMap → src/data/strategies.ts
 
@@ -462,14 +462,14 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   async function loadAll() {
     const store = storage;
     const [t, pr, sc, sr, dm, ci, st, cs, v2ProfileRes] = await Promise.all([
-      store.get("tradr_trades").catch(() => null),
-      store.get("tradr_profile").catch(() => null),
-      store.get("tradr_checklists").catch(() => null),
-      store.get("tradr_rules").catch(() => null),
-      store.get("tradr_dark").catch(() => null),
-      store.get("tradr_circles").catch(() => null),
-      store.get("tradr_thresholds").catch(() => null),
-      store.get("tradr_custom_strategies").catch(() => null),
+      store.get("koda_trades").catch(() => null),
+      store.get("koda_profile").catch(() => null),
+      store.get("koda_checklists").catch(() => null),
+      store.get("koda_rules").catch(() => null),
+      store.get("koda_dark").catch(() => null),
+      store.get("koda_circles").catch(() => null),
+      store.get("koda_thresholds").catch(() => null),
+      store.get("koda_custom_strategies").catch(() => null),
       (isFlagOn("newProfile") && user?.id)
         ? getProfile(user.id).catch(() => null)
         : Promise.resolve(null),
@@ -511,7 +511,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
             }
             if (changed && migrationAlive) {
               setTrades(updated);
-              await storage.set("tradr_trades", JSON.stringify(updated));
+              await storage.set("koda_trades", JSON.stringify(updated));
             }
           })();
           // Signal the IIFE to stop if the component unmounts before it finishes
@@ -544,7 +544,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
       }
       if (user?.id && p.uid !== user.id) {
         p = { ...p, uid: user.id };
-        try { await store.set("tradr_profile", JSON.stringify(p)); }
+        try { await store.set("koda_profile", JSON.stringify(p)); }
         catch (e) { log.error("loadAll.profile.uidStamp", e); }
       }
       // Always trust the JWT plan claim over whatever is stored in the KV blob.
@@ -582,7 +582,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     // Load Stripe customer ID
     try {
       const store = storage;
-      const stripeKv = await store.get("tradr_stripe_customer").catch(() => null);
+      const stripeKv = await store.get("koda_stripe_customer").catch(() => null);
       if (stripeKv?.value) {
         const { customerId } = JSON.parse(stripeKv.value);
         if (customerId) setProfile(p => ({ ...p, stripeCustomerId: customerId }));
@@ -601,7 +601,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     // Rebuild extra strategies from the new set (replaces stale entries).
     addExtraStrategies(Object.fromEntries(u.map((s) => [s.name, s as StrategyDef])));
     setCustomStrategies(u);
-    await storage.set("tradr_custom_strategies", JSON.stringify(u));
+    await storage.set("koda_custom_strategies", JSON.stringify(u));
   }
 
   function openNewStrategy() {
@@ -675,7 +675,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     setTrades(u);
     // Always write KV — safety net + fast reads during migration window
     try {
-      await storage.set("tradr_trades", JSON.stringify(u));
+      await storage.set("koda_trades", JSON.stringify(u));
     } catch (e) {
       log.error("saveTrades.kv", e);
     }
@@ -779,14 +779,14 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   async function saveProfile(u: Profile) {
     setProfile(u);
     // ── Legacy KV write (always — keeps live app working until v2 cutover) ──
-    await storage.set("tradr_profile", JSON.stringify(u));
+    await storage.set("koda_profile", JSON.stringify(u));
     if (u.handle) {
       registerHandle(u.handle, profile.handle || null);
       // Write public profile so other traders can view it
       const norm = u.handle.replace(/^@/, "").toLowerCase();
       try {
         await storage.set(
-          `tradr_profile_pub_${norm}`,
+          `koda_profile_pub_${norm}`,
           JSON.stringify({ name: u.name || "Trader", handle: norm, avatar: u.avatar || "", bio: u.bio || "", publicTrades: u.publicTrades || false }),
           true
         );
@@ -816,11 +816,11 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
       } catch (e) { log.error("saveProfile.v2", e, { userId: user.id }); }
     }
   }
-  async function saveStratChecklists(u: Record<string, { id: number; text: string }[]>) { setStratChecklists(u); await storage.set("tradr_checklists", JSON.stringify(u)); }
+  async function saveStratChecklists(u: Record<string, { id: number; text: string }[]>) { setStratChecklists(u); await storage.set("koda_checklists", JSON.stringify(u)); }
 
-  async function saveStratThresholds(u: Record<string, { minCount: number; required: string[] }>) { setStratThresholds(u); await storage.set("tradr_thresholds", JSON.stringify(u)); }
-  async function saveStratRules(u: Record<string, { id: number; text: string }[]>) { setStratRules(u); await storage.set("tradr_rules", JSON.stringify(u)); }
-  async function toggleDark() { const nd = !darkMode; setDarkMode(nd); await storage.set("tradr_dark", JSON.stringify(nd)); }
+  async function saveStratThresholds(u: Record<string, { minCount: number; required: string[] }>) { setStratThresholds(u); await storage.set("koda_thresholds", JSON.stringify(u)); }
+  async function saveStratRules(u: Record<string, { id: number; text: string }[]>) { setStratRules(u); await storage.set("koda_rules", JSON.stringify(u)); }
+  async function toggleDark() { const nd = !darkMode; setDarkMode(nd); await storage.set("koda_dark", JSON.stringify(nd)); }
 
   // Swipe — wired via useEffect so we can pass { passive: false } and call
   // preventDefault(), which prevents the browser from interpreting a horizontal
@@ -1057,13 +1057,13 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   // ── Handle registry ────────────────────────────────────────────
   // Maps @handle → { code, name } in shared_kv. Owner = the handle's user,
   // so only they can update/delete their own handle row (RLS-safe).
-  // Key: `tradr_handle_${normalised}` where normalised = lowercase, no @.
+  // Key: `koda_handle_${normalised}` where normalised = lowercase, no @.
   function normaliseHandle(h: string): string {
     return h.replace(/^@/, "").toLowerCase().replace(/[^a-z0-9_]/g, "");
   }
   async function resolveHandle(handle: string): Promise<{ code: string; name: string } | null> {
     try {
-      const key = `tradr_handle_${normaliseHandle(handle)}`;
+      const key = `koda_handle_${normaliseHandle(handle)}`;
       const r = await storage.get(key, true);
       if (!r) return null;
       return JSON.parse(r.value);
@@ -1084,10 +1084,10 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     if (!norm) return;
     // Clean up old handle row if the handle changed (we own it, RLS allows delete).
     if (oldHandle && normaliseHandle(oldHandle) !== norm) {
-      try { await storage.del(`tradr_handle_${normaliseHandle(oldHandle)}`, true); } catch {}
+      try { await storage.del(`koda_handle_${normaliseHandle(oldHandle)}`, true); } catch {}
     }
     await storage.set(
-      `tradr_handle_${norm}`,
+      `koda_handle_${norm}`,
       JSON.stringify({ code: mc, name: profile.name || "Trader" }),
       true
     );
@@ -1178,12 +1178,12 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     try {
       const mc = getMyCode();
       // Wipe all user_kv rows (trades, profile, checklists, etc)
-      const keys = ["tradr_trades","tradr_profile","tradr_friends","tradr_feed","tradr_checklists","tradr_rules","tradr_dark","tradr_circles","tradr_thresholds","tradr_custom_strategies"];
+      const keys = ["koda_trades","koda_profile","koda_friends","koda_feed","koda_checklists","koda_rules","koda_dark","koda_circles","koda_thresholds","koda_custom_strategies"];
       await Promise.all(keys.map(k => storage.del(k).catch(() => {})));
       // Wipe shared_kv rows we own (circle entries, feed, handle, follows)
       await Promise.all([
-        `tradr_feed_${mc}`,
-        `tradr_handle_${profile.handle ? profile.handle.replace("@","").toLowerCase() : ""}`,
+        `koda_feed_${mc}`,
+        `koda_handle_${profile.handle ? profile.handle.replace("@","").toLowerCase() : ""}`,
       ].map(k => storage.del(k, true).catch(() => {})));
       // Sign out and let Supabase handle auth deletion
       phReset();
@@ -1395,14 +1395,14 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
           };
           await saveProfile(updated);
           // Auto-join Kōda Global circle for every new user (silent — no error on failure).
-          if (TRADR_GLOBAL_CODE && !myCircles.find((c: Circle) => c.code === TRADR_GLOBAL_CODE)) {
+          if (LEGACY_GLOBAL_CODE && !myCircles.find((c: Circle) => c.code === LEGACY_GLOBAL_CODE)) {
             try {
-              const res = await storage.get("tradr_circle_" + TRADR_GLOBAL_CODE, true);
+              const res = await storage.get("koda_circle_" + LEGACY_GLOBAL_CODE, true);
               if (res) {
                 const circle = JSON.parse(res.value);
                 const me = myMemberRecord();
-                await storage.set(`tradr_circle_member_${TRADR_GLOBAL_CODE}_${me.code}`, JSON.stringify(me), true);
-                const members = await readCircleMembers(TRADR_GLOBAL_CODE, [me]);
+                await storage.set(`koda_circle_member_${LEGACY_GLOBAL_CODE}_${me.code}`, JSON.stringify(me), true);
+                const members = await readCircleMembers(LEGACY_GLOBAL_CODE, [me]);
                 await saveMyCircles([...myCircles, { ...circle, members, isOwner: false }]);
               }
             } catch { /* silently ignore — circle may not exist yet */ }

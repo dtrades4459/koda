@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// TRADR · POST /api/broker/connect
+// Kōda · POST /api/broker/connect
 //
 // Authenticates the user with Tradovate, encrypts the tokens, and upserts a
 // row in public.broker_connections.

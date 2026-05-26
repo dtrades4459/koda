@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// TRADR · Tradovate API proxy
+// Kōda · Tradovate API proxy
 //
 // Routes all Tradovate calls server-side so:
 //   - App ID / CID / secret stay in Vercel env vars (never shipped to client)

@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// TRADR · POST /api/broker/disconnect
+// Kōda · POST /api/broker/disconnect
 //
 // Deletes the broker connection for the authenticated user.
 // Body: { broker: "tradovate", env: "demo"|"live" }

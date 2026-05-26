@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// TRADR · Supabase admin client (server-side only)
+// Kōda · Supabase admin client (server-side only)
 //
 // Uses the service role key — bypasses Row Level Security entirely.
 // ONLY import this in Vercel serverless functions (api/**).

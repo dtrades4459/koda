@@ -72,7 +72,7 @@ export default async function handler(req: Req, res: Res) {
       const { data: entries } = await admin
         .from("shared_kv")
         .select("key, value")
-        .like("key", `tradr_circle_entry_${challenge.circle_code}_%`);
+        .like("key", `koda_circle_entry_${challenge.circle_code}_%`);
 
       if (!entries || entries.length === 0) {
         // No participants — just close it

@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// TRADR · Stripe Checkout API
+// Kōda · Stripe Checkout API
 //
 // POST { userId, email, billing?, stripeCustomerId?, promoCode? }
 // → Verifies the caller's Supabase JWT (Authorization: Bearer <token>)
@@ -125,7 +125,7 @@ export default async function handler(req: Req, res: Res) {
         .from("user_kv")
         .select("value")
         .eq("user_id", userId)
-        .eq("key", "tradr_stripe_customer")
+        .eq("key", "koda_stripe_customer")
         .maybeSingle();
       if (kvRow?.value) {
         try { customerId = JSON.parse(kvRow.value).customerId ?? ""; } catch { /* ignore */ }
@@ -135,7 +135,7 @@ export default async function handler(req: Req, res: Res) {
       const customer = await s.customers.create({ email, metadata: { userId } });
       customerId = customer.id;
       await db.from("user_kv").upsert(
-        { user_id: userId, key: "tradr_stripe_customer", value: JSON.stringify({ customerId }) },
+        { user_id: userId, key: "koda_stripe_customer", value: JSON.stringify({ customerId }) },
         { onConflict: "user_id,key" }
       );
     }
@@ -154,7 +154,7 @@ export default async function handler(req: Req, res: Res) {
         db.from("user_kv").upsert(
           {
             user_id: userId,
-            key: "tradr_promo_applied",
+            key: "koda_promo_applied",
             value: JSON.stringify({
               promoCode: normalized,
               planSelected: billing,

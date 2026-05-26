@@ -15,20 +15,20 @@ export function ProfileModal({ handle, myCode, following, followUser, unfollowUs
       try {
         const norm = handle.replace(/^@/, "").toLowerCase();
         let code: string | null = null;
-        const handleRow = await storage.get(`tradr_handle_${norm}`, true);
+        const handleRow = await storage.get(`koda_handle_${norm}`, true);
         if (handleRow) {
           try { code = JSON.parse(handleRow.value)?.code || null; } catch {}
           if (!code) code = handleRow.owner_id || null;
           setTargetCode(code);
         }
-        const profileRow = await storage.get(`tradr_profile_pub_${norm}`, true);
+        const profileRow = await storage.get(`koda_profile_pub_${norm}`, true);
         if (profileRow) {
           try {
             const p = JSON.parse(profileRow.value);
             if (p) {
               setPubProfile(p);
               if (p.publicTrades && code) {
-                const feedRow = await storage.get(`tradr_feed_${code}`, true);
+                const feedRow = await storage.get(`koda_feed_${code}`, true);
                 if (feedRow) {
                   try { const t = JSON.parse(feedRow.value); setFeedTrades(Array.isArray(t) ? t : []); } catch {}
                 }
@@ -36,7 +36,7 @@ export function ProfileModal({ handle, myCode, following, followUser, unfollowUs
             }
           } catch { /* malformed — leave pubProfile null */ }
         } else if (code) {
-          const feedRow = await storage.get(`tradr_feed_${code}`, true);
+          const feedRow = await storage.get(`koda_feed_${code}`, true);
           if (feedRow) {
             try {
               const t = JSON.parse(feedRow.value);

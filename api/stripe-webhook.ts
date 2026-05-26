@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// TRADR · Stripe Webhook
+// Kōda · Stripe Webhook
 //
 // Verifies Stripe signature, then:
 //   checkout.session.completed       → plan = "pro"; stores subscription_id + customer_id
@@ -8,7 +8,7 @@
 //   invoice.payment_failed           → logs only (Stripe handles retries)
 //
 // Plan is written to TWO places on every event so plan gating is server-enforced:
-//   1. user_kv tradr_profile blob  — persisted source of truth, synced to client
+//   1. user_kv koda_profile blob  — persisted source of truth, synced to client
 //   2. Supabase auth app_metadata  — embedded in the JWT so serverless functions
 //      can verify plan from the Bearer token without a DB round-trip
 //
@@ -56,12 +56,12 @@ async function setUserPlan(
 ) {
   const db = getSupabase();
 
-  // ── 1. Update tradr_profile KV blob ─────────────────────────────────────────
+  // ── 1. Update koda_profile KV blob ─────────────────────────────────────────
   const { data } = await db
     .from("user_kv")
     .select("value")
     .eq("user_id", userId)
-    .eq("key", "tradr_profile")
+    .eq("key", "koda_profile")
     .maybeSingle();
 
   if (!data?.value) {
@@ -72,7 +72,7 @@ async function setUserPlan(
     const profile = JSON.parse(data.value);
     profile.plan = plan;
     await db.from("user_kv").upsert(
-      { user_id: userId, key: "tradr_profile", value: JSON.stringify(profile) },
+      { user_id: userId, key: "koda_profile", value: JSON.stringify(profile) },
       { onConflict: "user_id,key" }
     );
   }
@@ -83,7 +83,7 @@ async function setUserPlan(
       .from("user_kv")
       .select("value")
       .eq("user_id", userId)
-      .eq("key", "tradr_stripe_customer")
+      .eq("key", "koda_stripe_customer")
       .maybeSingle();
 
     let existing: Record<string, string> = {};
@@ -96,7 +96,7 @@ async function setUserPlan(
       ...(extras.subscriptionId ? { subscriptionId: extras.subscriptionId } : {}),
     };
     await db.from("user_kv").upsert(
-      { user_id: userId, key: "tradr_stripe_customer", value: JSON.stringify(updated) },
+      { user_id: userId, key: "koda_stripe_customer", value: JSON.stringify(updated) },
       { onConflict: "user_id,key" }
     );
   }

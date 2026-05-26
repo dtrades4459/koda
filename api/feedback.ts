@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// TRADR · Feedback API
+// Kōda · Feedback API
 //
 // POST { feedback, name, handle }
 // → Supabase-backed rate limit (5 req / 60 s per IP) — survives cold starts
