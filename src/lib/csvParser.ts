@@ -3,6 +3,24 @@
 // No React, no side-effects. Imported by CsvImportPanel.tsx.
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// ── Field-name → Kōda field mapping (must be declared before parseCSV for header scoring) ──
+
+export const CSV_FIELD_HINTS: { field: string; patterns: RegExp[] }[] = [
+  { field: "pair",       patterns: [/^(symbol|ticker|pair|instrument|market|contract|asset|stock|coin)s?$/i, /symbol|ticker|pair|instrument/i] },
+  { field: "date",       patterns: [/^(open[_\s]*time|close[_\s]*time|execution[_\s]*time|entry[_\s]*date|trade[_\s]*date|date[_\s]*time|timestamp|date|time)$/i, /entry.*date|date.*time|timestamp/i, /date|time/i] },
+  { field: "bias",       patterns: [/^(direction|side|action|type|b\/?s|buy[_\s]*sell|long[_\s]*\/?[_\s]*short)$/i, /^(direction|side)$/i, /direction|side/i] },
+  { field: "outcome",    patterns: [/^(outcome|result|status|win[_\s]*\/?[_\s]*loss|w\/?l)$/i, /outcome|result|status/i] },
+  { field: "pnl",        patterns: [/^(p[\s/]?[&/]?l|pnl|profit|profit[_\s]*loss|net[_\s]*p[\s&/]?[&/]?l|realized[_\s]*p[&/]?l|net|realized|gain)$/i, /net.*p.?l|realized.*p.?l/i, /pnl|profit/i, /p.?l/i] },
+  { field: "entryPrice", patterns: [/^(entry[_\s]*price|entry|open[_\s]*price|buy[_\s]*price|avg[_\s]*entry|price[_\s]*in|fill[_\s]*price|buy[_\s]*fill[_\s]*price)$/i, /entry.*price|fill.*price/i, /entry|open.*price/i] },
+  { field: "exitPrice",  patterns: [/^(exit[_\s]*price|close[_\s]*price|sell[_\s]*price|sell[_\s]*fill[_\s]*price|exit)$/i, /exit.*price|sell.*fill.*price/i] },
+  { field: "slPrice",    patterns: [/^(stop[_\s]*loss|stop|sl|s[_\s]*\/[_\s]*l)$/i, /stop.*loss|stop/i] },
+  { field: "tpPrice",    patterns: [/^(take[_\s]*profit|target|tp|t[_\s]*\/[_\s]*p|limit)$/i, /target|take.*profit|tp/i] },
+  { field: "qty",        patterns: [/^(qty|quantity|size|volume|contracts?|lots?|shares?)$/i, /^(qty|quantity|size)$/i] },
+  { field: "rr",         patterns: [/^(r[_\s/:-]*r|risk[_\s]*reward|r[_\s]*multiple|r[_\s]*value)$/i, /risk.*reward|r:?r/i] },
+  { field: "notes",      patterns: [/^(note|notes|comment|comments|description|memo)$/i, /note|comment|memo/i] },
+  { field: "session",    patterns: [/^(session|market[_\s]*session)$/i, /session/i] },
+];
+
 // ── CSV tokeniser ─────────────────────────────────────────────────────────────
 
 /**
@@ -18,12 +36,42 @@ export function detectDelimiter(text: string): "," | "\t" {
 }
 
 /**
+ * Score a candidate header row by counting how many cells match known field hint patterns.
+ * A higher score means the row looks more like real column headers.
+ */
+export function scoreHeaderRow(cells: string[]): number {
+  const patterns = CSV_FIELD_HINTS.flatMap(h => h.patterns);
+  return cells.filter(c => {
+    const v = c.trim();
+    return v.length > 0 && patterns.some(p => p.test(v));
+  }).length;
+}
+
+/**
+ * Find the index of the real header row within the first 10 non-blank lines.
+ * Handles broker exports that begin with report-title preamble rows (NT8, MT4, FTMO).
+ * Strategy: prefer the row with the most field-hint matches; break ties by most non-empty cells.
+ */
+export function findHeaderRowIndex(lines: string[][]): number {
+  let bestIdx = 0, bestScore = -1, bestCount = 0;
+  for (let i = 0; i < Math.min(lines.length, 10); i++) {
+    const score = scoreHeaderRow(lines[i]);
+    const count = lines[i].filter(v => v.trim()).length;
+    if (score > bestScore || (score === bestScore && count > bestCount)) {
+      bestScore = score; bestCount = count; bestIdx = i;
+    }
+  }
+  return bestIdx;
+}
+
+/**
  * Parse a CSV (or TSV) string into headers + rows.
  * Handles:
  *   - UTF-8 BOM (U+FEFF) at the start — Excel adds this
  *   - Windows CRLF and Unix LF line endings
  *   - RFC 4180 quoted fields (embedded commas, escaped quotes)
  *   - Tab-separated files auto-detected by delimiter sniffing
+ *   - Preamble rows before the real header (broker report titles, account info)
  */
 export function parseCSV(text: string): { headers: string[]; rows: Record<string, string>[] } {
   // Strip UTF-8 BOM (U+FEFF) — Excel prepends it to every CSV it exports
@@ -52,28 +100,13 @@ export function parseCSV(text: string): { headers: string[]; rows: Record<string
   }
   if (cell !== "" || row.length) { row.push(cell); if (row.some(v => v.trim() !== "")) lines.push(row); }
   if (!lines.length) return { headers: [], rows: [] };
-  const headers = lines[0].map(h => h.trim());
-  const rows = lines.slice(1).map(l => Object.fromEntries(headers.map((h, i) => [h, (l[i] ?? "").trim()])));
+
+  // CRIT-6: skip preamble rows (report titles, account info) before the real header
+  const headerIdx = findHeaderRowIndex(lines);
+  const headers = lines[headerIdx].map(h => h.trim());
+  const rows = lines.slice(headerIdx + 1).map(l => Object.fromEntries(headers.map((h, i) => [h, (l[i] ?? "").trim()])));
   return { headers, rows };
 }
-
-// ── Field-name → Kōda field mapping ──────────────────────────────────────────
-
-export const CSV_FIELD_HINTS: { field: string; patterns: RegExp[] }[] = [
-  { field: "pair",       patterns: [/^(symbol|ticker|pair|instrument|market|contract|asset|stock|coin)s?$/i, /symbol|ticker|pair|instrument/i] },
-  { field: "date",       patterns: [/^(open[_\s]*time|close[_\s]*time|execution[_\s]*time|entry[_\s]*date|trade[_\s]*date|date[_\s]*time|timestamp|date|time)$/i, /entry.*date|date.*time|timestamp/i, /date|time/i] },
-  { field: "bias",       patterns: [/^(direction|side|action|type|b\/?s|buy[_\s]*sell|position|long[_\s]*\/?[_\s]*short)$/i, /^(direction|side)$/i, /direction|side/i] },
-  { field: "outcome",    patterns: [/^(outcome|result|status|win[_\s]*\/?[_\s]*loss|w\/?l)$/i, /outcome|result|status/i] },
-  { field: "pnl",        patterns: [/^(p[\s/]?[&/]?l|pnl|profit|profit[_\s]*loss|net[_\s]*p[\s&/]?[&/]?l|realized[_\s]*p[&/]?l|net|realized|gain)$/i, /net.*p.?l|realized.*p.?l/i, /pnl|profit/i, /p.?l/i] },
-  { field: "entryPrice", patterns: [/^(entry[_\s]*price|entry|open[_\s]*price|buy[_\s]*price|avg[_\s]*entry|price[_\s]*in|fill[_\s]*price|buy[_\s]*fill[_\s]*price)$/i, /entry.*price|fill.*price/i, /entry|open.*price/i] },
-  { field: "exitPrice",  patterns: [/^(exit[_\s]*price|close[_\s]*price|sell[_\s]*price|sell[_\s]*fill[_\s]*price|exit)$/i, /exit.*price|sell.*fill.*price/i] },
-  { field: "slPrice",    patterns: [/^(stop[_\s]*loss|stop|sl|s\/l)$/i, /stop.*loss|stop/i] },
-  { field: "tpPrice",    patterns: [/^(take[_\s]*profit|target|tp|t\/p|limit)$/i, /target|take.*profit|tp/i] },
-  { field: "qty",        patterns: [/^(qty|quantity|size|volume|contracts?|lots?|shares?)$/i, /^(qty|quantity|size)$/i] },
-  { field: "rr",         patterns: [/^(r[_\s/:-]*r|risk[_\s]*reward|r[_\s]*multiple|r[_\s]*value)$/i, /risk.*reward|r:?r/i] },
-  { field: "notes",      patterns: [/^(note|notes|comment|comments|description|memo)$/i, /note|comment|memo/i] },
-  { field: "session",    patterns: [/^(session|market[_\s]*session)$/i, /session/i] },
-];
 
 export function autoDetectMapping(headers: string[]): Record<string, string> {
   const m: Record<string, string> = {};
@@ -99,9 +132,10 @@ export function detectBroker(headers: string[]): string | null {
   if (h.has("instrument") && h.has("entry date") && (h.has("side") || h.has("net p&l"))) return "topstepx";
   // FTMO / MT5
   if ((h.has("open time") || h.has("open_time")) && (h.has("close price") || h.has("stop loss")) && h.has("volume")) return "ftmo_mt5";
-  // Rithmic
+  // Rithmic (both R|Trader Pro and Apex/TopstepX web export formats)
   if (has([/net.*p.?l/i, /buy.*fill.*price/i, /sell.*fill.*price/i])) return "rithmic";
   if (h.has("net p&l") || h.has("buy fill price") || h.has("buy fill time")) return "rithmic";
+  if (h.has("net p&l") && (h.has("entry date/time") || h.has("entry time")) && h.has("buy/sell")) return "rithmic";
   // Tradovate
   if ((h.has("b/s") || h.has("buy time")) && (h.has("p&l") || h.has("p / l"))) return "tradovate";
   // TradingView
@@ -214,12 +248,57 @@ export function detectSessionFromDateStr(raw: string): string {
 export function normaliseSymbol(pair: string): string {
   if (!pair) return pair;
   const upper = pair.toUpperCase().trim();
-  const m = upper.match(/^([A-Z]{1,5})[FGHJKMNQUVXZ]\d{1,2}$/);
-  return m ? m[1] : upper;
+  // Standard CME/NYMEX format: NQZ4, ESH25, MESZ4, CLM4
+  const m1 = upper.match(/^([A-Z]{1,5})[FGHJKMNQUVXZ]\d{1,2}$/);
+  if (m1) return m1[1];
+  // NinjaTrader 8 format: "NQ 03-25", "ES 12-24" (ROOT MM-YY)
+  const m2 = upper.match(/^([A-Z]{1,5})\s+\d{2}-\d{2}$/);
+  if (m2) return m2[1];
+  return upper;
 }
 
 /** Returns true when a symbol value is a CSV summary/total row, not a real trade. */
 export function isSummarySymbol(sym: string): boolean {
   const SUMMARY = new Set(["total", "total:", "subtotal", "subtotals", "sum", "grand total", "summary", "net"]);
   return SUMMARY.has(sym.trim().toLowerCase());
+}
+
+// ── Futures point value table ─────────────────────────────────────────────────
+
+/**
+ * Dollar value per 1.0 price-point move for common US futures contracts.
+ * Keyed by normalised root symbol (after stripping contract month/year).
+ */
+export const FUTURES_POINT_VALUE: Record<string, number> = {
+  // Equity index futures (CME)
+  ES: 50,   MES: 5,    // E-mini / Micro E-mini S&P 500
+  NQ: 20,   MNQ: 2,    // E-mini / Micro Nasdaq-100
+  YM: 5,    MYM: 0.5,  // E-mini / Micro Dow Jones
+  RTY: 50,  M2K: 5,    // E-mini / Micro Russell 2000
+  // Treasury futures (CBOT)
+  ZB: 1000, ZN: 1000, ZF: 1000, ZT: 2000,
+  // Energy futures (NYMEX)
+  CL: 1000, QM: 500,   // Crude Oil / Mini Crude
+  NG: 10000, QG: 2500, // Natural Gas / Mini Natural Gas
+  RB: 420,             // RBOB Gasoline (42,000 gal × $0.01)
+  HO: 420,             // Heating Oil
+  // Metals (COMEX)
+  GC: 100,  MGC: 10,   // Gold / Micro Gold
+  SI: 5000, SIL: 1000, // Silver / Micro Silver
+  HG: 25000,           // Copper
+  PL: 50, PA: 100,     // Platinum, Palladium
+  // Agriculture (CBOT)
+  ZC: 50, ZS: 50, ZW: 50, // Corn, Soybeans, Wheat ($0.01/bushel × 5000 bu)
+  ZM: 100, ZL: 600,        // Soybean Meal, Soybean Oil
+  // Soft commodities (ICE)
+  CC: 10, KC: 375, CT: 500, SB: 1120, OJ: 150,
+};
+
+/**
+ * Returns the dollar value of a 1.0 price-point move for the given symbol,
+ * or null if the symbol is not in the table (forex, equities, crypto, etc.).
+ */
+export function getPointValue(symbol: string): number | null {
+  const root = normaliseSymbol(symbol.toUpperCase().trim());
+  return FUTURES_POINT_VALUE[root] ?? null;
 }

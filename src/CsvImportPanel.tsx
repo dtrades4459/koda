@@ -36,6 +36,7 @@ function rowToTrade(
   mapping: Record<string, string>,
   defaultStrategy: string,
   dateLocale: "us" | "eu",
+  defaultAccountType: Trade["accountType"],
 ): Trade | null {
   const get = (f: string) => mapping[f] ? row[mapping[f]] : "";
   const rawDate = get("date");
@@ -73,6 +74,7 @@ function rowToTrade(
     comments: [],
     reactions: {},
     source: "csv_import",
+    accountType: defaultAccountType,
   };
   return trade;
 }
@@ -261,8 +263,9 @@ interface CsvImportPanelProps {
   inp: React.CSSProperties;
   sel: React.CSSProperties;
   lbl: React.CSSProperties;
+  defaultAccountType?: Trade["accountType"];
 }
-export function CsvImportPanel({ existingTrades, onImport, onClose, allStrategyNames, C, inp, sel, lbl }: CsvImportPanelProps) {
+export function CsvImportPanel({ existingTrades, onImport, onClose, allStrategyNames, C, inp, sel, lbl, defaultAccountType }: CsvImportPanelProps) {
   const [fileName, setFileName] = useState("");
   const [headers, setHeaders] = useState<string[]>([]);
   const [rows, setRows] = useState<Record<string, string>[]>([]);
@@ -272,6 +275,7 @@ export function CsvImportPanel({ existingTrades, onImport, onClose, allStrategyN
   const [activePreset, setActivePreset] = useState<string | null>(null);
   const [dateLocale, setDateLocale] = useState<"us" | "eu">("us");
   const [grossNet, setGrossNet] = useState<"net" | "gross">("net");
+  const [accountType, setAccountType] = useState<Trade["accountType"]>(defaultAccountType ?? "personal");
   // Analytics reveal
   const [revealStats, setRevealStats] = useState<ImportStats | null>(null);
   const [revealTrades, setRevealTrades] = useState<Trade[]>([]);
@@ -419,7 +423,7 @@ export function CsvImportPanel({ existingTrades, onImport, onClose, allStrategyN
       })
     : cappedRows;
 
-  const allParsed = filteredRows.map(r => rowToTrade(r, mapping, defaultStrategy, dateLocale));
+  const allParsed = filteredRows.map(r => rowToTrade(r, mapping, defaultStrategy, dateLocale, accountType));
   const previewTrades = allParsed.filter((t): t is Trade => t !== null);
   const invalidCount = allParsed.length - previewTrades.length;
   const uniquePreview = previewTrades.filter(t => !existingKeys.has(tradeKey(t)));
@@ -598,8 +602,19 @@ export function CsvImportPanel({ existingTrades, onImport, onClose, allStrategyN
             )}
           </div>
 
-          {/* Import options: date locale + gross/net */}
+          {/* Import options: account type + date locale + gross/net */}
           <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
+            <div>
+              <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "6px" }}>Account type</div>
+              <div style={{ display: "flex", gap: "6px" }}>
+                {(["personal", "funded", "demo"] as const).map(at => (
+                  <button key={at} onClick={() => setAccountType(at)}
+                    style={{ padding: "6px 12px", border: `1px solid ${accountType === at ? C.text : C.border2}`, borderRadius: "999px", background: accountType === at ? C.text : "transparent", color: accountType === at ? C.bg : C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                    {at}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div>
               <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "6px" }}>Date format</div>
               <div style={{ display: "flex", gap: "6px" }}>

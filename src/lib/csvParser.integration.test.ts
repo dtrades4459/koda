@@ -14,8 +14,13 @@ import {
   normalizeBias,
   normalizeOutcome,
   normalizeDate,
+  normaliseSymbol,
   parseNum,
   detectSessionFromDateStr,
+  findHeaderRowIndex,
+  scoreHeaderRow,
+  getPointValue,
+  isSummarySymbol,
 } from "./csvParser";
 
 /** Helper: load a fixture file from the __fixtures__ directory. */
@@ -29,7 +34,7 @@ function mapRow(
   mapping: Record<string, string>
 ): {
   pair: string;
-  date: string;
+  date: string | null;
   bias: string;
   outcome: string;
   pnl: number;
@@ -150,5 +155,316 @@ describe("Rithmic CSV integration", () => {
 
     expect(trade1.session).toBe("NY"); // 09:35
     expect(trade3.session).toBe("NY"); // 13:05
+  });
+});
+
+// ── NinjaTrader 8 fixture (with preamble) ────────────────────────────────────
+
+describe("NinjaTrader 8 CSV integration (preamble detection)", () => {
+  const csv = loadFixture("ninjatrader8-export.csv");
+  const { headers, rows } = parseCSV(csv);
+
+  it("skips preamble rows and detects the real header", () => {
+    // The header must contain 'Instrument', not the report title
+    expect(headers).toContain("Instrument");
+    expect(headers).toContain("Direction");
+    expect(headers).toContain("Entry time");
+    expect(headers).toContain("Net profit");
+  });
+
+  it("parses all 3 data rows (preamble rows excluded)", () => {
+    expect(rows).toHaveLength(3);
+  });
+
+  it("detects broker as ninjatrader8", () => {
+    expect(detectBroker(headers)).toBe("ninjatrader8");
+  });
+
+  it("maps first row (NQ long win) correctly", () => {
+    const m = autoDetectMapping(headers);
+    const trade = mapRow(rows[0], m);
+
+    expect(normaliseSymbol(trade.pair)).toBe("NQ");
+    expect(trade.date).toBe("2024-03-15");
+    expect(trade.pnl).toBeCloseTo(1012.50);
+    expect(trade.bias).toBe("Bullish");
+    expect(trade.outcome).toBe("Win");
+    expect(trade.session).toBe("NY"); // 9:31 AM
+  });
+
+  it("maps second row (ES short win) correctly", () => {
+    const m = autoDetectMapping(headers);
+    const trade = mapRow(rows[1], m);
+
+    expect(normaliseSymbol(trade.pair)).toBe("ES");
+    expect(trade.bias).toBe("Bearish");
+    expect(trade.pnl).toBeCloseTo(312.50);
+    expect(trade.outcome).toBe("Win");
+  });
+
+  it("maps third row (NQ loss) correctly", () => {
+    const m = autoDetectMapping(headers);
+    const trade = mapRow(rows[2], m);
+
+    expect(trade.pnl).toBeCloseTo(-600.00);
+    expect(trade.outcome).toBe("Loss");
+  });
+});
+
+// ── MT4 fixture ──────────────────────────────────────────────────────────────
+
+describe("MT4 CSV integration", () => {
+  const csv = loadFixture("mt4-export.csv");
+  const { headers, rows } = parseCSV(csv);
+
+  it("parses all 3 data rows", () => {
+    expect(rows).toHaveLength(3);
+  });
+
+  it("detects broker as mt4", () => {
+    expect(detectBroker(headers)).toBe("mt4");
+  });
+
+  it("auto-maps key fields", () => {
+    const m = autoDetectMapping(headers);
+    expect(m.pair).toBe("Symbol");
+    expect(m.date).toBe("Open Time");
+    expect(m.pnl).toBe("Profit");
+    expect(m.entryPrice).toBe("Open Price");
+    expect(m.slPrice).toBe("S / L");
+    expect(m.tpPrice).toBe("T / P");
+  });
+
+  it("maps first row (EURUSD buy win) correctly", () => {
+    const m = autoDetectMapping(headers);
+    const trade = mapRow(rows[0], m);
+
+    expect(trade.pair).toBe("EURUSD");
+    expect(trade.date).toBe("2024-03-15");
+    expect(trade.pnl).toBeCloseTo(27.0);
+    expect(trade.bias).toBe("Bullish");
+    expect(trade.outcome).toBe("Win");
+  });
+
+  it("maps third row (USDJPY loss) correctly", () => {
+    const m = autoDetectMapping(headers);
+    const trade = mapRow(rows[2], m);
+
+    expect(trade.pnl).toBeCloseTo(-43.0);
+    expect(trade.outcome).toBe("Loss");
+  });
+
+  it("parses MT4 dot-delimited dates correctly (EU locale)", () => {
+    // MT4 exports "2024.03.15" format — should parse as 2024-03-15
+    expect(normalizeDate("2024.03.15 09:31:00", "eu")).toBe("2024-03-15");
+  });
+});
+
+// ── FTMO / MT5 fixture ───────────────────────────────────────────────────────
+
+describe("FTMO / MT5 CSV integration", () => {
+  const csv = loadFixture("ftmo-mt5-export.csv");
+  const { headers, rows } = parseCSV(csv);
+
+  it("parses all 3 data rows", () => {
+    expect(rows).toHaveLength(3);
+  });
+
+  it("detects broker as ftmo_mt5", () => {
+    expect(detectBroker(headers)).toBe("ftmo_mt5");
+  });
+
+  it("auto-maps key fields", () => {
+    const m = autoDetectMapping(headers);
+    expect(m.pair).toBe("Symbol");
+    expect(m.date).toBe("Open Time");
+    expect(m.pnl).toBe("Profit");
+  });
+
+  it("maps first row (EURUSD win) correctly", () => {
+    const m = autoDetectMapping(headers);
+    const trade = mapRow(rows[0], m);
+
+    expect(trade.pair).toBe("EURUSD");
+    expect(trade.pnl).toBeCloseTo(27.0);
+    expect(trade.outcome).toBe("Win");
+    expect(trade.bias).toBe("Bullish");
+  });
+});
+
+// ── TradingView fixture ──────────────────────────────────────────────────────
+
+describe("TradingView CSV integration", () => {
+  const csv = loadFixture("tradingview-export.csv");
+  const { headers, rows } = parseCSV(csv);
+
+  it("detects broker as tradingview", () => {
+    expect(detectBroker(headers)).toBe("tradingview");
+  });
+
+  it("auto-maps key fields", () => {
+    const m = autoDetectMapping(headers);
+    expect(m.date).toBe("Date/Time");
+    expect(m.pnl).toBe("Profit");
+    expect(m.bias).toBe("Type");
+  });
+
+  it("maps exit rows with pnl", () => {
+    const m = autoDetectMapping(headers);
+    // row index 1 is the first exit row (Long Exit with Profit = 650.00)
+    const exitRow = rows.find(r => (r["Profit"] || "") !== "" && parseNum(r["Profit"] || "") !== 0);
+    if (exitRow) {
+      const trade = mapRow(exitRow, m);
+      expect(trade.pnl).toBeCloseTo(650.0);
+      expect(trade.outcome).toBe("Win");
+    }
+  });
+});
+
+// ── TopstepX fixture ─────────────────────────────────────────────────────────
+
+describe("TopstepX CSV integration", () => {
+  const csv = loadFixture("topstepx-export.csv");
+  const { headers, rows } = parseCSV(csv);
+
+  it("parses all 3 data rows", () => {
+    expect(rows).toHaveLength(3);
+  });
+
+  it("detects broker as topstepx", () => {
+    expect(detectBroker(headers)).toBe("topstepx");
+  });
+
+  it("auto-maps key fields", () => {
+    const m = autoDetectMapping(headers);
+    expect(m.pair).toBe("Instrument");
+    expect(m.date).toBe("Entry Date");
+    expect(m.pnl).toBe("Net P&L");
+    expect(m.bias).toBe("Side");
+  });
+
+  it("maps first row (NQ long win) correctly", () => {
+    const m = autoDetectMapping(headers);
+    const trade = mapRow(rows[0], m);
+
+    expect(trade.pair).toBe("NQ");
+    expect(trade.date).toBe("2024-03-15");
+    expect(trade.pnl).toBeCloseTo(962.50);
+    expect(trade.bias).toBe("Bullish");
+    expect(trade.session).toBe("NY");
+  });
+});
+
+// ── Preamble detection unit tests ────────────────────────────────────────────
+
+describe("findHeaderRowIndex / preamble detection", () => {
+  it("returns 0 for a normal CSV with no preamble", () => {
+    const lines = [
+      ["Symbol", "Date", "P&L", "Direction"],
+      ["NQ", "2024-03-15", "500", "Long"],
+    ];
+    expect(findHeaderRowIndex(lines)).toBe(0);
+  });
+
+  it("skips a single-cell title row", () => {
+    const lines = [
+      ["NinjaTrader Account Performance Report"],
+      ["Instrument", "Direction", "Entry time", "Net profit"],
+      ["NQ 03-25", "Long", "3/15/2024 9:31 AM", "1012.50"],
+    ];
+    expect(findHeaderRowIndex(lines)).toBe(1);
+  });
+
+  it("skips multiple preamble rows", () => {
+    const lines = [
+      ["Account Statement Export"],
+      ["Account: SIM101"],
+      ["Symbol", "Open Time", "Profit", "Direction", "Volume"],
+      ["EURUSD", "2024.03.15 09:31:00", "27.00", "buy", "0.10"],
+    ];
+    expect(findHeaderRowIndex(lines)).toBe(2);
+  });
+
+  it("scoreHeaderRow gives a higher score to header-like rows", () => {
+    const titleScore = scoreHeaderRow(["NinjaTrader Account Performance Report for SIM101"]);
+    const headerScore = scoreHeaderRow(["Instrument", "Direction", "Entry time", "Net profit"]);
+    expect(headerScore).toBeGreaterThan(titleScore);
+  });
+});
+
+// ── normaliseSymbol unit tests ────────────────────────────────────────────────
+
+describe("normaliseSymbol", () => {
+  it("strips month+year from standard futures codes", () => {
+    expect(normaliseSymbol("NQZ4")).toBe("NQ");
+    expect(normaliseSymbol("ESH25")).toBe("ES");
+    expect(normaliseSymbol("CLM4")).toBe("CL");
+    expect(normaliseSymbol("GCQ24")).toBe("GC");
+    expect(normaliseSymbol("MESZ4")).toBe("MES");
+    expect(normaliseSymbol("MNQH25")).toBe("MNQ");
+  });
+
+  it("leaves forex pairs unchanged", () => {
+    expect(normaliseSymbol("EURUSD")).toBe("EURUSD");
+    expect(normaliseSymbol("GBPJPY")).toBe("GBPJPY");
+    expect(normaliseSymbol("USDJPY")).toBe("USDJPY");
+  });
+
+  it("leaves stock tickers unchanged", () => {
+    expect(normaliseSymbol("AAPL")).toBe("AAPL");
+    expect(normaliseSymbol("TSLA")).toBe("TSLA");
+    expect(normaliseSymbol("SPY")).toBe("SPY");
+  });
+
+  it("leaves crypto unchanged", () => {
+    expect(normaliseSymbol("BTCUSD")).toBe("BTCUSD");
+  });
+
+  it("handles lowercase input", () => {
+    expect(normaliseSymbol("nqz4")).toBe("NQ");
+    expect(normaliseSymbol("eurusd")).toBe("EURUSD");
+  });
+});
+
+// ── getPointValue unit tests ──────────────────────────────────────────────────
+
+describe("getPointValue", () => {
+  it("returns correct values for common futures", () => {
+    expect(getPointValue("ES")).toBe(50);
+    expect(getPointValue("NQ")).toBe(20);
+    expect(getPointValue("MES")).toBe(5);
+    expect(getPointValue("MNQ")).toBe(2);
+    expect(getPointValue("CL")).toBe(1000);
+    expect(getPointValue("GC")).toBe(100);
+  });
+
+  it("normalises contract codes before lookup", () => {
+    expect(getPointValue("NQZ4")).toBe(20);
+    expect(getPointValue("ESH25")).toBe(50);
+    expect(getPointValue("CLM4")).toBe(1000);
+  });
+
+  it("returns null for forex, stocks, and crypto", () => {
+    expect(getPointValue("EURUSD")).toBeNull();
+    expect(getPointValue("AAPL")).toBeNull();
+    expect(getPointValue("BTCUSD")).toBeNull();
+  });
+});
+
+// ── isSummarySymbol unit tests ────────────────────────────────────────────────
+
+describe("isSummarySymbol", () => {
+  it("identifies summary rows", () => {
+    expect(isSummarySymbol("TOTAL")).toBe(true);
+    expect(isSummarySymbol("total:")).toBe(true);
+    expect(isSummarySymbol("Subtotal")).toBe(true);
+    expect(isSummarySymbol("Grand Total")).toBe(true);
+    expect(isSummarySymbol("Net")).toBe(true);
+  });
+
+  it("does not flag real symbols", () => {
+    expect(isSummarySymbol("NQ")).toBe(false);
+    expect(isSummarySymbol("EURUSD")).toBe(false);
+    expect(isSummarySymbol("ES")).toBe(false);
   });
 });
