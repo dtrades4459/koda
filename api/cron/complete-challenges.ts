@@ -4,7 +4,7 @@
 
 export const config = { runtime: "nodejs" };
 
-import { getAdminClient, getUserIdFromJwt } from "../lib/supabaseAdmin";
+import { getAdminClient, getUserIdFromJwt } from "../lib/supabaseAdmin.js";
 
 type Req = { method?: string; headers: Record<string, string | string[] | undefined> };
 type Res = { status(n: number): Res; json(d: unknown): Res; end(): void; setHeader(k: string, v: string): void };

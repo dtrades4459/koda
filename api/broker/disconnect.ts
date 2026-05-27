@@ -11,8 +11,8 @@
 
 export const config = { runtime: "nodejs" };
 
-import { getAdminClient, getUserIdFromJwt } from "../lib/supabaseAdmin";
-import { checkRateLimit, getClientIp } from "../lib/rateLimit";
+import { getAdminClient, getUserIdFromJwt } from "../lib/supabaseAdmin.js";
+import { checkRateLimit, getClientIp } from "../lib/rateLimit.js";
 
 const ALLOWED_ORIGINS = new Set([
   "https://tradrjournal.xyz",

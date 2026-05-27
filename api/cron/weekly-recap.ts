@@ -1,9 +1,11 @@
 // api/cron/weekly-recap.ts
 // Runs Sunday 20:00 UTC — sends weekly recap email to each user with trades this week.
 
-import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { createClient } from "@supabase/supabase-js";
-import { sendEmail, weeklyRecapHtml } from "../lib/email";
+import { sendEmail, weeklyRecapHtml } from "../lib/email.js";
+
+type VercelRequest  = { method?: string; headers: Record<string, string | string[] | undefined>; query: Record<string, string | string[] | undefined> };
+type VercelResponse = { status(n: number): VercelResponse; json(d: unknown): VercelResponse; end(): void };
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,

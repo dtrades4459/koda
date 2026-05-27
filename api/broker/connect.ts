@@ -12,9 +12,9 @@
 
 export const config = { runtime: "nodejs" };
 
-import { getAdminClient, getUserIdFromJwt } from "../lib/supabaseAdmin";
-import { encrypt } from "../lib/cryptoUtils";
-import { checkRateLimit, getClientIp } from "../lib/rateLimit";
+import { getAdminClient, getUserIdFromJwt } from "../lib/supabaseAdmin.js";
+import { encrypt } from "../lib/cryptoUtils.js";
+import { checkRateLimit, getClientIp } from "../lib/rateLimit.js";
 
 const DEMO_BASE = "https://demo.tradovateapi.com/v1";
 const LIVE_BASE = "https://live.tradovateapi.com/v1";

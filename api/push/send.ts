@@ -1,5 +1,6 @@
 // api/push/send.ts — send a push to a specific user (called internally)
-import type { VercelRequest, VercelResponse } from "@vercel/node";
+type VercelRequest  = { method?: string; headers: Record<string, string | string[] | undefined>; body: Record<string, unknown> };
+type VercelResponse = { status(n: number): VercelResponse; json(d: unknown): VercelResponse; end(): void };
 import { createClient } from "@supabase/supabase-js";
 import webpush from "web-push";
 

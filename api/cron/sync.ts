@@ -22,9 +22,9 @@
 
 export const config = { runtime: "nodejs" };
 
-import { tryDecrypt, encrypt } from "../lib/cryptoUtils";
-import { getAdminClient, getUserIdFromJwt } from "../lib/supabaseAdmin";
-import { checkRateLimit, getClientIp } from "../lib/rateLimit";
+import { tryDecrypt, encrypt } from "../lib/cryptoUtils.js";
+import { getAdminClient, getUserIdFromJwt } from "../lib/supabaseAdmin.js";
+import { checkRateLimit, getClientIp } from "../lib/rateLimit.js";
 
 // ── Tradovate endpoints ───────────────────────────────────────────────────────
 const DEMO_BASE = "https://demo.tradovateapi.com/v1";
@@ -419,12 +419,12 @@ export default async function handler(req: any, res: any) {
     if (error) return res.status(500).json({ error: error.message });
     if (!conns?.length) return res.status(200).json({ ok: true, synced: 0 });
 
-    const results = await runWithConcurrency(
+    const results = (await runWithConcurrency(
       (conns ?? []).map((conn) => () => syncConnection(conn)),
       10
-    );
+    )) as { tradesNew: number; error?: unknown }[];
 
-    const totalNew    = results.reduce((s, r) => s + r.tradesNew, 0);
+    const totalNew    = results.reduce((s, r) => s + (r.tradesNew ?? 0), 0);
     const errored     = results.filter(r => r.error);
 
     return res.status(200).json({

@@ -8,7 +8,7 @@ const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SE
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") return res.status(405).end();
 
-  const auth = req.headers.authorization;
+  const auth = req.headers.authorization as string | undefined;
   if (!auth?.startsWith("Bearer ")) return res.status(401).json({ error: "No token" });
 
   const { data: { user }, error: authErr } = await createClient(
