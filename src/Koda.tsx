@@ -17,7 +17,7 @@ import { STRATEGIES, STRATEGY_NAMES, getAllStrategiesMap, addExtraStrategies } f
 import { useTradovate } from "./hooks/useTradovate";
 
 import type { TradeComment, ReactionMap, Trade, Profile, CircleMember, Circle, Insight, StrategyDef } from "./types";
-import { AvatarCircle, Badge, SectionKicker, StrategyPill, StrategySelect, SubNavDropdown, GearButton, Toast, ToastStack, KodaMarkFilled, KodaMark, CrownIcon, GlassOrb, CornerGlow, GhostWord, TickMotif, TealArrowBtn, Pill, Card, Kicker, Delta, ScreenHeader, IconButton, FloatingInput, EmptyState, outcomeColor, outcomeLetter, stratCode, stratShort, compressImage, MONO, BODY, DISPLAY } from "./shared";
+import { AvatarCircle, Badge, SectionKicker, StrategyPill, StrategySelect, SubNavDropdown, GearButton, Toast, ToastStack, KodaMarkFilled, KodaMark, CrownIcon, GlassOrb, CornerGlow, GhostWord, TickMotif, TealArrowBtn, Pill, Card, Kicker, Delta, ScreenHeader, IconButton, FloatingInput, EmptyState, outcomeColor, outcomeLetter, stratCode, stratShort, compressImage, MONO, BODY, DISPLAY, EmptyTradesState, EmptyInboxState, ErrorOfflineState } from "./shared";
 import type { ToastKind, ToastItem } from "./shared";
 import { TradingCircles } from "./TradingCircles";
 import { FriendsFeed } from "./FriendsFeed";
@@ -276,6 +276,14 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   const [editId, setEditId] = useState<number | null>(null);
   const [filter, setFilter] = useState<{ outcome: string; setup: string; pair: string; strategy: string; dateFrom: string; dateTo: string }>({ outcome: "", setup: "", pair: "", strategy: "", dateFrom: "", dateTo: "" });
   const [loading, setLoading] = useState(true);
+  const [isOnline, setIsOnline] = useState(() => navigator.onLine);
+  useEffect(() => {
+    const up = () => setIsOnline(true);
+    const dn = () => setIsOnline(false);
+    window.addEventListener("online", up);
+    window.addEventListener("offline", dn);
+    return () => { window.removeEventListener("online", up); window.removeEventListener("offline", dn); };
+  }, []);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
   const [tradeToShare, setTradeToShare] = useState<Trade | null>(null);
@@ -2556,17 +2564,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
               {filteredTrades.length === 0 ? (
                 trades.length === 0 ? (
                   // True empty — no trades at all yet
-                  <div style={{ textAlign: "center", padding: "72px 0", borderTop: `1px solid ${C.border}` }}>
-                    <div style={{ fontFamily: DISPLAY, fontSize: "clamp(22px, 5vw, 28px)", fontWeight: 500, fontStyle: "italic", color: C.text2, letterSpacing: "-0.02em", marginBottom: "10px" }}>
-                      No trades logged yet.
-                    </div>
-                    <div style={{ fontFamily: BODY, fontSize: "13px", color: C.muted, lineHeight: 1.6, marginBottom: "28px" }}>
-                      Every edge starts with data. Log your first trade.
-                    </div>
-                    <button onClick={() => navigateTo("log")} style={pillPrimary(true)}>
-                      Log a trade →
-                    </button>
-                  </div>
+                  <EmptyTradesState C={C} onLog={() => navigateTo("log")} onSync={() => { setHomeSection("sync"); primaryNav("home"); }} />
                 ) : (
                   // Filters active, nothing matches
                   <div style={{ textAlign: "center", padding: "60px 0", color: C.muted, fontSize: "13px", fontFamily: BODY, fontStyle: "italic" }}>
@@ -3966,6 +3964,11 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
           <LotSizeCalculator C={C} onClose={() => setShowCalc(false)} />
         )}
         {toast && <Toast message={toast} onDone={() => setToast(null)} C={C} />}
+        {!isOnline && (
+          <div style={{ position: "fixed", inset: 0, zIndex: 9000, background: C.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <ErrorOfflineState C={C} onRetry={() => setIsOnline(navigator.onLine)} />
+          </div>
+        )}
         <ToastStack toasts={toastsV2} onDismiss={dismissToast} C={C} />
       </div>
     </div>
