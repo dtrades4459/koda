@@ -26,7 +26,10 @@ export function getAdminClient() {
   _admin = createClient(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
-  return _admin;
+  // TS 5.9 infers .from("unregistered_table") as never when Database generic
+  // propagates through conditional types. Cast to any so api/ files can
+  // query tables not yet in the generated schema without TS2769 errors.
+  return _admin as any;
 }
 
 /**

@@ -376,7 +376,7 @@ export default async function handler(req: any, res: any) {
 
   // ── MANUAL mode: POST with Supabase JWT ────────────────────────────────────
   if (req.method === "POST") {
-    const userId = await getUserIdFromJwt(req.headers["authorization"]);
+    const userId = await getUserIdFromJwt(req.headers["authorization"] as string | undefined);
     if (!userId) return res.status(401).json({ error: "Not authenticated" });
 
     // Rate limit: 10 manual syncs per 10 minutes per user-authenticated IP.

@@ -36,7 +36,7 @@ export default async function handler(req: any, res: any) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
   // ── Auth ────────────────────────────────────────────────────────────────────
-  const userId = await getUserIdFromJwt(req.headers["authorization"]);
+  const userId = await getUserIdFromJwt(req.headers["authorization"] as string | undefined);
   if (!userId) return res.status(401).json({ error: "Not authenticated" });
 
   // ── Rate limit ──────────────────────────────────────────────────────────────

@@ -41,7 +41,7 @@ export default async function handler(req: Req, res: Res) {
     }
   } else if (req.method === "POST") {
     // POST requires a valid Supabase JWT (manual trigger from authenticated UI)
-    const userId = await getUserIdFromJwt(req.headers["authorization"]);
+    const userId = await getUserIdFromJwt(req.headers["authorization"] as string | undefined);
     if (!userId) return res.status(401).json({ error: "Not authenticated" });
   } else {
     return res.status(405).json({ error: "Method not allowed" });
