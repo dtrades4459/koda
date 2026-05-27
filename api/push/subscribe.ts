@@ -16,7 +16,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (authErr || !user) return res.status(401).json({ error: "Invalid token" });
 
   const { endpoint, keys } = req.body as { endpoint: string; keys: { p256dh: string; auth: string } };
-  if (!endpoint || !keys?.p256dh || !keys?.auth) return res.status(400).json({ error: "Invalid subscription" });
+  if (!endpoint || typeof endpoint !== "string" || endpoint.length > 512 || !endpoint.startsWith("https://"))
+    return res.status(400).json({ error: "Invalid endpoint" });
+  if (!keys?.p256dh || !keys?.auth) return res.status(400).json({ error: "Invalid subscription" });
 
   const { error } = await supabase.from("notification_subscriptions").upsert({
     user_id: user.id, endpoint, p256dh: keys.p256dh, auth_key: keys.auth,

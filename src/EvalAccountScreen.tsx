@@ -5,6 +5,7 @@
 
 import { useMemo } from "react";
 import type { Trade, Profile } from "./types";
+import type { Theme } from "./theme";
 import { MONO, BODY, DISPLAY, Kicker, GlassOrb } from "./shared";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -12,14 +13,7 @@ import { MONO, BODY, DISPLAY, Kicker, GlassOrb } from "./shared";
 interface Props {
   profile: Profile;
   trades: Trade[];
-  C: {
-    bg: string; panel: string; panel2: string;
-    border: string; border2: string;
-    text: string; text2: string; muted: string; dim: string;
-    green: string; red: string;
-    accent: string; accentSoft: string;
-    live: string; liveSoft: string;
-  };
+  C: Theme;
   onEditTargets: () => void;
 }
 

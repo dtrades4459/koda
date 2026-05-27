@@ -5,7 +5,7 @@ import { KODA_GLOBAL_CODE } from "./hooks/useCircles";
 import { createChallenge, fetchActiveChallenge, fetchTrophies } from "./data/circlesChallenges";
 import { fetchSharedTrades, reactToSharedTrade, rowToSharedTrade } from "./data/circlesSharedTrades";
 import { SharedTradeCard } from "./components/SharedTradeCard";
-import type { CircleChallenge, ChallengeResult, FeedItem, CircleMessage } from "./types";
+import type { CircleChallenge, ChallengeResult, FeedItem, CircleMessage, CircleMember } from "./types";
 
 export function TradingCircles({ myCircles, circlesView, setCirclesView, activeCircle, setActiveCircle, circleForm, setCircleForm, circleJoinCode, setCircleJoinCode, circleMsg, setCircleMsg, createCircle, joinCircle, publishToCircle, fetchCircleLeaderboard, profile, getMyCode, showToast, wins, losses, total, winRate, totalPnL, pnlPos, weekPnL, weekPnLPos, weekPnLStr, avgRR, streak, STRATEGY_NAMES, C, inp, sel, lbl, pillPrimary, pillGhost, following, followUser, unfollowUser, kickMember, leaveCircle, openProfile, isJoiningCircle, isCreatingCircle, totalPnlDollar, hasDollarData }: any) {
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
@@ -284,7 +284,7 @@ export function TradingCircles({ myCircles, circlesView, setCirclesView, activeC
       if (document.visibilityState === "visible") refresh();
     }, 120_000);
     let unsub = () => {};
-    try { unsub = subscribeToCircle(activeCircle.code, () => { refresh(); }); } catch {}
+    // subscribeToCircle removed — real-time updates via setInterval + Supabase channels below
     const chatChannel = supabase
       .channel(`circle_chat_${activeCircle.code}`)
       .on("postgres_changes" as any, {
@@ -420,7 +420,7 @@ export function TradingCircles({ myCircles, circlesView, setCirclesView, activeC
                 </div>
                 {/* Avatar stack */}
                 <div style={{ display: "flex", marginTop: "18px", alignItems: "center", position: "relative", zIndex: 1 }}>
-                  {(circle.members || []).slice(0, 5).map((m, i) => (
+                  {(circle.members || []).slice(0, 5).map((m: CircleMember, i: number) => (
                     <div key={m.code || i} style={{ width: 34, height: 34, borderRadius: "999px", background: `linear-gradient(135deg, oklch(0.7 0.16 ${200 + i * 30}), oklch(0.5 0.18 ${280 + i * 20}))`, border: `2px solid ${C.bg}`, marginLeft: i === 0 ? 0 : -10, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontFamily: DISPLAY, fontWeight: 600, fontSize: "10px" }}>{(m.name || "?").slice(0, 2).toUpperCase()}</div>
                   ))}
                   {(circle.members?.length || 0) > 5 && (

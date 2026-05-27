@@ -27,7 +27,7 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
   // Get the ISO week label (e.g. "Week 22")
   const now = new Date();
   const startOfWeek = new Date(now);
-  startOfWeek.setDate(now.getDate() - now.getDay()); // Sunday
+  startOfWeek.setDate(now.getDate() - (now.getDay() === 0 ? 7 : now.getDay())); // Sunday
   const endOfWeek = new Date(startOfWeek);
   endOfWeek.setDate(startOfWeek.getDate() + 6);
   const weekLabel = `${startOfWeek.toLocaleDateString("en-US", { month: "short", day: "numeric" })} – ${endOfWeek.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;

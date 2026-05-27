@@ -18,7 +18,7 @@ export function ProfileModal({ handle, myCode, following, followUser, unfollowUs
         const handleRow = await storage.get(`koda_handle_${norm}`, true);
         if (handleRow) {
           try { code = JSON.parse(handleRow.value)?.code || null; } catch {}
-          if (!code) code = handleRow.owner_id || null;
+          if (!code) code = (handleRow as any).owner_id || null;
           setTargetCode(code);
         }
         const profileRow = await storage.get(`koda_profile_pub_${norm}`, true);

@@ -233,7 +233,7 @@ export function LogTradeScreen({
                 onClick={() => {
                   const current = getEmotionTags(form.emotions);
                   const next = active ? current.filter(t => t !== tag.id) : [...current, tag.id];
-                  setForm(f => ({ ...f, emotions: next }));
+                  setForm(f => ({ ...f, emotions: next.join(",") }));
                 }}
                 style={{
                   background: active ? tag.color + "22" : undefined,

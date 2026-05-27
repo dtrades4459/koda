@@ -71,7 +71,8 @@ async function setUserPlan(
     // Still stamp app_metadata so the JWT reflects the plan even if the KV row
     // hasn't been created yet (edge case: purchase before onboarding completes).
   } else {
-    const profile = JSON.parse(data.value);
+    let profile: Record<string, unknown>;
+    try { profile = JSON.parse(data.value); } catch { profile = {}; }
     profile.plan = plan;
     await db.from("user_kv").upsert(
       { user_id: userId, key: "koda_profile", value: JSON.stringify(profile) },
