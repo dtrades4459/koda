@@ -17,7 +17,7 @@ import { STRATEGIES, STRATEGY_NAMES, getAllStrategiesMap, addExtraStrategies } f
 import { useTradovate } from "./hooks/useTradovate";
 
 import type { TradeComment, ReactionMap, Trade, Profile, CircleMember, Circle, Insight, StrategyDef } from "./types";
-import { AvatarCircle, Badge, SectionKicker, StrategyPill, StrategySelect, SubNavDropdown, GearButton, Toast, ToastStack, KodaMarkFilled, KodaMark, CrownIcon, GlassOrb, CornerGlow, GhostWord, TickMotif, TealArrowBtn, Pill, Card, Kicker, Delta, ScreenHeader, IconButton, FloatingInput, EmptyState, outcomeColor, outcomeLetter, stratCode, stratShort, compressImage, MONO, BODY, DISPLAY, EmptyTradesState, ErrorOfflineState } from "./shared";
+import { AvatarCircle, Badge, SectionKicker, StrategyPill, StrategySelect, SubNavDropdown, GearButton, Toast, ToastStack, KodaMarkFilled, KodaMark, CrownIcon, GlassOrb, CornerGlow, GhostWord, TickMotif, TealArrowBtn, Pill, Card, Kicker, Delta, ScreenHeader, IconButton, FloatingInput, EmptyState, outcomeColor, outcomeLetter, stratCode, stratShort, compressImage, MONO, BODY, DISPLAY, EmptyTradesState, ErrorOfflineState, CelebrationOverlay } from "./shared";
 import type { ToastKind, ToastItem } from "./shared";
 import { TradingCircles } from "./TradingCircles";
 import { FriendsFeed } from "./FriendsFeed";
@@ -311,6 +311,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   // ── Toast v2 (stacked, 4 kinds) ──
   const [toastsV2, setToastsV2] = useState<ToastItem[]>([]);
   const toastIdRef = useRef(0);
+  const [celebration, setCelebration] = useState<{ kind: "trade" | "streak" | "pro"; streakCount?: number; tradeStats?: { winRate: number; avgR: number; streak: number } } | null>(null);
   const showToastV2 = useCallback((kind: ToastKind, title: string, body?: string) => {
     const id = ++toastIdRef.current;
     setToastsV2(prev => [...prev, { id, kind, title, body, ts: Date.now() }]);
@@ -412,7 +413,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     if (params.get("upgraded") === "1") {
       const cid = params.get("cid") ?? "";
       setProfile(p => ({ ...p, plan: "pro" as const, ...(cid ? { stripeCustomerId: cid } : {}) }));
-      showToast("⚡ You're on Kōda Pro — welcome!");
+      setCelebration({ kind: "pro" });
       window.history.replaceState({}, "", window.location.pathname);
     }
     if (params.get("cancelled") === "1") {
@@ -888,6 +889,12 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     await saveTrades(u); setForm(EMPTY_TRADE);
     phCapture(editId ? "trade_edited" : "trade_logged", { outcome: base.outcome, pair: base.pair, total_trades: u.length });
     showToast("Trade saved");
+    const totalSaved = u.length;
+    const winsSaved = u.filter((t: Trade) => t.outcome === "Win").length;
+    const wrSaved = Math.round(winsSaved / Math.max(totalSaved, 1) * 100);
+    const avgRSaved = parseFloat((u.reduce((s: number, t: Trade) => s + (parseFloat(t.rr) || 0), 0) / Math.max(totalSaved, 1)).toFixed(1));
+    // TODO: streak celebration — fire when streakCount hits 3/7/14/30/100 milestone (needs user_kv dedup)
+    setCelebration({ kind: "trade", tradeStats: { winRate: wrSaved, avgR: avgRSaved, streak: streak.count } });
     setTimeout(() => setSavingTrade(false), 1500);
     // Go back if we have history, otherwise land on journal
     setViewHistory(h => { if (h.length > 0) { setView(h[h.length - 1]); return h.slice(0, -1); } setView("history"); return h; });
@@ -3964,6 +3971,16 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
           <LotSizeCalculator C={C} onClose={() => setShowCalc(false)} />
         )}
         {toast && <Toast message={toast} onDone={() => setToast(null)} C={C} />}
+        {celebration && (
+          <CelebrationOverlay
+            C={C}
+            kind={celebration.kind}
+            streakCount={celebration.streakCount}
+            tradeStats={celebration.tradeStats}
+            onDismiss={() => setCelebration(null)}
+            onViewTrade={celebration.kind === "trade" ? () => { setCelebration(null); navigateTo("history"); } : undefined}
+          />
+        )}
         {!isOnline && (
           <div style={{ position: "fixed", inset: 0, zIndex: 9999, background: C.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
             <ErrorOfflineState C={C} onRetry={() => setIsOnline(navigator.onLine)} />
