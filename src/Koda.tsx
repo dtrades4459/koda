@@ -408,14 +408,12 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     Object.fromEntries(STRATEGY_NAMES.map(s => [s, { minCount: Math.ceil(STRATEGIES[s].checklist.length * 0.75), required: [] }]))
   );
 
-  // Run once on mount. Using a ref guard instead of [] + suppression so the
-  // linter is satisfied — the ref prevents double-execution in Strict Mode.
   const _loadedRef = useRef(false);
   useEffect(() => {
     if (_loadedRef.current) return;
     _loadedRef.current = true;
     void loadAll();
-  });
+  }, []);
 
   useEffect(() => {
     // Use fontSize instead of zoom — zoom is non-standard and causes the
@@ -424,7 +422,6 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     try { localStorage.setItem("koda_font_scale", String(fontScale)); } catch {}
   }, [fontScale]);
 
-  // ── Stripe return URL handler ───────────────────────────────────────────────
   const _stripeHandledRef = useRef(false);
   useEffect(() => {
     if (_stripeHandledRef.current) return;
@@ -440,7 +437,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
       showToast("No worries — you're still on the free plan.");
       window.history.replaceState({}, "", window.location.pathname);
     }
-  }); // No deps — ref guard inside the block ensures single execution
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── ?join= deep-link handler ────────────────────────────────────────────────
   // tradrjournal.xyz/?join=TRADR-ABCD-EFGH → open join flow pre-filled
@@ -779,7 +776,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     circleLatestMsgs,
     isCreatingCircle, isJoiningCircle,
     saveMyCircles, myMemberRecord, readCircleMembers,
-    createCircle, joinCircle, kickMember, leaveCircle,
+    createCircle, joinCircle, joinCircleByCode, kickMember, leaveCircle,
     publishToCircle, fetchCircleLeaderboard,
   } = useCircles({
     loading,
@@ -1152,7 +1149,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `tradr-export-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `koda-export-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
     showToast("Export downloaded");
@@ -1171,7 +1168,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `tradr-trades-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `koda-trades-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
     showToast("CSV downloaded");
@@ -1430,17 +1427,9 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
           };
           await saveProfile(updated);
           // Auto-join Kōda Global circle for every new user (silent — no error on failure).
-          if (LEGACY_GLOBAL_CODE && !myCircles.find((c: Circle) => c.code === LEGACY_GLOBAL_CODE)) {
-            try {
-              const res = await storage.get("koda_circle_" + LEGACY_GLOBAL_CODE, true);
-              if (res) {
-                const circle = JSON.parse(res.value);
-                const me = myMemberRecord();
-                await storage.set(`koda_circle_member_${LEGACY_GLOBAL_CODE}_${me.code}`, JSON.stringify(me), true);
-                const members = await readCircleMembers(LEGACY_GLOBAL_CODE, [me]);
-                await saveMyCircles([...myCircles, { ...circle, members, isOwner: false }]);
-              }
-            } catch { /* silently ignore — circle may not exist yet */ }
+          // Using KODA_GLOBAL_CODE; joinCircleByCode auto-creates the global record if absent.
+          if (!myCircles.find((c: Circle) => c.code === KODA_GLOBAL_CODE)) {
+            try { await joinCircleByCode(KODA_GLOBAL_CODE); } catch { /* silently ignore */ }
           }
           setView("log");
           // Show the first-run tour unless they've already seen it
@@ -1458,10 +1447,10 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
         ::-webkit-scrollbar{width:3px;}::-webkit-scrollbar-thumb{background:${C.border2};border-radius:2px;}
         input::placeholder,textarea::placeholder{color:${C.dim};font-weight:400;}
         input:focus,textarea:focus,select:focus{border-bottom-color:${C.text}!important;}
-        .tradr-app input[type=date]::-webkit-calendar-picker-indicator{filter:${darkMode ? "invert(0.7)" : "invert(0.3)"};}
-        .tradr-app select option{background:${C.panel};color:${C.text};}
-        .tradr-app button:hover:not(:disabled){opacity:0.88;}
-        .tradr-app button:active:not(:disabled){transform:scale(0.98);}
+        .koda-app input[type=date]::-webkit-calendar-picker-indicator{filter:${darkMode ? "invert(0.7)" : "invert(0.3)"};}
+        .koda-app select option{background:${C.panel};color:${C.text};}
+        .koda-app button:hover:not(:disabled){opacity:0.88;}
+        .koda-app button:active:not(:disabled){transform:scale(0.98);}
         .row-hvr{cursor:pointer;transition:background 0.15s,opacity 0.15s;}
         .row-hvr:hover{opacity:0.75;}
         .check-row:hover .ca{opacity:1!important;}
@@ -1483,7 +1472,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
       `}</style>
 
       {/* ── PAGE FRAME (responsive: 4-tier viewport scaling) ── */}
-      <div className="tradr-app" ref={swipeRef}
+      <div className="koda-app" ref={swipeRef}
         style={{
           width: "100%",
           maxWidth: viewport === "phone" ? "none" : viewport === "tablet" ? "720px" : viewport === "desktop" ? "1440px" : "1680px",
@@ -3130,7 +3119,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
 
                   {/* Share button */}
                   <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                    <button onClick={() => { const txt = `${profile.handle||"Trader"} · ${total} trades · ${winRate}% WR · ${pnlPos?"+":""}${totalPnL}R\n\n@tradrjournal https://tradrjournal.xyz`; window.open(`https://x.com/intent/post?text=${encodeURIComponent(txt)}`, "_blank", "noopener"); }} style={{ display: "flex", alignItems: "center", gap: "6px", background: "transparent", border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "8px 14px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.08em", color: C.muted }}>
+                    <button onClick={() => { const txt = `${profile.handle||"Trader"} · ${total} trades · ${winRate}% WR · ${pnlPos?"+":""}${totalPnL}R\n\n#Kōda https://tradrjournal.xyz`; window.open(`https://x.com/intent/post?text=${encodeURIComponent(txt)}`, "_blank", "noopener"); }} style={{ display: "flex", alignItems: "center", gap: "6px", background: "transparent", border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "8px 14px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.08em", color: C.muted }}>
                       <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.911-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
                       Share Stats
                     </button>
@@ -4045,28 +4034,6 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
           </div>
         )}
       </div>
-    </div>
-  );
-}
-
-// ─── HOME SECTION TABS ───────────────────────────────────────────────────────
-// Replaces the emoji-dropdown with editorial mono text tabs.
-function HomeSectionTabs({ homeSection, setHomeSection, C }: { homeSection: string; setHomeSection: (s: string) => void; C: typeof DARK }) {
-  const SECTIONS = [
-    { id: "feed", label: "Overview" },
-    { id: "analytics", label: "Analytics" },
-    { id: "ai", label: "Execution" },
-    { id: "rules", label: "Rules" },
-    { id: "sync", label: "Sync" },
-  ];
-  return (
-    <div style={{ display: "flex", gap: "22px", fontFamily: MONO, fontSize: "11px", letterSpacing: "0.08em", textTransform: "uppercase", borderBottom: `1px solid ${C.border}`, paddingBottom: "10px", overflowX: "auto", flexWrap: "wrap" }}>
-      {SECTIONS.map(s => (
-        <button key={s.id} onClick={() => setHomeSection(s.id)}
-          style={{ background: "none", border: "none", padding: 0, color: homeSection === s.id ? C.text : C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "11px", letterSpacing: "0.08em", textTransform: "uppercase", borderBottom: homeSection === s.id ? `1px solid ${C.text}` : "1px solid transparent", paddingBottom: "4px", marginBottom: "-11px", whiteSpace: "nowrap" }}>
-          {s.label}
-        </button>
-      ))}
     </div>
   );
 }

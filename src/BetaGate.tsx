@@ -44,8 +44,8 @@ function KodaMarkFilled({ size = 28 }: { size?: number }) {
     <svg width={size} height={size} viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style={{ display: "block", flexShrink: 0 }}>
       <rect width="100" height="100" rx="20" fill={PANEL}/>
       <text x="50" y="67" textAnchor="middle" fill={TEXT}
-        fontFamily="-apple-system, BlinkMacSystemFont, 'Inter', sans-serif"
-        fontWeight="700" fontSize="52" letterSpacing="-2">tr</text>
+        fontFamily="'Geist Mono', 'IBM Plex Mono', ui-monospace, monospace"
+        fontWeight="700" fontSize="52" letterSpacing="-2">kd</text>
     </svg>
   );
 }
