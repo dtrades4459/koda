@@ -81,19 +81,19 @@ export function TourOverlay({ C, onDone }: { C: any; onDone: () => void }) {
         <div style={{ width: "52px", height: "52px", borderRadius: "14px", background: C.panel, border: `1px solid ${C.border2}`, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "18px", fontFamily: "system-ui, sans-serif", fontSize: "22px" }}>
           {current.icon}
         </div>
-        <div style={{ fontFamily: "var(--font-display, Georgia, serif)", fontSize: "22px", fontWeight: 500, color: C.text, letterSpacing: "-0.02em", marginBottom: "10px" }}>
+        <div style={{ fontFamily: DISPLAY, fontSize: "22px", fontWeight: 500, color: C.text, letterSpacing: "-0.02em", marginBottom: "10px" }}>
           {current.title}
         </div>
-        <div style={{ fontFamily: "var(--font-body, system-ui, sans-serif)", fontSize: "14px", color: C.muted, lineHeight: 1.6, marginBottom: "32px" }}>
+        <div style={{ fontFamily: BODY, fontSize: "14px", color: C.muted, lineHeight: 1.6, marginBottom: "32px" }}>
           {current.body}
         </div>
         <div style={{ display: "flex", gap: "10px" }}>
           <button onClick={finish}
-            style={{ flex: 1, padding: "13px", background: "transparent", border: `1px solid ${C.border2}`, borderRadius: "10px", color: C.muted, cursor: "pointer", fontFamily: "var(--font-mono, monospace)", fontSize: "11px", letterSpacing: "0.12em", textTransform: "uppercase" }}>
+            style={{ flex: 1, padding: "13px", background: "transparent", border: `1px solid ${C.border2}`, borderRadius: "10px", color: C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "11px", letterSpacing: "0.12em", textTransform: "uppercase" }}>
             Skip
           </button>
           <button onClick={() => isLast ? finish() : setStep(s => s + 1)}
-            style={{ flex: 2, padding: "13px", background: C.text, border: "none", borderRadius: "10px", color: C.bg, cursor: "pointer", fontFamily: "var(--font-mono, monospace)", fontSize: "11px", letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: 500 }}>
+            style={{ flex: 2, padding: "13px", background: C.text, border: "none", borderRadius: "10px", color: C.bg, cursor: "pointer", fontFamily: MONO, fontSize: "11px", letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: 500 }}>
             {isLast ? "Let's go →" : "Next →"}
           </button>
         </div>
