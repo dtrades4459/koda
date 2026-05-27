@@ -6,11 +6,10 @@ import Koda from "./Koda";
 import { BetaGate, betaEnabled, isBetaUnlocked } from "./BetaGate";
 import { DARK } from "./theme";
 import type { Theme } from "./theme";
-import { KodaMark, FloatingInput, TealArrowBtn, MONO, BODY } from "./shared";
+import { KodaMark, FloatingInput, TealArrowBtn, GlassOrb, GhostWord, Kicker, MONO, BODY, DISPLAY } from "./shared";
 
 // â”€â”€â”€ THEME (dark-only for auth surfaces) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const C = DARK;
-const DISPLAY = BODY;
 
 // â”€â”€â”€ OAUTH BUTTON â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function OAuthBtn({ label, provider, onClick }: {
@@ -456,10 +455,12 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
           <aside className="koda-auth-card" style={{
             position: "relative", padding: 32, borderRadius: 28,
             background: "rgba(18,18,22,0.7)",
-            backdropFilter: "blur(24px) saturate(160%)",
+            backdropFilter: "blur(28px) saturate(180%)",
+            WebkitBackdropFilter: "blur(28px) saturate(180%)",
             border: `1px solid ${C.border2}`,
             boxShadow: `0 30px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06)`,
             overflow: "hidden",
+            animation: "kRise 0.42s ease-out",
           }}>
             {/* Iridescent corner glow */}
             <div style={{
@@ -477,6 +478,11 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
               <KodaMark size={24} color={C.text} />
               <span style={{ fontFamily: DISPLAY, fontWeight: 600, fontSize: 14, letterSpacing: "0.22em", color: C.text }}>KÅda</span>
               <span style={{ fontFamily: MONO, fontWeight: 500, fontSize: 9, letterSpacing: "0.16em", color: C.text, padding: "2px 5px", borderRadius: 4, border: `1px solid ${C.border2}`, lineHeight: 1 }}>OS</span>
+            </div>
+
+            {/* Kicker */}
+            <div style={{ position: "relative", zIndex: 1, textAlign: "center", marginBottom: 6 }}>
+              <Kicker C={C}>Sign in to Kōda</Kicker>
             </div>
 
             {/* Heading */}
