@@ -17,7 +17,7 @@ import { STRATEGIES, STRATEGY_NAMES, getAllStrategiesMap, addExtraStrategies } f
 import { useTradovate } from "./hooks/useTradovate";
 
 import type { TradeComment, ReactionMap, Trade, Profile, CircleMember, Circle, Insight, StrategyDef } from "./types";
-import { AvatarCircle, Badge, SectionKicker, StrategyPill, StrategySelect, SubNavDropdown, GearButton, Toast, ToastStack, KodaMarkFilled, KodaMark, CrownIcon, GlassOrb, CornerGlow, GhostWord, TickMotif, TealArrowBtn, Pill, Card, Kicker, Delta, ScreenHeader, IconButton, FloatingInput, EmptyState, outcomeColor, outcomeLetter, stratCode, stratShort, compressImage, MONO, BODY, DISPLAY, EmptyTradesState, EmptyInboxState, ErrorOfflineState } from "./shared";
+import { AvatarCircle, Badge, SectionKicker, StrategyPill, StrategySelect, SubNavDropdown, GearButton, Toast, ToastStack, KodaMarkFilled, KodaMark, CrownIcon, GlassOrb, CornerGlow, GhostWord, TickMotif, TealArrowBtn, Pill, Card, Kicker, Delta, ScreenHeader, IconButton, FloatingInput, EmptyState, outcomeColor, outcomeLetter, stratCode, stratShort, compressImage, MONO, BODY, DISPLAY, EmptyTradesState, ErrorOfflineState } from "./shared";
 import type { ToastKind, ToastItem } from "./shared";
 import { TradingCircles } from "./TradingCircles";
 import { FriendsFeed } from "./FriendsFeed";
@@ -3965,7 +3965,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
         )}
         {toast && <Toast message={toast} onDone={() => setToast(null)} C={C} />}
         {!isOnline && (
-          <div style={{ position: "fixed", inset: 0, zIndex: 9000, background: C.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ position: "fixed", inset: 0, zIndex: 9999, background: C.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
             <ErrorOfflineState C={C} onRetry={() => setIsOnline(navigator.onLine)} />
           </div>
         )}
