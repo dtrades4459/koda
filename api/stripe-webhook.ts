@@ -27,7 +27,7 @@
 
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
-import { sendEmail, receiptHtml } from "./lib/email";
+import { sendEmail, receiptHtml } from "./lib/email.js";
 
 // Must disable body parsing — Stripe needs the raw body to verify the signature
 export const config = { runtime: "nodejs", api: { bodyParser: false } };

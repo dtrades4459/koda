@@ -15,7 +15,7 @@
 
 export const config = { runtime: "nodejs" };
 
-import { getUserIdFromJwt, getAdminClient } from "./lib/supabaseAdmin";
+import { getUserIdFromJwt, getAdminClient } from "./lib/supabaseAdmin.js";
 
 type Req = { method?: string; headers: Record<string, string | string[] | undefined> };
 type Res = { status(n: number): Res; json(d: unknown): Res; end(): void; setHeader(k: string, v: string): void };
@@ -30,7 +30,7 @@ const ALLOWED_ORIGINS = new Set([
 ]);
 
 function cors(req: Req, res: Res) {
-  const origin = req.headers["origin"] ?? "";
+  const origin = (req.headers["origin"] as string | undefined) ?? "";
   const allowed = ALLOWED_ORIGINS.has(origin) ? origin : "https://tradrjournal.xyz";
   res.setHeader("Access-Control-Allow-Origin", allowed);
   res.setHeader("Vary", "Origin");

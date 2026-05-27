@@ -12,7 +12,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { createHash } from "crypto";
-import { getAdminClient } from "./supabaseAdmin";
+import { getAdminClient } from "./supabaseAdmin.js";
 
 /** Stable 16-char hex derived from the IP via SHA-256 — avoids storing raw IPs in the DB. */
 export function hashIp(ip: string): string {

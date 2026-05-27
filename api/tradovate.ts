@@ -15,7 +15,7 @@
 
 export const config = { runtime: "nodejs" };
 
-import { getUserIdFromJwt } from "./lib/supabaseAdmin";
+import { getUserIdFromJwt } from "./lib/supabaseAdmin.js";
 
 const DEMO_BASE = "https://demo.tradovateapi.com/v1";
 const LIVE_BASE = "https://live.tradovateapi.com/v1";

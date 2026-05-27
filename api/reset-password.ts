@@ -18,7 +18,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { createClient } from "@supabase/supabase-js";
-import { checkRateLimit, getClientIp } from "./lib/rateLimit";
+import { checkRateLimit, getClientIp } from "./lib/rateLimit.js";
 
 export const config = { runtime: "nodejs" };
 
