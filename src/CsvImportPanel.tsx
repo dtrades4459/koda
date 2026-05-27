@@ -1,5 +1,8 @@
 import { useState } from "react";
+import type React from "react";
 import { MONO, BODY } from "./shared";
+import type { Trade } from "./types";
+import type { Theme } from "./theme";
 import {
   parseCSV,
   autoDetectMapping,
@@ -18,7 +21,7 @@ function _djb2(s: string): string {
   return (h >>> 0).toString(36);
 }
 
-function tradeKey(t: any): string {
+function tradeKey(t: Partial<Trade>): string {
   const content = [t.date ?? "", (t.pair ?? "").toUpperCase(), t.entryPrice ?? "", t.slPrice ?? "", t.tpPrice ?? "", t.pnl ?? "", t.session ?? ""].join("|");
   return _djb2(content);
 }
@@ -30,7 +33,7 @@ function rowToTrade(row: Record<string, string>, mapping: Record<string, string>
   const qty = get("qty") ? parseNum(get("qty")) : NaN;
   // Session: prefer mapped column, fall back to auto-detection from timestamp
   const session = get("session") || detectSessionFromDateStr(rawDate);
-  const trade: any = {
+  const trade: Trade = {
     id: Date.now() * 1000 + Math.floor(Math.random() * 999),
     date: normalizeDate(rawDate),
     pair: (get("pair") || "").toUpperCase(),
@@ -49,6 +52,7 @@ function rowToTrade(row: Record<string, string>, mapping: Record<string, string>
     notes: get("notes"),
     emotions: "",
     screenshot: "",
+    pnlDollar: "",
     comments: [],
     reactions: {},
   };
@@ -68,7 +72,7 @@ interface ImportStats {
   sessionBreakdown: Record<string, number>;
 }
 
-function computeImportStats(trades: any[]): ImportStats {
+function computeImportStats(trades: Trade[]): ImportStats {
   const withPnl = trades.filter(t => t.pnl !== "" && !isNaN(parseFloat(t.pnl)));
   const totalPnl = withPnl.length ? withPnl.reduce((s, t) => s + parseFloat(t.pnl), 0) : null;
   const wins = withPnl.filter(t => parseFloat(t.pnl) > 0);
@@ -217,7 +221,17 @@ const CSV_PRESETS: Record<string, { label: string; hint: string; mapping: Record
 };
 
 // ─── COMPONENT ────────────────────────────────────────────────────────────────
-export function CsvImportPanel({ existingTrades, onImport, onClose, allStrategyNames, C, inp, sel, lbl }: any) {
+interface CsvImportPanelProps {
+  existingTrades: Trade[];
+  onImport: (trades: Trade[]) => void;
+  onClose: () => void;
+  allStrategyNames: string[];
+  C: Theme;
+  inp: React.CSSProperties;
+  sel: React.CSSProperties;
+  lbl: React.CSSProperties;
+}
+export function CsvImportPanel({ existingTrades, onImport, onClose, allStrategyNames, C, inp, sel, lbl }: CsvImportPanelProps) {
   const [fileName, setFileName] = useState("");
   const [headers, setHeaders] = useState<string[]>([]);
   const [rows, setRows] = useState<Record<string, string>[]>([]);
@@ -227,7 +241,7 @@ export function CsvImportPanel({ existingTrades, onImport, onClose, allStrategyN
   const [activePreset, setActivePreset] = useState<string | null>(null);
   // Analytics reveal
   const [revealStats, setRevealStats] = useState<ImportStats | null>(null);
-  const [revealTrades, setRevealTrades] = useState<any[]>([]);
+  const [revealTrades, setRevealTrades] = useState<Trade[]>([]);
   // Templates
   const [templates, setTemplates] = useState<Record<string, ImportTemplate>>(() => loadTemplates());
   const [saveTemplateName, setSaveTemplateName] = useState("");
@@ -241,7 +255,7 @@ export function CsvImportPanel({ existingTrades, onImport, onClose, allStrategyN
     const resolved: Record<string, string> = {};
     for (const [field, col] of Object.entries(preset.mapping)) {
       let hit = headers.find(h => h.toLowerCase() === col.toLowerCase());
-      const fbs = (preset as any).fallbacks?.[field] as string[] | undefined;
+      const fbs = preset.fallbacks?.[field];
       if (!hit && fbs) {
         for (const fb of fbs) { hit = headers.find(h => h.toLowerCase() === fb.toLowerCase()); if (hit) break; }
       }
@@ -274,7 +288,7 @@ export function CsvImportPanel({ existingTrades, onImport, onClose, allStrategyN
     refreshTemplates();
   }
 
-  function handleFile(e: any) {
+  function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -304,7 +318,7 @@ export function CsvImportPanel({ existingTrades, onImport, onClose, allStrategyN
           const presetMap: Record<string, string> = {};
           for (const [field, col] of Object.entries(preset.mapping)) {
             let hit = h.find(hh => hh.toLowerCase() === col.toLowerCase());
-            const fbs = (preset as any).fallbacks?.[field] as string[] | undefined;
+            const fbs = preset.fallbacks?.[field];
             if (!hit && fbs) {
               for (const fb of fbs) { hit = h.find(hh => hh.toLowerCase() === fb.toLowerCase()); if (hit) break; }
             }
@@ -315,7 +329,7 @@ export function CsvImportPanel({ existingTrades, onImport, onClose, allStrategyN
         } else {
           setMapping(autoMap);
         }
-      } catch (err: any) { setError("Couldn't parse this file: " + (err?.message || "unknown error")); }
+      } catch (err: unknown) { setError("Couldn't parse this file: " + (err instanceof Error ? err.message : "unknown error")); }
     };
     reader.onerror = () => setError("Couldn't read the file. Try saving it as CSV (UTF-8) from your platform.");
     // Explicitly request UTF-8 — prevents Windows-1252 misreads on some machines
@@ -527,7 +541,7 @@ export function CsvImportPanel({ existingTrades, onImport, onClose, allStrategyN
                   <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "2px" }}>
                     {f.label}{f.required && <span style={{ color: C.red, marginLeft: "4px" }}>*</span>}
                   </div>
-                  <select value={mapping[f.key] || ""} onChange={e => setMapping((m: any) => ({ ...m, [f.key]: e.target.value }))} style={sel}>
+                  <select value={mapping[f.key] || ""} onChange={e => setMapping(m => ({ ...m, [f.key]: e.target.value }))} style={sel}>
                     <option value="">-- skip --</option>
                     {headers.map(h => <option key={h} value={h}>{h}</option>)}
                   </select>
@@ -557,7 +571,7 @@ export function CsvImportPanel({ existingTrades, onImport, onClose, allStrategyN
                   </tr>
                 </thead>
                 <tbody>
-                  {previewTrades.slice(0, 5).map((t: any, i: number) => {
+                  {previewTrades.slice(0, 5).map((t, i) => {
                     const dup = existingKeys.has(tradeKey(t));
                     return (
                       <tr key={i} style={{ opacity: dup ? 0.5 : 1 }}>

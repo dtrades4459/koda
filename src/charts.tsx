@@ -1,8 +1,11 @@
 import { useState } from "react";
 import type { Trade } from "./types";
 import { MONO, BODY, DISPLAY, stratCode, stratShort } from "./shared";
-
 import type { Insight } from "./types";
+import type { Theme } from "./theme";
+import type React from "react";
+
+type ChartProps = { trades: Trade[]; C: Theme };
 
 // ─── AI INSIGHTS ─────────────────────────────────────────────────────────────
 export function generateInsights(trades: Trade[]): Insight[] {
@@ -11,25 +14,25 @@ export function generateInsights(trades: Trade[]): Insight[] {
   const wins = trades.filter(t => t.outcome === "Win").length;
   const losses = trades.filter(t => t.outcome === "Loss").length;
   const wr = trades.length ? wins / trades.length : 0;
-  const sesStats: any = {};
+  const sesStats: Record<string, { w: number; total: number }> = {};
   trades.forEach(t => { if (!t.session) return; if (!sesStats[t.session]) sesStats[t.session] = { w: 0, total: 0 }; if (t.outcome === "Win") sesStats[t.session].w++; sesStats[t.session].total++; });
   const SESSION_MIN = 10;
-  Object.entries(sesStats).forEach(([ses, v]: any) => {
+  Object.entries(sesStats).forEach(([ses, v]) => {
     const swr = v.w / v.total;
     if (v.total >= SESSION_MIN && swr < wr - 0.15) insights.push({ kicker: "WARN", text: `Your ${ses} session win rate (${(swr * 100).toFixed(0)}%) is below your average. Consider trading fewer setups here.`, type: "warning" });
     if (v.total >= SESSION_MIN && swr > wr + 0.15) insights.push({ kicker: "NOTE", text: `${ses} is your best session with a ${(swr * 100).toFixed(0)}% win rate. Prioritise it.`, type: "positive" });
   });
-  const stratS: any = {};
+  const stratS: Record<string, { w: number; total: number; pnl: number }> = {};
   trades.forEach(t => { if (!t.strategy) return; if (!stratS[t.strategy]) stratS[t.strategy] = { w: 0, total: 0, pnl: 0 }; if (t.outcome === "Win") stratS[t.strategy].w++; stratS[t.strategy].total++; stratS[t.strategy].pnl += parseFloat(t.pnl) || 0; });
   let bestStrat: string | null = null, bestWR = 0;
-  Object.entries(stratS).forEach(([s, v]: any) => { const swr = v.total ? v.w / v.total : 0; if (v.total >= SESSION_MIN && swr > bestWR) { bestWR = swr; bestStrat = s; } });
+  Object.entries(stratS).forEach(([s, v]) => { const swr = v.total ? v.w / v.total : 0; if (v.total >= SESSION_MIN && swr > bestWR) { bestWR = swr; bestStrat = s; } });
   if (bestStrat) insights.push({ kicker: "EDGE", text: `${stratShort(bestStrat)} is your strongest strategy at ${(bestWR * 100).toFixed(0)}% win rate.`, type: "positive" });
   let streak = 0;
   for (const t of trades) { if (t.outcome === "Loss") streak++; else break; }
   if (streak >= 3) insights.push({ kicker: "STOP", text: `You're on a ${streak}-trade losing streak. Consider stepping back and reviewing your process.`, type: "danger" });
-  const byDay: any = {};
+  const byDay: Record<string, number> = {};
   trades.forEach(t => { byDay[t.date] = (byDay[t.date] || 0) + 1; });
-  const overtradeDays = Object.values(byDay).filter((c: any) => c > 3).length;
+  const overtradeDays = Object.values(byDay).filter(c => c > 3).length;
   if (overtradeDays >= 2) insights.push({ kicker: "WARN", text: `You've exceeded 3 trades/day on ${overtradeDays} occasions. Overtrading may be hurting your results.`, type: "warning" });
   const rrTrades = trades.filter(t => t.rr);
   if (rrTrades.length >= SESSION_MIN) {
@@ -41,21 +44,21 @@ export function generateInsights(trades: Trade[]): Insight[] {
   return insights;
 }
 // ─── MINI SPARKLINE ──────────────────────────────────────────────────────────
-export function MiniSparkline({ trades, C }: any) {
+export function MiniSparkline({ trades, C }: ChartProps) {
   if (trades.length < 2) return null;
   let r = 0;
-  const pts = trades.slice().reverse().map((t: any) => { r += parseFloat(t.pnl) || 0; return r; });
+  const pts = trades.slice().reverse().map(t => { r += parseFloat(t.pnl) || 0; return r; });
   const min = Math.min(...pts), max = Math.max(...pts), range = max - min || 1, w = 72, h = 20;
   const p = pts.map((v: number, i: number) => `${(i / (pts.length - 1)) * w},${h - ((v - min) / range) * h}`).join(" ");
   return <svg width={w} height={h}><polyline points={p} fill="none" stroke={C.text} strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" /></svg>;
 }
 
 // ─── PNL CHART ───────────────────────────────────────────────────────────────
-export function PnLChart({ trades, C }: any) {
+export function PnLChart({ trades, C }: ChartProps) {
   if (!trades.length) return null;
   let r = 0;
-  const pts: any[] = [{ x: 0, y: 0 }];
-  trades.slice().reverse().forEach((t: any, i: number) => { r += parseFloat(t.pnl) || 0; pts.push({ x: i + 1, y: r }); });
+  const pts: Array<{ x: number; y: number }> = [{ x: 0, y: 0 }];
+  trades.slice().reverse().forEach((t, i) => { r += parseFloat(t.pnl) || 0; pts.push({ x: i + 1, y: r }); });
   const minY = Math.min(...pts.map(p => p.y)), maxY = Math.max(...pts.map(p => p.y)), rangeY = maxY - minY || 1;
   const W = 320, H = 96, PAD = 8;
   const cx = (x: number) => PAD + (x / (pts.length - 1 || 1)) * (W - PAD * 2);
@@ -72,17 +75,17 @@ export function PnLChart({ trades, C }: any) {
 }
 
 // ─── MONTHLY PNL CHART ───────────────────────────────────────────────────────
-export function MonthlyPnLChart({ trades, C }: any) {
-  const monthly: any = {};
-  trades.forEach((t: any) => { const k = t.date?.slice(0, 7); if (k) { if (!monthly[k]) monthly[k] = 0; monthly[k] += parseFloat(t.pnl) || 0; } });
+export function MonthlyPnLChart({ trades, C }: ChartProps) {
+  const monthly: Record<string, number> = {};
+  trades.forEach(t => { const k = t.date?.slice(0, 7); if (k) { if (!monthly[k]) monthly[k] = 0; monthly[k] += parseFloat(t.pnl) || 0; } });
   const entries = Object.entries(monthly).sort(([a], [b]) => a.localeCompare(b)).slice(-6);
   if (entries.length < 2) return null;
-  const vals = entries.map(([, v]: any) => v);
+  const vals = entries.map(([, v]) => v);
   const min = Math.min(...vals, 0), max = Math.max(...vals, 0), range = max - min || 1;
   const W = 320, H = 96, PAD = 8, barW = Math.max(14, (W - PAD * 2) / entries.length - 10);
   return (
     <svg width="100%" viewBox={`0 0 ${W} ${H + 22}`}>
-      {entries.map(([k, v]: any, i) => {
+      {entries.map(([k, v], i) => {
         const x = PAD + i * (W - PAD * 2) / entries.length + (W - PAD * 2) / entries.length / 2 - barW / 2;
         const zeroY = H - PAD - ((0 - min) / range) * (H - PAD * 2);
         const barH = Math.abs((v / range) * (H - PAD * 2));
@@ -101,14 +104,14 @@ export function MonthlyPnLChart({ trades, C }: any) {
 }
 
 // ─── WIN RATE BAR CHART ──────────────────────────────────────────────────────
-export function WinRateChart({ trades, C }: any) {
-  const stratStats: any = {};
-  trades.forEach((t: any) => { if (!t.strategy) return; if (!stratStats[t.strategy]) stratStats[t.strategy] = { w: 0, total: 0 }; if (t.outcome === "Win") stratStats[t.strategy].w++; stratStats[t.strategy].total++; });
-  const entries = Object.entries(stratStats).filter(([, v]: any) => v.total >= 1);
+export function WinRateChart({ trades, C }: ChartProps) {
+  const stratStats: Record<string, { w: number; total: number }> = {};
+  trades.forEach(t => { if (!t.strategy) return; if (!stratStats[t.strategy]) stratStats[t.strategy] = { w: 0, total: 0 }; if (t.outcome === "Win") stratStats[t.strategy].w++; stratStats[t.strategy].total++; });
+  const entries = Object.entries(stratStats).filter(([, v]) => v.total >= 1);
   if (!entries.length) return <div style={{ fontSize: "12px", color: C.muted, padding: "16px 0", fontFamily: BODY }}>Log trades with a strategy to see win rates.</div>;
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-      {entries.map(([s, v]: any, idx) => {
+      {entries.map(([s, v], idx) => {
         const wr = v.total ? v.w / v.total : 0;
         return (
           <div key={s}>
@@ -162,13 +165,13 @@ export function fmtDuration(sec: number): string {
 }
 
 // ─── TRADE DURATION CHART ─────────────────────────────────────────────────────
-export function TradeDurationChart({ trades, C }: any) {
-  const withDur = trades.map((t: any) => ({ ...t, _dur: parseDurationSec(t.entryTime, t.exitTime) })).filter((t: any) => t._dur !== null);
+export function TradeDurationChart({ trades, C }: ChartProps) {
+  const withDur = trades.map(t => ({ ...t, _dur: parseDurationSec(t.entryTime, t.exitTime) })).filter(t => t._dur !== null);
   if (!withDur.length) return <div style={{ textAlign:"center", padding:"40px 0", color:C.muted, fontSize:"11px", fontFamily:MONO, letterSpacing:"0.06em" }}>ADD ENTRY + EXIT TIME WHEN LOGGING TRADES TO SEE DURATION ANALYSIS</div>;
   const bd = DURATION_BUCKETS.map(b => {
-    const bk = withDur.filter((t: any) => t._dur >= b.min && t._dur < b.max);
-    const w = bk.filter((t: any) => t.outcome === "Win").length;
-    const l = bk.filter((t: any) => t.outcome === "Loss").length;
+    const bk = withDur.filter(t => t._dur! >= b.min && t._dur! < b.max);
+    const w = bk.filter(t => t.outcome === "Win").length;
+    const l = bk.filter(t => t.outcome === "Loss").length;
     return { ...b, count: bk.length, wr: (w+l) > 0 ? Math.round(w/(w+l)*100) : null };
   });
   const mx = Math.max(...bd.map(b => b.count), 1);
@@ -198,9 +201,9 @@ export function TradeDurationChart({ trades, C }: any) {
 }
 
 // ─── NET DAILY P&L ───────────────────────────────────────────────────────────
-export function NetDailyPnLChart({ trades, C, useDollar }: any) {
+export function NetDailyPnLChart({ trades, C, useDollar }: ChartProps & { useDollar?: boolean }) {
   const dm: Record<string,number> = {};
-  trades.forEach((t: any) => { if (!t.date) return; dm[t.date] = (dm[t.date]||0) + (useDollar ? parseFloat(t.pnlDollar)||0 : parseFloat(t.pnl)||0); });
+  trades.forEach(t => { if (!t.date) return; dm[t.date] = (dm[t.date]||0) + (useDollar ? parseFloat(t.pnlDollar)||0 : parseFloat(t.pnl)||0); });
   const days = Object.keys(dm).sort().slice(-30);
   if (!days.length) return null;
   const vals = days.map(d => dm[d]);
@@ -228,9 +231,9 @@ export function NetDailyPnLChart({ trades, C, useDollar }: any) {
 }
 
 // ─── CUMULATIVE P&L LINE ─────────────────────────────────────────────────────
-export function DailyCumulativePnLChart({ trades, C, useDollar }: any) {
+export function DailyCumulativePnLChart({ trades, C, useDollar }: ChartProps & { useDollar?: boolean }) {
   const dm: Record<string,number> = {};
-  trades.forEach((t: any) => { if (!t.date) return; dm[t.date] = (dm[t.date]||0) + (useDollar ? parseFloat(t.pnlDollar)||0 : parseFloat(t.pnl)||0); });
+  trades.forEach(t => { if (!t.date) return; dm[t.date] = (dm[t.date]||0) + (useDollar ? parseFloat(t.pnlDollar)||0 : parseFloat(t.pnl)||0); });
   const days = Object.keys(dm).sort();
   if (days.length < 2) return null;
   let cum = 0;
@@ -261,25 +264,25 @@ export function DailyCumulativePnLChart({ trades, C, useDollar }: any) {
 }
 
 // ─── TRADE STAT CARDS ────────────────────────────────────────────────────────
-export function TradeStatCards({ trades, C }: any) {
-  const withDur = trades.map((t: any) => ({...t, _d: parseDurationSec(t.entryTime,t.exitTime)})).filter((t: any) => t._d !== null);
-  const avgSec = withDur.length ? Math.round(withDur.reduce((a: number,t: any)=>a+t._d,0)/withDur.length) : null;
+export function TradeStatCards({ trades, C }: ChartProps) {
+  const withDur = trades.map(t => ({...t, _d: parseDurationSec(t.entryTime,t.exitTime)})).filter(t => t._d !== null);
+  const avgSec = withDur.length ? Math.round(withDur.reduce((a,t)=>a+t._d!,0)/withDur.length) : null;
   const dm: Record<string,number> = {};
-  trades.forEach((t: any) => { if (t.date) dm[t.date] = (dm[t.date]||0)+(parseFloat(t.pnl)||0); });
+  trades.forEach(t => { if (t.date) dm[t.date] = (dm[t.date]||0)+(parseFloat(t.pnl)||0); });
   const tot = Object.values(dm).reduce((a,v)=>a+v,0);
   const best = Math.max(...Object.values(dm),0);
   const pct = tot>0 ? Math.round(best/tot*100) : 0;
   const DNS = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
   const dc: Record<string,number> = {};
-  trades.forEach((t: any) => { if (!t.date) return; const n=DNS[new Date(t.date+"T12:00:00").getDay()]; dc[n]=(dc[n]||0)+1; });
+  trades.forEach(t => { if (!t.date) return; const n=DNS[new Date(t.date+"T12:00:00").getDay()]; dc[n]=(dc[n]||0)+1; });
   const mad = Object.keys(dc).sort((a,b)=>dc[b]-dc[a])[0]||"—";
   const bde = Object.entries(dm).sort((a,b)=>b[1]-a[1])[0];
-  const bdt = bde ? trades.filter((t: any)=>t.date===bde[0]) : [];
+  const bdt = bde ? trades.filter(t=>t.date===bde[0]) : [];
   const cards: Array<{label:string;value:string;sub?:string}> = [
     {label:"Total Number Of Trades",value:String(trades.length)},
     {label:"Avg. Trade Duration",value:avgSec!==null?fmtDuration(avgSec):"—"},
     {label:"Best Day % Of Total Profit",value:String(pct)},
-    {label:"Most Active Day",value:mad,sub:bde?`Date: ${bde[0]}  Trades: ${bdt.length}  Winning: ${bdt.filter((t: any)=>t.outcome==="Win").length}`:""},
+    {label:"Most Active Day",value:mad,sub:bde?`Date: ${bde[0]}  Trades: ${bdt.length}  Winning: ${bdt.filter(t=>t.outcome==="Win").length}`:""},
   ];
   return (
     <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))", gap:"10px" }}>
@@ -295,20 +298,20 @@ export function TradeStatCards({ trades, C }: any) {
 }
 
 // ─── AVERAGE STATS CARDS ─────────────────────────────────────────────────────
-export function AvgStatsCards({ trades, C }: any) {
-  const wins = trades.filter((t: any)=>t.outcome==="Win");
-  const losses = trades.filter((t: any)=>t.outcome==="Loss");
-  const gp = wins.reduce((a: number,t: any)=>a+Math.max(parseFloat(t.pnl)||0,0),0);
-  const gl = Math.abs(losses.reduce((a: number,t: any)=>a+Math.min(parseFloat(t.pnl)||0,0),0));
+export function AvgStatsCards({ trades, C }: ChartProps) {
+  const wins = trades.filter(t=>t.outcome==="Win");
+  const losses = trades.filter(t=>t.outcome==="Loss");
+  const gp = wins.reduce((a,t)=>a+Math.max(parseFloat(t.pnl)||0,0),0);
+  const gl = Math.abs(losses.reduce((a,t)=>a+Math.min(parseFloat(t.pnl)||0,0),0));
   const pfN = gl>0?gp/gl:(gp>0?99:0);
   const pfS = gl>0?pfN.toFixed(2):(gp>0?"∞":"0");
-  const el = trades.filter((t: any)=>t.outcome==="Win"||t.outcome==="Loss");
+  const el = trades.filter(t=>t.outcome==="Win"||t.outcome==="Loss");
   const wr = el.length ? Math.round(wins.length/el.length*100) : 0;
-  const aw = wins.length ? wins.reduce((a: number,t: any)=>a+(parseFloat(t.pnl)||0),0)/wins.length : 0;
-  const al = losses.length ? Math.abs(losses.reduce((a: number,t: any)=>a+(parseFloat(t.pnl)||0),0)/losses.length) : 0;
+  const aw = wins.length ? wins.reduce((a,t)=>a+(parseFloat(t.pnl)||0),0)/wins.length : 0;
+  const al = losses.length ? Math.abs(losses.reduce((a,t)=>a+(parseFloat(t.pnl)||0),0)/losses.length) : 0;
   const wlS = al>0?(aw/al).toFixed(2):(aw>0?"∞":"0");
-  const lo = trades.filter((t: any)=>t.direction==="Long"||(!t.direction&&t.bias==="Bullish")).length;
-  const sh = trades.filter((t: any)=>t.direction==="Short"||(!t.direction&&t.bias==="Bearish")).length;
+  const lo = trades.filter(t=>t.direction==="Long"||(!t.direction&&t.bias==="Bullish")).length;
+  const sh = trades.filter(t=>t.direction==="Short"||(!t.direction&&t.bias==="Bearish")).length;
   const td = lo+sh||1;
   const lp = Math.round(lo/td*100); const sp = 100-lp;
   const ring = (pct: number, col: string) => {
@@ -340,7 +343,7 @@ export function AvgStatsCards({ trades, C }: any) {
               </div>}
             </div>
             <div style={{ display:"flex", flexDirection:"column", gap:"3px" }}>
-              {c.subs.map((s: any)=>(
+              {c.subs.map(s=>(
                 <div key={s.l} style={{ display:"flex", alignItems:"center", gap:"5px" }}>
                   <div style={{ width:"6px", height:"6px", borderRadius:"50%", background:s.c, flexShrink:0 }}/>
                   <span style={{ fontSize:"9px", color:C.muted, fontFamily:MONO }}>{s.l}</span>
@@ -356,20 +359,20 @@ export function AvgStatsCards({ trades, C }: any) {
 }
 
 // ─── DAILY INSIGHTS ───────────────────────────────────────────────────────────
-export function DailyInsights({ trades, C, useDollar }: any) {
+export function DailyInsights({ trades, C, useDollar }: ChartProps & { useDollar?: boolean }) {
   if (!trades.length) return null;
   const dm: Record<string,{pnl:number;dlr:number}> = {};
-  trades.forEach((t: any) => { if (!t.date) return; if (!dm[t.date]) dm[t.date]={pnl:0,dlr:0}; dm[t.date].pnl+=parseFloat(t.pnl)||0; dm[t.date].dlr+=parseFloat(t.pnlDollar)||0; });
+  trades.forEach(t => { if (!t.date) return; if (!dm[t.date]) dm[t.date]={pnl:0,dlr:0}; dm[t.date].pnl+=parseFloat(t.pnl)||0; dm[t.date].dlr+=parseFloat(t.pnlDollar)||0; });
   const days = Object.keys(dm).sort(); if (!days.length) return null;
   const fday = (d: string) => { try { return new Date(d+"T12:00:00").toLocaleDateString("en-US",{weekday:"long"}); } catch { return d; } };
   const fval = (d: string) => useDollar&&dm[d].dlr ? `$${dm[d].dlr.toFixed(2)}` : `${dm[d].pnl.toFixed(2)}R`;
   const best = days.reduce((a,b)=>dm[a].pnl>=dm[b].pnl?a:b,days[0]);
   const worst = days.reduce((a,b)=>dm[a].pnl<=dm[b].pnl?a:b,days[0]);
-  const wt = trades.filter((t: any)=>t.outcome==="Win"&&parseFloat(t.pnl)>0);
-  const lt = trades.filter((t: any)=>t.outcome==="Loss"&&parseFloat(t.pnl)<0);
-  const bt = wt.length ? wt.reduce((a: any,b: any)=>parseFloat(a.pnl)>=parseFloat(b.pnl)?a:b) : null;
-  const wort = lt.length ? lt.reduce((a: any,b: any)=>parseFloat(a.pnl)<=parseFloat(b.pnl)?a:b) : null;
-  const ftv = (t: any) => useDollar&&t.pnlDollar ? `$${Math.abs(parseFloat(t.pnlDollar)).toFixed(1)}` : `${Math.abs(parseFloat(t.pnl)).toFixed(1)}R`;
+  const wt = trades.filter(t=>t.outcome==="Win"&&parseFloat(t.pnl)>0);
+  const lt = trades.filter(t=>t.outcome==="Loss"&&parseFloat(t.pnl)<0);
+  const bt = wt.length ? wt.reduce((a,b)=>parseFloat(a.pnl)>=parseFloat(b.pnl)?a:b) : null;
+  const wort = lt.length ? lt.reduce((a,b)=>parseFloat(a.pnl)<=parseFloat(b.pnl)?a:b) : null;
+  const ftv = (t: Trade) => useDollar&&t.pnlDollar ? `$${Math.abs(parseFloat(t.pnlDollar)).toFixed(1)}` : `${Math.abs(parseFloat(t.pnl)).toFixed(1)}R`;
   const cards = [
     {label:"Most Profitable Day",primary:fval(best),secondary:fday(best),sub:"",color:C.green},
     {label:"Less Profitable Day",primary:fval(worst),secondary:fday(worst),sub:"",color:C.red},
@@ -380,7 +383,7 @@ export function DailyInsights({ trades, C, useDollar }: any) {
     <div>
       <div style={{ fontSize:"10px", color:C.muted, fontFamily:MONO, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:"12px" }}>Daily Insights</div>
       <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))", gap:"10px" }}>
-        {cards.map((c: any)=>(
+        {cards.map(c=>(
           <div key={c.label} style={{ background:C.panel, borderRadius:"10px", padding:"16px 14px" }}>
             <div style={{ fontSize:"10px", color:C.muted, fontFamily:MONO, letterSpacing:"0.06em", textTransform:"uppercase", marginBottom:"10px" }}>{c.label}</div>
             <div style={{ fontSize:"24px", fontWeight:700, fontFamily:DISPLAY, color:c.color, letterSpacing:"-0.02em", lineHeight:1.1, marginBottom:"5px" }}>{c.primary}</div>
@@ -396,14 +399,14 @@ export function DailyInsights({ trades, C, useDollar }: any) {
 // ─── CALENDAR ────────────────────────────────────────────────────────────────
 function fmtMonth(y: number, m: number) { return new Date(y, m, 1).toLocaleString("default", { month: "long", year: "numeric" }); }
 
-export function CalendarView({ trades, C, onDayClick }: any) {
+export function CalendarView({ trades, C, onDayClick }: ChartProps & { onDayClick?: (key: string) => void }) {
   const [year, setYear] = useState(new Date().getFullYear());
   const [month, setMonth] = useState(new Date().getMonth());
-  const dayPnL: any = {};
-  trades.forEach((t: any) => { if (t.date) { if (!dayPnL[t.date]) dayPnL[t.date] = { pnl: 0, count: 0 }; dayPnL[t.date].pnl += parseFloat(t.pnl) || 0; dayPnL[t.date].count++; } });
+  const dayPnL: Record<string, { pnl: number; count: number }> = {};
+  trades.forEach(t => { if (t.date) { if (!dayPnL[t.date]) dayPnL[t.date] = { pnl: 0, count: 0 }; dayPnL[t.date].pnl += parseFloat(t.pnl) || 0; dayPnL[t.date].count++; } });
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const cells: any[] = [];
+  const cells: (number | null)[] = [];
   for (let i = 0; i < firstDay; i++) cells.push(null);
   for (let d = 1; d <= daysInMonth; d++) cells.push(d);
   while (cells.length % 7 !== 0) cells.push(null);
@@ -439,11 +442,11 @@ export function CalendarView({ trades, C, onDayClick }: any) {
 }
 
 // ─── DRAWDOWN CURVE ──────────────────────────────────────────────────────────
-export function DrawdownCurve({ trades, C }: any) {
+export function DrawdownCurve({ trades, C }: ChartProps) {
   if (!trades || trades.length === 0) return null;
-  const sorted = [...trades].sort((a: any, b: any) => a.date > b.date ? 1 : -1);
+  const sorted = [...trades].sort((a, b) => a.date > b.date ? 1 : -1);
   const dailyMap: Record<string, number> = {};
-  sorted.forEach((t: any) => {
+  sorted.forEach(t => {
     const d = t.date; const v = parseFloat(t.pnl) || 0;
     dailyMap[d] = (dailyMap[d] || 0) + v;
   });
@@ -498,13 +501,13 @@ export function DrawdownCurve({ trades, C }: any) {
 }
 
 // ─── SESSION HEATMAP ─────────────────────────────────────────────────────────
-export function SessionHeatmap({ trades, C }: any) {
+export function SessionHeatmap({ trades, C }: ChartProps) {
   const sessions = ["London", "New York", "Asian", "London/NY"];
   const days = ["Mon", "Tue", "Wed", "Thu", "Fri"];
   type Cell = { pnl: number; count: number };
   const grid: Record<string, Record<string, Cell>> = {};
   sessions.forEach(s => { grid[s] = {}; days.forEach(d => { grid[s][d] = { pnl: 0, count: 0 }; }); });
-  trades.forEach((t: any) => {
+  trades.forEach(t => {
     if (!t.date || !t.session) return;
     const dow = new Date(t.date + "T12:00:00").getDay();
     if (dow === 0 || dow === 6) return;
@@ -554,13 +557,13 @@ export function SessionHeatmap({ trades, C }: any) {
 }
 
 // ─── TIME OF DAY CHART ───────────────────────────────────────────────────────
-export function TimeOfDayChart({ trades, C }: any) {
+export function TimeOfDayChart({ trades, C }: ChartProps) {
   const BUCKETS = ["00","02","04","06","08","10","12","14","16","18","20","22"];
   const LABELS  = ["12a","2a","4a","6a","8a","10a","12p","2p","4p","6p","8p","10p"];
   type Bucket = { pnl: number; wins: number; total: number };
   const data: Bucket[] = BUCKETS.map(() => ({ pnl: 0, wins: 0, total: 0 }));
 
-  trades.forEach((t: any) => {
+  trades.forEach(t => {
     if (!t.entryTime) return;
     const hour = parseInt(t.entryTime.split(":")[0], 10);
     if (isNaN(hour)) return;
@@ -630,12 +633,12 @@ export function TimeOfDayChart({ trades, C }: any) {
 }
 
 // ─── DAY OF WEEK CHART ────────────────────────────────────────────────────────
-export function DayOfWeekChart({ trades, C }: any) {
+export function DayOfWeekChart({ trades, C }: ChartProps) {
   const DAYS = ["Mon","Tue","Wed","Thu","Fri"];
   type DayBucket = { pnl: number; wins: number; total: number };
   const data: DayBucket[] = DAYS.map(() => ({ pnl:0, wins:0, total:0 }));
 
-  trades.forEach((t: any) => {
+  trades.forEach(t => {
     if (!t.date) return;
     const dow = new Date(t.date + "T12:00:00").getDay();
     if (dow === 0 || dow === 6) return;
@@ -682,8 +685,8 @@ export function DayOfWeekChart({ trades, C }: any) {
 }
 
 // ─── MAE/MFE SCATTER CHART ────────────────────────────────────────────────────
-export function MAEMFEChart({ trades, C }: any) {
-  const pts = trades.filter((t: any) => t.mae && t.mfe).map((t: any) => ({
+export function MAEMFEChart({ trades, C }: ChartProps) {
+  const pts = trades.filter(t => t.mae && t.mfe).map(t => ({
     mae: parseFloat(t.mae) || 0,
     mfe: parseFloat(t.mfe) || 0,
     pnl: parseFloat(t.pnl) || 0,
@@ -695,12 +698,12 @@ export function MAEMFEChart({ trades, C }: any) {
       Log MAE & MFE on {Math.max(0, 3 - pts.length)} more trade{3 - pts.length !== 1 ? "s" : ""} to see the scatter.
     </div>
   );
-  const maxMAE = Math.max(...pts.map((p: any) => p.mae), 1);
-  const maxMFE = Math.max(...pts.map((p: any) => p.mfe), 1);
+  const maxMAE = Math.max(...pts.map(p => p.mae), 1);
+  const maxMFE = Math.max(...pts.map(p => p.mfe), 1);
   const W = 300; const H = 200; const PAD = 32;
   const xS = (v: number) => PAD + (v / maxMAE) * (W - PAD * 2);
   const yS = (v: number) => H - PAD - (v / maxMFE) * (H - PAD * 2);
-  const avgEff = pts.length ? pts.reduce((a: number, p: any) => a + (p.mfe > 0 ? Math.min(p.pnl / p.mfe, 1) : 0), 0) / pts.length * 100 : 0;
+  const avgEff = pts.length ? pts.reduce((a, p) => a + (p.mfe > 0 ? Math.min(p.pnl / p.mfe, 1) : 0), 0) / pts.length * 100 : 0;
   return (
     <div>
       <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ display: "block" }}>
@@ -708,7 +711,7 @@ export function MAEMFEChart({ trades, C }: any) {
         <line x1={PAD} y1={PAD} x2={PAD} y2={H - PAD} stroke={C.border2} strokeWidth="0.5" />
         <text x={W / 2} y={H - 4} textAnchor="middle" fontSize="9" fill={C.muted} fontFamily="monospace">MAE (R)</text>
         <text x={10} y={H / 2} textAnchor="middle" fontSize="9" fill={C.muted} fontFamily="monospace" transform={`rotate(-90, 10, ${H / 2})`}>MFE (R)</text>
-        {pts.map((p: any, i: number) => (
+        {pts.map((p, i) => (
           <circle key={i} cx={xS(p.mae)} cy={yS(p.mfe)} r="5"
             fill={p.outcome === "Win" ? "#00C96B" : p.outcome === "Loss" ? "#FF3D00" : "#BCBCB4"}
             fillOpacity="0.7" stroke="none" />

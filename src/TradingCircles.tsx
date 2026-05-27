@@ -241,7 +241,7 @@ export function TradingCircles({ myCircles, circlesView, setCirclesView, activeC
     // Client-side fallback: trigger cron if challenge already expired
     if (challenge && new Date(challenge.endsAt) < new Date()) {
       fetch("/api/cron/complete-challenges", { method: "POST" }).catch(() => {});
-      setTimeout(() => fetchActiveChallenge(circle.code).then(c => setActiveChallenge(c)), 2000);
+      setTimeout(() => fetchActiveChallenge(circle.code).then(c => setActiveChallenge(c)).catch(() => {}), 2000);
     }
   }
 
@@ -349,7 +349,7 @@ export function TradingCircles({ myCircles, circlesView, setCirclesView, activeC
     setTrophiesLoading(true);
     fetchTrophies(activeCircle.code).then(results => {
       if (alive) { setTrophies(results); setTrophiesLoading(false); }
-    });
+    }).catch(() => { if (alive) setTrophiesLoading(false); });
     return () => { alive = false; };
   }, [circleTab, activeCircle]);
 

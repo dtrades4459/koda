@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { supabase } from "./lib/supabase";
 import { MONO, BODY, DISPLAY } from "./shared";
+import type { Theme } from "./theme";
 
 export function UpgradeModal({ C, userId, userEmail, stripeCustomerId, onCustomerId, onClose, mandatory = false }: {
-  C: Record<string, string>;
+  C: Theme;
   userId: string;
   userEmail: string;
   stripeCustomerId?: string;
@@ -42,11 +43,7 @@ export function UpgradeModal({ C, userId, userEmail, stripeCustomerId, onCustome
     }
   }
 
-  const live = (C as any).live ?? "oklch(0.84 0.14 175)";
-  const liveSoft = (C as any).liveSoft ?? "oklch(0.84 0.14 175 / 0.18)";
-  const orb1 = (C as any).orb1 ?? "oklch(0.55 0.22 252)";
-  const orb2 = (C as any).orb2 ?? "oklch(0.45 0.20 268)";
-  const orb3 = (C as any).orb3 ?? "oklch(0.68 0.18 175)";
+  const { live, liveSoft, orb1, orb2, orb3 } = C;
 
   const FEATURES = [
     { icon: "📊", text: "Unlimited trade history" },
@@ -64,7 +61,7 @@ export function UpgradeModal({ C, userId, userEmail, stripeCustomerId, onCustome
       <div style={{
         position: "relative",
         width: "100%", maxWidth: "380px",
-        background: (C as any).surfaceGlass ?? C.panel ?? "#131317",
+        background: C.surfaceGlass,
         border: `1px solid ${C.border2 ?? "rgba(255,255,255,0.13)"}`,
         borderRadius: "24px",
         padding: "28px 24px 24px",
@@ -86,7 +83,7 @@ export function UpgradeModal({ C, userId, userEmail, stripeCustomerId, onCustome
         <div style={{
           position: "absolute", top: 40, left: "50%", transform: "translateX(-50%)",
           width: 300, height: 300, borderRadius: "50%",
-          background: `conic-gradient(from 180deg, ${orb1}, ${(C as any).live ?? "oklch(0.84 0.14 175)"}, ${orb3}, ${orb1})`,
+          background: `conic-gradient(from 180deg, ${orb1}, ${live}, ${orb3}, ${orb1})`,
           filter: "blur(80px)", opacity: 0.35, pointerEvents: "none",
         }} />
 
