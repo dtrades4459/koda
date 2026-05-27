@@ -35,7 +35,8 @@ export async function checkRateLimit(
   const admin = getAdminClient();
   const key = `koda_rl_${action}_${hashIp(ip)}`;
 
-  const { data, error } = await (admin.rpc as Function)("check_and_increment_rate_limit", {
+  type RpcCall = (fn: string, args: Record<string, unknown>) => Promise<{ data: boolean | null; error: { message: string } | null }>;
+  const { data, error } = await (admin.rpc as unknown as RpcCall)("check_and_increment_rate_limit", {
     p_key: key,
     p_limit: limit,
     p_window_ms: windowMs,
