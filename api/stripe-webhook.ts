@@ -5,6 +5,7 @@
 //   checkout.session.completed       → plan = "pro"; stores subscription_id + customer_id
 //   customer.subscription.updated    → re-evaluates active/cancelled state
 //   customer.subscription.deleted    → plan = "free"
+//   invoice.paid                     → sends receipt email via Resend
 //   invoice.payment_failed           → logs only (Stripe handles retries)
 //
 // Plan is written to TWO places on every event so plan gating is server-enforced:
@@ -21,11 +22,12 @@
 // IMPORTANT: Add this endpoint in Stripe Dashboard → Webhooks:
 //   URL: https://tradrjournal.xyz/api/stripe-webhook
 //   Events: checkout.session.completed, customer.subscription.updated,
-//           customer.subscription.deleted, invoice.payment_failed
+//           customer.subscription.deleted, invoice.paid, invoice.payment_failed
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
+import { sendEmail, receiptHtml } from "./lib/email";
 
 // Must disable body parsing — Stripe needs the raw body to verify the signature
 export const config = { runtime: "nodejs", api: { bodyParser: false } };
@@ -167,6 +169,40 @@ export default async function handler(req: any, res: any) {
         console.error("[webhook] customer.subscription.deleted: missing userId — sub:", sub.id);
       } else {
         await setUserPlan(uid, "free", { subscriptionId: sub.id });
+      }
+
+    } else if (event.type === "invoice.paid") {
+      const invoice = event.data.object as Stripe.Invoice;
+      const customerId = invoice.customer as string;
+      const db = getSupabase();
+
+      // Look up user by Stripe customer ID
+      const { data: kvRow } = await db
+        .from("user_kv")
+        .select("user_id, value")
+        .eq("key", "koda_stripe_customer")
+        .eq("value->>customerId", customerId)
+        .maybeSingle();
+
+      if (kvRow) {
+        const { data: profileRow } = await db
+          .from("user_kv")
+          .select("value")
+          .eq("user_id", kvRow.user_id)
+          .eq("key", "koda_profile")
+          .maybeSingle();
+
+        const profile = profileRow?.value as { email?: string; name?: string; plan?: string } | undefined;
+        if (profile?.email) {
+          const amount = `$${(invoice.amount_paid / 100).toFixed(2)}`;
+          const date = new Date(invoice.created * 1000).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+          const plan = profile.plan === "elite" ? "Elite" : "Pro";
+          await sendEmail({
+            to: profile.email,
+            subject: `Receipt from Kōda — ${amount}`,
+            html: receiptHtml({ name: profile.name?.split(" ")[0] ?? "Trader", plan, amount, date }),
+          });
+        }
       }
 
     } else if (event.type === "invoice.payment_failed") {
