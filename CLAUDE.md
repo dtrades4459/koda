@@ -1,4 +1,4 @@
-# TRADR — Claude Code Operating Rules & Project Context
+# Kōda — Claude Code Operating Rules & Project Context
 
 > Read this file at the start of every session. Follow the Operating Rules without exception, then use the project context below for all decisions.
 
@@ -45,7 +45,7 @@ These rules apply to every task in this repo.
 
 ---
 
-## What TRADR is
+## What Kōda is
 
 A trading journal PWA for retail traders. Users log trades, track stats (P&L, win rate, avg R), follow friends, and compete in Trading Circles. Built for mobile-first, installable as a home screen app on iOS and Android.
 
@@ -60,7 +60,7 @@ A trading journal PWA for retail traders. Users log trades, track stats (P&L, wi
 
 - React 19 + TypeScript + Vite
 - Supabase (auth + KV tables + v2 relational schema)
-- Vercel (hosting + serverless functions in `api/` + Vercel Cron every 5 min)
+- Vercel (hosting + serverless functions in `api/` + Vercel Cron nightly for challenge completion)
 - Main app: `src/Koda.tsx` (~4300 lines — many screens extracted into separate files)
 - Auth wrapper: `src/KodaAuth.tsx`
 - Storage shim: `src/lib/storage.ts` (window.storage — wraps Supabase KV + localStorage cache)
@@ -98,14 +98,13 @@ A trading journal PWA for retail traders. Users log trades, track stats (P&L, wi
 | `src/BetaGate.tsx` | **NEW** Closed-beta password wall — shown before auth if `VITE_BETA_PASSWORD` is set. Unlock persists in localStorage. |
 | `src/lib/posthog.ts` | **NEW** PostHog analytics wrapper — `initPostHog`, `phIdentify`, `phCapture`, `phReset`. No-op if key not set. |
 | `src/main.tsx` | Mounts React, installs storage shim, calls `initSentry()` and `initPostHog()`. |
-| `api/broker/connect.ts` | POST /api/broker/connect — authenticates with Tradovate, encrypts tokens, upserts broker_connections. |
-| `api/broker/disconnect.ts` | POST /api/broker/disconnect — deletes connection (user_id guard). |
-| `api/cron/sync.ts` | **NEW** GET (cron, every 5 min) + POST (manual) — FIFO fill matching, token refresh, idempotent trade upsert. |
-| `api/lib/cryptoUtils.ts` | **NEW** AES-256-GCM encrypt/decrypt for broker token storage. Requires `TRADR_ENCRYPTION_KEY`. |
+| `api/broker/[action].ts` | POST /api/broker/connect — authenticates with Tradovate, encrypts tokens, upserts broker_connections. POST /api/broker/disconnect — deletes connection (user_id guard). |
+| `api/cron/sync.ts` | **NEW** GET (cron, every 5 min via GitHub Actions) + POST (manual) — FIFO fill matching, token refresh, idempotent trade upsert. |
+| `api/lib/cryptoUtils.ts` | **NEW** AES-256-GCM encrypt/decrypt for broker token storage. Requires `TRADR_ENCRYPTION_KEY` (rename to `KODA_ENCRYPTION_KEY` pending — see Session F). |
 | `api/lib/supabaseAdmin.ts` | **NEW** Service-role Supabase client + JWT verifier for serverless functions. |
 | `api/feedback.ts` | POST → Telegram bot. |
 | `api/tradovate.ts` | Tradovate API proxy (auth, accounts, positions, fills, contracts). |
-| `vercel.json` | CSP headers + Vercel Cron config (every 5 min → /api/cron/sync). |
+| `vercel.json` | CSP headers + Vercel Cron config (nightly → /api/cron/complete-challenges). Broker sync runs via GitHub Actions every 5 min instead. |
 | `supabase/migrations/001_rls_cleanup.sql` | Removes dead RLS branches, adds text_pattern_ops index. |
 | `supabase/migrations/002_v2_schema_additive.sql` | Creates v2 tables (profiles, trades, circles, circle_members, follows). |
 | `supabase/migrations/003_storage_bucket.sql` | Trade screenshot storage bucket + RLS. |
@@ -174,12 +173,14 @@ All must be set in Vercel dashboard → Settings → Environment Variables (Prod
 
 | Variable | Purpose |
 |----------|---------|
-| `VITE_SUPABASE_URL` | Supabase project URL |
+| `VITE_SUPABASE_URL` | Supabase project URL (browser-safe) |
 | `VITE_SUPABASE_ANON_KEY` | Supabase anon key (browser-safe) |
 | `SUPABASE_URL` | Same URL — used by serverless functions |
+| `SUPABASE_ANON_KEY` | Anon key for server-side user-context API calls (distinct from service role) |
 | `SUPABASE_SERVICE_ROLE_KEY` | Service role key — bypasses RLS in cron/api functions |
-| `TRADR_ENCRYPTION_KEY` | 64 hex chars (32 bytes) — AES-256-GCM key for broker token storage. Generate: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
-| `CRON_SECRET` | Random string — sent as `x-cron-secret` header by Vercel Cron to authenticate GET /api/cron/sync |
+| `APP_URL` | Production URL — used in emails, Stripe redirects, CORS. e.g. `https://tradrjournal.xyz` |
+| `TRADR_ENCRYPTION_KEY` | 64 hex chars (32 bytes) — AES-256-GCM key for broker token storage. Generate: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`. ⚠️ Rename to `KODA_ENCRYPTION_KEY` pending. |
+| `CRON_SECRET` | Random string — sent as `x-cron-secret` header by GitHub Actions to authenticate GET /api/cron/sync |
 | `TRADOVATE_APP_ID` | Tradovate app ID |
 | `TRADOVATE_APP_VERSION` | Tradovate app version |
 | `TRADOVATE_CID` | Tradovate CID (numeric) |
@@ -188,11 +189,22 @@ All must be set in Vercel dashboard → Settings → Environment Variables (Prod
 | `TELEGRAM_CHAT_ID` | Feedback bot chat ID |
 | `STRIPE_SECRET_KEY` | Stripe secret key |
 | `STRIPE_WEBHOOK_SECRET` | Stripe webhook secret |
-| `STRIPE_PRICE_ID` | Stripe Pro price ID |
+| `STRIPE_PRICE_ID` | Stripe Pro price ID (legacy fallback — prefer `STRIPE_PRICE_ID_MONTHLY`) |
+| `STRIPE_PRICE_ID_MONTHLY` | Stripe monthly recurring price ID |
+| `STRIPE_PRICE_ID_ANNUAL` | Stripe annual recurring price ID (not live yet) |
+| `STRIPE_PROMO_CODE_ID_K0DA` | Stripe promo code object ID (promo_xxx) |
+| `STRIPE_PROMO_CODE_ID_FOUNDERS` | Stripe founders promo code object ID |
+| `STRIPE_PROMO_CODE_ID_BETA` | Stripe beta promo code object ID |
+| `RESEND_API_KEY` | Resend API key for transactional email (`re_...`) |
+| `VAPID_PUBLIC_KEY` | VAPID public key for web push notifications |
+| `VAPID_PRIVATE_KEY` | VAPID private key for web push notifications |
+| `VAPID_EMAIL` | VAPID contact email (e.g. `mailto:you@example.com`) |
+| `VITE_VAPID_PUBLIC_KEY` | Same as `VAPID_PUBLIC_KEY` — exposed to browser for push subscription |
 | `VITE_SENTRY_DSN` | Optional — leave blank to disable Sentry |
+| `VITE_APP_VERSION` | App version string for Sentry releases. Typically set by CI (git SHA). |
 | `VITE_POSTHOG_KEY` | PostHog project API key (`phc_...`). Leave blank to disable analytics. |
-| `VITE_POSTHOG_HOST` | PostHog host — `https://eu.i.posthog.com` (EU cloud) or `https://us.i.posthog.com` (US). |
-| `VITE_BETA_PASSWORD` | Closed-beta invite code. If set, shows BetaGate before auth. Leave blank to disable the gate. |
+| `VITE_POSTHOG_HOST` | PostHog host — `https://eu.i.posthog.com` (EU) or `https://us.i.posthog.com` (US). |
+| `VITE_BETA_PASSWORD` | Closed-beta invite code. If set, shows BetaGate before auth. Leave blank to disable. |
 
 > ⚠️ Never commit real credential values to CLAUDE.md or any tracked file. This file is in a public git repo.
 
@@ -262,7 +274,7 @@ Home tab has sub-nav: Overview · Circles · Execution · Rules · **Sync** · S
 ## Broker Sync Architecture
 
 ```
-Vercel Cron (GET /api/cron/sync every 5 min)
+GitHub Actions Cron (GET /api/cron/sync every 5 min)
   └─ x-cron-secret header auth
   └─ fetchAll broker_connections where status = connected/error
   └─ runWithConcurrency(10) → syncConnection(conn)
@@ -282,7 +294,7 @@ POST /api/cron/sync (manual trigger, JWT auth)
   └─ same flow but only for the authenticated user, concurrency 5
 ```
 
-**Token security:** Tradovate credentials are used once to get a token — never stored. Tokens stored as `base64(IV[12] || AuthTag[16] || Ciphertext)` in Postgres text columns. Key lives only in `TRADR_ENCRYPTION_KEY` env var.
+**Token security:** Tradovate credentials are used once to get a token — never stored. Tokens stored as `base64(IV[12] || AuthTag[16] || Ciphertext)` in Postgres text columns. Key lives only in `TRADR_ENCRYPTION_KEY` env var (rename to `KODA_ENCRYPTION_KEY` pending).
 
 **Deduplication:** `external_id` = `tv-{entryFillId}-{exitFillId}` + unique index on `(user_id, external_id)`. Re-running sync is fully idempotent.
 
@@ -365,7 +377,7 @@ if (isFlagOn("newTrades")) {
 }
 
 // Toggle from devtools:
-//   window.tradrFlags.enableFlag("newTrades"); location.reload();
+//   window.kodaFlags.enableFlag("newTrades"); location.reload();
 ```
 
 ### v2 data modules (when wiring in)
@@ -411,7 +423,7 @@ import { getAdminClient, getUserIdFromJwt } from "../lib/supabaseAdmin";
 ### Competitive roadmap
 
 Key competitors: TraderSync ($30–80/mo), Tradezella ($29–89/mo), Edgewonk ($197/yr), TradesViz ($0–30/mo).
-TRADR target pricing: Free tier · Pro $24.99/mo.
+Kōda target pricing: Free tier · Pro $24.99/mo.
 
 **Tech stack (May 2026)**
 - Vercel — hosting + serverless + cron
