@@ -358,6 +358,33 @@ export function SettingsScreen({
           )}
         </div>
 
+        {/* Push notifications */}
+        {("serviceWorker" in navigator && "PushManager" in window) && (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", borderBottom: `1px solid ${C.border}` }}>
+            <div>
+              <div style={{ fontFamily: BODY, fontSize: 14, color: C.text }}>Push notifications</div>
+              <div style={{ fontFamily: MONO, fontSize: 10, color: C.muted, letterSpacing: "0.08em", marginTop: 2 }}>New circle activity, AI insights</div>
+            </div>
+            <button
+              onClick={async () => {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session?.access_token) return;
+                const reg = await navigator.serviceWorker.ready;
+                const sub = await reg.pushManager.subscribe({
+                  userVisibleOnly: true,
+                  applicationServerKey: import.meta.env.VITE_VAPID_PUBLIC_KEY,
+                });
+                await fetch("/api/push/subscribe", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+                  body: JSON.stringify(sub.toJSON()),
+                });
+                showToast("Push notifications enabled");
+              }}
+              style={{ padding: "8px 14px", borderRadius: 999, background: C.live, color: "#0A0A0A", border: "none", fontFamily: MONO, fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase" as const, cursor: "pointer" }}
+            >Enable</button>
+          </div>
+        )}
         {/* Export CSV */}
         <div onClick={() => { if (isFlagOn("paywall") && profile.plan !== "pro" && profile.plan !== "elite") { setShowUpgrade(true); return; } exportCSV(); }} style={{ display: "flex", alignItems: "center", gap: "14px", padding: "14px 18px", borderBottom: `1px solid ${C.border}`, cursor: "pointer" }}>
           <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: (C as any).accentSoft ?? C.panel, border: `1px solid ${C.border2}`, color: C.accent, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
