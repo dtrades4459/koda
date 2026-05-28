@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
+import { sentryVitePlugin } from "@sentry/vite-plugin";
 
 export default defineConfig({
   plugins: [
@@ -36,6 +37,18 @@ export default defineConfig({
         type: "module",
       },
     }),
+    // Upload source maps to Sentry on production builds.
+    // Requires SENTRY_AUTH_TOKEN in Vercel env vars (build-time only, no VITE_ prefix).
+    // Generate at: sentry.io → Settings → Auth Tokens → project:releases + org:read
+    sentryVitePlugin({
+      org: process.env.SENTRY_ORG ?? "koda",
+      project: process.env.SENTRY_PROJECT ?? "koda",
+      authToken: process.env.SENTRY_AUTH_TOKEN,
+      // Only upload during CI/Vercel builds — skip locally when token is absent.
+      disable: !process.env.SENTRY_AUTH_TOKEN,
+      sourcemaps: { filesToDeleteAfterUpload: ["./dist/**/*.map"] },
+      telemetry: false,
+    }),
   ],
   test: {
     // Only pick up *.test.ts files inside src/ — exclude Playwright tests in tests/
@@ -46,6 +59,7 @@ export default defineConfig({
   },
   build: {
     target: "es2022",
+    sourcemap: true,
     rollupOptions: {
       output: {
         manualChunks(id) {
