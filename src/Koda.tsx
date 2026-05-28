@@ -373,7 +373,8 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
       window.history.replaceState({}, "", window.location.pathname);
     }
     // Also handle generic Stripe return URLs (?return=settings or ?session_id=…)
-    if (params.get("return") === "settings" || params.get("session_id")) {
+    // Guard: skip if the upgraded flow already handled it to avoid a double loadAll() race.
+    if (!_upgradedRef.current && (params.get("return") === "settings" || params.get("session_id"))) {
       window.history.replaceState({}, "", window.location.pathname);
       supabase.auth.refreshSession().then(({ data }) => {
         if (data?.session) { void loadAll(); }
@@ -2529,6 +2530,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                     } catch (_) {}
                     phReset();
                   }}
+                  onPlanRefreshed={() => { void loadAll(); }}
                 />
               )}
             </div>

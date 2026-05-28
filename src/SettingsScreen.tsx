@@ -37,6 +37,7 @@ export interface SettingsScreenProps {
   setFeedbackOpen: (v: boolean) => void;
   isFlagOn: (name: string) => boolean;
   onSignOut: () => Promise<void>;
+  onPlanRefreshed?: () => void;
 }
 
 export function SettingsScreen({
@@ -64,7 +65,9 @@ export function SettingsScreen({
   setFeedbackOpen,
   isFlagOn,
   onSignOut,
+  onPlanRefreshed,
 }: SettingsScreenProps) {
+  const [refreshingPlan, setRefreshingPlan] = React.useState(false);
   const inp: React.CSSProperties = {
     background: "transparent",
     border: "none",
@@ -143,13 +146,22 @@ export function SettingsScreen({
           {(profile.plan === "pro" || profile.plan === "elite") && (
             <div style={{ marginTop: 4 }}>
               <button
+                disabled={refreshingPlan}
                 onClick={async () => {
-                  await supabase.auth.refreshSession();
-                  showToast("Plan refreshed — reload if features are still locked");
+                  setRefreshingPlan(true);
+                  try {
+                    await supabase.auth.refreshSession();
+                    onPlanRefreshed?.();
+                    showToast("Plan refreshed!");
+                  } catch (_) {
+                    showToast("Refresh failed — please try again.");
+                  } finally {
+                    setRefreshingPlan(false);
+                  }
                 }}
-                style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "9px", letterSpacing: "0.08em", padding: 0, textDecoration: "underline" }}
+                style={{ background: "none", border: "none", color: C.muted, cursor: refreshingPlan ? "default" : "pointer", fontFamily: MONO, fontSize: "9px", letterSpacing: "0.08em", padding: 0, textDecoration: "underline", opacity: refreshingPlan ? 0.5 : 1 }}
               >
-                Refresh plan
+                {refreshingPlan ? "Refreshing…" : "Refresh plan"}
               </button>
             </div>
           )}
