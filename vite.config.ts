@@ -41,9 +41,10 @@ export default defineConfig({
     // Requires SENTRY_AUTH_TOKEN in Vercel env vars (build-time only, no VITE_ prefix).
     // Generate at: sentry.io → Settings → Auth Tokens → project:releases + org:read
     sentryVitePlugin({
-      org: process.env.SENTRY_ORG ?? "koda",
+      org: process.env.SENTRY_ORG ?? "tradr-tt",
       project: process.env.SENTRY_PROJECT ?? "koda",
       authToken: process.env.SENTRY_AUTH_TOKEN,
+      url: "https://de.sentry.io",
       // Only upload during CI/Vercel builds — skip locally when token is absent.
       disable: !process.env.SENTRY_AUTH_TOKEN,
       sourcemaps: { filesToDeleteAfterUpload: ["./dist/**/*.map"] },
