@@ -234,13 +234,14 @@ export function TradingCircles({ myCircles, circlesView, setCirclesView, activeC
     setTrophies([]);
     setLoadingLB(true);
     setLbError(false);
+    let challenge: CircleChallenge | null = null;
     try {
-      const [entries, challenge] = await Promise.all([
+      const [entries, challengeResult] = await Promise.all([
         fetchCircleLeaderboard(circle),
         fetchActiveChallenge(circle.code),
       ]);
       setLeaderboard(entries);
-      setLbError(false);
+      challenge = challengeResult;
       setActiveChallenge(challenge);
     } catch {
       setLbError(true);
@@ -725,7 +726,7 @@ export function TradingCircles({ myCircles, circlesView, setCirclesView, activeC
                         setMembersLoading(true);
                         readCircleMembers(activeCircle.code, activeCircle.members || [])
                           .then(fresh => { setActiveCircle((c: unknown) => c ? { ...(c as object), members: fresh } : c); })
-                          .catch(() => {})
+                          .catch((err) => { console.error("Failed to refresh members:", err); })
                           .finally(() => setMembersLoading(false));
                       }
                     }}
@@ -841,7 +842,7 @@ export function TradingCircles({ myCircles, circlesView, setCirclesView, activeC
               <div>
                 {lbError && (
                   <div style={{ padding: "20px", textAlign: "center", fontFamily: BODY, fontSize: "13px", color: C.muted }}>
-                    Couldn't load leaderboard. <button onClick={async () => { setLoadingLB(true); setLbError(false); try { const e = await fetchCircleLeaderboard(activeCircle); setLeaderboard(e); } catch { setLbError(true); } setLoadingLB(false); }} style={{ background: "none", border: "none", color: C.accent, cursor: "pointer", fontFamily: MONO, fontSize: "11px", textDecoration: "underline" }}>Try again</button>
+                    Couldn't load leaderboard. <button onClick={async () => { if (!activeCircle) return; setLoadingLB(true); setLbError(false); try { const [e, ch] = await Promise.all([fetchCircleLeaderboard(activeCircle), fetchActiveChallenge(activeCircle.code)]); setLeaderboard(e); setActiveChallenge(ch); } catch { setLbError(true); } setLoadingLB(false); }} style={{ background: "none", border: "none", color: C.accent, cursor: "pointer", fontFamily: MONO, fontSize: "11px", textDecoration: "underline" }}>Try again</button>
                   </div>
                 )}
                 {loadingLB ? (
