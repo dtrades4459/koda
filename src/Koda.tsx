@@ -360,12 +360,24 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
       setProfile(p => ({ ...p, plan: "pro" as const, ...(cid ? { stripeCustomerId: cid } : {}) }));
       setCelebration({ kind: "pro" });
       window.history.replaceState({}, "", window.location.pathname);
-      // Refresh JWT after 2s so the webhook's app_metadata update is reflected immediately
-      setTimeout(() => supabase.auth.refreshSession(), 2000);
+      // Refresh JWT after 2s so the webhook's app_metadata update is reflected immediately,
+      // then reload profile from KV so plan-gated features unlock without a manual refresh.
+      setTimeout(() => {
+        supabase.auth.refreshSession().then(({ data }) => {
+          if (data?.session) { void loadAll(); }
+        }).catch(() => {});
+      }, 2000);
     }
     if (params.get("cancelled") === "1") {
       showToast("No worries — you're still on the free plan.");
       window.history.replaceState({}, "", window.location.pathname);
+    }
+    // Also handle generic Stripe return URLs (?return=settings or ?session_id=…)
+    if (params.get("return") === "settings" || params.get("session_id")) {
+      window.history.replaceState({}, "", window.location.pathname);
+      supabase.auth.refreshSession().then(({ data }) => {
+        if (data?.session) { void loadAll(); }
+      }).catch(() => {});
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 

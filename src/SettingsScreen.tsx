@@ -140,6 +140,19 @@ export function SettingsScreen({
           {(profile.plan === "pro" || profile.plan === "elite") && (
             <div style={{ marginTop: "6px", display: "inline-flex", padding: "2px 8px", borderRadius: "999px", background: (C as any).liveSoft ?? "rgba(100,220,180,0.08)", color: (C as any).live ?? C.green, fontFamily: MONO, fontSize: "9px", fontWeight: 700, letterSpacing: "0.12em", border: `1px solid color-mix(in oklch, ${(C as any).live ?? C.green} 30%, transparent)` }}>{"●"} PRO PLAN</div>
           )}
+          {(profile.plan === "pro" || profile.plan === "elite") && (
+            <div style={{ marginTop: 4 }}>
+              <button
+                onClick={async () => {
+                  await supabase.auth.refreshSession();
+                  showToast("Plan refreshed — reload if features are still locked");
+                }}
+                style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "9px", letterSpacing: "0.08em", padding: 0, textDecoration: "underline" }}
+              >
+                Refresh plan
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
