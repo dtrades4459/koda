@@ -3264,6 +3264,10 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
 
               {statsTab === "strategies" && (
                 <>
+                  {Object.keys(stratStats).length === 0 ? (
+                    <EmptyState C={C} icon="◆" headline="No strategy data yet." body="Assign a strategy when logging trades to see your edge breakdown here." cta="Log a trade →" onCta={() => navigateTo("log")} />
+                  ) : (
+                  <>
                   <section>
                     <SectionKicker label="WIN RATE BY STRATEGY" C={C} />
                     <div style={{ marginTop: "20px" }}><WinRateChart trades={trades} C={C} /></div>
@@ -3298,6 +3302,8 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                         })}
                       </div>
                     </section>
+                  )}
+                  </>
                   )}
                 </>
               )}
