@@ -24,8 +24,9 @@ export default defineConfig({
         // Only precache compiled JS/CSS/HTML -- never trade data or screenshots.
         globPatterns: ["**/*.{js,css,html,svg,png,webmanifest,woff2}"],
         // Exclude large or frequently-changing assets from the precache so the
-        // install payload stays small.
-        globIgnores: ["**/node_modules/**", "icon-maskable.svg"],
+        // install payload stays small. Exclude .map files — Sentry uploads then
+        // deletes them; they should never be precached by the service worker.
+        globIgnores: ["**/node_modules/**", "icon-maskable.svg", "**/*.map"],
         // Bump this whenever you want to force a full cache refresh on users.
         injectionPoint: "self.__WB_MANIFEST",
       },
@@ -49,6 +50,8 @@ export default defineConfig({
       disable: !process.env.SENTRY_AUTH_TOKEN,
       sourcemaps: { filesToDeleteAfterUpload: ["./dist/**/*.map"] },
       telemetry: false,
+      // Never let upload failures break the deployment.
+      errorHandler: (err) => { console.warn("[sentry] source map upload failed:", err.message); },
     }),
   ],
   test: {
@@ -60,7 +63,9 @@ export default defineConfig({
   },
   build: {
     target: "es2022",
-    sourcemap: true,
+    // "hidden" generates map files for Sentry upload but omits the
+    // sourceMappingURL comment from bundles, so maps stay off the public CDN.
+    sourcemap: "hidden",
     rollupOptions: {
       output: {
         manualChunks(id) {
