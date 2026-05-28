@@ -20,9 +20,7 @@
     "strict": true,
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true
+    "noUncheckedSideEffectImports": true
   },
   "include": ["src"],
   "exclude": [

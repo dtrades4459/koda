@@ -378,7 +378,7 @@ export function DailyInsights({ trades, C, useDollar }: ChartProps & { useDollar
     {label:"Less Profitable Day",primary:fval(worst),secondary:fday(worst),sub:"",color:C.red},
     bt?{label:"Best Trade",primary:ftv(bt),secondary:`${bt.direction||bt.bias||""} ${bt.pair}`.trim(),sub:bt.date,color:C.green}:null,
     wort?{label:"Worst Trade",primary:ftv(wort),secondary:`${wort.direction||wort.bias||""} ${wort.pair}`.trim(),sub:wort.date,color:C.red}:null,
-  ].filter(Boolean);
+  ].filter((c): c is NonNullable<typeof c> => c !== null);
   return (
     <div>
       <div style={{ fontSize:"10px", color:C.muted, fontFamily:MONO, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:"12px" }}>Daily Insights</div>
@@ -429,7 +429,7 @@ export function CalendarView({ trades, C, onDayClick }: ChartProps & { onDayClic
           const isToday = key === new Date().toISOString().split("T")[0];
           const textCol = data ? (data.pnl > 0 ? C.green : data.pnl < 0 ? C.red : C.muted) : C.muted;
           return (
-            <div key={i} onClick={() => data && onDayClick(key)}
+            <div key={i} onClick={() => data && onDayClick?.(key)}
               style={{ border: `1px solid ${isToday ? C.text : C.border}`, padding: "6px 3px", textAlign: "center", cursor: data ? "pointer" : "default", minHeight: "44px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: "2px", background: "transparent" }}>
               <div style={{ fontSize: "11px", color: isToday ? C.text : C.text2, fontFamily: MONO }}>{d}</div>
               {data && <div style={{ fontSize: "10px", color: textCol, fontFamily: MONO, letterSpacing: "0.04em" }}>{data.pnl >= 0 ? "+" : ""}{data.pnl.toFixed(1)}</div>}
@@ -687,8 +687,8 @@ export function DayOfWeekChart({ trades, C }: ChartProps) {
 // ─── MAE/MFE SCATTER CHART ────────────────────────────────────────────────────
 export function MAEMFEChart({ trades, C }: ChartProps) {
   const pts = trades.filter(t => t.mae && t.mfe).map(t => ({
-    mae: parseFloat(t.mae) || 0,
-    mfe: parseFloat(t.mfe) || 0,
+    mae: parseFloat(t.mae ?? "0") || 0,
+    mfe: parseFloat(t.mfe ?? "0") || 0,
     pnl: parseFloat(t.pnl) || 0,
     outcome: t.outcome,
     pair: t.pair,

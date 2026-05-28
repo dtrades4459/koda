@@ -246,7 +246,7 @@ export function DataSourcesScreen({
   // ── Shared styles ─────────────────────────────────────────────────────────
 
   const card: React.CSSProperties = {
-    background: C.card ?? C.surface ?? "#1a1a2e",
+    background: C.panel2,
     borderRadius: 14,
     padding: "14px 16px",
     marginBottom: 10,
@@ -266,7 +266,7 @@ export function DataSourcesScreen({
     background:
       variant === "primary" ? (C.accent ?? "#7c3aed") :
       variant === "danger"  ? "#ef4444" :
-      C.surface2 ?? C.surface ?? "#2a2a3e",
+      C.panel2,
     color:
       variant === "primary" ? "#fff" :
       variant === "danger"  ? "#fff" :
@@ -278,7 +278,7 @@ export function DataSourcesScreen({
     padding: "10px 12px",
     borderRadius: 10,
     border: `1px solid ${C.border ?? "#333"}`,
-    background: C.surface2 ?? "#2a2a3e",
+    background: C.panel2,
     color: C.text ?? "#e2e8f0",
     fontFamily: BODY,
     fontSize: 14,
@@ -516,7 +516,7 @@ export function DataSourcesScreen({
           onClick={e => { if (e.target === e.currentTarget) setShowConnect(false); }}
         >
           <div style={{
-            background: C.card ?? "#1a1a2e",
+            background: C.panel2,
             width: "100%", maxWidth: 480,
             borderRadius: "20px 20px 0 0",
             padding: "24px 20px 36px",
@@ -537,7 +537,7 @@ export function DataSourcesScreen({
                   style={{
                     flex: 1, padding: "9px 0", borderRadius: 10, border: "none",
                     cursor: "pointer", fontFamily: BODY, fontSize: 14, fontWeight: 600,
-                    background: connectEnv === env ? (C.accent ?? "#7c3aed") : (C.surface2 ?? "#2a2a3e"),
+                    background: connectEnv === env ? (C.accent ?? "#7c3aed") : (C.panel2),
                     color: connectEnv === env ? "#fff" : (C.muted ?? "#888"),
                   }}
                 >
@@ -614,7 +614,7 @@ export function DataSourcesScreen({
           onClick={e => { if (e.target === e.currentTarget) setPendingDisconnect(null); }}
         >
           <div style={{
-            background: C.card ?? "#1a1a2e",
+            background: C.panel2,
             borderRadius: 18, padding: "24px 20px",
             width: "100%", maxWidth: 380,
           }}>

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { supabase } from "./lib/supabase";
 import type { User } from "@supabase/supabase-js";
 import { onStorageError, storage } from "./lib/storage";
-import { calcRR, calcWinRate, calcStreak, calcWeeklyPnL, calcTotalPnL } from "./lib/stats";
+import { calcRR, calcStreak } from "./lib/stats";
 import { log } from "./lib/log";
 import { isFlagOn } from "./lib/flags";
 import { useFollows } from "./hooks/useFollows";
@@ -16,19 +16,19 @@ import { KODA_GLOBAL_CODE } from "./hooks/useCircles";
 import { STRATEGIES, STRATEGY_NAMES, getAllStrategiesMap, addExtraStrategies } from "./data/strategies";
 import { useTradovate } from "./hooks/useTradovate";
 
-import type { TradeComment, ReactionMap, Trade, Profile, CircleMember, Circle, Insight, StrategyDef } from "./types";
-import { AvatarCircle, Badge, SectionKicker, StrategyPill, StrategySelect, SubNavDropdown, GearButton, Toast, ToastStack, KodaMarkFilled, KodaMark, CrownIcon, GlassOrb, CornerGlow, GhostWord, TickMotif, TealArrowBtn, Pill, Card, Kicker, Delta, ScreenHeader, IconButton, FloatingInput, EmptyState, outcomeColor, outcomeLetter, stratCode, stratShort, compressImage, MONO, BODY, DISPLAY, EmptyTradesState, ErrorOfflineState, CelebrationOverlay } from "./shared";
-import type { ToastKind, ToastItem } from "./shared";
+import type { TradeComment, ReactionMap, Trade, Profile, Circle, Insight, StrategyDef } from "./types";
+import { AvatarCircle, SectionKicker, StrategySelect, SubNavDropdown, GearButton, Toast, ToastStack, KodaMarkFilled, KodaMark, GlassOrb, Pill, Card, Kicker, Delta, IconButton, EmptyState, outcomeColor, outcomeLetter, stratCode, stratShort, compressImage, MONO, BODY, DISPLAY, EmptyTradesState, CelebrationOverlay } from "./shared";
+import type { ToastItem } from "./shared";
 import { TradingCircles } from "./TradingCircles";
 import { FriendsFeed } from "./FriendsFeed";
-import { MiniSparkline, PnLChart, MonthlyPnLChart, WinRateChart, TradeDurationChart, NetDailyPnLChart, DailyCumulativePnLChart, TradeStatCards, AvgStatsCards, DailyInsights, CalendarView, DrawdownCurve, SessionHeatmap, TimeOfDayChart, DayOfWeekChart, MAEMFEChart, generateInsights } from "./charts";
+import { PnLChart, MonthlyPnLChart, WinRateChart, TradeDurationChart, NetDailyPnLChart, DailyCumulativePnLChart, TradeStatCards, AvgStatsCards, DailyInsights, CalendarView, DrawdownCurve, SessionHeatmap, TimeOfDayChart, DayOfWeekChart, MAEMFEChart, generateInsights } from "./charts";
 import { CsvImportPanel } from "./CsvImportPanel";
 import { DataSourcesScreen } from "./DataSourcesScreen";
 import { ProfileModal } from "./ProfileModal";
 import { SettingsScreen } from "./SettingsScreen";
 import { LogTradeScreen } from "./LogTradeScreen";
 import { ReviewInboxScreen } from "./ReviewInboxScreen";
-import { SESSIONS, BIAS, EMOTION_TAGS, getEmotionTags, EMPTY_TRADE } from "./tradeConstants";
+import { EMOTION_TAGS, getEmotionTags, EMPTY_TRADE } from "./tradeConstants";
 import { TourOverlay, OnboardingFlow } from "./OnboardingFlow";
 import type { OnboardingData } from "./OnboardingFlow";
 import { UpgradeModal } from "./UpgradeModal";
@@ -43,8 +43,6 @@ import { ProLock } from "./components/ProLock";
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
 
 /** The Kōda Global circle — every new user auto-joins on onboarding completion. */
-const LEGACY_GLOBAL_CODE = "TRADRG-HB1U";
-
 // STRATEGIES, STRATEGY_NAMES, getAllStrategiesMap → src/data/strategies.ts
 
 // ─── DEFAULT PROFILE ─────────────────────────────────────────────────────────
@@ -237,7 +235,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   const [editingProfile, setEditingProfile] = useState(false);
   const [profileDraft, setProfileDraft] = useState<Profile>(DEF_PROFILE);
   const [commentInputs, setCommentInputs] = useState<Record<number, string>>({});
-  const [pnlMode, setPnlMode] = useState<"r" | "$">("$");
+  const [pnlMode] = useState<"r" | "$">("$");
   const [timeMode, setTimeMode] = useState<"week" | "all">("week");
   // Follow system — state + sync managed by useFollows (wired below after getMyCode).
   const [viewProfile, setViewProfile] = useState<string | null>(null);
@@ -253,11 +251,6 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   const [toastsV2, setToastsV2] = useState<ToastItem[]>([]);
   const toastIdRef = useRef(0);
   const [celebration, setCelebration] = useState<{ kind: "trade" | "streak" | "pro" | "loss" | "streak-loss"; streakCount?: number; tradeStats?: { winRate: number; avgR: number; streak: number } } | null>(null);
-  const showToastV2 = useCallback((kind: ToastKind, title: string, body?: string) => {
-    const id = ++toastIdRef.current;
-    setToastsV2(prev => [...prev, { id, kind, title, body, ts: Date.now() }]);
-    setTimeout(() => setToastsV2(prev => prev.filter(t => t.id !== id)), 6000);
-  }, []);
   const dismissToast = useCallback((id: number) => {
     setToastsV2(prev => prev.filter(t => t.id !== id));
   }, []);
@@ -283,7 +276,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   const [newRuleText, setNewRuleText] = useState("");
   const [addingCheck, setAddingCheck] = useState(false);
   const [addingRule, setAddingRule] = useState(false);
-  const [calDayTrades, setCalDayTrades] = useState<Trade[] | null>(null);
+  const [calDayTrades, setCalDayTrades] = useState<{ key: string; trades: Trade[] } | null>(null);
   const [statsTab, setStatsTab] = useState("overview");
   const [perfPnlMode, setPerfPnlMode] = useState<"r" | "$">("$");
   const [savingTrade, setSavingTrade] = useState(false);
@@ -291,7 +284,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   // Custom strategies: user-defined, same shape as built-ins (name, code, setups, checklist, rules).
   // Merged into STRATEGIES global on load so stratCode/stratShort keep working unchanged.
   const [customStrategies, setCustomStrategies] = useState<StrategyDef[]>([]);
-  const allStrategyNames = [...STRATEGY_NAMES, ...customStrategies.map((s: StrategyDef & { name: string }) => s.name)];
+  const allStrategyNames = [...STRATEGY_NAMES, ...(customStrategies as Array<StrategyDef & { name: string }>).map(s => s.name)];
   // Custom-strategy editor state
   const [showStrategyEditor, setShowStrategyEditor] = useState(false);
   const [editingStrategy, setEditingStrategy] = useState<string | null>(null);
@@ -299,7 +292,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
 
   // CSV import panel state
   const [showCsvImport, setShowCsvImport] = useState(false);
-  const [isImportingCsv, setIsImportingCsv] = useState(false);
+  const [, setIsImportingCsv] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [mandatoryUpgrade, setMandatoryUpgrade] = useState(false);
   const [showCalc,    setShowCalc]    = useState(false);
@@ -567,27 +560,27 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     const d = strategyDraft;
     if (!d.name.trim()) { showToast("Name required"); return; }
     const code = (d.code || d.name).replace(/[^A-Z0-9]/gi, "").slice(0, 4).toUpperCase() || "NEW";
-    const clean = { name: d.name.trim(), code, setups: d.setups.filter((x: string) => x?.trim()), checklist: d.checklist.filter((x: { text?: string }) => x?.text?.trim()), rules: d.rules.filter((x: { text?: string }) => x?.text?.trim()) };
+    const clean = { name: d.name.trim(), code, setups: d.setups.filter(x => x?.trim()), checklist: d.checklist.filter(x => x?.trim()), rules: d.rules.filter(x => x?.trim()) };
     // Block overwriting a built-in.
     if (STRATEGY_NAMES.includes(clean.name) && editingStrategy !== clean.name) { showToast("Name clashes with a built-in"); return; }
-    let u;
-    if (editingStrategy) u = customStrategies.map((s: StrategyDef & { name: string }) => s.name === editingStrategy ? clean : s);
-    else u = [...customStrategies, clean];
+    let u: Array<StrategyDef & { name: string }>;
+    if (editingStrategy) u = (customStrategies as Array<StrategyDef & { name: string }>).map(s => s.name === editingStrategy ? clean : s);
+    else u = [...(customStrategies as Array<StrategyDef & { name: string }>), clean];
     await saveCustomStrategies(u);
     // Seed checklist/rules state so the Check tab can render the new strategy immediately.
     if (!stratChecklists[clean.name]) {
-      const cl = clean.checklist.length ? clean.checklist : [];
+      const cl = clean.checklist.map((t, i) => ({ id: i + 1, text: t }));
       await saveStratChecklists({ ...stratChecklists, [clean.name]: cl });
     }
     if (!stratRules[clean.name]) {
-      const rl = clean.rules.length ? clean.rules : [];
+      const rl = clean.rules.map((t, i) => ({ id: i + 1, text: t }));
       await saveStratRules({ ...stratRules, [clean.name]: rl });
     }
     setShowStrategyEditor(false);
     showToast(editingStrategy ? "Strategy updated" : "Strategy added");
   }
   async function deleteCustomStrategy(name: string) {
-    const u = customStrategies.filter((s: StrategyDef & { name: string }) => s.name !== name);
+    const u = (customStrategies as Array<StrategyDef & { name: string }>).filter(s => s.name !== name);
     await saveCustomStrategies(u);
     const cl = { ...stratChecklists }; delete cl[name]; await saveStratChecklists(cl);
     const rl = { ...stratRules }; delete rl[name]; await saveStratRules(rl);
@@ -2355,12 +2348,12 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                     {ruleItems.map((rule: { id: number; text: string }, idx: number) => (
                       <div key={rule.id} className="check-row" style={{ minHeight: "52px", borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: "14px", padding: "8px 0" }}>
                         <span style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, letterSpacing: "0.08em", minWidth: "24px" }}>{String(idx + 1).padStart(2, "0")}</span>
-                        {editingRule === rule.id
+                        {editingRule?.id === rule.id
                           ? <EditInline val={rule.text} onSave={(t: string) => saveEditRule(rule.id, t)} onCancel={() => setEditingRule(null)} C={C} />
                           : <>
                             <span style={{ flex: 1, fontSize: "14px", color: C.text, lineHeight: 1.55, fontFamily: BODY }}>{rule.text}</span>
                             <div className="ca" style={{ display: "flex", gap: "4px", opacity: 0, transition: "opacity 0.15s" }}>
-                              <button onClick={() => setEditingRule(rule.id)} style={{ background: "none", border: `1px solid ${C.border2}`, borderRadius: "6px", color: C.muted, fontSize: "10px", cursor: "pointer", fontFamily: MONO, letterSpacing: "0.08em", textTransform: "uppercase", padding: "8px 10px", minHeight: "44px" }}>edit</button>
+                              <button onClick={() => setEditingRule(rule)} style={{ background: "none", border: `1px solid ${C.border2}`, borderRadius: "6px", color: C.muted, fontSize: "10px", cursor: "pointer", fontFamily: MONO, letterSpacing: "0.08em", textTransform: "uppercase", padding: "8px 10px", minHeight: "44px" }}>edit</button>
                               <button onClick={() => deleteRule(rule.id)} style={{ background: "none", border: `1px solid ${C.border2}`, borderRadius: "6px", color: C.red, fontSize: "10px", cursor: "pointer", fontFamily: MONO, letterSpacing: "0.08em", textTransform: "uppercase", padding: "8px 10px", minHeight: "44px" }}>rm</button>
                             </div>
                           </>}
@@ -3412,9 +3405,9 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                 <SectionKicker label={`${checklistTab === "rules" ? "RULES" : "PRE-TRADE"} · ${stratShort(activeStrategy).toUpperCase()}`} C={C} />
                 <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
                   <StrategySelect strategies={allStrategyNames} value={activeStrategy} onChange={(s: string) => { setActiveStrategy(s); setEditingCheckItem(null); setEditingRule(null); }} C={C} align="right" />
-                  {customStrategies.find((s: StrategyDef & { name: string }) => s.name === activeStrategy) && (
+                  {(customStrategies as Array<StrategyDef & { name: string }>).find(s => s.name === activeStrategy) && (
                     <>
-                      <button onClick={() => openEditStrategy(customStrategies.find((s: StrategyDef & { name: string }) => s.name === activeStrategy))}
+                      <button onClick={() => { const found = (customStrategies as Array<StrategyDef & { name: string }>).find(s => s.name === activeStrategy); if (found) openEditStrategy(found); }}
                         style={{ background: "transparent", border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "6px 12px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", color: C.muted }}>
                         Edit
                       </button>
@@ -3478,13 +3471,13 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                               ✓
                             </div>
                           </div>
-                          {editingCheckItem === item.id
+                          {editingCheckItem?.id === item.id
                             ? <EditInline val={item.text} onSave={(t: string) => saveEditCheck(item.id, t)} onCancel={() => setEditingCheckItem(null)} C={C} />
                             : <>
                               <span onClick={() => toggleCheck(item.id)}
                                 style={{ flex: 1, fontSize: "14px", color: ch ? C.muted : C.text, textDecoration: ch ? "line-through" : "none", cursor: "pointer", lineHeight: 1.5, fontFamily: BODY }}>{item.text}</span>
                               <div className="ca" style={{ display: "flex", gap: "4px", opacity: 0, transition: "opacity 0.15s" }}>
-                                <button onClick={() => setEditingCheckItem(item.id)} style={{ background: "none", border: `1px solid ${C.border2}`, borderRadius: "6px", color: C.muted, fontSize: "10px", cursor: "pointer", fontFamily: MONO, letterSpacing: "0.08em", textTransform: "uppercase", padding: "8px 10px", minHeight: "44px" }}>edit</button>
+                                <button onClick={() => setEditingCheckItem(item)} style={{ background: "none", border: `1px solid ${C.border2}`, borderRadius: "6px", color: C.muted, fontSize: "10px", cursor: "pointer", fontFamily: MONO, letterSpacing: "0.08em", textTransform: "uppercase", padding: "8px 10px", minHeight: "44px" }}>edit</button>
                                 <button onClick={() => deleteCheckItem(item.id)} style={{ background: "none", border: `1px solid ${C.border2}`, borderRadius: "6px", color: C.red, fontSize: "10px", cursor: "pointer", fontFamily: MONO, letterSpacing: "0.08em", textTransform: "uppercase", padding: "8px 10px", minHeight: "44px" }}>rm</button>
                               </div>
                             </>}
@@ -3526,12 +3519,12 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                     {ruleItems.map((rule: { id: number; text: string }, idx: number) => (
                       <div key={rule.id} className="check-row" style={{ minHeight: "52px", borderBottom: idx < ruleItems.length - 1 ? `1px solid ${C.border}` : "none", display: "flex", alignItems: "center", gap: "12px", padding: "0 16px" }}>
                         <span style={{ width: "20px", height: "20px", borderRadius: "999px", background: `color-mix(in oklch, ${C.green} 18%, transparent)`, border: `1px solid ${C.green}`, display: "flex", alignItems: "center", justifyContent: "center", color: C.green, fontSize: "10px", flexShrink: 0 }}>✓</span>
-                        {editingRule === rule.id
+                        {editingRule?.id === rule.id
                           ? <EditInline val={rule.text} onSave={(t: string) => saveEditRule(rule.id, t)} onCancel={() => setEditingRule(null)} C={C} />
                           : <>
                             <span style={{ flex: 1, fontSize: "14px", color: C.text, lineHeight: 1.55, fontFamily: BODY }}>{rule.text}</span>
                             <div className="ca" style={{ display: "flex", gap: "4px", opacity: 0, transition: "opacity 0.15s" }}>
-                              <button onClick={() => setEditingRule(rule.id)} style={{ background: "none", border: `1px solid ${C.border2}`, borderRadius: "6px", color: C.muted, fontSize: "10px", cursor: "pointer", fontFamily: MONO, letterSpacing: "0.08em", textTransform: "uppercase", padding: "8px 10px", minHeight: "44px" }}>edit</button>
+                              <button onClick={() => setEditingRule(rule)} style={{ background: "none", border: `1px solid ${C.border2}`, borderRadius: "6px", color: C.muted, fontSize: "10px", cursor: "pointer", fontFamily: MONO, letterSpacing: "0.08em", textTransform: "uppercase", padding: "8px 10px", minHeight: "44px" }}>edit</button>
                               <button onClick={() => deleteRule(rule.id)} style={{ background: "none", border: `1px solid ${C.border2}`, borderRadius: "6px", color: C.red, fontSize: "10px", cursor: "pointer", fontFamily: MONO, letterSpacing: "0.08em", textTransform: "uppercase", padding: "8px 10px", minHeight: "44px" }}>rm</button>
                             </div>
                           </>}
