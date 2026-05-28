@@ -443,7 +443,7 @@ Kōda target pricing: Free tier · Pro $24.99/mo.
 
 **Sprint 2 — Psychology + Prop Firm**
 - [x] Per-trade emotional state field (Calm / FOMO / Revenge / Confident) + rule-adherence Y/N + mistake tag ✓ (`LogTradeScreen.tsx` Discipline/Emotional/Mistake cards)
-- [ ] Prop firm account mode — evaluation targets (profit target, daily loss limit, max drawdown), live progress bars *(EvalAccountScreen.tsx exists — needs verification it's fully wired)*
+- [x] Prop firm account mode — evaluation targets (profit target, daily loss limit, max drawdown), live progress bars ✓ (`EvalAccountScreen.tsx` + Settings toggle + sub-nav Eval tab + Home dashboard mini-bars with red-warning thresholds)
 - [x] Discipline score card — "You followed your rules on 71% of trades this month" ✓ (`Koda.tsx` psychology stats tab: rule adherence %, mistake frequency, emotion × outcome)
 
 **Sprint 3 — Advanced Analytics**
