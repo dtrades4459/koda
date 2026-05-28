@@ -3,6 +3,7 @@
 // Import from here rather than re-defining per-file.
 
 import type { Trade } from "./types";
+import { localDateStr } from "./shared";
 
 export const SESSIONS = ["London","New York","Asia","London/NY Overlap","Pre-Market","After Hours"];
 export const BIAS = ["Bullish","Bearish","Neutral"];
@@ -40,7 +41,7 @@ export const MISTAKE_TAGS = [
 ] as const;
 
 export const EMPTY_TRADE: Partial<Trade> = {
-  date: new Date().toISOString().split("T")[0],
+  date: localDateStr(),
   pair: "", session: "", bias: "", strategy: "", setup: "",
   entryPrice: "", slPrice: "", tpPrice: "", rr: "",
   outcome: "", pnl: "", pnlDollar: "",

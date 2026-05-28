@@ -2,6 +2,12 @@
 import type { StrategyDef } from "./types";
 import type { Theme } from "./theme";
 
+// ─── DATE HELPERS ────────────────────────────────────────────────────────────
+/** Returns today's date as YYYY-MM-DD in the user's local timezone. */
+export function localDateStr(d = new Date()): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 // ─── FONT STACKS (duplicated from Koda.tsx for standalone use) ──────────────
 export const MONO = "'Geist Mono', 'IBM Plex Mono', ui-monospace, monospace";
 export const BODY = "'Geist', 'Inter', system-ui, sans-serif";

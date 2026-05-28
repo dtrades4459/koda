@@ -17,7 +17,7 @@ import { STRATEGIES, STRATEGY_NAMES, getAllStrategiesMap, addExtraStrategies } f
 import { useTradovate } from "./hooks/useTradovate";
 
 import type { TradeComment, ReactionMap, Trade, Profile, CircleMember, Circle, Insight, StrategyDef } from "./types";
-import { AvatarCircle, Badge, SectionKicker, StrategyPill, StrategySelect, SubNavDropdown, GearButton, Toast, ToastStack, KodaMarkFilled, KodaMark, CrownIcon, GlassOrb, CornerGlow, GhostWord, TickMotif, TealArrowBtn, Pill, Card, Kicker, Delta, ScreenHeader, IconButton, FloatingInput, EmptyState, outcomeColor, outcomeLetter, stratCode, stratShort, compressImage, MONO, BODY, DISPLAY, EmptyTradesState, ErrorOfflineState, CelebrationOverlay } from "./shared";
+import { AvatarCircle, Badge, SectionKicker, StrategyPill, StrategySelect, SubNavDropdown, GearButton, Toast, ToastStack, KodaMarkFilled, KodaMark, CrownIcon, GlassOrb, CornerGlow, GhostWord, TickMotif, TealArrowBtn, Pill, Card, Kicker, Delta, ScreenHeader, IconButton, FloatingInput, EmptyState, outcomeColor, outcomeLetter, stratCode, stratShort, compressImage, MONO, BODY, DISPLAY, EmptyTradesState, ErrorOfflineState, CelebrationOverlay, localDateStr } from "./shared";
 import type { ToastKind, ToastItem } from "./shared";
 import { TradingCircles } from "./TradingCircles";
 import { FriendsFeed } from "./FriendsFeed";
@@ -55,7 +55,7 @@ const DEF_PROFILE: Profile = {
   avatar: "",
   broker: "",
   timezone: "London (GMT)",
-  startDate: new Date().toISOString().split("T")[0],
+  startDate: localDateStr(),
   targetRR: "2",
   maxTradesPerDay: "2",
   onboarded: false,
@@ -1282,7 +1282,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
 
   const openExportPdf = () => {
     const norm = (profile.handle || "").replace(/^@/, "").toLowerCase();
-    const today = new Date().toISOString().split("T")[0];
+    const today = localDateStr();
     const wr = total > 0 ? Math.round((wins / total) * 100) : 0;
     const avgR = total > 0 ? (parseFloat(totalPnL) / total).toFixed(2) : "0";
     const recentTrades = [...trades].sort((a, b) => b.date > a.date ? 1 : -1).slice(0, 15);
@@ -1703,7 +1703,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
 
                   {/* Daily risk dashboard + kill switch */}
                   {(() => {
-                    const today = new Date().toISOString().split("T")[0];
+                    const today = localDateStr();
                     const todayTrades = trades.filter(t => t.date === today);
                     const maxTrades = parseInt(profile.maxTradesPerDay) || 0;
                     const todayPnl = todayTrades.reduce((a, t) => a + (parseFloat(t.pnl as string) || 0), 0);
@@ -2465,7 +2465,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                 </div>
               )}
             {(() => {
-              const _today = new Date().toISOString().split("T")[0];
+              const _today = localDateStr();
               const _todayTrades = trades.filter(t => t.date === _today);
               const _todayPnl = _todayTrades.reduce((a, t) => a + (parseFloat(t.pnl as string) || 0), 0);
               const _maxTpd = parseInt(profile.maxTradesPerDay) || 0;
@@ -3028,7 +3028,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                       const dailyLimit = profile.propFirmDailyLossLimit ?? 0;
                       const maxDD = profile.propFirmMaxDrawdown ?? 0;
                       const totalPnlDollarNum = trades.reduce((a, t) => a + (parseFloat(t.pnlDollar as string) || 0), 0);
-                      const today = new Date().toISOString().split("T")[0];
+                      const today = localDateStr();
                       const todayPnl = trades.filter(t => t.date === today).reduce((a, t) => a + (parseFloat(t.pnlDollar as string) || 0), 0);
                       const targetPct = target > 0 ? Math.min(100, Math.round((Math.max(0, totalPnlDollarNum) / target) * 100)) : 0;
                       const ddPct = maxDD > 0 ? Math.min(100, Math.round((Math.abs(Math.min(0, totalPnlDollarNum)) / maxDD) * 100)) : 0;

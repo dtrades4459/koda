@@ -6,7 +6,7 @@
 import { useMemo } from "react";
 import type { Trade, Profile } from "./types";
 import type { Theme } from "./theme";
-import { MONO, BODY, DISPLAY, Kicker, GlassOrb } from "./shared";
+import { MONO, BODY, DISPLAY, Kicker, GlassOrb, localDateStr } from "./shared";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -108,7 +108,7 @@ export default function EvalAccountScreen({ profile, trades, C, onEditTargets }:
   const dailyLim  = profile.propFirmDailyLossLimit ?? 0;
   const maxDD     = profile.propFirmMaxDrawdown ?? 0;
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = localDateStr();
 
   const stats = useMemo(() => {
     const totalPnl = trades.reduce((a, t) => a + (parseFloat(t.pnlDollar as string) || 0), 0);
