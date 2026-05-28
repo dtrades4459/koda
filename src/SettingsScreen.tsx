@@ -36,6 +36,7 @@ export interface SettingsScreenProps {
   setShowUpgrade: (v: boolean) => void;
   setFeedbackOpen: (v: boolean) => void;
   isFlagOn: (name: string) => boolean;
+  onSignOut: () => void;
 }
 
 export function SettingsScreen({
@@ -62,6 +63,7 @@ export function SettingsScreen({
   setShowUpgrade,
   setFeedbackOpen,
   isFlagOn,
+  onSignOut,
 }: SettingsScreenProps) {
   const inp: React.CSSProperties = {
     background: "transparent",
@@ -139,7 +141,6 @@ export function SettingsScreen({
             <div style={{ marginTop: "6px", display: "inline-flex", padding: "2px 8px", borderRadius: "999px", background: (C as any).liveSoft ?? "rgba(100,220,180,0.08)", color: (C as any).live ?? C.green, fontFamily: MONO, fontSize: "9px", fontWeight: 700, letterSpacing: "0.12em", border: `1px solid color-mix(in oklch, ${(C as any).live ?? C.green} 30%, transparent)` }}>{"●"} PRO PLAN</div>
           )}
         </div>
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke={C.muted} strokeWidth="1.3" strokeLinecap="round"/></svg>
       </div>
 
       {/* ── Account section ── */}
@@ -414,6 +415,16 @@ export function SettingsScreen({
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Sign out */}
+      <div style={{ padding: "14px 18px 0" }}>
+        <button
+          onClick={onSignOut}
+          style={{ width: "100%", padding: "13px", border: `1px solid ${C.border2}`, borderRadius: "14px", background: "transparent", color: C.text2, cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase" as const }}
+        >
+          Sign Out
+        </button>
       </div>
 
       {/* ── Support ── */}

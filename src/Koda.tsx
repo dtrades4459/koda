@@ -2511,6 +2511,10 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                   setShowUpgrade={setShowUpgrade}
                   setFeedbackOpen={setFeedbackOpen}
                   isFlagOn={isFlagOn}
+                  onSignOut={async () => {
+                    await supabase.auth.signOut();
+                    phReset();
+                  }}
                 />
               )}
             </div>
