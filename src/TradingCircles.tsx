@@ -206,7 +206,11 @@ export function TradingCircles({ myCircles, circlesView, setCirclesView, activeC
         text,
       });
       // Reload to ensure sender sees their own message even without realtime
-      await loadChatMessages(circleCode);
+      try {
+        await loadChatMessages(circleCode);
+      } catch {
+        // Reload failure is non-fatal; message was already sent
+      }
     } catch { setChatInput(text); }
     setChatSending(false);
   }
