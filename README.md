@@ -1,8 +1,8 @@
-# TRADR
+# Kōda
 
-Mobile-first trading journal + social layer, delivered as an installable PWA.
+Mobile-first trading journal + social platform, delivered as an installable PWA. Live at [kodatrade.co.uk](https://kodatrade.co.uk).
 
-**Stack:** React 19 · TypeScript · Vite · Supabase · Vercel
+**Stack:** React 19 · TypeScript · Vite · Supabase · Vercel · Stripe · Resend
 
 ---
 
@@ -11,10 +11,12 @@ Mobile-first trading journal + social layer, delivered as an installable PWA.
 ```bash
 npm install
 npm run dev        # localhost:5173
-npx tsc --noEmit   # type-check (vite build has EPERM on Windows/OneDrive)
+npm run typecheck  # tsc --noEmit (also wired into pre-commit)
+npm run lint       # eslint (flat config)
+npm test           # vitest unit tests
 ```
 
-> **Note:** `vite build` fails in the Linux sandbox (EPERM on the OneDrive mount). Run it in a Windows terminal or let Vercel handle it on push.
+Vercel handles production builds on push to `main`. CI runs lint + typecheck + tests on every PR.
 
 ---
 
@@ -22,21 +24,28 @@ npx tsc --noEmit   # type-check (vite build has EPERM on Windows/OneDrive)
 
 ```
 src/
-  main.tsx            — entry point, installs window.storage shim, mounts TradrAuth
-  TradrAuth.tsx       — Supabase auth gate (sign-in / sign-up / password reset)
-  TRADR.tsx           — the app (~3600 lines, component extraction on roadmap)
-  ErrorBoundary.tsx   — class component fallback UI for uncaught runtime errors
+  main.tsx              entry: mounts KodaAuth + CookieConsent, boots Sentry/PostHog
+  KodaAuth.tsx          Supabase auth gate (sign-in / sign-up / password reset)
+  Koda.tsx              the app — routes, screens, modals, state shell
+  CookieConsent.tsx     bottom banner; gates PostHog behind opt-in (PECR/GDPR)
+  ErrorBoundary.tsx     class component fallback UI for uncaught runtime errors
+  CsvImportPanel.tsx    CSV/XLSX import flow + broker presets
+  TradingCircles.tsx    social: leaderboards, chat, challenges
+  ...                   screens, modals, components
+  hooks/                useCircles, useFeed, useViewport, useFlags, etc.
+  data/                 v2 schema modules (trades, profiles, follows, circles)
   lib/
-    supabase.ts       — Supabase client (credentials hardcoded — see Known Issues)
-    storage.ts        — window.storage shim: user_kv + shared_kv + localStorage cache
-  data/
-    circles.ts        — circle meta / member rows / leaderboard entries + realtime
-    follows.ts        — per-row follow edges + legacy migration + realtime
-public/
-  manifest.webmanifest
-  icon.svg / apple-touch-icon.svg / favicon.svg
-supabase-schema.sql   — user_kv + shared_kv table defs + RLS policies
-TRADR-BRAIN.md        — master context doc (architecture, known issues, roadmap)
+    supabase.ts         Supabase client (env-driven)
+    storage.ts          window.storage shim: user_kv + shared_kv + localStorage cache
+    csvParser.ts        broker-agnostic CSV parsing (parseNum, dedup, broker detect)
+    imports.ts          persists original CSV + audit row on import
+    posthog.ts          analytics wrapper, consent-gated
+    sentry.ts           error monitoring
+    utm.ts              UTM persistence across OAuth round-trip
+    stats.ts            P&L / win-rate / R-multiple math
+api/                    Vercel serverless functions (Stripe, Resend, cron, push)
+public/                 static HTML pages (privacy, terms, cookies, faq, changelog) + PWA assets
+supabase/migrations/    SQL migrations (run via Supabase dashboard, idempotent)
 ```
 
 ---
@@ -46,20 +55,23 @@ TRADR-BRAIN.md        — master context doc (architecture, known issues, roadma
 Every row in `shared_kv` is owned by exactly one user (`owner_id = auth.uid()`). Writes only succeed for the row's owner.
 
 Rules that flow from this:
-- **Following:** writer creates both `tradr_follow_<me>_<them>` and `tradr_follower_<them>_<me>`, both owned by the follower.
-- **Joining a circle:** joiner creates `tradr_circle_member_<CIRCLE>_<me>`, owned by themselves.
-- **Publishing leaderboard stats:** member creates `tradr_circle_entry_<CIRCLE>_<me>`, owned by themselves.
-- **Kicking a member:** circle owner writes `tradr_circle_bans_<CIRCLE>` (a row they own); members are filtered on read — never try to delete another user's row.
+- **Following:** writer creates both `koda_follow_<me>_<them>` and `koda_follower_<them>_<me>`, both owned by the follower.
+- **Joining a circle:** joiner creates `koda_circle_member_<CIRCLE>_<me>`, owned by themselves.
+- **Publishing leaderboard stats:** member creates `koda_circle_entry_<CIRCLE>_<me>`, owned by themselves.
+- **Kicking a member:** circle owner writes `koda_circle_bans_<CIRCLE>` (a row they own); members are filtered on read — never try to delete another user's row.
 
 If you need to modify a row owned by someone else, stop — add a new row you own instead.
 
 ---
 
+## Audits & open work
+
+See `AUDIT_INDEX.md` at the repo root for the most recent codebase / dev-env / UX / funnel / CSV-import audits and their phased fix list. The audits flag concrete file/line targets — work them in the order suggested.
+
+---
+
 ## Known issues
 
-- **Hardcoded Supabase credentials** in `src/lib/supabase.ts`. Low security risk (anon key is RLS-bounded), but should move to `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` env vars.
-- **Monolithic TRADR.tsx** (~5700 lines). Extraction into `src/screens/` + `src/components/` is on the roadmap.
-- **No test suite.** The data-layer modules (`circles.ts`, `follows.ts`) are the natural place to start.
-- **No error monitoring.** No Sentry, no Vercel Analytics on errors.
-- **No offline mode.** PWA installs but requires network.
-- **OneDrive corrupting `.git/index`.** Delete `.git/index` and run `git reset` to rebuild if you hit `index uses *ޏ extension` errors.
+- **Monolithic `Koda.tsx`** (~4.5k lines). Component extraction in progress — see `AUDIT.md` for the target folder layout.
+- **OneDrive corruption risk.** This working tree lives under `C:\Users\Dylon\OneDrive\…`. Large writes can be truncated by OneDrive sync. After any big write to `Koda.tsx` verify `wc -l src/Koda.tsx` is sane.
+- **Live broker sync UI is gated.** `DataSourcesScreen.tsx` still shows a "Coming Soon" overlay until live connections roll out properly.

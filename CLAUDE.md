@@ -61,7 +61,7 @@ A trading journal PWA for retail traders. Users log trades, track stats (P&L, wi
 - React 19 + TypeScript + Vite
 - Supabase (auth + KV tables + v2 relational schema)
 - Vercel (hosting + serverless functions in `api/` + Vercel Cron nightly for challenge completion)
-- Main app: `src/Koda.tsx` (~4300 lines — many screens extracted into separate files)
+- Main app: `src/Koda.tsx` (~4500 lines — many screens extracted into separate files)
 - Auth wrapper: `src/KodaAuth.tsx`
 - Storage shim: `src/lib/storage.ts` (window.storage — wraps Supabase KV + localStorage cache)
 
@@ -120,7 +120,7 @@ A trading journal PWA for retail traders. Users log trades, track stats (P&L, wi
 
 ### `user_kv` (private per-user)
 - `uid` — Supabase auth user ID
-- `key` — string key (e.g. `tradr_profile`, `tradr_trades`)
+- `key` — string key (e.g. `koda_profile`, `koda_trades`)
 - `value` — JSON blob
 - RLS: user can only read/write their own rows
 
@@ -128,17 +128,19 @@ A trading journal PWA for retail traders. Users log trades, track stats (P&L, wi
 - `key` — string key
 - `value` — JSON blob
 - RLS: anyone can read, only the owner can write
-- Used for: circle data, public profiles (`tradr_profile_pub_{handle}`), friend feeds
+- Used for: circle data, public profiles (`koda_profile_pub_{handle}`), friend feeds
 
 ### Key storage keys
 | Key | Table | Contents |
 |-----|-------|----------|
-| `tradr_profile` | user_kv | Full profile (private) |
-| `tradr_trades` | user_kv | Trade history |
-| `tradr_profile_pub_{handle}` | shared_kv | Public profile (name, handle, avatar, bio, publicTrades flag) |
-| `tradr_feed_{uid}` | shared_kv | Published trade feed for social/circles |
-| `tradr_circle_{code}` | shared_kv | Circle data + members + leaderboard |
-| `tradr_following_{uid}` | user_kv | Who the user follows |
+| `koda_profile` | user_kv | Full profile (private) |
+| `koda_trades` | user_kv | Trade history |
+| `koda_profile_pub_{handle}` | shared_kv | Public profile (name, handle, avatar, bio, publicTrades flag) |
+| `koda_feed_{uid}` | shared_kv | Published trade feed for social/circles |
+| `koda_circle_{code}` | shared_kv | Circle data + members + leaderboard |
+| `koda_following_{uid}` | user_kv | Who the user follows |
+
+> Legacy `tradr_*` keys were renamed to `koda_*` by migration `20260524000000_rename_tradr_kv_keys.sql`. All code uses the `koda_*` prefix.
 
 ### `public.broker_connections` (v2 — live)
 Stores one row per user+broker account. Tokens encrypted at rest with AES-256-GCM.
@@ -337,7 +339,7 @@ Both `kodatrade.co.uk` and `www.kodatrade.co.uk` verified and live in Vercel.
 ## Code Patterns
 
 ### Writing large files (Koda.tsx etc.)
-Koda.tsx is ~4300 lines. OneDrive can truncate large writes. Always use Python atomic writes. After any large write, verify `wc -l src/Koda.tsx` is reasonable and `npm run build` passes.
+Koda.tsx is ~4500 lines. OneDrive can truncate large writes. Always use Python atomic writes. After any large write, verify `wc -l src/Koda.tsx` is reasonable and `npm run build` passes.
 ```python
 import os
 tmp = path + ".tmp"
@@ -349,11 +351,11 @@ os.replace(tmp, path)
 ### Storage reads/writes (legacy KV — current prod code path)
 ```tsx
 // Private (user only)
-const data = await (window as any).storage.get("tradr_profile");
-await (window as any).storage.set("tradr_profile", JSON.stringify(profile));
+const data = await (window as any).storage.get("koda_profile");
+await (window as any).storage.set("koda_profile", JSON.stringify(profile));
 
 // Public (shared_kv)
-await (window as any).storage.set("tradr_profile_pub_handle", JSON.stringify(pubProfile), true);
+await (window as any).storage.set("koda_profile_pub_handle", JSON.stringify(pubProfile), true);
 ```
 
 ### Logging (use this instead of console.error)
