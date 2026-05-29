@@ -69,6 +69,14 @@ const DEF_PROFILE: Profile = {
 const OUTCOMES = ["Win","Loss","Breakeven"];
 const REACTIONS = ["FIRE","GEM","UP","TARGET","PAIN","MIND"];
 const TABS = ["home","log","stats","history","circles"];
+const STREAK_MILESTONES = [3, 7, 14, 30, 100];
+const STREAK_FLAVOUR: Record<number, string> = {
+  3: "Three days of discipline.",
+  7: "One week of consistent execution.",
+  14: "Two weeks in. The habit is forming.",
+  30: "A full month. This is who you are now.",
+  100: "One hundred days. Exceptional.",
+};
 
 
 // ─── THEME ────────────────────────────────────────────────────────────────────
@@ -256,14 +264,6 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   const [toastsV2, setToastsV2] = useState<ToastItem[]>([]);
   const toastIdRef = useRef(0);
   const [celebration, setCelebration] = useState<{ kind: "trade" | "streak" | "pro" | "loss" | "streak-loss"; streakCount?: number; tradeStats?: { winRate: number; avgR: number; streak: number } } | null>(null);
-  const STREAK_MILESTONES = [3, 7, 14, 30, 100];
-  const STREAK_FLAVOUR: Record<number, string> = {
-    3: "Three days of discipline.",
-    7: "One week of consistent execution.",
-    14: "Two weeks in. The habit is forming.",
-    30: "A full month. This is who you are now.",
-    100: "One hundred days. Exceptional.",
-  };
   const [streakBanner, setStreakBanner] = useState<{ streakCount: number } | null>(null);
   const showToastV2 = useCallback((kind: ToastKind, title: string, body?: string) => {
     const id = ++toastIdRef.current;
@@ -923,11 +923,16 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
       // Check for milestone (3/7/14/30/100) — deduplicated via user_kv
       const hitMilestone = STREAK_MILESTONES.find(m => m === newStreak);
       if (hitMilestone) {
-        const raw = await (window as any).storage.get("koda_streak_milestones");
-        const shown: number[] = raw ? JSON.parse(raw) : [];
-        if (!shown.includes(hitMilestone)) {
-          await (window as any).storage.set("koda_streak_milestones", JSON.stringify([...shown, hitMilestone]));
-          setStreakBanner({ streakCount: hitMilestone });
+        try {
+          const raw = await (window as any).storage.get("koda_streak_milestones");
+          const parsed = raw ? JSON.parse(raw) : [];
+          const shown: number[] = Array.isArray(parsed) ? parsed : [];
+          if (!shown.includes(hitMilestone)) {
+            await (window as any).storage.set("koda_streak_milestones", JSON.stringify([...shown, hitMilestone]));
+            setStreakBanner({ streakCount: hitMilestone });
+          }
+        } catch {
+          // KV error — skip banner, don't block trade save
         }
       }
       setCelebration({ kind: "trade", tradeStats: { winRate: wrSaved, avgR: avgRSaved, streak: newStreak } });
