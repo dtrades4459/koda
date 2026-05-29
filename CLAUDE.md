@@ -61,7 +61,7 @@ A trading journal PWA for retail traders. Users log trades, track stats (P&L, wi
 - React 19 + TypeScript + Vite
 - Supabase (auth + KV tables + v2 relational schema)
 - Vercel (hosting + serverless functions in `api/` + Vercel Cron nightly for challenge completion)
-- Main app: `src/Koda.tsx` (~4500 lines — many screens extracted into separate files)
+- Main app: `src/Koda.tsx` (~4067 lines — many screens extracted into separate files)
 - Auth wrapper: `src/KodaAuth.tsx`
 - Storage shim: `src/lib/storage.ts` (window.storage — wraps Supabase KV + localStorage cache)
 
@@ -339,7 +339,7 @@ Both `kodatrade.co.uk` and `www.kodatrade.co.uk` verified and live in Vercel.
 ## Code Patterns
 
 ### Writing large files (Koda.tsx etc.)
-Koda.tsx is ~4500 lines. OneDrive can truncate large writes. Always use Python atomic writes. After any large write, verify `wc -l src/Koda.tsx` is reasonable and `npm run build` passes.
+Koda.tsx is ~4067 lines. OneDrive can truncate large writes. Always use Python atomic writes. After any large write, verify `wc -l src/Koda.tsx` is reasonable and `npm run build` passes.
 ```python
 import os
 tmp = path + ".tmp"
