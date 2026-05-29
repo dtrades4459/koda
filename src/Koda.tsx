@@ -302,6 +302,29 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   const [setupMetric, setSetupMetric] = useState<"pnl" | "winrate" | "trades">("pnl");
   const [setupDollar, setSetupDollar] = useState(false);
   const [perfPnlMode, setPerfPnlMode] = useState<"r" | "$">("$");
+
+  const setupRows = useMemo(() => {
+    const now = new Date();
+    const filtered = setupPeriod === "month"
+      ? trades.filter((t: Trade) => { const d = new Date(t.date + "T12:00:00"); return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth(); })
+      : trades;
+    const stats: Record<string, { pnl: number; dollar: number; wins: number; total: number }> = {};
+    filtered.forEach((t: Trade) => {
+      if (!t.strategy) return;
+      if (!stats[t.strategy]) stats[t.strategy] = { pnl: 0, dollar: 0, wins: 0, total: 0 };
+      stats[t.strategy].pnl += parseFloat(t.pnl) || 0;
+      stats[t.strategy].dollar += parseFloat(t.pnlDollar) || 0;
+      stats[t.strategy].wins += t.outcome === "Win" ? 1 : 0;
+      stats[t.strategy].total++;
+    });
+    return Object.entries(stats).map(([name, s]) => ({
+      name,
+      pnl: s.pnl,
+      dollar: s.dollar,
+      winRate: s.total > 0 ? (s.wins / s.total) * 100 : 0,
+      trades: s.total,
+    }));
+  }, [trades, setupPeriod]);
   const [savingTrade, setSavingTrade] = useState(false);
 
   // Custom strategies: user-defined, same shape as built-ins (name, code, setups, checklist, rules).
@@ -2344,26 +2367,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                   <section>
                     <SectionKicker label="P&L BY SETUP" C={C} />
                     {(() => {
-                      const now = new Date();
-                      const filtered = setupPeriod === "month"
-                        ? trades.filter((t: Trade) => { const d = new Date(t.date + "T12:00:00"); return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth(); })
-                        : trades;
-                      const stats: Record<string, { pnl: number; dollar: number; wins: number; total: number }> = {};
-                      filtered.forEach((t: Trade) => {
-                        if (!t.strategy) return;
-                        if (!stats[t.strategy]) stats[t.strategy] = { pnl: 0, dollar: 0, wins: 0, total: 0 };
-                        stats[t.strategy].pnl += parseFloat(t.pnl) || 0;
-                        stats[t.strategy].dollar += parseFloat(t.pnlDollar) || 0;
-                        stats[t.strategy].wins += t.outcome === "Win" ? 1 : 0;
-                        stats[t.strategy].total++;
-                      });
-                      const rows = Object.entries(stats).map(([name, s]) => ({
-                        name,
-                        pnl: s.pnl,
-                        dollar: s.dollar,
-                        winRate: s.total > 0 ? (s.wins / s.total) * 100 : 0,
-                        trades: s.total,
-                      })).sort((a, b) => {
+                      const rows = [...setupRows].sort((a, b) => {
                         if (setupMetric === "pnl") return (setupDollar ? b.dollar : b.pnl) - (setupDollar ? a.dollar : a.pnl);
                         if (setupMetric === "winrate") return b.winRate - a.winRate;
                         return b.trades - a.trades;
@@ -2386,7 +2390,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                             <div style={{ width: "1px", background: C.border, margin: "0 2px" }} />
                             {/* Metric toggle */}
                             {(["pnl", "winrate", "trades"] as const).map(m => (
-                              <button key={m} onClick={() => setSetupMetric(m)} style={{ fontFamily: MONO, fontSize: "10px", letterSpacing: "0.08em", padding: "5px 12px", borderRadius: "999px", border: `1px solid ${setupMetric === m ? C.text : C.border}`, background: setupMetric === m ? C.text : "transparent", color: setupMetric === m ? C.bg : C.muted, cursor: "pointer" }}>
+                              <button key={m} onClick={() => { setSetupMetric(m); if (m !== "pnl") setSetupDollar(false); }} style={{ fontFamily: MONO, fontSize: "10px", letterSpacing: "0.08em", padding: "5px 12px", borderRadius: "999px", border: `1px solid ${setupMetric === m ? C.text : C.border}`, background: setupMetric === m ? C.text : "transparent", color: setupMetric === m ? C.bg : C.muted, cursor: "pointer" }}>
                                 {m === "pnl" ? "P&L" : m === "winrate" ? "WIN RATE" : "TRADES"}
                               </button>
                             ))}
@@ -2411,7 +2415,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                                   const isPos = setupMetric !== "pnl" || val >= 0;
                                   const barPct = (Math.abs(val) / maxAbs) * 100;
                                   const label = setupMetric === "pnl"
-                                    ? (setupDollar ? `${val >= 0 ? "+" : ""}$${Math.abs(val).toFixed(0)}` : `${val >= 0 ? "+" : ""}${val.toFixed(1)}R`)
+                                    ? (setupDollar ? `${val >= 0 ? "+" : "-"}$${Math.abs(val).toFixed(0)}` : `${val >= 0 ? "+" : ""}${val.toFixed(1)}R`)
                                     : setupMetric === "winrate" ? `${val.toFixed(0)}%`
                                     : `${val}`;
                                   return (
