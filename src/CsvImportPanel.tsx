@@ -16,6 +16,7 @@ import {
   normaliseSymbol,
   isSummarySymbol,
   tradeKey,
+  computePnlDollar,
 } from "./lib/csvParser";
 import { calcRR } from "./lib/stats";
 
@@ -35,8 +36,10 @@ function rowToTrade(
   if (!date || !pair) return null;
 
   const pnl = parseNum(get("pnl"));
+  const qty = parseNum(get("qty"));
   const session = get("session") || detectSessionFromDateStr(rawDate);
   const entryPrice = get("entryPrice");
+  const exitPrice = get("exitPrice");
   const slPrice = get("slPrice");
   const tpPrice = get("tpPrice");
 
@@ -57,7 +60,16 @@ function rowToTrade(
     notes: get("notes"),
     emotions: "",
     screenshot: "",
-    pnlDollar: "",
+    pnlDollar: (() => {
+      const dollars = computePnlDollar({
+        symbol: pair,
+        entryPrice: parseNum(entryPrice),
+        exitPrice: parseNum(exitPrice),
+        qty,
+        bias: normalizeBias(get("bias")),
+      });
+      return dollars === null ? "" : dollars.toFixed(2);
+    })(),
     comments: [],
     reactions: {},
     source: "csv_import",

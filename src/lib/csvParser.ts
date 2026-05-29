@@ -317,6 +317,36 @@ export function getPointValue(symbol: string): number | null {
   return FUTURES_POINT_VALUE[root] ?? null;
 }
 
+/**
+ * Compute dollar P&L for a futures trade from entry, exit, quantity, and bias.
+ * Returns null when the symbol isn't a known futures contract, any numeric
+ * input is null/zero/non-finite, or the inputs don't make arithmetic sense.
+ *
+ * The point-value table (FUTURES_POINT_VALUE) is the source of truth: a 1.0
+ * price-point move on NQ is $20 per contract, on ES is $50, etc.
+ *
+ * bias: "Bullish" → long (+sign), "Bearish" → short (-sign), anything else →
+ * assumed long. Most futures journals default to long; if the user's actual
+ * trade was short and bias was missing, they'll see the wrong sign and can
+ * correct it. The trade can also be edited manually after import.
+ */
+export function computePnlDollar(args: {
+  symbol: string;
+  entryPrice: number | null;
+  exitPrice: number | null;
+  qty: number | null;
+  bias: string;
+}): number | null {
+  const { symbol, entryPrice, exitPrice, qty, bias } = args;
+  const pointValue = getPointValue(symbol);
+  if (pointValue === null) return null;
+  if (entryPrice === null || exitPrice === null || qty === null) return null;
+  if (qty <= 0) return null;
+  const sign = bias === "Bearish" ? -1 : 1;
+  const pnl = qty * (exitPrice - entryPrice) * pointValue * sign;
+  return Number.isFinite(pnl) ? pnl : null;
+}
+
 // ── Dedup key for trade rows ──────────────────────────────────────────────────
 
 function _djb2(s: string): string {
