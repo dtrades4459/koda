@@ -339,6 +339,8 @@ export function useCircles({
       setCircleForm({ name: "", description: "", strategy: "", privacy: "public", emoji: "◆", metric: "dollar" });
       setCirclesView("browse");
       showToast("Circle created");
+    } catch {
+      showToast("Failed to create circle — try again");
     } finally {
       setIsCreatingCircle(false);
     }
@@ -380,6 +382,7 @@ export function useCircles({
     } catch {
       setCircleMsg("Error joining. Try again.");
       setTimeout(() => setCircleMsg(""), 2500);
+      showToast("Failed to join circle — check the code and try again");
     } finally {
       setIsJoiningCircle(false);
     }

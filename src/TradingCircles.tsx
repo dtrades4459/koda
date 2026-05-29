@@ -211,7 +211,7 @@ export function TradingCircles({ myCircles, circlesView, setCirclesView, activeC
       } catch {
         // Reload failure is non-fatal; message was already sent
       }
-    } catch { setChatInput(text); }
+    } catch { setChatInput(text); showToast("Message failed to send — try again"); }
     setChatSending(false);
   }
 
