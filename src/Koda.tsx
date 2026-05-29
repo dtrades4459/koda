@@ -42,6 +42,11 @@ import { DARK, LIGHT, makeStyles } from "./theme";
 import { useIsDesktop, useViewport } from "./hooks/useViewport";
 import { EditInline } from "./components/EditInline";
 import { ProLock } from "./components/ProLock";
+import { StrategyEditor } from "./components/StrategyEditor";
+import { ConfluenceTracker } from "./components/ConfluenceTracker";
+import { FirstSessionSurvey } from "./components/FirstSessionSurvey";
+import { LoadingSplash } from "./components/LoadingSplash";
+import { OfflineBanner } from "./components/OfflineBanner";
 
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
 
@@ -81,114 +86,6 @@ const STREAK_FLAVOUR: Record<number, string> = {
 // DARK + LIGHT theme tokens live in src/theme.ts
 
 // calcRR, calcWinRate, calcStreak, calcWeeklyPnL, calcTotalPnL imported from ./lib/stats
-
-
-// ─── Strategy Editor ─────────────────────────────────────────────────────────
-// Modal-style card rendered inside the Checklist view when the user clicks
-// "+ New" or "Edit". Handles name, code abbreviation, and optional setups list.
-// Checklist items and rules are managed separately in the checklist tab itself.
-function StrategyEditor({ draft, setDraft, onSave, onCancel, isEdit, C, inp, lbl }: {
-  draft: StrategyDef & { name: string };
-  setDraft: React.Dispatch<React.SetStateAction<StrategyDef & { name: string }>>;
-  onSave: () => void;
-  onCancel: () => void;
-  isEdit: boolean;
-  C: typeof DARK;
-  inp: React.CSSProperties;
-  lbl: React.CSSProperties;
-}) {
-  const [newSetup, setNewSetup] = useState("");
-  const canSave = !!(draft.name || "").trim();
-  return (
-    <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: "16px", padding: "20px 16px", display: "flex", flexDirection: "column", gap: "20px" }}>
-      <div style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, letterSpacing: "0.12em", textTransform: "uppercase" }}>
-        {isEdit ? "Edit Strategy" : "New Strategy"}
-      </div>
-
-      {/* Name */}
-      <div>
-        <label style={lbl}>Strategy Name *</label>
-        <input
-          autoFocus
-          value={draft.name}
-          onChange={e => setDraft((d) => ({ ...d, name: e.target.value }))}
-          onKeyDown={e => { if (e.key === "Enter" && canSave) onSave(); if (e.key === "Escape") onCancel(); }}
-          placeholder="e.g. Opening Range Breakout"
-          style={{ ...inp }}
-        />
-      </div>
-
-      {/* Code */}
-      <div>
-        <label style={lbl}>Code (up to 4 chars · auto-derived if blank)</label>
-        <input
-          value={draft.code}
-          onChange={e => setDraft((d) => ({ ...d, code: e.target.value.replace(/[^A-Z0-9&]/gi, "").slice(0, 4).toUpperCase() }))}
-          placeholder={draft.name ? (draft.name.replace(/[^A-Z0-9]/gi, "").slice(0, 4).toUpperCase() || "CODE") : "CODE"}
-          maxLength={4}
-          style={{ ...inp, fontFamily: MONO, letterSpacing: "0.14em", textTransform: "uppercase" }}
-        />
-      </div>
-
-      {/* Setups */}
-      <div>
-        <label style={lbl}>Setups (optional — used when tagging trades)</label>
-        {(draft.setups || []).length > 0 && (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "10px" }}>
-            {(draft.setups || []).map((s: string, i: number) => (
-              <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: "5px", background: C.panel2 ?? C.bg, border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "4px 10px 4px 12px", fontFamily: MONO, fontSize: "10px", color: C.text2 ?? C.muted, letterSpacing: "0.06em" }}>
-                {s}
-                <button
-                  aria-label={`Remove setup ${s}`}
-                  onClick={() => setDraft((d) => ({ ...d, setups: d.setups.filter((_: string, j: number) => j !== i) }))}
-                  style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, padding: 0, fontSize: "13px", lineHeight: 1, display: "flex", alignItems: "center" }}>
-                  ×
-                </button>
-              </span>
-            ))}
-          </div>
-        )}
-        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-          <input
-            value={newSetup}
-            onChange={e => setNewSetup(e.target.value)}
-            onKeyDown={e => {
-              if (e.key === "Enter" && newSetup.trim()) {
-                setDraft((d) => ({ ...d, setups: [...(d.setups || []), newSetup.trim()] }));
-                setNewSetup("");
-              }
-              if (e.key === "Escape") setNewSetup("");
-            }}
-            placeholder="Type a setup name, press Enter to add"
-            style={{ ...inp, flex: 1 }}
-          />
-          {newSetup.trim() && (
-            <button
-              onClick={() => { setDraft((d) => ({ ...d, setups: [...(d.setups || []), newSetup.trim()] })); setNewSetup(""); }}
-              style={{ background: C.text, color: C.bg, border: "none", borderRadius: "999px", padding: "8px 14px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.08em", textTransform: "uppercase", flexShrink: 0 }}>
-              Add
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Actions */}
-      <div style={{ display: "flex", gap: "10px" }}>
-        <button
-          onClick={onSave}
-          disabled={!canSave}
-          style={{ flex: 1, background: canSave ? C.text : "transparent", color: canSave ? C.bg : C.muted, border: canSave ? "none" : `1px solid ${C.border2}`, borderRadius: "999px", padding: "13px 20px", fontSize: "13px", cursor: canSave ? "pointer" : "not-allowed", fontFamily: BODY, letterSpacing: "0.02em", transition: "opacity 0.15s" }}>
-          {isEdit ? "Save Changes" : "Add Strategy"}
-        </button>
-        <button
-          onClick={onCancel}
-          style={{ background: "transparent", color: C.muted, border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "13px 18px", fontSize: "12px", cursor: "pointer", fontFamily: MONO, letterSpacing: "0.06em", textTransform: "uppercase", flexShrink: 0 }}>
-          Cancel
-        </button>
-      </div>
-    </div>
-  );
-}
 
 
 export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" | "pro" | "elite" } = {}) {
@@ -1483,33 +1380,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     return null;
   };
 
-  if (loading) return (
-    <div style={{ minHeight: "100dvh", background: DARK.bg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "20px" }}>
-      <style>{`
-        @keyframes splashPulse{0%,100%{transform:scale(1);opacity:0.18}50%{transform:scale(1.55);opacity:0}}
-        @keyframes splashBreath{0%,100%{opacity:0.3;transform:scale(0.92)}50%{opacity:1;transform:scale(1)}}
-        @keyframes splashDot{0%,80%,100%{opacity:0.2;transform:scale(0.7)}40%{opacity:1;transform:scale(1)}}
-      `}</style>
-      {/* Pulse ring behind logo */}
-      <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ position: "absolute", width: "96px", height: "96px", borderRadius: "50%", border: `1.5px solid ${DARK.text}`, animation: "splashPulse 2s ease-in-out infinite" }} />
-        <div style={{ animation: "splashBreath 2.4s ease-in-out infinite" }}>
-          <KodaMarkFilled size={64} bg={DARK.panel} />
-        </div>
-      </div>
-      {/* Wordmark */}
-      <div style={{ display: "flex", alignItems: "baseline", gap: "8px" }}>
-        <span style={{ fontFamily: DISPLAY, fontWeight: 600, fontSize: "18px", letterSpacing: "0.22em", color: DARK.text }}>Kōda</span>
-        <span style={{ fontFamily: MONO, fontWeight: 500, fontSize: "9px", letterSpacing: "0.16em", color: DARK.text2, padding: "2px 5px", borderRadius: "4px", border: `1px solid ${DARK.border2}`, lineHeight: 1 }}>OS</span>
-      </div>
-      {/* Breathing dots */}
-      <div style={{ display: "flex", gap: "6px" }}>
-        {[0, 1, 2].map(i => (
-          <span key={i} style={{ width: "5px", height: "5px", borderRadius: "50%", background: DARK.text, display: "inline-block", animation: `splashDot 1.2s ease-in-out infinite`, animationDelay: `${i * 0.2}s` }} />
-        ))}
-      </div>
-    </div>
-  );
+  if (loading) return <LoadingSplash />;
 
   // Show onboarding for new users who haven't completed the flow yet.
   // Also check localStorage as a backup in case the Supabase write failed mid-onboarding.
@@ -4120,12 +3991,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
             onViewTrade={celebration.kind === "trade" ? () => { dismissCelebration(); navigateTo("history"); } : undefined}
           />
         )}
-        {!isOnline && (
-          <div role="alert" aria-live="assertive" style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 9999, background: C.warn, color: "#0A0A0B", fontFamily: MONO, fontSize: 11, letterSpacing: "0.06em", padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
-            <span>OFFLINE — changes won't sync until you reconnect.</span>
-            <button onClick={() => setIsOnline(navigator.onLine)} style={{ background: "transparent", border: "1px solid rgba(0,0,0,0.25)", borderRadius: 999, padding: "2px 10px", cursor: "pointer", fontFamily: MONO, fontSize: 10, letterSpacing: "0.08em", color: "#0A0A0B" }}>Retry</button>
-          </div>
-        )}
+        <OfflineBanner visible={!isOnline} onRetry={() => setIsOnline(navigator.onLine)} C={C} />
         <ToastStack toasts={toastsV2} onDismiss={dismissToast} C={C} />
 
         {/* ── Circle Share Picker ── */}
@@ -4199,191 +4065,3 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   );
 }
 
-// ─── CONFLUENCE TRACKER (editorial) ──────────────────────────────────────────
-function ConfluenceTracker({ checkItems, checkedCount, totalItems, isChecked, activeStrategy, C, stratThresholds, saveStratThresholds, inp, pillGhost }: {
-  checkItems: { id: number; text: string }[];
-  checkedCount: number;
-  totalItems: number;
-  isChecked: (id: number) => boolean;
-  activeStrategy: string;
-  C: typeof DARK;
-  stratThresholds: Record<string, { minCount: number; required: number[] }>;
-  saveStratThresholds: (u: Record<string, { minCount: number; required: number[] }>) => Promise<void>;
-  inp: React.CSSProperties;
-  pillGhost: React.CSSProperties;
-}) {
-  const [editMode, setEditMode] = useState(false);
-  const thresh = stratThresholds[activeStrategy] || { minCount: Math.ceil(totalItems * 0.75), required: [] };
-  const minCount = thresh.minCount || 1;
-  const required = thresh.required || [];
-
-  const reqMet = required.every((id: number) => isChecked(id));
-  const countMet = checkedCount >= minCount;
-  const greenLight = reqMet && countMet;
-  const pct = totalItems ? Math.round((checkedCount / totalItems) * 100) : 0;
-
-  const statusCol = greenLight ? C.green : countMet && !reqMet ? C.text2 : C.red;
-  const statusText = greenLight ? "CLEAR TO ENTER" : (!countMet) ? `NEED ${minCount - checkedCount} MORE` : "REQUIRED CONFLUENCE MISSING";
-
-  function toggleRequired(id: number) {
-    const updated = required.includes(id) ? required.filter((r: number) => r !== id) : [...required, id];
-    const u = { ...stratThresholds, [activeStrategy]: { ...thresh, required: updated } };
-    saveStratThresholds(u);
-  }
-  function setMin(val: string) {
-    const v = Math.max(1, Math.min(totalItems, parseInt(val) || 1));
-    const u = { ...stratThresholds, [activeStrategy]: { ...thresh, minCount: v } };
-    saveStratThresholds(u);
-  }
-
-  return (
-    <div>
-      {/* Score — editorial, no card */}
-      <div style={{ borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}`, padding: "20px 0", marginBottom: "14px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "14px" }}>
-          <div>
-            <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.12em", marginBottom: "6px" }}>CONFLUENCE</div>
-            <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
-              <span style={{ fontFamily: DISPLAY, fontSize: "40px", fontWeight: 700, color: C.text, letterSpacing: "-0.03em", lineHeight: 1 }}>{checkedCount}</span>
-              <span style={{ fontFamily: DISPLAY, fontSize: "18px", color: C.muted, fontWeight: 500 }}>/ {totalItems}</span>
-            </div>
-            <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, marginTop: "6px", letterSpacing: "0.06em" }}>Min required: <span style={{ color: C.text }}>{minCount}</span></div>
-          </div>
-          <div style={{ textAlign: "right" }}>
-            <div style={{ fontFamily: MONO, fontSize: "11px", color: statusCol, letterSpacing: "0.1em", maxWidth: "160px", lineHeight: 1.4 }}>{statusText}</div>
-          </div>
-        </div>
-        {/* Progress bar — 1px hairline */}
-        <div style={{ position: "relative", background: C.border, height: "1px", width: "100%" }}>
-          <div style={{ background: statusCol, height: "1px", width: `${pct}%`, transition: "width 0.35s ease" }} />
-          <div style={{ position: "absolute", top: "-3px", bottom: "-3px", left: `${Math.round((minCount / totalItems) * 100)}%`, width: "1px", background: C.text }} />
-        </div>
-        <div style={{ display: "flex", justifyContent: "space-between", marginTop: "6px", fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.04em" }}>
-          <span>{pct}% MET</span>
-          <span>THRESHOLD {Math.round((minCount / totalItems) * 100)}%</span>
-        </div>
-        {required.length > 0 && (
-          <div style={{ marginTop: "14px", paddingTop: "14px", borderTop: `1px solid ${C.border}` }}>
-            <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.1em", marginBottom: "8px" }}>MUST-HAVES</div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "14px", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.04em" }}>
-              {required.map((rid: number) => {
-                const item = checkItems.find((i) => i.id === rid);
-                if (!item) return null;
-                const met = isChecked(rid);
-                return (
-                  <span key={rid} style={{ color: met ? C.green : C.red }}>
-                    {met ? "✓" : "✕"} {stratShort(item.text)}
-                  </span>
-                );
-              })}
-            </div>
-          </div>
-        )}
-        <button onClick={() => setEditMode(!editMode)} style={{ ...pillGhost, marginTop: "16px", width: "100%" }}>
-          {editMode ? "CLOSE SETTINGS" : "ENTRY RULE SETTINGS"}
-        </button>
-      </div>
-
-      {editMode && (
-        <div style={{ padding: "4px 0 20px", marginBottom: "4px" }}>
-          <SectionKicker label={`ENTRY RULES — ${stratShort(activeStrategy).toUpperCase()}`} C={C} />
-          <div style={{ marginTop: "18px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px", alignItems: "baseline" }}>
-              <label style={{ fontFamily: BODY, fontSize: "13px", color: C.text }}>Minimum confluences to enter</label>
-              <span style={{ fontFamily: MONO, fontSize: "13px", color: C.text, letterSpacing: "0.04em" }}>{minCount} / {totalItems}</span>
-            </div>
-            <input type="range" min={1} max={totalItems} value={minCount} onChange={e => setMin(e.target.value)}
-              style={{ width: "100%", accentColor: C.text, cursor: "pointer" }} />
-            <div style={{ display: "flex", justifyContent: "space-between", marginTop: "4px", fontFamily: MONO, fontSize: "9px", color: C.dim, letterSpacing: "0.06em" }}>
-              <span>1 LENIENT</span>
-              <span>{totalItems} STRICT</span>
-            </div>
-          </div>
-          <div style={{ marginTop: "24px" }}>
-            <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", marginBottom: "8px" }}>MARK AS REQUIRED</div>
-            <div style={{ fontFamily: BODY, fontSize: "12px", color: C.muted, marginBottom: "14px", lineHeight: 1.55 }}>
-              Toggle any confluence as required — the clear-to-enter signal only fires if these are checked, regardless of minimum count.
-            </div>
-            <div style={{ borderTop: `1px solid ${C.border}` }}>
-              {checkItems.map((item: { id: number; text: string }) => {
-                const isReq = required.includes(item.id);
-                return (
-                  <div key={item.id} onClick={() => toggleRequired(item.id)}
-                    style={{ display: "flex", alignItems: "center", gap: "14px", padding: "12px 0", borderBottom: `1px solid ${C.border}`, cursor: "pointer" }}>
-                    <div style={{ width: "16px", height: "16px", borderRadius: "50%", border: `1px solid ${isReq ? C.text : C.border2}`, background: isReq ? C.text : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      {isReq && <span style={{ color: C.bg, fontSize: "9px", lineHeight: 1 }}>✓</span>}
-                    </div>
-                    <span style={{ fontFamily: BODY, fontSize: "13px", color: isReq ? C.text : C.text2, flex: 1, lineHeight: 1.5 }}>{item.text}</span>
-                    <span style={{ fontFamily: MONO, fontSize: "10px", color: isReq ? C.text : C.muted, letterSpacing: "0.08em", textTransform: "uppercase" }}>{isReq ? "Required" : "Optional"}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
-
-    </div>
-  );
-}
-
-// ─── First-session survey ─────────────────────────────────────────────────────
-
-const PRIOR_TOOL_OPTIONS = [
-  "TradesViz", "Edgewonk", "Excel / Google Sheets",
-  "Notion / Obsidian", "Nothing (paper/memory)", "Other",
-];
-
-function FirstSessionSurvey({
-  C,
-  onSave,
-}: {
-  C: ReturnType<typeof makeStyles>;
-  onSave: (priorTool: string, almostStoppedReason: string) => Promise<void>;
-}) {
-  const [priorTool, setPriorTool] = useState("");
-  const [reason, setReason] = useState("");
-  const [saving, setSaving] = useState(false);
-
-  async function handleSave() {
-    if (!priorTool) return;
-    setSaving(true);
-    await onSave(priorTool, reason.trim());
-    setSaving(false);
-  }
-
-  return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 9990, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
-      <div style={{ background: C.bg, borderRadius: "20px 20px 0 0", width: "100%", maxWidth: "clamp(0px,100%,min(560px,92vw))", padding: "10px 24px 40px" }}>
-        <div style={{ width: "36px", height: "4px", background: C.border2, borderRadius: "2px", margin: "14px auto 24px" }} />
-        <div style={{ fontFamily: DISPLAY, fontSize: "20px", fontWeight: 500, color: C.text, marginBottom: "4px" }}>Quick question</div>
-        <div style={{ fontFamily: BODY, fontSize: "13px", color: C.text2, marginBottom: "24px" }}>Help us understand your background — takes 20 seconds.</div>
-
-        <div style={{ fontFamily: BODY, fontSize: "12px", color: C.text2, marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.08em" }}>What were you using before Kōda?</div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "24px" }}>
-          {PRIOR_TOOL_OPTIONS.map(opt => (
-            <button key={opt} onClick={() => setPriorTool(opt)}
-              style={{ fontFamily: BODY, fontSize: "13px", padding: "7px 14px", borderRadius: "999px", border: `1px solid ${priorTool === opt ? C.text : C.border2}`, background: priorTool === opt ? C.text : "transparent", color: priorTool === opt ? C.bg : C.text2, cursor: "pointer", transition: "all 0.15s" }}>
-              {opt}
-            </button>
-          ))}
-        </div>
-
-        <div style={{ fontFamily: BODY, fontSize: "12px", color: C.text2, marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.08em" }}>What almost stopped you signing up? <span style={{ color: C.muted }}>(optional)</span></div>
-        <textarea value={reason} onChange={e => setReason(e.target.value)} rows={3} placeholder="Price, not sure if I'd use it, already have a system…"
-          style={{ width: "100%", boxSizing: "border-box", background: C.panel, border: `1px solid ${C.border2}`, borderRadius: "10px", padding: "12px", fontFamily: BODY, fontSize: "13px", color: C.text, resize: "none", outline: "none", marginBottom: "20px" }} />
-
-        <div style={{ display: "flex", gap: "10px" }}>
-          <button onClick={handleSave} disabled={!priorTool || saving}
-            style={{ flex: 1, padding: "13px", borderRadius: "12px", border: "none", background: priorTool ? C.text : C.border2, color: priorTool ? C.bg : C.muted, fontFamily: BODY, fontSize: "14px", fontWeight: 600, cursor: priorTool ? "pointer" : "default" }}>
-            {saving ? "Saving…" : "Save"}
-          </button>
-          <button onClick={() => onSave("skipped", "")}
-            style={{ padding: "13px 20px", borderRadius: "12px", border: `1px solid ${C.border2}`, background: "transparent", color: C.text2, fontFamily: BODY, fontSize: "14px", cursor: "pointer" }}>
-            Skip
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
