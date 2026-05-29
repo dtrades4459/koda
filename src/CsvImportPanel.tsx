@@ -15,21 +15,10 @@ import {
   normalizeDate,
   normaliseSymbol,
   isSummarySymbol,
+  tradeKey,
+  computePnlDollar,
 } from "./lib/csvParser";
 import { calcRR } from "./lib/stats";
-
-function _djb2(s: string): string {
-  let h = 5381;
-  for (let i = 0; i < s.length; i++) h = ((h << 5) + h) ^ s.charCodeAt(i);
-  return (h >>> 0).toString(36);
-}
-
-// Dedup key uses only the fields that are reliably present across all brokers.
-// slPrice/tpPrice/session are often empty and caused false duplicate matches.
-function tradeKey(t: Partial<Trade>): string {
-  const content = [t.date ?? "", (t.pair ?? "").toUpperCase(), t.entryPrice ?? "", t.pnl ?? ""].join("|");
-  return _djb2(content);
-}
 
 function rowToTrade(
   row: Record<string, string>,
@@ -47,9 +36,10 @@ function rowToTrade(
   if (!date || !pair) return null;
 
   const pnl = parseNum(get("pnl"));
-  const qty = get("qty") ? parseNum(get("qty")) : NaN;
+  const qty = parseNum(get("qty"));
   const session = get("session") || detectSessionFromDateStr(rawDate);
   const entryPrice = get("entryPrice");
+  const exitPrice = get("exitPrice");
   const slPrice = get("slPrice");
   const tpPrice = get("tpPrice");
 
@@ -65,12 +55,21 @@ function rowToTrade(
     slPrice,
     tpPrice,
     rr: get("rr") || (entryPrice && slPrice && tpPrice ? calcRR(entryPrice, slPrice, tpPrice) : ""),
-    outcome: normalizeOutcome(get("outcome"), pnl),
-    pnl: isNaN(pnl) ? "" : pnl.toFixed(2),
+    outcome: normalizeOutcome(get("outcome"), pnl ?? 0),
+    pnl: pnl === null ? "" : pnl.toFixed(2),
     notes: get("notes"),
     emotions: "",
     screenshot: "",
-    pnlDollar: isNaN(qty) ? "" : "",
+    pnlDollar: (() => {
+      const dollars = computePnlDollar({
+        symbol: pair,
+        entryPrice: parseNum(entryPrice),
+        exitPrice: parseNum(exitPrice),
+        qty,
+        bias: normalizeBias(get("bias")),
+      });
+      return dollars === null ? "" : dollars.toFixed(2);
+    })(),
     comments: [],
     reactions: {},
     source: "csv_import",

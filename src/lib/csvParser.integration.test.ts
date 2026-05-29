@@ -37,10 +37,10 @@ function mapRow(
   date: string | null;
   bias: string;
   outcome: string;
-  pnl: number;
-  entryPrice: number;
-  exitPrice: number;
-  qty: number;
+  pnl: number | null;
+  entryPrice: number | null;
+  exitPrice: number | null;
+  qty: number | null;
   session: string;
 } {
   const pnlRaw = mapping.pnl ? row[mapping.pnl] ?? "" : "";
@@ -49,7 +49,7 @@ function mapRow(
     pair: mapping.pair ? (row[mapping.pair] ?? "") : "",
     date: normalizeDate(mapping.date ? (row[mapping.date] ?? "") : ""),
     bias: normalizeBias(mapping.bias ? (row[mapping.bias] ?? "") : ""),
-    outcome: normalizeOutcome(mapping.outcome ? (row[mapping.outcome] ?? "") : "", pnl),
+    outcome: normalizeOutcome(mapping.outcome ? (row[mapping.outcome] ?? "") : "", pnl ?? 0),
     pnl,
     entryPrice: parseNum(mapping.entryPrice ? (row[mapping.entryPrice] ?? "") : ""),
     exitPrice: parseNum(mapping.exitPrice ? (row[mapping.exitPrice] ?? "") : ""),
@@ -402,6 +402,11 @@ describe("normaliseSymbol", () => {
     expect(normaliseSymbol("GCQ24")).toBe("GC");
     expect(normaliseSymbol("MESZ4")).toBe("MES");
     expect(normaliseSymbol("MNQH25")).toBe("MNQ");
+    // Single-digit year codes (CME current convention)
+    expect(normaliseSymbol("NQH5")).toBe("NQ");
+    expect(normaliseSymbol("ESM5")).toBe("ES");
+    expect(normaliseSymbol("MNQU5")).toBe("MNQ");
+    expect(normaliseSymbol("CLZ5")).toBe("CL");
   });
 
   it("leaves forex pairs unchanged", () => {
@@ -466,5 +471,17 @@ describe("isSummarySymbol", () => {
     expect(isSummarySymbol("NQ")).toBe(false);
     expect(isSummarySymbol("EURUSD")).toBe(false);
     expect(isSummarySymbol("ES")).toBe(false);
+  });
+
+  it("handles whitespace and mixed case", () => {
+    expect(isSummarySymbol("  TOTAL  ")).toBe(true);
+    expect(isSummarySymbol("Total")).toBe(true);
+    expect(isSummarySymbol("subTOTAL")).toBe(true);
+  });
+
+  it("does not flag symbols that contain summary substrings", () => {
+    // 'TOTAL' is a summary row, but 'TOTALES' or 'NETFLIX' are not.
+    expect(isSummarySymbol("TOTALES")).toBe(false);
+    expect(isSummarySymbol("NETFLIX")).toBe(false);
   });
 });

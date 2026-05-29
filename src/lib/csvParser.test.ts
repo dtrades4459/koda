@@ -14,6 +14,8 @@ import {
   normalizeDate,
   parseNum,
   detectSessionFromDateStr,
+  tradeKey,
+  computePnlDollar,
 } from "./csvParser";
 
 // ── detectDelimiter ───────────────────────────────────────────────────────────
@@ -234,8 +236,13 @@ describe("parseNum", () => {
     expect(parseNum("(125.00)")).toBe(-125);
   });
 
-  it("returns NaN for empty string", () => {
-    expect(parseNum("")).toBeNaN();
+  it("returns null for empty string", () => {
+    expect(parseNum("")).toBeNull();
+  });
+
+  it("returns null for unparseable input", () => {
+    expect(parseNum("abc")).toBeNull();
+    expect(parseNum("---")).toBeNull();
   });
 });
 
@@ -290,5 +297,115 @@ describe("detectSessionFromDateStr", () => {
   it("returns empty string for unrecognised format", () => {
     expect(detectSessionFromDateStr("March 15")).toBe("");
     expect(detectSessionFromDateStr("")).toBe("");
+  });
+});
+
+// ── tradeKey ──────────────────────────────────────────────────────────────────
+
+describe("tradeKey", () => {
+  const base = { date: "2024-03-15", pair: "NQ", entryPrice: "18250.25", pnl: "412.50" };
+
+  it("returns the same key for identical core fields", () => {
+    expect(tradeKey(base)).toBe(tradeKey({ ...base }));
+  });
+
+  it("returns the same key when pair case differs", () => {
+    expect(tradeKey({ ...base, pair: "nq" })).toBe(tradeKey({ ...base, pair: "NQ" }));
+  });
+
+  it("changes when date changes", () => {
+    expect(tradeKey({ ...base, date: "2024-03-16" })).not.toBe(tradeKey(base));
+  });
+
+  it("changes when pair changes", () => {
+    expect(tradeKey({ ...base, pair: "ES" })).not.toBe(tradeKey(base));
+  });
+
+  it("changes when entryPrice changes", () => {
+    expect(tradeKey({ ...base, entryPrice: "18250.50" })).not.toBe(tradeKey(base));
+  });
+
+  it("changes when pnl changes", () => {
+    expect(tradeKey({ ...base, pnl: "412.51" })).not.toBe(tradeKey(base));
+  });
+
+  it("ignores session, slPrice, tpPrice, notes (day-1 false-positive fix)", () => {
+    const noisy = { ...base, session: "NY", slPrice: "18240", tpPrice: "18280", notes: "felt strong" };
+    expect(tradeKey(noisy)).toBe(tradeKey(base));
+  });
+
+  it("handles missing fields without throwing", () => {
+    expect(tradeKey({})).toBeTypeOf("string");
+    expect(tradeKey({ date: "2024-03-15" })).toBeTypeOf("string");
+  });
+
+  it("is collision-resistant within reasonable input space (sanity)", () => {
+    const keys = new Set<string>();
+    for (let i = 0; i < 1000; i++) {
+      keys.add(tradeKey({ date: "2024-03-15", pair: "NQ", entryPrice: String(18250 + i), pnl: "100" }));
+    }
+    expect(keys.size).toBe(1000);
+  });
+});
+
+// ── computePnlDollar ──────────────────────────────────────────────────────────
+
+describe("computePnlDollar", () => {
+  it("computes a long NQ win correctly", () => {
+    // 1 contract NQ, 20pt move up, $20 per point = $400
+    expect(computePnlDollar({
+      symbol: "NQ", entryPrice: 18250, exitPrice: 18270, qty: 1, bias: "Bullish",
+    })).toBe(400);
+  });
+
+  it("computes a short ES win correctly", () => {
+    // 2 contracts ES, 5pt move down (short = profit), $50 per point × 2 = $500
+    expect(computePnlDollar({
+      symbol: "ES", entryPrice: 5800, exitPrice: 5795, qty: 2, bias: "Bearish",
+    })).toBe(500);
+  });
+
+  it("computes a long MES loss correctly", () => {
+    // 1 contract MES, 4pt move down, $5 per point = -$20
+    expect(computePnlDollar({
+      symbol: "MES", entryPrice: 5800, exitPrice: 5796, qty: 1, bias: "Bullish",
+    })).toBe(-20);
+  });
+
+  it("normalises contract codes (NQH5 → NQ) before lookup", () => {
+    expect(computePnlDollar({
+      symbol: "NQH5", entryPrice: 18250, exitPrice: 18260, qty: 1, bias: "Bullish",
+    })).toBe(200);
+  });
+
+  it("defaults to long when bias is empty", () => {
+    expect(computePnlDollar({
+      symbol: "NQ", entryPrice: 18250, exitPrice: 18260, qty: 1, bias: "",
+    })).toBe(200);
+  });
+
+  it("returns null for unknown symbols (forex, stocks, crypto)", () => {
+    expect(computePnlDollar({
+      symbol: "EURUSD", entryPrice: 1.08, exitPrice: 1.09, qty: 1, bias: "Bullish",
+    })).toBeNull();
+    expect(computePnlDollar({
+      symbol: "AAPL", entryPrice: 180, exitPrice: 185, qty: 100, bias: "Bullish",
+    })).toBeNull();
+  });
+
+  it("returns null when any numeric input is null", () => {
+    const base = { symbol: "NQ", entryPrice: 18250, exitPrice: 18270, qty: 1, bias: "Bullish" };
+    expect(computePnlDollar({ ...base, entryPrice: null })).toBeNull();
+    expect(computePnlDollar({ ...base, exitPrice: null })).toBeNull();
+    expect(computePnlDollar({ ...base, qty: null })).toBeNull();
+  });
+
+  it("returns null when qty is zero or negative", () => {
+    expect(computePnlDollar({
+      symbol: "NQ", entryPrice: 18250, exitPrice: 18270, qty: 0, bias: "Bullish",
+    })).toBeNull();
+    expect(computePnlDollar({
+      symbol: "NQ", entryPrice: 18250, exitPrice: 18270, qty: -1, bias: "Bullish",
+    })).toBeNull();
   });
 });
