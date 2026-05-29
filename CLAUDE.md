@@ -49,7 +49,7 @@ These rules apply to every task in this repo.
 
 A trading journal PWA for retail traders. Users log trades, track stats (P&L, win rate, avg R), follow friends, and compete in Trading Circles. Built for mobile-first, installable as a home screen app on iOS and Android.
 
-**Live URL:** https://tradrjournal.xyz and https://www.tradrjournal.xyz (both active, custom domain via GoDaddy → Vercel)
+**Live URL:** https://kodatrade.co.uk and https://www.kodatrade.co.uk (custom domain via GoDaddy → Vercel)
 **Vercel project:** tradr.dt (dylnyland4459-1994s-projects)
 **Supabase project ID:** vifwjwsndchnrpvfgrmg
 **GitHub:** public repo, auto-deploys to Vercel on push to main
@@ -100,7 +100,7 @@ A trading journal PWA for retail traders. Users log trades, track stats (P&L, wi
 | `src/main.tsx` | Mounts React, installs storage shim, calls `initSentry()` and `initPostHog()`. |
 | `api/broker/[action].ts` | POST /api/broker/connect — authenticates with Tradovate, encrypts tokens, upserts broker_connections. POST /api/broker/disconnect — deletes connection (user_id guard). |
 | `api/cron/sync.ts` | **NEW** GET (cron, every 5 min via GitHub Actions) + POST (manual) — FIFO fill matching, token refresh, idempotent trade upsert. |
-| `api/lib/cryptoUtils.ts` | **NEW** AES-256-GCM encrypt/decrypt for broker token storage. Requires `TRADR_ENCRYPTION_KEY` (rename to `KODA_ENCRYPTION_KEY` pending — see Session F). |
+| `api/lib/cryptoUtils.ts` | **NEW** AES-256-GCM encrypt/decrypt for broker token storage. Requires `KODA_ENCRYPTION_KEY` env var. |
 | `api/lib/supabaseAdmin.ts` | **NEW** Service-role Supabase client + JWT verifier for serverless functions. |
 | `api/feedback.ts` | POST → Telegram bot. |
 | `api/tradovate.ts` | Tradovate API proxy (auth, accounts, positions, fills, contracts). |
@@ -178,8 +178,8 @@ All must be set in Vercel dashboard → Settings → Environment Variables (Prod
 | `SUPABASE_URL` | Same URL — used by serverless functions |
 | `SUPABASE_ANON_KEY` | Anon key for server-side user-context API calls (distinct from service role) |
 | `SUPABASE_SERVICE_ROLE_KEY` | Service role key — bypasses RLS in cron/api functions |
-| `APP_URL` | Production URL — used in emails, Stripe redirects, CORS. e.g. `https://tradrjournal.xyz` |
-| `TRADR_ENCRYPTION_KEY` | 64 hex chars (32 bytes) — AES-256-GCM key for broker token storage. Generate: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`. ⚠️ Rename to `KODA_ENCRYPTION_KEY` pending. |
+| `APP_URL` | Production URL — used in emails, Stripe redirects, CORS. e.g. `https://kodatrade.co.uk` |
+| `KODA_ENCRYPTION_KEY` | 64 hex chars (32 bytes) — AES-256-GCM key for broker token storage. Generate: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`. |
 | `CRON_SECRET` | Random string — sent as `x-cron-secret` header by GitHub Actions to authenticate GET /api/cron/sync |
 | `TRADOVATE_APP_ID` | Tradovate app ID |
 | `TRADOVATE_APP_VERSION` | Tradovate app version |
@@ -260,7 +260,7 @@ Home tab has sub-nav: Overview · Circles · Execution · Rules · **Sync** · S
 - **5-step onboarding** — name + handle + emoji avatar, bio + Twitter/X, instruments multi-select, strategy, ready summary. localStorage backup prevents re-loop on network failure.
 - React Error Boundary wrapping the whole app
 - Feedback button → modal → POST `/api/feedback` → Telegram bot
-- Custom domain tradrjournal.xyz live via GoDaddy DNS → Vercel
+- Custom domain kodatrade.co.uk live via GoDaddy DNS → Vercel
 - PWA manifest, icons, iOS/Android installable
 - Stripe billing (Free / Pro / Elite) — checkout, portal, webhook, JWT plan claim
 - **Tradovate live sync** — connect account, encrypted token storage, 5-min Vercel Cron, FIFO fill→trade matching, idempotent upsert, token auto-refresh, manual sync trigger, sync audit log. ⚠️ Live broker UI hidden behind "Coming Soon" banner — requires Tradovate partner/API credentials.
@@ -294,24 +294,24 @@ POST /api/cron/sync (manual trigger, JWT auth)
   └─ same flow but only for the authenticated user, concurrency 5
 ```
 
-**Token security:** Tradovate credentials are used once to get a token — never stored. Tokens stored as `base64(IV[12] || AuthTag[16] || Ciphertext)` in Postgres text columns. Key lives only in `TRADR_ENCRYPTION_KEY` env var (rename to `KODA_ENCRYPTION_KEY` pending).
+**Token security:** Tradovate credentials are used once to get a token — never stored. Tokens stored as `base64(IV[12] || AuthTag[16] || Ciphertext)` in Postgres text columns. Key lives only in `KODA_ENCRYPTION_KEY` env var.
 
 **Deduplication:** `external_id` = `tv-{entryFillId}-{exitFillId}` + unique index on `(user_id, external_id)`. Re-running sync is fully idempotent.
 
-**Review Inbox pattern:** Auto-synced trades land as `review_status = 'draft'`. They don't appear in the main journal until the user enriches and publishes them. ⚠️ Review Inbox UI not built yet — this is the next priority.
+**Review Inbox pattern:** Auto-synced trades land as `review_status = 'draft'`. They don't appear in the main journal until the user enriches and publishes them. Review Inbox UI is built — `src/ReviewInboxScreen.tsx`, wired via Log-tab badge + CTA in `Koda.tsx`.
 
 ---
 
-## DNS Setup (tradrjournal.xyz)
+## DNS Setup (kodatrade.co.uk)
 
 Registrar: GoDaddy
 Nameservers: ns39.domaincontrol.com / ns40.domaincontrol.com
 
 GoDaddy DNS records:
 - A record `@` → `76.76.21.21` (Vercel IP)
-- CNAME `www` → `f084cb49980fd15b.vercel-dns-017.com`
+- CNAME `www` → Vercel DNS
 
-Both `tradrjournal.xyz` and `www.tradrjournal.xyz` verified and live in Vercel.
+Both `kodatrade.co.uk` and `www.kodatrade.co.uk` verified and live in Vercel.
 
 ---
 
@@ -396,7 +396,7 @@ import { getAdminClient, getUserIdFromJwt } from "../lib/supabaseAdmin";
 
 ### Broker sync follow-ups
 
-- [ ] Update `.env.example` with the 4 new required vars (`SUPABASE_SERVICE_ROLE_KEY`, `TRADR_ENCRYPTION_KEY`, `CRON_SECRET`, `TRADOVATE_*`)
+- [x] Update `.env.example` with new required vars ✓ (`KODA_ENCRYPTION_KEY`, `CRON_SECRET`, `TRADOVATE_*` all present)
 - [ ] Add Rithmic/NinjaTrader 8/TopstepX live API connections (CSV covers import; API would enable live sync)
 
 ### v2 data layer migration
@@ -446,13 +446,19 @@ Kōda target pricing: Free tier · Pro $24.99/mo.
 - [x] Prop firm account mode — evaluation targets (profit target, daily loss limit, max drawdown), live progress bars ✓ (`EvalAccountScreen.tsx` + Settings toggle + sub-nav Eval tab + Home dashboard mini-bars with red-warning thresholds)
 - [x] Discipline score card — "You followed your rules on 71% of trades this month" ✓ (`Koda.tsx` psychology stats tab: rule adherence %, mistake frequency, emotion × outcome)
 
-**Sprint 3 — Advanced Analytics**
-- [ ] Setup P&L breakdown — which setups actually make money
+**Sprint 3 — Analytics, Streaks, Circles polish** ✓ (shipped 2026-05-29)
+- [x] P&L by Setup ranked bar chart — Analytics tab, period/metric/R-$ toggles ✓
+- [x] Streak milestone banner — fires at 3/7/14/30/100 days, deduped in user_kv ✓
+- [x] TradingCircles error toasts — create/join/chat all show toast on failure ✓
+
+**Sprint 4 — Advanced Analytics**
 - [ ] MAE/MFE per trade (broker data now available via sync)
 - [ ] Commission/fee tracking — gross vs. net P&L
 - [ ] Weekly report card — in-app summary, shareable image
+- [ ] Drill-down to individual trades per setup (Analytics tab v2)
+- [ ] Custom date range picker
 
-**Sprint 4 — Monetisation**
+**Sprint 5 — Monetisation**
 - [x] Stripe billing integration ✓
 - [ ] Basic AI insights — rule-based pattern detection ("You make 80% of profit before 11am ET")
 - [ ] TradingView chart embed on trade detail view (entry/exit markers)
