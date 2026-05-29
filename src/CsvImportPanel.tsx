@@ -15,21 +15,9 @@ import {
   normalizeDate,
   normaliseSymbol,
   isSummarySymbol,
+  tradeKey,
 } from "./lib/csvParser";
 import { calcRR } from "./lib/stats";
-
-function _djb2(s: string): string {
-  let h = 5381;
-  for (let i = 0; i < s.length; i++) h = ((h << 5) + h) ^ s.charCodeAt(i);
-  return (h >>> 0).toString(36);
-}
-
-// Dedup key uses only the fields that are reliably present across all brokers.
-// slPrice/tpPrice/session are often empty and caused false duplicate matches.
-function tradeKey(t: Partial<Trade>): string {
-  const content = [t.date ?? "", (t.pair ?? "").toUpperCase(), t.entryPrice ?? "", t.pnl ?? ""].join("|");
-  return _djb2(content);
-}
 
 function rowToTrade(
   row: Record<string, string>,

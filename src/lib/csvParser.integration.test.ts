@@ -402,6 +402,11 @@ describe("normaliseSymbol", () => {
     expect(normaliseSymbol("GCQ24")).toBe("GC");
     expect(normaliseSymbol("MESZ4")).toBe("MES");
     expect(normaliseSymbol("MNQH25")).toBe("MNQ");
+    // Single-digit year codes (CME current convention)
+    expect(normaliseSymbol("NQH5")).toBe("NQ");
+    expect(normaliseSymbol("ESM5")).toBe("ES");
+    expect(normaliseSymbol("MNQU5")).toBe("MNQ");
+    expect(normaliseSymbol("CLZ5")).toBe("CL");
   });
 
   it("leaves forex pairs unchanged", () => {
@@ -466,5 +471,17 @@ describe("isSummarySymbol", () => {
     expect(isSummarySymbol("NQ")).toBe(false);
     expect(isSummarySymbol("EURUSD")).toBe(false);
     expect(isSummarySymbol("ES")).toBe(false);
+  });
+
+  it("handles whitespace and mixed case", () => {
+    expect(isSummarySymbol("  TOTAL  ")).toBe(true);
+    expect(isSummarySymbol("Total")).toBe(true);
+    expect(isSummarySymbol("subTOTAL")).toBe(true);
+  });
+
+  it("does not flag symbols that contain summary substrings", () => {
+    // 'TOTAL' is a summary row, but 'TOTALES' or 'NETFLIX' are not.
+    expect(isSummarySymbol("TOTALES")).toBe(false);
+    expect(isSummarySymbol("NETFLIX")).toBe(false);
   });
 });

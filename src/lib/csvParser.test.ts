@@ -14,6 +14,7 @@ import {
   normalizeDate,
   parseNum,
   detectSessionFromDateStr,
+  tradeKey,
 } from "./csvParser";
 
 // ── detectDelimiter ───────────────────────────────────────────────────────────
@@ -290,5 +291,53 @@ describe("detectSessionFromDateStr", () => {
   it("returns empty string for unrecognised format", () => {
     expect(detectSessionFromDateStr("March 15")).toBe("");
     expect(detectSessionFromDateStr("")).toBe("");
+  });
+});
+
+// ── tradeKey ──────────────────────────────────────────────────────────────────
+
+describe("tradeKey", () => {
+  const base = { date: "2024-03-15", pair: "NQ", entryPrice: "18250.25", pnl: "412.50" };
+
+  it("returns the same key for identical core fields", () => {
+    expect(tradeKey(base)).toBe(tradeKey({ ...base }));
+  });
+
+  it("returns the same key when pair case differs", () => {
+    expect(tradeKey({ ...base, pair: "nq" })).toBe(tradeKey({ ...base, pair: "NQ" }));
+  });
+
+  it("changes when date changes", () => {
+    expect(tradeKey({ ...base, date: "2024-03-16" })).not.toBe(tradeKey(base));
+  });
+
+  it("changes when pair changes", () => {
+    expect(tradeKey({ ...base, pair: "ES" })).not.toBe(tradeKey(base));
+  });
+
+  it("changes when entryPrice changes", () => {
+    expect(tradeKey({ ...base, entryPrice: "18250.50" })).not.toBe(tradeKey(base));
+  });
+
+  it("changes when pnl changes", () => {
+    expect(tradeKey({ ...base, pnl: "412.51" })).not.toBe(tradeKey(base));
+  });
+
+  it("ignores session, slPrice, tpPrice, notes (day-1 false-positive fix)", () => {
+    const noisy = { ...base, session: "NY", slPrice: "18240", tpPrice: "18280", notes: "felt strong" };
+    expect(tradeKey(noisy)).toBe(tradeKey(base));
+  });
+
+  it("handles missing fields without throwing", () => {
+    expect(tradeKey({})).toBeTypeOf("string");
+    expect(tradeKey({ date: "2024-03-15" })).toBeTypeOf("string");
+  });
+
+  it("is collision-resistant within reasonable input space (sanity)", () => {
+    const keys = new Set<string>();
+    for (let i = 0; i < 1000; i++) {
+      keys.add(tradeKey({ date: "2024-03-15", pair: "NQ", entryPrice: String(18250 + i), pnl: "100" }));
+    }
+    expect(keys.size).toBe(1000);
   });
 });

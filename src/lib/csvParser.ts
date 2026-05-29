@@ -3,6 +3,8 @@
 // No React, no side-effects. Imported by CsvImportPanel.tsx.
 // ═══════════════════════════════════════════════════════════════════════════════
 
+import type { Trade } from "../types";
+
 // ── Field-name → Kōda field mapping (must be declared before parseCSV for header scoring) ──
 
 export const CSV_FIELD_HINTS: { field: string; patterns: RegExp[] }[] = [
@@ -306,4 +308,28 @@ export const FUTURES_POINT_VALUE: Record<string, number> = {
 export function getPointValue(symbol: string): number | null {
   const root = normaliseSymbol(symbol.toUpperCase().trim());
   return FUTURES_POINT_VALUE[root] ?? null;
+}
+
+// ── Dedup key for trade rows ──────────────────────────────────────────────────
+
+function _djb2(s: string): string {
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) h = ((h << 5) + h) ^ s.charCodeAt(i);
+  return (h >>> 0).toString(36);
+}
+
+/**
+ * Stable hash for deduping imported trades against the existing journal.
+ * Uses only the four fields that are reliably present across every broker
+ * export: date, pair (uppercased), entryPrice, pnl. Adding fields that some
+ * brokers omit (slPrice, tpPrice, session) caused false positives in day 1.
+ */
+export function tradeKey(t: Partial<Trade>): string {
+  const content = [
+    t.date ?? "",
+    (t.pair ?? "").toUpperCase(),
+    t.entryPrice ?? "",
+    t.pnl ?? "",
+  ].join("|");
+  return _djb2(content);
 }
