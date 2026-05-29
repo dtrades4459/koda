@@ -34,6 +34,8 @@ export function initSentry(): void {
         return event;
       },
     });
+    // Expose on window so log.ts and ErrorBoundary can access without a static import.
+    (window as any).Sentry = Sentry;
   }).catch(() => {
     // @sentry/react not installed - Sentry disabled, app continues normally
   });

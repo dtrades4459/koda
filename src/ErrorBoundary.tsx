@@ -27,6 +27,9 @@ export class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, info: { componentStack: string }) {
     console.error("[Kōda OS] Uncaught error:", error, info.componentStack);
     this.setState({ info: info.componentStack ?? "" });
+    (window as any).Sentry?.captureException?.(error, {
+      extra: { componentStack: info.componentStack },
+    });
   }
 
   render() {
