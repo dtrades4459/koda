@@ -37,10 +37,10 @@ function mapRow(
   date: string | null;
   bias: string;
   outcome: string;
-  pnl: number;
-  entryPrice: number;
-  exitPrice: number;
-  qty: number;
+  pnl: number | null;
+  entryPrice: number | null;
+  exitPrice: number | null;
+  qty: number | null;
   session: string;
 } {
   const pnlRaw = mapping.pnl ? row[mapping.pnl] ?? "" : "";
@@ -49,7 +49,7 @@ function mapRow(
     pair: mapping.pair ? (row[mapping.pair] ?? "") : "",
     date: normalizeDate(mapping.date ? (row[mapping.date] ?? "") : ""),
     bias: normalizeBias(mapping.bias ? (row[mapping.bias] ?? "") : ""),
-    outcome: normalizeOutcome(mapping.outcome ? (row[mapping.outcome] ?? "") : "", pnl),
+    outcome: normalizeOutcome(mapping.outcome ? (row[mapping.outcome] ?? "") : "", pnl ?? 0),
     pnl,
     entryPrice: parseNum(mapping.entryPrice ? (row[mapping.entryPrice] ?? "") : ""),
     exitPrice: parseNum(mapping.exitPrice ? (row[mapping.exitPrice] ?? "") : ""),

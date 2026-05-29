@@ -235,8 +235,13 @@ describe("parseNum", () => {
     expect(parseNum("(125.00)")).toBe(-125);
   });
 
-  it("returns NaN for empty string", () => {
-    expect(parseNum("")).toBeNaN();
+  it("returns null for empty string", () => {
+    expect(parseNum("")).toBeNull();
+  });
+
+  it("returns null for unparseable input", () => {
+    expect(parseNum("abc")).toBeNull();
+    expect(parseNum("---")).toBeNull();
   });
 });
 

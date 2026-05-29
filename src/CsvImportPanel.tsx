@@ -35,7 +35,6 @@ function rowToTrade(
   if (!date || !pair) return null;
 
   const pnl = parseNum(get("pnl"));
-  const qty = get("qty") ? parseNum(get("qty")) : NaN;
   const session = get("session") || detectSessionFromDateStr(rawDate);
   const entryPrice = get("entryPrice");
   const slPrice = get("slPrice");
@@ -53,12 +52,12 @@ function rowToTrade(
     slPrice,
     tpPrice,
     rr: get("rr") || (entryPrice && slPrice && tpPrice ? calcRR(entryPrice, slPrice, tpPrice) : ""),
-    outcome: normalizeOutcome(get("outcome"), pnl),
-    pnl: isNaN(pnl) ? "" : pnl.toFixed(2),
+    outcome: normalizeOutcome(get("outcome"), pnl ?? 0),
+    pnl: pnl === null ? "" : pnl.toFixed(2),
     notes: get("notes"),
     emotions: "",
     screenshot: "",
-    pnlDollar: isNaN(qty) ? "" : "",
+    pnlDollar: "",
     comments: [],
     reactions: {},
     source: "csv_import",

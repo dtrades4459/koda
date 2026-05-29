@@ -172,10 +172,17 @@ export function normalizeOutcome(raw: string, pnl: number): string {
   return "";
 }
 
-export function parseNum(s: string): number {
-  if (!s) return NaN;
+/**
+ * Parse a CSV number cell into a number, or null for empty/unparseable input.
+ * Strips currency symbols and commas; converts parenthetical negatives like
+ * "(125.00)" → -125. Returns null (not NaN) so callers can use simple
+ * null-checks instead of isNaN guards.
+ */
+export function parseNum(s: string): number | null {
+  if (!s) return null;
   const n = s.replace(/[^0-9.\-()/]/g, "").replace(/\((.*)\)/, "-$1");
-  return parseFloat(n);
+  const parsed = parseFloat(n);
+  return Number.isFinite(parsed) ? parsed : null;
 }
 
 /**
