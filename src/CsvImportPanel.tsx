@@ -21,6 +21,7 @@ import {
   inferBiasFromTimes,
 } from "./lib/csvParser";
 import { calcRR } from "./lib/stats";
+import { persistImport } from "./lib/imports";
 
 interface RowContext {
   /** Decimal separator hint derived from the file's column delimiter. */
@@ -312,6 +313,7 @@ interface CsvImportPanelProps {
 }
 export function CsvImportPanel({ existingTrades, onImport, onClose, allStrategyNames, C, inp, sel, lbl, defaultAccountType }: CsvImportPanelProps) {
   const [fileName, setFileName] = useState("");
+  const [originalFile, setOriginalFile] = useState<File | null>(null);
   const [headers, setHeaders] = useState<string[]>([]);
   const [rows, setRows] = useState<Record<string, string>[]>([]);
   const [csvDelimiter, setCsvDelimiter] = useState<"," | "\t" | ";">(",");
@@ -425,6 +427,7 @@ export function CsvImportPanel({ existingTrades, onImport, onClose, allStrategyN
     }
 
     setFileName(file.name);
+    setOriginalFile(file);
     setError("");
     setActivePreset(null);
 
@@ -546,9 +549,27 @@ export function CsvImportPanel({ existingTrades, onImport, onClose, allStrategyN
   }
 
   function confirmImport() {
-    onImport(revealTrades);
+    const tradesToImport = revealTrades;
+    const importedCount = tradesToImport.length;
+    onImport(tradesToImport);
     setRevealStats(null);
     setRevealTrades([]);
+
+    // Audit trail: best-effort persist of the original file + a counts row.
+    // We do NOT await — trades have already saved locally and the user
+    // shouldn't wait on the network. See src/lib/imports.ts.
+    if (originalFile) {
+      persistImport({
+        file:            originalFile,
+        broker:          activePreset,
+        accountType:     accountType ?? null,
+        rowCount:        rows.length,
+        importedCount,
+        duplicateCount:  dupCount,
+      }).catch(err => {
+        console.warn("[koda imports] persist crashed:", err);
+      });
+    }
   }
 
   function cancelReveal() {
