@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cookie Policy — Kōda OS</title>
+  <style>
+    :root { --bg: #0C0C0B; --text: #EDEDE8; --text2: #BCBCB4; --muted: #8A8A82; --border: #2A2A24; --green: #00C96B; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 15px; line-height: 1.7; padding: 0 20px; }
+    .wrap { max-width: 680px; margin: 0 auto; padding: 60px 0 100px; }
+    .logo { font-family: "SF Mono", "Fira Code", monospace; font-size: 13px; letter-spacing: 0.2em; color: var(--green); text-decoration: none; display: inline-block; margin-bottom: 48px; }
+    h1 { font-size: 28px; font-weight: 600; color: var(--text); margin-bottom: 8px; letter-spacing: -0.02em; }
+    .meta { font-size: 12px; color: var(--muted); font-family: "SF Mono", monospace; letter-spacing: 0.08em; margin-bottom: 48px; }
+    h2 { font-size: 14px; font-weight: 600; color: var(--text); letter-spacing: 0.08em; text-transform: uppercase; margin: 40px 0 12px; padding-top: 40px; border-top: 1px solid var(--border); }
+    h2:first-of-type { border-top: none; padding-top: 0; }
+    p { color: var(--text2); margin-bottom: 14px; }
+    ul { color: var(--text2); padding-left: 20px; margin-bottom: 14px; }
+    li { margin-bottom: 6px; }
+    a { color: var(--green); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    table { width: 100%; border-collapse: collapse; margin: 14px 0 24px; font-size: 13px; }
+    th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); color: var(--text2); vertical-align: top; }
+    th { color: var(--text); font-weight: 600; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; }
+    code { font-family: "SF Mono", "Fira Code", monospace; font-size: 12px; color: var(--text); background: rgba(255,255,255,0.04); padding: 1px 6px; border-radius: 3px; }
+    .footer { margin-top: 60px; padding-top: 24px; border-top: 1px solid var(--border); display: flex; gap: 20px; font-size: 12px; color: var(--muted); font-family: "SF Mono", monospace; letter-spacing: 0.06em; }
+    .footer a { color: var(--muted); }
+    .footer a:hover { color: var(--text); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <a class="logo" href="/">← Kōda OS</a>
+    <h1>Cookie Policy</h1>
+    <p class="meta">EFFECTIVE DATE: 29 MAY 2026 &nbsp;·&nbsp; LAST UPDATED: 29 MAY 2026</p>
+
+    <h2>What this covers</h2>
+    <p>This page explains what cookies and similar technologies (localStorage, sessionStorage) Kōda OS uses, why we use them, and how you can control them. It supplements our <a href="/privacy.html">Privacy Policy</a>.</p>
+
+    <h2>What are cookies?</h2>
+    <p>Cookies are small text files stored by your browser when you visit a website. We also use browser storage APIs (localStorage and sessionStorage) for the same purpose. Throughout this policy "cookies" refers to all of these.</p>
+
+    <h2>Essential cookies</h2>
+    <p>These are required for Kōda OS to work. They cannot be turned off. They store authentication tokens, your preferences, and your in-app data while you use the service.</p>
+    <table>
+      <thead>
+        <tr><th>Name</th><th>Purpose</th><th>Duration</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>sb-*</code></td><td>Supabase Auth — keeps you signed in</td><td>Session / persistent</td></tr>
+        <tr><td><code>koda_*</code> (localStorage)</td><td>Profile cache, UI preferences, draft trades, tour progress</td><td>Persistent until cleared</td></tr>
+        <tr><td><code>koda_cookie_consent</code></td><td>Remembers your choice on this banner</td><td>Persistent until cleared</td></tr>
+        <tr><td><code>koda_beta_unlocked</code></td><td>Remembers your beta access code</td><td>Persistent until cleared</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Analytics cookies (require consent)</h2>
+    <p>If you click "Accept" on the cookie banner, we load PostHog to understand how Kōda is used in aggregate. Analytics help us improve the product. They are <strong>not</strong> used for advertising and we do not sell this data.</p>
+    <table>
+      <thead>
+        <tr><th>Name</th><th>Provider</th><th>Purpose</th><th>Duration</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>ph_*</code></td><td>PostHog</td><td>Aggregate usage analytics, feature performance, anonymous session replay (passwords masked)</td><td>Up to 1 year</td></tr>
+      </tbody>
+    </table>
+    <p>If you click "Reject", PostHog is never loaded.</p>
+
+    <h2>Error monitoring</h2>
+    <p>We use Sentry to capture application errors so we can fix bugs. Sentry runs only when an error occurs, does not set cookies, and does not collect personal information beyond the error context (URL, browser version, stack trace). We consider this a necessary part of running a reliable service. See the <a href="https://sentry.io/privacy/" target="_blank" rel="noopener">Sentry Privacy Policy</a>.</p>
+
+    <h2>Third-party cookies</h2>
+    <p>Stripe sets cookies on the Stripe-hosted checkout page when you subscribe to Pro. Those cookies are required for payment processing and are governed by Stripe's <a href="https://stripe.com/gb/privacy" target="_blank" rel="noopener">Privacy Policy</a>. We do not set Stripe cookies on Kōda pages.</p>
+
+    <h2>How to change your choice</h2>
+    <p>You can change your decision at any time:</p>
+    <ul>
+      <li>To withdraw analytics consent: clear site data for <code>kodatrade.co.uk</code> in your browser settings, then reload — the banner will reappear.</li>
+      <li>To revoke without clearing data: open your browser console and run <code>localStorage.removeItem('koda_cookie_consent')</code>, then reload.</li>
+    </ul>
+    <p>We're adding a Cookie preferences screen to Settings — once live, you'll be able to change your choice in-app.</p>
+
+    <h2>Do Not Track</h2>
+    <p>Kōda OS honours your explicit consent choice. We treat browser "Do Not Track" signals as advisory only; the banner choice is authoritative.</p>
+
+    <h2>Changes to this policy</h2>
+    <p>If the cookies we use materially change, we'll update this page and re-prompt for consent.</p>
+
+    <h2>Contact</h2>
+    <p>Questions? Email <a href="mailto:support@kodatrade.co.uk">support@kodatrade.co.uk</a>.</p>
+
+    <div class="footer">
+      <a href="/">← Back to Kōda OS</a>
+      <a href="/privacy.html">Privacy Policy</a>
+      <a href="/terms.html">Terms of Service</a>
+    </div>
+  </div>
+</body>
+</html>

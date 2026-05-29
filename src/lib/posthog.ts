@@ -1,5 +1,6 @@
 // ─── PostHog analytics wrapper ────────────────────────────────────────────────
 // Safe no-op if VITE_POSTHOG_KEY is not set (local dev, CI).
+// Gated on cookie consent — PECR / GDPR: no non-essential cookies before opt-in.
 // Import `ph` and call ph.capture() anywhere in the app.
 
 import posthog from "posthog-js";
@@ -7,8 +8,17 @@ import posthog from "posthog-js";
 const KEY  = import.meta.env.VITE_POSTHOG_KEY as string | undefined;
 const HOST = import.meta.env.VITE_POSTHOG_HOST as string | undefined ?? "https://us.i.posthog.com";
 
+export const COOKIE_CONSENT_KEY = "koda_cookie_consent";
+
+export function hasAnalyticsConsent(): boolean {
+  if (typeof window === "undefined") return false;
+  try { return localStorage.getItem(COOKIE_CONSENT_KEY) === "accepted"; }
+  catch { return false; }
+}
+
 export function initPostHog() {
   if (!KEY) return;
+  if (!hasAnalyticsConsent()) return;
   posthog.init(KEY, {
     api_host:                HOST,
     person_profiles:         "identified_only",
