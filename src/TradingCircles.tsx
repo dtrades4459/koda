@@ -47,7 +47,7 @@ export function TradingCircles({ myCircles, circlesView, setCirclesView, activeC
     const m = circle?.metric || "dollar";
     if (m === "dollar") { const v = entry.totalPnLDollar || 0; const pct = entry.pnlPercent; const val = pct !== null && pct !== undefined ? `${v >= 0 ? "+" : ""}$${Math.abs(v).toFixed(0)} (${pct >= 0 ? "+" : ""}${pct.toFixed(1)}%)` : `${v >= 0 ? "+" : ""}$${Math.abs(v).toFixed(0)}`; return { val, raw: v, label: "$ P&L" }; }
     if (m === "r")       { const v = entry.totalPnL || 0; return { val: `${v >= 0 ? "+" : ""}${v.toFixed(1)}R`, raw: v, label: "R P&L" }; }
-    if (m === "winrate") { const v = entry.winRate || 0; return { val: `${v.toFixed(0)}%`, raw: v, label: "WIN RATE" }; }
+    if (m === "winrate") { const v = Number(entry.winRate) || 0; return { val: `${v.toFixed(0)}%`, raw: v, label: "WIN RATE" }; }
     if (m === "trades")  { const v = entry.total || 0; return { val: `${v}`, raw: v, label: "TRADES" }; }
     if (m === "avgr")    { const v = entry.avgRR || 0; return { val: `${v.toFixed(2)}R`, raw: v, label: "AVG R" }; }
     const v = entry.totalPnLDollar || 0; return { val: `${v >= 0 ? "+" : ""}$${Math.abs(v).toFixed(0)}`, raw: v, label: "$ P&L" };
@@ -658,7 +658,7 @@ export function TradingCircles({ myCircles, circlesView, setCirclesView, activeC
               </div>
               <div style={{ textAlign: "right" }}>
                 <div style={{ fontFamily: DISPLAY, fontSize: "22px", fontWeight: 700, color: C.green, letterSpacing: "-0.02em" }}>{metricDisplay(leader, activeCircle).val}</div>
-                <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.08em" }}>{(leader.winRate ?? 0).toFixed(0)}% WR · {leader.total} trades</div>
+                <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.08em" }}>{Number(leader.winRate ?? 0).toFixed(0)}% WR · {leader.total} trades</div>
               </div>
             </div>
           )}
@@ -885,7 +885,7 @@ export function TradingCircles({ myCircles, circlesView, setCirclesView, activeC
                               </div>
                               <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginTop: "3px", fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.06em", textTransform: "uppercase" }}>
                                 <span>{entry.total} trades</span>
-                                <span style={{ color: (entry.winRate ?? 0) >= 50 ? C.green : (entry.winRate ?? 0) > 0 ? C.red : C.muted }}>{(entry.winRate ?? 0).toFixed(0)}% WR</span>
+                                <span style={{ color: Number(entry.winRate ?? 0) >= 50 ? C.green : Number(entry.winRate ?? 0) > 0 ? C.red : C.muted }}>{Number(entry.winRate ?? 0).toFixed(0)}% WR</span>
                                 {entry.topStrategy && <span>{stratCode(entry.topStrategy)}</span>}
                                 {entry.streak?.count >= 2 && <span style={{ color: entry.streak.type === "Win" ? C.green : C.red }}>{entry.streak.count}{entry.streak.type === "Win" ? "W" : "L"}</span>}
                               </div>
@@ -1022,7 +1022,7 @@ export function TradingCircles({ myCircles, circlesView, setCirclesView, activeC
                             {(m.code === activeCircle.createdBy || m.isOwner) ? <span style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.1em" }}>OWNER</span> : null}
                           </div>
                           {m.alias && <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.06em", marginTop: "2px" }}>{m.alias}</div>}
-                          {lbEntry && <div style={{ fontFamily: MONO, fontSize: "10px", color: lbEntry.totalPnL >= 0 ? C.green : C.red, letterSpacing: "0.06em", marginTop: "2px" }}>{lbEntry.totalPnL >= 0 ? "+" : ""}{lbEntry.totalPnL.toFixed(1)}R · {(lbEntry.winRate ?? 0).toFixed(0)}% WR</div>}
+                          {lbEntry && <div style={{ fontFamily: MONO, fontSize: "10px", color: lbEntry.totalPnL >= 0 ? C.green : C.red, letterSpacing: "0.06em", marginTop: "2px" }}>{lbEntry.totalPnL >= 0 ? "+" : ""}{lbEntry.totalPnL.toFixed(1)}R · {Number(lbEntry.winRate ?? 0).toFixed(0)}% WR</div>}
                         </div>
                         {!isMe && (
                           <button onClick={() => isFollowing ? unfollowUser(m.code) : followUser(m.code)}
