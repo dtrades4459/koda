@@ -105,7 +105,7 @@ test.describe("Reset password", () => {
     await expect(forgotLink).toBeVisible({ timeout: 5_000 });
   });
 
-  test("R.2 — Entering an email shows reset confirmation", async ({ page }) => {
+  test("R.2 — Entering a username submits and shows reset confirmation", async ({ page }) => {
     await page.goto("/");
     await dismissCookieBanner(page);
 
@@ -117,31 +117,21 @@ test.describe("Reset password", () => {
       .or(page.getByText(/forgot.?password|reset.?password/i).first());
     await forgotLink.click();
 
-    // An email input should appear (either the existing one or a new dedicated one).
-    const emailInput = page
-      .getByRole("textbox", { name: /email/i })
-      .or(page.locator('input[type="email"]'))
-      .or(page.locator('input[type="text"]').first());
-    await expect(emailInput).toBeVisible({ timeout: 5_000 });
+    // The reset form shows a USERNAME field (Kōda uses username-based auth, not email).
+    const usernameInput = page.locator('input[type="text"]').first();
+    await expect(usernameInput).toBeVisible({ timeout: 5_000 });
 
-    // Use a throwaway address — no actual email is sent to a real inbox in tests.
-    await emailInput.fill("smoke-test@example.com");
+    // Use a valid username format (alphanumeric, no @ or dots — those fail USERNAME_RE).
+    // The API responds the same whether the account exists or not (anti-enumeration).
+    await usernameInput.fill("smoketestuser");
 
-    // Submit the reset request.
-    const sendBtn = page
-      .getByRole("button", { name: /send|reset|submit/i })
-      .last(); // avoid clicking auth-submit by accident
-    await sendBtn.click();
+    // Click the specific "Send reset link" button (not the OAuth buttons).
+    await page.getByRole("button", { name: /send reset link/i }).click();
 
-    // The app should acknowledge the request — look for any confirmation copy.
-    const confirmation = page.locator([
-      "text=/check your email/i",
-      "text=/email sent/i",
-      "text=/link sent/i",
-      "text=/reset link/i",
-      "text=/if an account exists/i",
-    ].join(", ")).first();
-    await expect(confirmation).toBeVisible({ timeout: 10_000 });
+    // The confirmation screen (mode === "reset-sent") shows "Check your recovery email".
+    await expect(
+      page.getByText(/check your recovery email/i)
+    ).toBeVisible({ timeout: 10_000 });
   });
 });
 
