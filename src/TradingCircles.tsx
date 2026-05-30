@@ -418,7 +418,7 @@ export function TradingCircles({ myCircles, circlesView, setCirclesView, activeC
             <>
             {/* Featured / first circle — glass card */}
             {sortedCircles.slice(0, 1).map(circle => (
-              <div key={circle.id} onClick={() => openCircle(circle)} style={{ position: "relative", zIndex: 2, cursor: "pointer", borderRadius: "22px", padding: "22px", overflow: "hidden", isolation: "isolate", background: (C as any).surfaceGlass ?? C.panel, backdropFilter: "blur(20px) saturate(140%)", WebkitBackdropFilter: "blur(20px) saturate(140%)", border: `1px solid ${C.border2}` }}>
+              <div key={circle.id} data-testid="circle-card" onClick={() => openCircle(circle)} style={{ position: "relative", zIndex: 2, cursor: "pointer", borderRadius: "22px", padding: "22px", overflow: "hidden", isolation: "isolate", background: (C as any).surfaceGlass ?? C.panel, backdropFilter: "blur(20px) saturate(140%)", WebkitBackdropFilter: "blur(20px) saturate(140%)", border: `1px solid ${C.border2}` }}>
                 {/* corner glow */}
                 <div style={{ position: "absolute", top: -60, left: -60, width: 200, height: 200, borderRadius: "50%", background: `conic-gradient(from 200deg at 50% 50%, ${(C as any).orb3 ?? C.green}, ${C.accent}, ${(C as any).orb2 ?? C.accent}, ${(C as any).orb3 ?? C.green})`, filter: "blur(40px)", opacity: 0.4, pointerEvents: "none", zIndex: 0 }} />
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", position: "relative", zIndex: 1 }}>
@@ -447,7 +447,7 @@ export function TradingCircles({ myCircles, circlesView, setCirclesView, activeC
             {sortedCircles.length > 1 && (
             <div style={{ marginTop: "12px", display: "flex", flexDirection: "column", gap: "8px", position: "relative", zIndex: 2 }}>
               {sortedCircles.slice(1).map((circle, i) => (
-                <div key={circle.id} className="row-hvr" onClick={() => openCircle(circle)}
+                <div key={circle.id} data-testid="circle-card" className="row-hvr" onClick={() => openCircle(circle)}
                   style={{ background: (C as any).surfaceGlass ?? C.panel, backdropFilter: "blur(20px) saturate(160%)", WebkitBackdropFilter: "blur(20px) saturate(160%)", border: `1px solid ${C.border2}`, borderRadius: 20, overflow: "hidden", position: "relative", padding: "18px 20px", cursor: "pointer", animation: `kRise 0.42s ease-out ${i * 0.06}s backwards` }}>
                   <CornerGlow C={C} />
                   <div style={{ display: "flex", alignItems: "center", gap: "12px", position: "relative", zIndex: 1 }}>

@@ -32,53 +32,94 @@ async function dismissCookieBanner(page: Page) {
   }
 }
 
+/** Inject beta-gate bypass before the page boots so the auth screen is always visible. */
+async function bypassBetaGate(page: Page) {
+  await page.addInitScript(() => {
+    localStorage.setItem("koda_beta_unlocked", "1");
+  });
+}
+
 async function signIn(page: Page) {
+  await bypassBetaGate(page);
   await page.goto("/");
   await dismissCookieBanner(page);
   await page.locator('input[type="text"]').first().fill(EMAIL);
   await page.locator('input[type="password"]').fill(PASSWORD);
   await page.getByTestId("auth-submit").click();
-  // Wait until the nav-log quick-action card is visible — confirms auth + app boot.
-  await expect(page.getByTestId("nav-log")).toBeVisible({ timeout: 20_000 });
+
+  // New accounts land in the onboarding flow — skip it by patching the profile.
+  const navLog = page.getByTestId("nav-log");
+  const onboarding = page.getByText(/step 1 of|let's set up/i).first();
+  await Promise.race([
+    navLog.waitFor({ timeout: 20_000 }),
+    onboarding.waitFor({ timeout: 20_000 }),
+  ]);
+  if (await onboarding.isVisible().catch(() => false)) {
+    await patchProfile(page, { onboarded: true, priorTool: "other" });
+    await page.reload();
+    await expect(navLog).toBeVisible({ timeout: 20_000 });
+  }
+
+  // Wait for the Supabase profile sync to settle, then re-stamp the bypass fields
+  // so any subsequent page.reload() in the test doesn't revert to onboarding or
+  // show the first-session survey (which blocks tab navigation).
+  await page.waitForTimeout(3_000);
+  await patchProfile(page, { onboarded: true, priorTool: "other" });
+}
+
+/** Extract the koda userId from any existing koda__user__ localStorage key. */
+function getUserId(page: Page): Promise<string | null> {
+  return page.evaluate(() => {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k?.startsWith("koda__user__")) {
+        const parts = k.split("__");
+        if (parts.length >= 3) return parts[2];
+      }
+    }
+    return null;
+  });
 }
 
 /**
- * Overwrite the cached profile in localStorage with the given field updates.
- * The storage layer checks the localStorage cache before Supabase on `loadAll`,
- * so a page.reload() after this call picks up the changes immediately.
+ * Patch the cached profile AND register an addInitScript so the patch
+ * re-applies on the next page.reload() BEFORE the app's own JS runs.
+ * This beats the storage layer's background Supabase refresh.
  */
-async function patchProfile(page: Page, updates: Record<string, unknown>): Promise<boolean> {
-  return page.evaluate((updates) => {
+async function patchProfile(page: Page, updates: Record<string, unknown>): Promise<void> {
+  const patcher = (u: Record<string, unknown>) => {
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);
-      if (!k || !k.includes("koda_profile") || !k.startsWith("koda__user__")) continue;
+      if (!k?.includes("koda_profile") || !k?.startsWith("koda__user__")) continue;
       try {
-        const current = JSON.parse(localStorage.getItem(k)!);
-        localStorage.setItem(k, JSON.stringify({ ...current, ...updates }));
-        return true;
+        const obj = JSON.parse(localStorage.getItem(k)!) ?? {};
+        localStorage.setItem(k, JSON.stringify({ ...obj, ...u }));
+        return;
       } catch { /* skip */ }
     }
-    return false;
-  }, updates);
+  };
+  await page.evaluate(patcher, updates);
+  await page.addInitScript(patcher, updates);
 }
 
 /**
  * Prepend a fake trade to the cached trades array in localStorage.
- * Used to push todayPnl over a limit or to hit the max-trades-per-day count.
+ * Creates the key (from userId) if the account has no trades yet.
+ * Also registers an addInitScript so the prepend survives page.reload().
  */
-async function prependTrade(page: Page, trade: Record<string, unknown>): Promise<boolean> {
-  return page.evaluate((trade) => {
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (!k || !k.includes("koda_trades") || !k.startsWith("koda__user__")) continue;
-      try {
-        const current: unknown[] = JSON.parse(localStorage.getItem(k)!) ?? [];
-        localStorage.setItem(k, JSON.stringify([trade, ...current]));
-        return true;
-      } catch { /* skip */ }
+async function prependTrade(page: Page, trade: Record<string, unknown>): Promise<void> {
+  const userId = await getUserId(page);
+  if (!userId) throw new Error("prependTrade: no userId found in localStorage");
+
+  const prepender = (args: { userId: string; trade: Record<string, unknown> }) => {
+    const tradesKey = `koda__user__${args.userId}__koda_trades`;
+    const current: unknown[] = JSON.parse(localStorage.getItem(tradesKey) || "[]") ?? [];
+    if (!current.find((x: unknown) => (x as Record<string, unknown>).id === args.trade.id)) {
+      localStorage.setItem(tradesKey, JSON.stringify([args.trade, ...current]));
     }
-    return false;
-  }, trade);
+  };
+  await page.evaluate(prepender, { userId, trade });
+  await page.addInitScript(prepender, { userId, trade });
 }
 
 /** Navigate to the Log screen and wait for the trade form to be ready. */
@@ -91,6 +132,7 @@ async function goToLogScreen(page: Page) {
 
 test.describe("Reset password", () => {
   test("R.1 — Forgot password link is visible on the auth screen", async ({ page }) => {
+    await bypassBetaGate(page);
     await page.goto("/");
     await dismissCookieBanner(page);
 
@@ -106,6 +148,7 @@ test.describe("Reset password", () => {
   });
 
   test("R.2 — Entering a username submits and shows reset confirmation", async ({ page }) => {
+    await bypassBetaGate(page);
     await page.goto("/");
     await dismissCookieBanner(page);
 
@@ -263,16 +306,29 @@ test.describe("Circles UI", () => {
   });
 
   async function goToCircles(page: Page) {
-    // The bottom nav renders three tabs: Home, Stats, Circles.
-    const circlesTab = page
-      .getByRole("button", { name: /^circles$/i })
+    // The bottom nav renders Home, Stats, Circles tabs.
+    const circlesTab = page.getByTestId("nav-circles")
+      .or(page.getByRole("button", { name: /^circles$/i }))
       .or(page.locator("[data-tab='circles']"))
       .first();
     await circlesTab.click();
-    // Wait for the circles browse screen — "Trading circles" kicker or "+ New" button.
+    // Wait for the circles browse screen.
     await expect(
       page.getByText(/trading circles/i).or(page.getByRole("button", { name: /new/i })).first()
     ).toBeVisible({ timeout: 10_000 });
+
+    // Dismiss the notifications drawer — Escape is the most reliable method since
+    // the drawer listens for keydown Escape to close.
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(600);
+
+    const notifDialog = page.getByRole("dialog", { name: /notifications/i });
+    if (await notifDialog.isVisible({ timeout: 1_000 }).catch(() => false)) {
+      await notifDialog.getByRole("button", { name: "Close" }).click().catch(async () => {
+        await page.mouse.click(10, 450);
+      });
+      await notifDialog.waitFor({ state: "hidden", timeout: 4_000 }).catch(() => {});
+    }
   }
 
   test("C.1 — Discover pill tab is absent from the Circles browse screen", async ({ page }) => {
@@ -287,7 +343,7 @@ test.describe("Circles UI", () => {
     await goToCircles(page);
 
     // Open the first circle in the list (or skip if no circles joined yet).
-    const firstCircleCard = page.locator("[class*='row-hvr'], [style*='cursor: pointer']").first();
+    const firstCircleCard = page.getByTestId("circle-card").first();
     const hasCircle = await firstCircleCard.isVisible().catch(() => false);
 
     if (!hasCircle) {
