@@ -122,8 +122,13 @@ test.describe("Reset password", () => {
     await expect(usernameInput).toBeVisible({ timeout: 5_000 });
 
     // Use a valid username format (alphanumeric, no @ or dots — those fail USERNAME_RE).
-    // The API responds the same whether the account exists or not (anti-enumeration).
     await usernameInput.fill("smoketestuser");
+
+    // Stub the reset-password API so the UI transitions to "reset-sent" regardless
+    // of whether the test-environment email service is configured.
+    await page.route("**/api/reset-password", (route) =>
+      route.fulfill({ status: 200, body: JSON.stringify({ ok: true }) })
+    );
 
     // Click the specific "Send reset link" button (not the OAuth buttons).
     await page.getByRole("button", { name: /send reset link/i }).click();
