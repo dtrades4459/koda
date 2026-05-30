@@ -101,36 +101,6 @@ export async function readCircleMembers(code: string, fallback: MemberRecord[] =
   }
 }
 
-export async function readLeaderboard(circle: Pick<Circle, "code" | "members">): Promise<LeaderboardEntry[]> {
-  // Always refresh members first — a new member may have joined since the
-  // cached circle object was last set on this client.
-  const members = await readCircleMembers(circle.code, circle.members || []);
-  // Fetch all member entries in parallel (was a sequential for..of — O(n) round trips).
-  const rows = await Promise.all(
-    members.map(m =>
-      storage.get(circleKeys.entry(circle.code, m.code), true).catch(e => {
-        log.error("circles.readLeaderboard", e, { code: circle.code, memberCode: m.code });
-        return null;
-      })
-    )
-  );
-  const entries: LeaderboardEntry[] = rows.map((r, i) => {
-    if (!r) return blankEntry(members[i]);
-    try { return JSON.parse(r.value) as LeaderboardEntry; }
-    catch { return blankEntry(members[i]); }
-  });
-  entries.sort((a, b) => b.totalPnL - a.totalPnL);
-  return entries;
-}
-
-function blankEntry(m: MemberRecord): LeaderboardEntry {
-  return {
-    memberCode: m.code, name: m.name, handle: m.handle, avatar: m.avatar,
-    wins: 0, losses: 0, total: 0, winRate: 0, totalPnL: 0, avgRR: 0,
-    streak: null, topStrategy: null, updatedAt: null,
-  };
-}
-
 // ── Writes (always per-row, always owned by the caller) ─────────────────────
 
 export async function createCircle(input: {

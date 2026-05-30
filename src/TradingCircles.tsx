@@ -37,8 +37,6 @@ export function TradingCircles({ myCircles, circlesView, setCirclesView, activeC
   const [composeText, setComposeText] = useState("");
   const [composeSending, setComposeSending] = useState(false);
 
-  const isPro = profile?.plan === "pro" || profile?.plan === "elite";
-
   const CIRCLE_EMOJIS = ["◆","▲","●","■","⬡","◈","△","○","□","✦"];
   const MEDALS = ["🥇","🥈","🥉"];
 
@@ -243,7 +241,7 @@ export function TradingCircles({ myCircles, circlesView, setCirclesView, activeC
     let challenge: CircleChallenge | null = null;
     try {
       const [entries, challengeResult] = await Promise.all([
-        fetchCircleLeaderboard(circle),
+        fetchCircleLeaderboard(circle, lbSort),
         fetchActiveChallenge(circle.code),
       ]);
       setLeaderboard(entries);
@@ -293,7 +291,7 @@ export function TradingCircles({ myCircles, circlesView, setCirclesView, activeC
     let alive = true;
     async function refresh() {
       try {
-        const entries = await fetchCircleLeaderboard(activeCircle);
+        const entries = await fetchCircleLeaderboard(activeCircle, lbSort);
         if (alive) setLeaderboard(entries);
       } catch {}
     }
@@ -358,7 +356,7 @@ export function TradingCircles({ myCircles, circlesView, setCirclesView, activeC
       supabase.removeChannel(sharedTradesChannel);
       supabase.removeChannel(challengesChannel);
     };
-  }, [circlesView, activeCircle, fetchCircleLeaderboard]);
+  }, [circlesView, activeCircle, fetchCircleLeaderboard, lbSort]);
 
   useEffect(() => {
     if (circleTab !== "trophies" || !activeCircle) return;
@@ -411,9 +409,7 @@ export function TradingCircles({ myCircles, circlesView, setCirclesView, activeC
 
           {/* Pill tabs */}
           <div style={{ display: "flex", gap: "6px", padding: "0 6px 12px", position: "relative", zIndex: 2, flexWrap: "wrap" }}>
-            {["Joined", "Discover"].map((tab, i) => (
-              <button key={tab} style={{ padding: "6px 14px", borderRadius: "999px", background: i === 0 ? C.text : "transparent", color: i === 0 ? C.bg : C.text2, border: i === 0 ? `1px solid ${C.text}` : `1px solid ${C.border2}`, fontFamily: BODY, fontSize: "11px", fontWeight: 500, cursor: "pointer", flexShrink: 0 }}>{tab}</button>
-            ))}
+            <div style={{ padding: "6px 14px", borderRadius: "999px", background: C.text, color: C.bg, border: `1px solid ${C.text}`, fontFamily: BODY, fontSize: "11px", fontWeight: 500, flexShrink: 0 }}>Joined</div>
             <div style={{ flex: 1 }} />
             <button onClick={() => setCirclesView("create")} style={{ padding: "6px 14px", borderRadius: "999px", background: "transparent", color: C.text2, border: `1px solid ${C.border2}`, fontFamily: BODY, fontSize: "11px", fontWeight: 500, cursor: "pointer", flexShrink: 0 }}>+ New</button>
           </div>
@@ -761,12 +757,20 @@ export function TradingCircles({ myCircles, circlesView, setCirclesView, activeC
               {circleTab === "leaderboard" && (
                 <div style={{ display: "flex", gap: "6px", alignItems: "center", justifyContent: "flex-end", paddingTop: "10px" }}>
                   {(["all", "week"] as const).map(s => (
-                    <button key={s} onClick={() => setLbSort(s)}
+                    <button key={s} onClick={() => {
+                      setLbSort(s);
+                      if (activeCircle) {
+                        setLoadingLB(true);
+                        fetchCircleLeaderboard(activeCircle, s)
+                          .then(e => { setLeaderboard(e); setLoadingLB(false); })
+                          .catch(() => setLoadingLB(false));
+                      }
+                    }}
                       style={{ background: lbSort === s ? C.text2 + "22" : "transparent", border: `1px solid ${lbSort === s ? C.text2 : C.border2}`, borderRadius: "999px", padding: "4px 10px", cursor: "pointer", fontFamily: MONO, fontSize: "9px", color: lbSort === s ? C.text : C.muted, letterSpacing: "0.08em", textTransform: "uppercase" }}>
                       {s === "all" ? "ALL TIME" : "THIS WEEK"}
                     </button>
                   ))}
-                  <button onClick={async () => { setLoadingLB(true); const e = await fetchCircleLeaderboard(activeCircle); setLeaderboard(e); setLoadingLB(false); }}
+                  <button onClick={async () => { setLoadingLB(true); const e = await fetchCircleLeaderboard(activeCircle, lbSort); setLeaderboard(e); setLoadingLB(false); }}
                     style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "11px" }}>↻</button>
                 </div>
               )}
@@ -848,7 +852,7 @@ export function TradingCircles({ myCircles, circlesView, setCirclesView, activeC
               <div>
                 {lbError && (
                   <div style={{ padding: "20px", textAlign: "center", fontFamily: BODY, fontSize: "13px", color: C.muted }}>
-                    Couldn't load leaderboard. <button onClick={async () => { if (!activeCircle) return; setLoadingLB(true); setLbError(false); try { const [e, ch] = await Promise.all([fetchCircleLeaderboard(activeCircle), fetchActiveChallenge(activeCircle.code)]); setLeaderboard(e); setActiveChallenge(ch); } catch { setLbError(true); } setLoadingLB(false); }} style={{ background: "none", border: "none", color: C.accent, cursor: "pointer", fontFamily: MONO, fontSize: "11px", textDecoration: "underline" }}>Try again</button>
+                    Couldn't load leaderboard. <button onClick={async () => { if (!activeCircle) return; setLoadingLB(true); setLbError(false); try { const [e, ch] = await Promise.all([fetchCircleLeaderboard(activeCircle, lbSort), fetchActiveChallenge(activeCircle.code)]); setLeaderboard(e); setActiveChallenge(ch); } catch { setLbError(true); } setLoadingLB(false); }} style={{ background: "none", border: "none", color: C.accent, cursor: "pointer", fontFamily: MONO, fontSize: "11px", textDecoration: "underline" }}>Try again</button>
                   </div>
                 )}
                 {loadingLB ? (
@@ -1013,7 +1017,10 @@ export function TradingCircles({ myCircles, circlesView, setCirclesView, activeC
                     return (
                       <div key={m.code || idx} style={{ display: "flex", alignItems: "center", gap: "14px", padding: "14px 0", borderBottom: `1px solid ${C.border}` }}>
                         <div style={{ width: "40px", height: "40px", borderRadius: "50%", background: C.panel, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: DISPLAY, fontSize: "18px", flexShrink: 0, border: `1px solid ${C.border}` }}>
-                          {m.avatar ? (m.avatar.length <= 8 && !m.avatar.startsWith("http") && !m.avatar.startsWith("data:") ? m.avatar : "👤") : "👤"}
+                          {m.avatar?.startsWith("http")
+                            ? <img src={m.avatar} style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />
+                            : <span style={{ fontFamily: DISPLAY, fontSize: "14px", fontWeight: 600 }}>{(m.name || "?").slice(0, 2).toUpperCase()}</span>
+                          }
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: "flex", alignItems: "baseline", gap: "8px" }}>
@@ -1124,7 +1131,7 @@ export function TradingCircles({ myCircles, circlesView, setCirclesView, activeC
 
           {/* Compose bar \u2014 fixed bottom, feed tab only */}
           {circleTab === "feed" && (
-            <div style={{ position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 500, padding: "10px 16px 22px", background: `linear-gradient(to top, ${C.bg} 70%, transparent)`, display: "flex", alignItems: "center", gap: 7, zIndex: 10 }}>
+            <div style={{ position: "fixed" as const, bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 500, padding: "10px 16px calc(22px + env(safe-area-inset-bottom))", background: `linear-gradient(to top, ${C.bg} 70%, transparent)`, display: "flex", alignItems: "center", gap: 7, zIndex: 40 }}>
               <input
                 value={composeText}
                 onChange={e => setComposeText(e.target.value)}

@@ -68,12 +68,12 @@ export function LogTradeScreen({
 }: LogTradeScreenProps) {
   const T = C as any as Theme;
   const live = T.live ?? "oklch(0.84 0.14 175)";
-  const enabled = !!(form.pair && form.date && form.outcome && !savingTrade);
-
   const activeAccountType = form.accountType ?? defaultAccountType;
   const atTradeLimit  = !editId && maxTradesPerDay > 0 && todayTradeCount >= maxTradesPerDay;
   const nearTradeLimit = !editId && maxTradesPerDay > 0 && todayTradeCount === maxTradesPerDay - 1;
-  const nearDailyLoss = !editId && maxDailyLoss > 0 && todayPnl <= -(maxDailyLoss * 0.6);
+  const nearDailyLoss = !editId && maxDailyLoss > 0 && todayPnl <= -(maxDailyLoss * 0.75);
+  const killSwitchTripped = !editId && maxDailyLoss > 0 && todayPnl <= -maxDailyLoss;
+  const enabled = !!(form.pair && form.date && form.outcome && !savingTrade && !killSwitchTripped && !atTradeLimit);
 
   /* Shared input base for FloatingInput-style fields */
   const inp: React.CSSProperties = {
@@ -100,6 +100,14 @@ export function LogTradeScreen({
     <div style={{ padding: "18px 16px 0", display: "flex", flexDirection: "column", gap: 12, marginTop: "clamp(4px, 2vw, 12px)" }}>
 
       {/* ── Pre-trade friction banners ── */}
+      {killSwitchTripped && (
+        <div role="alert" style={{ borderRadius: 14, padding: "12px 16px", background: `color-mix(in oklch, ${C.red} 10%, transparent)`, border: `1px solid color-mix(in oklch, ${C.red} 40%, transparent)` }}>
+          <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.1em", color: C.red, textTransform: "uppercase" as const, marginBottom: 2 }}>Kill switch active</div>
+          <div style={{ fontFamily: BODY, fontSize: 13, color: C.text2, lineHeight: 1.5 }}>
+            You've hit your daily loss limit of {maxDailyLoss}R ({todayPnl.toFixed(2)}R today). Step away and review. Override in Settings if this is a data error.
+          </div>
+        </div>
+      )}
       {atTradeLimit && (
         <div role="alert" style={{ borderRadius: 14, padding: "12px 16px", background: `color-mix(in oklch, ${C.red} 10%, transparent)`, border: `1px solid color-mix(in oklch, ${C.red} 40%, transparent)` }}>
           <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.1em", color: C.red, textTransform: "uppercase" as const, marginBottom: 2 }}>Trade limit reached</div>

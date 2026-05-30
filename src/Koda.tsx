@@ -2592,8 +2592,9 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
               const _maxTpd = parseInt(profile.maxTradesPerDay) || 0;
               const _maxDl = parseFloat(profile.maxDailyLoss || "0") || 0;
               const _lossStreak = (() => {
+                const sorted = [...trades].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
                 let count = 0;
-                for (const t of trades) {
+                for (const t of sorted) {
                   if (t.outcome === "Loss") { count++; } else { break; }
                 }
                 return count;
@@ -3732,6 +3733,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
               isCreatingCircle={isCreatingCircle}
               totalPnlDollar={totalPnlDollar}
               hasDollarData={hasDollarData}
+              isPro={isPro}
             />
           )}
           </div>{/* end main */}

@@ -192,11 +192,15 @@ export function useCircles({
   // its real deps: statsFingerprint, myCircles, loading.
   const _publishRef = useRef(publishToCircle);
   _publishRef.current = publishToCircle;
+  const _lastPublishRef = useRef(0);
   useEffect(() => {
     if (loading) return;
     if (!myCircles.length) return;
     const publish = _publishRef.current;
     const t = setTimeout(() => {
+      const now = Date.now();
+      if (now - _lastPublishRef.current < 5000) return;
+      _lastPublishRef.current = now;
       myCircles.forEach((c: Circle) => { publish(c.code, true); });
     }, 800);
     return () => clearTimeout(t);
@@ -360,6 +364,13 @@ export function useCircles({
       setTimeout(() => setCircleMsg(""), 3000);
       return;
     }
+    // Check ban list before allowing rejoin
+    const bans = await readCircleBans(code);
+    if (bans.has(getMyCodeRef.current())) {
+      setCircleMsg("You cannot join this circle.");
+      setTimeout(() => setCircleMsg(""), 3000);
+      return;
+    }
     if (isJoiningCircle) return;
     setIsJoiningCircle(true);
     try {
@@ -418,6 +429,10 @@ export function useCircles({
       const bans = await readCircleBans(circleCode);
       bans.add(memberCode);
       await storage.set(`koda_circle_bans_${circleCode}`, JSON.stringify([...bans]), true);
+      // Delete the kicked member's leaderboard entry so they don't stay on the board
+      try {
+        await storage.del(`koda_circle_entry_${circleCode}_${memberCode}`, true);
+      } catch { /* non-fatal */ }
       const filterKicked = (m: CircleMember) => m.code !== memberCode;
       const updated = myCirclesRef.current.map((c: Circle) =>
         c.code !== circleCode ? c : { ...c, members: c.members.filter(filterKicked) }
@@ -497,7 +512,7 @@ export function useCircles({
     if (!silent) showToast("Stats published");
   }
 
-  async function fetchCircleLeaderboard(circle: Circle) {
+  async function fetchCircleLeaderboard(circle: Circle, sort: "all" | "week" = "all") {
     // Always pull members fresh — sync effect may not have run yet, or a new
     // member may have joined since the last tick.
     const members = await readCircleMembers(circle.code, circle.members || []);
@@ -530,14 +545,18 @@ export function useCircles({
     }
 
     const metric = circle.metric || "dollar";
-    entries.sort((a, b) => {
-      if (metric === "dollar")  return (b.totalPnLDollar || 0) - (a.totalPnLDollar || 0);
-      if (metric === "r")       return (b.totalPnL || 0) - (a.totalPnL || 0);
-      if (metric === "winrate") return (b.winRate || 0) - (a.winRate || 0);
-      if (metric === "trades")  return (b.total || 0) - (a.total || 0);
-      if (metric === "avgr")    return (b.avgRR || 0) - (a.avgRR || 0);
-      return (b.totalPnLDollar || 0) - (a.totalPnLDollar || 0);
-    });
+    if (sort === "week") {
+      entries.sort((a, b) => (b.weekPnL || 0) - (a.weekPnL || 0));
+    } else {
+      entries.sort((a, b) => {
+        if (metric === "dollar")  return (b.totalPnLDollar || 0) - (a.totalPnLDollar || 0);
+        if (metric === "r")       return (b.totalPnL || 0) - (a.totalPnL || 0);
+        if (metric === "winrate") return (b.winRate || 0) - (a.winRate || 0);
+        if (metric === "trades")  return (b.total || 0) - (a.total || 0);
+        if (metric === "avgr")    return (b.avgRR || 0) - (a.avgRR || 0);
+        return (b.totalPnLDollar || 0) - (a.totalPnLDollar || 0);
+      });
+    }
     return entries;
   }
 
