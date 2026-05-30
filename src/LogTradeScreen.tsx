@@ -404,7 +404,7 @@ export function LogTradeScreen({
       </Card>
 
       {/* ── Save button (design-spec: teal arrow CTA) ── */}
-      <button data-testid="trade-save" onClick={submitTrade} disabled={savingTrade || !(form.pair && form.date && form.outcome)}
+      <button data-testid="trade-save" onClick={submitTrade} disabled={!enabled}
         style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
           background: enabled ? C.text : (C as any).panel2 ?? C.panel,
