@@ -1559,7 +1559,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
               {/* Section sub-nav dropdown — mobile only; desktop uses the dropdown in the top-nav */}
               {!isDesktop && (
                 <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "8px", paddingBottom: "10px", borderBottom: `0.5px solid ${C.border}` }}>
-                  <SubNavDropdown sections={HOME_SECTIONS} value={homeSection} onChange={(s: string) => { if (s === "checklist") navigateTo("checklist"); else setHomeSection(s); }} C={C} />
+                  <SubNavDropdown sections={HOME_SECTIONS} value={homeSection} onChange={(s: string) => { if (s === "rules") navigateTo("checklist"); else if (s === "journal") navigateTo("history"); else setHomeSection(s); }} C={C} />
                   <GearButton onClick={() => setHomeSection("settings")} active={homeSection === "settings"} C={C} />
                 </div>
               )}
