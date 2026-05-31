@@ -33,10 +33,11 @@ export default async function handler(req: Req, res: Res) {
   res.setHeader("Access-Control-Allow-Origin", process.env.APP_URL ?? "https://kodatrade.co.uk");
   res.setHeader("Vary", "Origin");
 
-  // Cron calls use GET with the secret header
+  // Cron calls use GET — Vercel sends: Authorization: Bearer {CRON_SECRET}
   if (req.method === "GET") {
-    const secret = req.headers["x-cron-secret"];
-    if (!secret || secret !== process.env.CRON_SECRET) {
+    const auth = req.headers["authorization"] as string | undefined;
+    const token = auth?.startsWith("Bearer ") ? auth.slice(7) : "";
+    if (!token || token !== process.env.CRON_SECRET) {
       return res.status(401).json({ error: "Unauthorized" });
     }
   } else if (req.method === "POST") {

@@ -56,8 +56,8 @@ async function verifyToken(req: any): Promise<{ id: string; email?: string }> {
   const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
   if (!token) throw Object.assign(new Error("Missing auth token"), { status: 401 });
 
-  const anon = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
-  const { data: { user }, error } = await anon.auth.getUser(token);
+  const adminClient = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+  const { data: { user }, error } = await adminClient.auth.getUser(token);
   if (error || !user) throw Object.assign(new Error("Invalid or expired token"), { status: 401 });
   return user;
 }

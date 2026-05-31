@@ -83,7 +83,7 @@ export default async function handler(req: any, res: any) {
   // preventing a timing oracle on username existence.
   if (!authUser) {
     await new Promise(r => setTimeout(r, 800 + Math.random() * 200));
-    return res.status(200).json({ ok: true, hasRecoveryEmail: false });
+    return res.status(200).json({ ok: true });
   }
 
   const recoveryEmail: string = authUser.raw_user_meta_data?.recovery_email ?? "";
@@ -170,5 +170,7 @@ export default async function handler(req: any, res: any) {
     }).catch(e => console.error("[reset-password] Telegram:", e));
   }
 
-  return res.status(200).json({ ok: true, hasRecoveryEmail: !!recoveryEmail });
+  // Return the same shape regardless of whether a recovery email exists.
+  // Revealing hasRecoveryEmail:true would confirm the username exists.
+  return res.status(200).json({ ok: true });
 }

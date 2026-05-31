@@ -9,11 +9,13 @@
 
 import { useState } from "react";
 import { MONO, BODY } from "./shared";
+import { BetaWelcome } from "./BetaWelcome";
 
-const BETA_PASSWORD = import.meta.env.VITE_BETA_PASSWORD as string | undefined;
-const STORAGE_KEY   = "koda_beta_unlocked";
+// VITE_BETA_ENABLED=true shows the gate UI. The actual password lives in
+// BETA_PASSWORD on the server — never in the bundle.
+const STORAGE_KEY = "koda_beta_unlocked";
 
-export const betaEnabled = !!BETA_PASSWORD;
+export const betaEnabled = import.meta.env.VITE_BETA_ENABLED === "true";
 
 export function isBetaUnlocked(): boolean {
   if (!betaEnabled) return true;
@@ -60,18 +62,39 @@ interface BetaGateProps {
 }
 
 export function BetaGate({ onUnlocked }: BetaGateProps) {
-  const [input,   setInput]   = useState("");
-  const [error,   setError]   = useState(false);
-  const [shaking, setShaking] = useState(false);
+  const [input,    setInput]    = useState("");
+  const [error,    setError]    = useState(false);
+  const [shaking,  setShaking]  = useState(false);
+  const [loading,  setLoading]  = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
 
-  function attempt() {
-    if (input.trim().toLowerCase() === BETA_PASSWORD!.trim().toLowerCase()) {
-      unlock();
-      onUnlocked();
-    } else {
+  if (showWelcome) {
+    return <BetaWelcome onClose={onUnlocked} />;
+  }
+
+  async function attempt() {
+    if (!input.trim() || loading) return;
+    setLoading(true);
+    try {
+      const res = await fetch("/api/beta-unlock", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: input.trim() }),
+      });
+      if (res.ok) {
+        unlock();
+        setShowWelcome(true);
+      } else {
+        setError(true);
+        setShaking(true);
+        setTimeout(() => setShaking(false), 500);
+      }
+    } catch {
       setError(true);
       setShaking(true);
       setTimeout(() => setShaking(false), 500);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -237,23 +260,23 @@ export function BetaGate({ onUnlocked }: BetaGateProps) {
           <button
             className="beta-btn"
             onClick={attempt}
-            disabled={!input.trim()}
+            disabled={!input.trim() || loading}
             style={{
-              background: input.trim() ? TEXT : "transparent",
-              color: input.trim() ? BG : MUTED,
-              border: input.trim() ? "none" : `1px solid ${BORDER2}`,
+              background: input.trim() && !loading ? TEXT : "transparent",
+              color: input.trim() && !loading ? BG : MUTED,
+              border: input.trim() && !loading ? "none" : `1px solid ${BORDER2}`,
               borderRadius: 999,
               padding: "14px 20px",
               fontSize: 13,
               fontWeight: 500,
               letterSpacing: "0.02em",
-              cursor: input.trim() ? "pointer" : "not-allowed",
+              cursor: input.trim() && !loading ? "pointer" : "not-allowed",
               fontFamily: BODY,
               width: "100%",
               transition: "background 0.15s, color 0.15s, opacity 0.15s",
             }}
           >
-            {input.trim() ? "Enter →" : "Enter invite code above"}
+            {loading ? "Checking…" : input.trim() ? "Enter →" : "Enter invite code above"}
           </button>
         </div>
 

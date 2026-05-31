@@ -60,12 +60,10 @@ export async function fetchSharedTrades(
 export async function reactToSharedTrade(
   tradeId: string,
   emoji: string,
-  memberCode: string
 ): Promise<void> {
   const { error } = await supabase.rpc("toggle_trade_reaction", {
     p_trade_id: tradeId,
     p_emoji: emoji,
-    p_member_code: memberCode,
   });
   if (error) log.error("circlesSharedTrades.reactToSharedTrade", error, { tradeId, emoji });
 }

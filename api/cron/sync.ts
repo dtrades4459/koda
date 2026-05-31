@@ -405,11 +405,14 @@ export default async function handler(req: any, res: any) {
   }
 
   // ── SCHEDULED mode: GET with cron secret ──────────────────────────────────
+  // Vercel sends: Authorization: Bearer {CRON_SECRET} on all cron invocations.
   if (req.method === "GET") {
     const cronSecret = process.env.CRON_SECRET;
     if (!cronSecret)
       return res.status(500).json({ error: "CRON_SECRET not configured" });
-    if (req.headers["x-cron-secret"] !== cronSecret)
+    const auth = req.headers["authorization"] as string | undefined;
+    const token = auth?.startsWith("Bearer ") ? auth.slice(7) : "";
+    if (token !== cronSecret)
       return res.status(401).json({ error: "Invalid cron secret" });
 
     const { data: conns, error } = await admin

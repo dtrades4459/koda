@@ -2,6 +2,15 @@
 // Resend-based email helper for Kōda transactional emails.
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY ?? "";
+
+function esc(s: string): string {
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 const FROM = "Kōda <noreply@kodatrade.co.uk>";
 
 export async function sendEmail({ to, subject, html }: { to: string; subject: string; html: string }) {
@@ -30,7 +39,7 @@ export function weeklyRecapHtml({
   <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;padding:40px 24px">
     <tr><td>
       <p style="font-family:monospace;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#65655F;margin:0 0 8px">${weekLabel} · Weekly Recap</p>
-      <p style="font-size:28px;font-weight:600;letter-spacing:-0.02em;margin:0 0 32px">Your week in review, ${name}.</p>
+      <p style="font-size:28px;font-weight:600;letter-spacing:-0.02em;margin:0 0 32px">Your week in review, ${esc(name)}.</p>
       <table width="100%" cellpadding="16" style="background:#131317;border-radius:16px;border:1px solid rgba(255,255,255,0.07);margin-bottom:24px">
         <tr>
           <td style="text-align:center;border-right:1px solid rgba(255,255,255,0.07)">
@@ -47,7 +56,7 @@ export function weeklyRecapHtml({
           </td>
         </tr>
       </table>
-      ${bestSetup ? `<p style="font-size:13px;color:#A6A6A2;margin:0 0 32px">Best setup this week: <strong style="color:#F2F2EE">${bestSetup}</strong></p>` : ""}
+      ${bestSetup ? `<p style="font-size:13px;color:#A6A6A2;margin:0 0 32px">Best setup this week: <strong style="color:#F2F2EE">${esc(bestSetup)}</strong></p>` : ""}
       <a href="https://kodatrade.co.uk" style="display:inline-block;padding:12px 26px;border-radius:999px;background:#F2F2EE;color:#0A0A0B;font-family:monospace;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;text-decoration:none">Open Kōda →</a>
       <p style="font-size:11px;color:#45453F;margin-top:40px">You're receiving this because weekly recaps are on in your settings. <a href="https://kodatrade.co.uk" style="color:#65655F">Unsubscribe</a></p>
     </td></tr>
@@ -62,11 +71,11 @@ export function receiptHtml({ name, plan, amount, date }: { name: string; plan: 
   <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;padding:40px 24px">
     <tr><td>
       <p style="font-family:monospace;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#65655F;margin:0 0 8px">Payment receipt</p>
-      <p style="font-size:26px;font-weight:600;letter-spacing:-0.02em;margin:0 0 32px">Thanks, ${name}.</p>
+      <p style="font-size:26px;font-weight:600;letter-spacing:-0.02em;margin:0 0 32px">Thanks, ${esc(name)}.</p>
       <table width="100%" cellpadding="14" style="background:#131317;border-radius:14px;border:1px solid rgba(255,255,255,0.07);margin-bottom:24px">
-        <tr><td style="font-size:13px;color:#A6A6A2;border-bottom:1px solid rgba(255,255,255,0.07)">Plan</td><td style="font-size:13px;color:#F2F2EE;text-align:right;border-bottom:1px solid rgba(255,255,255,0.07)">Kōda ${plan}</td></tr>
-        <tr><td style="font-size:13px;color:#A6A6A2;border-bottom:1px solid rgba(255,255,255,0.07)">Amount</td><td style="font-size:13px;color:#F2F2EE;text-align:right;border-bottom:1px solid rgba(255,255,255,0.07)">${amount}</td></tr>
-        <tr><td style="font-size:13px;color:#A6A6A2">Date</td><td style="font-size:13px;color:#F2F2EE;text-align:right">${date}</td></tr>
+        <tr><td style="font-size:13px;color:#A6A6A2;border-bottom:1px solid rgba(255,255,255,0.07)">Plan</td><td style="font-size:13px;color:#F2F2EE;text-align:right;border-bottom:1px solid rgba(255,255,255,0.07)">Kōda ${esc(plan)}</td></tr>
+        <tr><td style="font-size:13px;color:#A6A6A2;border-bottom:1px solid rgba(255,255,255,0.07)">Amount</td><td style="font-size:13px;color:#F2F2EE;text-align:right;border-bottom:1px solid rgba(255,255,255,0.07)">${esc(amount)}</td></tr>
+        <tr><td style="font-size:13px;color:#A6A6A2">Date</td><td style="font-size:13px;color:#F2F2EE;text-align:right">${esc(date)}</td></tr>
       </table>
       <a href="https://kodatrade.co.uk" style="display:inline-block;padding:12px 26px;border-radius:999px;background:#F2F2EE;color:#0A0A0B;font-family:monospace;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;text-decoration:none">Open Kōda →</a>
     </td></tr>
