@@ -38,6 +38,7 @@ export interface SettingsScreenProps {
   isFlagOn: (name: string) => boolean;
   onSignOut: () => Promise<void>;
   onPlanRefreshed?: () => void;
+  isPro: boolean;
 }
 
 export function SettingsScreen({
@@ -66,6 +67,7 @@ export function SettingsScreen({
   isFlagOn,
   onSignOut,
   onPlanRefreshed,
+  isPro,
 }: SettingsScreenProps) {
   const [refreshingPlan, setRefreshingPlan] = React.useState(false);
   const inp: React.CSSProperties = {
@@ -349,7 +351,7 @@ export function SettingsScreen({
             </div>
             <button
               onClick={() => {
-                if (!profile.propFirmMode && profile.plan !== "pro" && profile.plan !== "elite") {
+                if (!profile.propFirmMode && !isPro) {
                   setShowUpgrade(true);
                   return;
                 }
@@ -443,7 +445,7 @@ export function SettingsScreen({
       </div>
 
       {/* Sign out */}
-      <div style={{ padding: "14px 18px 0" }}>
+      <div style={{ padding: "24px 18px 0", borderTop: `1px solid ${C.border}`, marginTop: "8px" }}>
         <button
           onClick={onSignOut}
           style={{ width: "100%", padding: "13px", border: `1px solid ${C.border2}`, borderRadius: "14px", background: "transparent", color: C.text2, cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase" as const }}
