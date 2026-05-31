@@ -1470,7 +1470,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
 
         {/* ── MASTHEAD ── */}
         <header style={{ padding: isDesktop ? "calc(16px + env(safe-area-inset-top)) 40px 0" : "calc(8px + env(safe-area-inset-top)) 22px 6px", position: "sticky", top: 0, background: C.bg, zIndex: 10 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", paddingBottom: isDesktop ? "14px" : 0 }}>
+          <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", paddingBottom: isDesktop ? "14px" : 0 }}>
             {/* Left: back button when history exists, otherwise logo */}
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               {viewHistory.length > 0 ? (
@@ -1493,6 +1493,46 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                 </>
               )}
             </div>
+            {/* Center: four pillars (desktop only, absolutely centered so it stays put when left/right change width) */}
+            {isDesktop && (
+              <div style={{
+                position: "absolute",
+                left: "50%",
+                top: "50%",
+                transform: "translate(-50%, -50%)",
+                display: "flex",
+                alignItems: "center",
+                gap: 14,
+                pointerEvents: "none",
+              }}>
+                {[
+                  { n: "01", w: "discipline", accent: false },
+                  { n: "02", w: "momentum",   accent: false },
+                  { n: "03", w: "progress",   accent: false },
+                  { n: "04", w: "success",    accent: true  },
+                ].map((p, i, arr) => (
+                  <div key={p.n} style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+                      <span style={{
+                        fontFamily: MONO, fontWeight: 500, fontSize: 8,
+                        letterSpacing: "0.18em",
+                        color: p.accent ? C.live : C.muted,
+                      }}>{p.n}</span>
+                      <span style={{
+                        fontFamily: BODY, fontStyle: "italic",
+                        fontWeight: p.accent ? 500 : 400, fontSize: 11,
+                        color: p.accent ? C.live : C.dim,
+                      }}>{p.w}</span>
+                    </div>
+                    {i < arr.length - 1 && (
+                      <svg width="9" height="7" viewBox="0 0 12 10" style={{ opacity: 0.35, marginTop: 6, flexShrink: 0 }}>
+                        <path d="M2 1l4 4-4 4M6 1l4 4-4 4" stroke={C.text} strokeWidth="0.9" fill="none" strokeLinecap="round"/>
+                      </svg>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
             {/* Right: bell + avatar (design spec) */}
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <div style={{ position: "relative" }}>
