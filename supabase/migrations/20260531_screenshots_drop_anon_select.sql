@@ -1,0 +1,24 @@
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- Kōda · Drop unauthenticated SELECT policy on trade-screenshots
+--
+-- WHAT THIS DOES
+--   Removes the "screenshots_read_anon" RLS policy that allowed unauthenticated
+--   (anon role) users to SELECT objects from the trade-screenshots bucket.
+--   Authenticated reads are preserved via "screenshots_read_public".
+--
+-- LIMITATION
+--   The bucket remains public:true and the app uses getPublicUrl() — so objects
+--   are still reachable via their permanent public URL without auth. Fully
+--   restricting access requires switching to a private bucket + createSignedUrl(),
+--   which needs a URL migration on existing trade rows. Tracked for post-launch.
+--
+-- WHY THIS CHANGE
+--   Defence-in-depth: removes the explicit anon grant from the RLS layer.
+--   Circle members are always authenticated, so authenticated-only SELECT covers
+--   every real use case in the app today.
+--
+-- HOW TO RUN
+--   Supabase dashboard → SQL Editor → paste → Run. Idempotent (DROP IF EXISTS).
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+drop policy if exists "screenshots_read_anon" on storage.objects;

@@ -38,6 +38,9 @@ async function handleSubscribe(req: VercelRequest, res: VercelResponse) {
 }
 
 async function handleSend(req: VercelRequest, res: VercelResponse) {
+  const secret = req.headers["x-cron-secret"] as string | undefined;
+  if (!secret || secret !== process.env.CRON_SECRET) return res.status(401).json({ error: "Unauthorized" });
+
   const { userId, title, body } = req.body as { userId: string; title: string; body: string };
   if (!userId || !title) return res.status(400).json({ error: "Missing fields" });
 
