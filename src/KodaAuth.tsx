@@ -134,6 +134,9 @@ function AuthForm({ onSuccess, initialError = "", onModeChange }: {
   }
 
   async function signInWithOAuth(provider: "google" | "twitter" | "apple") {
+    // Clear any stale session before redirecting — a lingering session can cause
+    // OAuth to return without completing the new sign-in.
+    await supabase.auth.signOut().catch(() => {});
     await supabase.auth.signInWithOAuth({
       provider,
       options: {

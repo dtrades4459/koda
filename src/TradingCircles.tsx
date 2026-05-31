@@ -190,26 +190,34 @@ export function TradingCircles({ myCircles, circlesView, setCirclesView, activeC
     setTimeout(() => chatBottomRef.current?.scrollIntoView({ behavior: "smooth" }), 80);
   }
 
-  async function sendChatMessage(circleCode: string, myId: string) {
+  async function sendChatMessage(circleCode: string, myId: string | undefined) {
     const text = chatInput.trim();
-    if (!text || chatSending) return;
+    if (!text || chatSending || !myId) {
+      if (!myId) showToast("Sign in required to send messages");
+      return;
+    }
     setChatSending(true);
     setChatInput("");
     try {
-      await supabase.from("circle_messages").insert({
+      const { error } = await supabase.from("circle_messages").insert({
         circle_code: circleCode,
         sender_id: myId,
         sender_name: profile.name || "Trader",
         sender_handle: profile.handle || "",
         text,
       });
-      // Reload to ensure sender sees their own message even without realtime
+      if (error) throw error;
       try {
         await loadChatMessages(circleCode);
       } catch {
-        // Reload failure is non-fatal; message was already sent
+        // Reload failure is non-fatal
       }
-    } catch { setChatInput(text); showToast("Message failed to send — try again"); }
+    } catch (e: unknown) {
+      setChatInput(text);
+      const errMsg = e instanceof Error ? e.message : "";
+      const msg = errMsg.includes("policy") ? "Permission denied — try refreshing the page" : "Message failed to send — try again";
+      showToast(msg);
+    }
     setChatSending(false);
   }
 
@@ -989,7 +997,7 @@ export function TradingCircles({ myCircles, circlesView, setCirclesView, activeC
                       placeholder="Message the circle…" rows={2}
                       style={{ ...inp, flex: 1, resize: "none", lineHeight: 1.5, fontFamily: BODY, fontSize: "14px" }} />
                     <button onClick={() => sendChatMessage(activeCircle.code, myId)}
-                      disabled={!chatInput.trim() || chatSending}
+                      disabled={!chatInput.trim() || chatSending || !myId}
                       style={{ ...pillPrimary(!!chatInput.trim() && !chatSending), width: "auto", padding: "10px 18px", opacity: chatSending ? 0.6 : 1, flexShrink: 0 }}>
                       {chatSending ? "…" : "Send"}
                     </button>
