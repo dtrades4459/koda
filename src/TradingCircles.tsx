@@ -216,10 +216,16 @@ export function TradingCircles({ myCircles, circlesView, setCirclesView, activeC
       setChatInput(text);
       const errMsg = (e instanceof Error ? e.message : (e as any)?.message) ?? "";
       const errCode = (e as any)?.code ?? "";
+      const errHint = (e as any)?.hint ?? "";
       console.error("chat send error", e);
       const isPolicy = errMsg.includes("policy") || errMsg.includes("denied") || errCode === "42501";
-      const msg = isPolicy ? "Permission denied — try refreshing the page" : "Message failed to send — try again";
+      const msg = isPolicy
+        ? "Permission denied — try refreshing the page"
+        : errMsg
+          ? `Send failed: ${errMsg}${errCode ? ` (${errCode})` : ""}`
+          : "Message failed to send — try again";
       showToast(msg);
+      void errHint;
     }
     setChatSending(false);
   }
