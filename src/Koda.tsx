@@ -1408,11 +1408,10 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
             socialLinks: twitter.trim() ? { twitter: twitter.trim() } : profile.socialLinks,
           };
           await saveProfile(updated);
-          // Auto-join Kōda Global circle for every new user (silent — no error on failure).
-          // Using KODA_GLOBAL_CODE; joinCircleByCode auto-creates the global record if absent.
-          if (!myCircles.find((c: Circle) => c.code === KODA_GLOBAL_CODE)) {
-            try { await joinCircleByCode(KODA_GLOBAL_CODE); } catch { /* silently ignore */ }
-          }
+          // Auto-join Kōda Global is handled by the backfill effect (line ~709)
+          // which runs after React re-renders with the correct profile. Calling
+          // joinCircleByCode here would invoke getMyCode() with the stale profile
+          // closure (still {name:"Trader"}) and overwrite the just-saved name.
           setView("log");
           // Show the first-run tour unless they've already seen it
           if (!localStorage.getItem("koda_tour_done")) setShowTour(true);

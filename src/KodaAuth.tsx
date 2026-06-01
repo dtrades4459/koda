@@ -134,9 +134,6 @@ function AuthForm({ onSuccess, initialError = "", onModeChange }: {
   }
 
   async function signInWithOAuth(provider: "google" | "twitter" | "apple") {
-    // Clear any stale session before redirecting — a lingering session can cause
-    // OAuth to return without completing the new sign-in.
-    await supabase.auth.signOut().catch(() => {});
     await supabase.auth.signInWithOAuth({
       provider,
       options: {
@@ -217,8 +214,6 @@ function AuthForm({ onSuccess, initialError = "", onModeChange }: {
       {/* OAuth first — frictionless one-tap path for both modes */}
       <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 18 }}>
         <OAuthBtn label="Continue with Google" provider="google" onClick={() => signInWithOAuth("google")} />
-        <OAuthBtn label="Continue with X" provider="x" onClick={() => signInWithOAuth("twitter")} />
-        <OAuthBtn label="Continue with Apple" provider="apple" onClick={() => signInWithOAuth("apple")} />
       </div>
 
       {/* OR divider */}

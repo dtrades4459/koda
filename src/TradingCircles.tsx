@@ -901,83 +901,106 @@ any) {
                   </div>
                 ) : (
                   <div style={{ borderTop: `1px solid ${C.border}` }}>
-                    {leaderboard.map((entry: any, i: number) => {
-                      const isMe = entry.memberCode === getMyCode();
-                      const md = metricDisplay(entry, activeCircle);
-                      const pPos = md.raw >= 0;
-                      const isFirst = i === 0;
-                      const pnlCol = isFirst && pPos ? C.green : pPos ? C.text : C.red;
-                      const isExpanded = expandedMember === entry.memberCode;
-                      const isFollowing = (following || []).includes(entry.memberCode);
-                      const medal = MEDALS[i] || null;
-                      const isBlurred = i >= 5 && !isMe;
-                      return (
-                        <div key={entry.memberCode} style={{ borderBottom: `1px solid ${C.border}`, background: isFirst ? `${C.green}08` : "transparent", filter: isBlurred ? "blur(4px)" : "none", userSelect: isBlurred ? "none" : "auto", pointerEvents: isBlurred ? "none" : "auto", opacity: isBlurred ? 0.6 : 1 }}>
-                          <div
-                            onClick={() => setExpandedMember(isExpanded ? null : entry.memberCode)}
-                            style={{ padding: "16px 0", display: "grid", gridTemplateColumns: "auto 1fr auto", alignItems: "center", gap: "14px", cursor: "pointer", paddingLeft: isExpanded ? "10px" : 0, paddingRight: isExpanded ? "10px" : 0 }}>
-                            <span style={{ fontFamily: MONO, fontSize: "13px", color: isFirst ? C.green : C.muted, letterSpacing: "0.06em", minWidth: "28px" }}>
-                              {medal || String(i + 1).padStart(2, "0")}
-                            </span>
-                            <div style={{ minWidth: 0 }}>
-                              <div style={{ display: "flex", alignItems: "baseline", gap: "8px", flexWrap: "wrap" }}>
-                                <span style={{ fontFamily: DISPLAY, fontSize: "17px", fontWeight: 500, color: C.text, letterSpacing: "-0.01em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{entry.name}</span>
-                                {isMe && <span style={{ fontFamily: MONO, fontSize: "9px", color: C.green, letterSpacing: "0.12em", textTransform: "uppercase" }}>· YOU</span>}
-                              </div>
-                              <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginTop: "3px", fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.06em", textTransform: "uppercase" }}>
-                                <span>{entry.total} trades</span>
-                                <span style={{ color: Number(entry.winRate ?? 0) >= 50 ? C.green : Number(entry.winRate ?? 0) > 0 ? C.red : C.muted }}>{Number(entry.winRate ?? 0).toFixed(0)}% WR</span>
-                                {entry.topStrategy && <span>{stratCode(entry.topStrategy)}</span>}
-                                {entry.streak?.count >= 2 && <span style={{ color: entry.streak.type === "Win" ? C.green : C.red }}>{entry.streak.count}{entry.streak.type === "Win" ? "W" : "L"}</span>}
-                              </div>
-                            </div>
-                            <div style={{ textAlign: "right", flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
-                              <div style={{ fontFamily: DISPLAY, fontSize: "18px", fontWeight: 700, color: pnlCol, letterSpacing: "-0.01em", lineHeight: 1 }}>{md.val}</div>
-                              <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.06em" }}>{md.label}</div>
-                            </div>
-                          </div>
-                          {isExpanded && (
-                            <div style={{ padding: "0 10px 16px", display: "flex", flexDirection: "column", gap: "12px" }}>
-                              <div>
-                                <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.14em", marginBottom: "4px" }}>
-                                  {entry.alias && entry.alias !== entry.memberCode ? "ALIAS · USER CODE" : "USER CODE"}
+                    {(() => {
+                      const myCode = getMyCode();
+                      const myIdx = leaderboard.findIndex(e => e.memberCode === myCode);
+                      const renderRow = (entry: typeof leaderboard[number], i: number, blur: boolean) => {
+                        const isMe = entry.memberCode === myCode;
+                        const md = metricDisplay(entry, activeCircle);
+                        const pPos = md.raw >= 0;
+                        const isFirst = i === 0;
+                        const pnlCol = isFirst && pPos ? C.green : pPos ? C.text : C.red;
+                        const isExpanded = expandedMember === entry.memberCode;
+                        const isFollowing = (following || []).includes(entry.memberCode);
+                        const medal = MEDALS[i] || null;
+                        const isBlurred = blur && !isMe;
+                        return (
+                          <div key={entry.memberCode} style={{ borderBottom: `1px solid ${C.border}`, background: isFirst ? `${C.green}08` : "transparent", filter: isBlurred ? "blur(4px)" : "none", userSelect: isBlurred ? "none" : "auto", pointerEvents: isBlurred ? "none" : "auto", opacity: isBlurred ? 0.6 : 1 }}>
+                            <div
+                              onClick={() => setExpandedMember(isExpanded ? null : entry.memberCode)}
+                              style={{ padding: "16px 0", display: "grid", gridTemplateColumns: "auto 1fr auto", alignItems: "center", gap: "14px", cursor: "pointer", paddingLeft: isExpanded ? "10px" : 0, paddingRight: isExpanded ? "10px" : 0 }}>
+                              <span style={{ fontFamily: MONO, fontSize: "13px", color: isFirst ? C.green : C.muted, letterSpacing: "0.06em", minWidth: "28px" }}>
+                                {medal || String(i + 1).padStart(2, "0")}
+                              </span>
+                              <div style={{ minWidth: 0 }}>
+                                <div style={{ display: "flex", alignItems: "baseline", gap: "8px", flexWrap: "wrap" }}>
+                                  <span style={{ fontFamily: DISPLAY, fontSize: "17px", fontWeight: 500, color: C.text, letterSpacing: "-0.01em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{entry.name}</span>
+                                  {isMe && <span style={{ fontFamily: MONO, fontSize: "9px", color: C.green, letterSpacing: "0.12em", textTransform: "uppercase" }}>· YOU</span>}
                                 </div>
-                                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                  <span style={{ fontFamily: MONO, fontSize: "13px", color: C.text, letterSpacing: "0.10em", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                    {entry.alias && entry.alias !== entry.memberCode ? `${entry.alias} · ${entry.memberCode}` : entry.memberCode}
-                                  </span>
-                                  <button onClick={(e) => { e.stopPropagation(); navigator.clipboard?.writeText(entry.memberCode); showToast("Code copied"); }}
-                                    style={{ ...pillGhost, padding: "6px 12px", fontSize: "9px" }}>COPY</button>
+                                <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginTop: "3px", fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                                  <span>{entry.total} trades</span>
+                                  <span style={{ color: Number(entry.winRate ?? 0) >= 50 ? C.green : Number(entry.winRate ?? 0) > 0 ? C.red : C.muted }}>{Number(entry.winRate ?? 0).toFixed(0)}% WR</span>
+                                  {entry.topStrategy && <span>{stratCode(entry.topStrategy)}</span>}
+                                  {entry.streak?.count >= 2 && <span style={{ color: entry.streak.type === "Win" ? C.green : C.red }}>{entry.streak.count}{entry.streak.type === "Win" ? "W" : "L"}</span>}
                                 </div>
                               </div>
-                              {!isMe && (
-                                <div style={{ display: "flex", gap: "8px" }}>
-                                  <button onClick={(e) => { e.stopPropagation(); if (isFollowing) { unfollowUser(entry.memberCode); } else { followUser(entry.memberCode); } }}
-                                    style={{ background: isFollowing ? "transparent" : C.text, color: isFollowing ? C.muted : C.bg, border: `1px solid ${isFollowing ? C.border2 : C.text}`, borderRadius: "999px", padding: "8px 18px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", flex: 1 }}>
-                                    {isFollowing ? "✓ Following" : "+ Follow"}
-                                  </button>
-                                  {activeCircle?.isOwner && (
-                                    <button onClick={async (e) => { e.stopPropagation(); await kickMember(activeCircle.code, entry.memberCode); setLeaderboard(prev => prev.filter(r => r.memberCode !== entry.memberCode)); setExpandedMember(null); }}
-                                      style={{ background: "transparent", color: C.red, border: `1px solid ${C.red}44`, borderRadius: "999px", padding: "8px 14px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase" }}>
-                                      KICK
+                              <div style={{ textAlign: "right", flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
+                                <div style={{ fontFamily: DISPLAY, fontSize: "18px", fontWeight: 700, color: pnlCol, letterSpacing: "-0.01em", lineHeight: 1 }}>{md.val}</div>
+                                <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.06em" }}>{md.label}</div>
+                              </div>
+                            </div>
+                            {isExpanded && (
+                              <div style={{ padding: "0 10px 16px", display: "flex", flexDirection: "column", gap: "12px" }}>
+                                <div>
+                                  <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.14em", marginBottom: "4px" }}>
+                                    {entry.alias && entry.alias !== entry.memberCode ? "ALIAS · USER CODE" : "USER CODE"}
+                                  </div>
+                                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                    <span style={{ fontFamily: MONO, fontSize: "13px", color: C.text, letterSpacing: "0.10em", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                      {entry.alias && entry.alias !== entry.memberCode ? `${entry.alias} · ${entry.memberCode}` : entry.memberCode}
+                                    </span>
+                                    <button onClick={(e) => { e.stopPropagation(); navigator.clipboard?.writeText(entry.memberCode); showToast("Code copied"); }}
+                                      style={{ ...pillGhost, padding: "6px 12px", fontSize: "9px" }}>COPY</button>
+                                  </div>
+                                </div>
+                                {!isMe && (
+                                  <div style={{ display: "flex", gap: "8px" }}>
+                                    <button onClick={(e) => { e.stopPropagation(); if (isFollowing) { unfollowUser(entry.memberCode); } else { followUser(entry.memberCode); } }}
+                                      style={{ background: isFollowing ? "transparent" : C.text, color: isFollowing ? C.muted : C.bg, border: `1px solid ${isFollowing ? C.border2 : C.text}`, borderRadius: "999px", padding: "8px 18px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", flex: 1 }}>
+                                      {isFollowing ? "✓ Following" : "+ Follow"}
                                     </button>
-                                  )}
-                                </div>
-                              )}
-                              {entry.handle && openProfile && (
-                                <button onClick={(e) => { e.stopPropagation(); openProfile(entry.handle); }}
-                                  style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "9px", letterSpacing: "0.1em", textTransform: "uppercase", padding: 0, textDecoration: "underline" }}>View Profile →</button>
-                              )}
-                              {entry.updatedAt && (
-                                <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.10em", textTransform: "uppercase" }}>
-                                  Last published · {new Date(entry.updatedAt).toLocaleString()}
-                                </div>
-                              )}
-                            </div>
+                                    {activeCircle?.isOwner && (
+                                      <button onClick={async (e) => { e.stopPropagation(); await kickMember(activeCircle.code, entry.memberCode); setLeaderboard(prev => prev.filter(r => r.memberCode !== entry.memberCode)); setExpandedMember(null); }}
+                                        style={{ background: "transparent", color: C.red, border: `1px solid ${C.red}44`, borderRadius: "999px", padding: "8px 14px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase" }}>
+                                        KICK
+                                      </button>
+                                    )}
+                                  </div>
+                                )}
+                                {entry.handle && openProfile && (
+                                  <button onClick={(e) => { e.stopPropagation(); openProfile(entry.handle); }}
+                                    style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "9px", letterSpacing: "0.1em", textTransform: "uppercase", padding: 0, textDecoration: "underline" }}>View Profile →</button>
+                                )}
+                                {entry.updatedAt && (
+                                  <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.10em", textTransform: "uppercase" }}>
+                                    Last published · {new Date(entry.updatedAt).toLocaleString()}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      };
+                      return (
+                        <>
+                          {leaderboard.slice(0, 5).map((entry, i) => renderRow(entry, i, false))}
+                          {myIdx >= 5 && (
+                            <>
+                              <div style={{ padding: "10px 0", display: "flex", alignItems: "center", gap: "10px" }}>
+                                <div style={{ flex: 1, height: "1px", background: C.border }} />
+                                <span style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.14em", textTransform: "uppercase" }}>Your Position</span>
+                                <div style={{ flex: 1, height: "1px", background: C.border }} />
+                              </div>
+                              {renderRow(leaderboard[myIdx], myIdx, false)}
+                            </>
                           )}
-                        </div>
+                          {leaderboard.slice(5).map((entry, i) => {
+                            if (myIdx >= 5 && entry.memberCode === myCode) return null;
+                            return renderRow(entry, i + 5, false);
+                          })}
+                        </>
                       );
-                    })}
+                    })()}
                   </div>
                 )}
               </div>

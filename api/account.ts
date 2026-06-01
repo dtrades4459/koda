@@ -255,7 +255,8 @@ async function handleFeedback(req: Req, res: Res) {
   const allowed = await checkRateLimit("feedback", ip, { limit: 5, windowMs: 60_000 });
   if (!allowed) return res.status(429).json({ error: "Too many requests" });
 
-  const { feedback, name, handle } = req.body || {};
+  const body   = req.body as { feedback?: string; name?: string; handle?: string };
+  const { feedback, name, handle } = body;
   if (!feedback?.trim()) return res.status(400).json({ error: "Feedback is required" });
 
   const token  = process.env.TELEGRAM_BOT_TOKEN;
