@@ -74,16 +74,16 @@ async function handleNotifyCircle(req: VercelRequest, res: VercelResponse) {
   if (!circleCode || typeof circleCode !== "string" || circleCode.length > 64)
     return res.status(400).json({ error: "Invalid circleCode" });
 
-  const prefix = `koda_circle_member_${circleCode}_`;
   const { data: memberRows } = await supabase
-    .from("shared_kv")
-    .select("owner_id")
-    .like("key", `${prefix}%`);
+    .from("circle_members")
+    .select("user_id")
+    .eq("circle_code", circleCode)
+    .neq("role", "banned");
 
   if (!memberRows?.length) return res.status(200).json({ ok: true, sent: 0 });
 
   const recipientUids = memberRows
-    .map((r: { owner_id: string }) => r.owner_id)
+    .map((r: { user_id: string }) => r.user_id)
     .filter((uid: string) => uid && uid !== user.id);
 
   if (!recipientUids.length) return res.status(200).json({ ok: true, sent: 0 });
