@@ -136,6 +136,7 @@ async function handleUserLookup(chatId: number, email: string) {
 
   const plan      = (user.app_metadata?.plan as string | undefined) ?? 'free';
   const handle    = profileRes.data?.handle ?? '—';
+  const name      = profileRes.data?.name ?? '—';
   const signedUp  = new Date(user.created_at).toLocaleDateString('en-GB');
   const trades    = tradeRes.count ?? 0;
   const onboarded = profileRes.data?.onboarded ? 'Yes' : 'No';
@@ -144,6 +145,7 @@ async function handleUserLookup(chatId: number, email: string) {
     b('👤 User Lookup'),
     `Email: ${code(email)}`,
     `Handle: @${handle}`,
+    `Name: ${name}`,
     `Plan: ${b(plan)}`,
     `Signed up: ${signedUp}`,
     `Trades logged: ${b(trades)}`,
