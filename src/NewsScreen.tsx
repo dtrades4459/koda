@@ -23,6 +23,7 @@ const TZ_OPTIONS: ReadonlyArray<{ id: TzId; label: string; iana: string | undefi
 ];
 
 const TZ_LS_KEY = "koda_news_tz";
+const USD_ONLY_LS_KEY = "koda_news_usd_only";
 
 interface Props {
   C: Theme;
@@ -109,15 +110,27 @@ function loadTz(): TzId {
   return "local";
 }
 
+function loadUsdOnly(): boolean {
+  if (typeof window === "undefined") return true;
+  const stored = window.localStorage?.getItem(USD_ONLY_LS_KEY);
+  if (stored === "0") return false;
+  return true; // default: USD-only on
+}
+
 export function NewsScreen({ C }: Props) {
   const { calendar, headlines } = useNews();
   const [range, setRange] = useState<Range>("today");
   const [impactFilter, setImpactFilter] = useState<Set<Impact>>(() => new Set(ALL_IMPACTS));
   const [tz, setTz] = useState<TzId>(loadTz);
+  const [usdOnly, setUsdOnly] = useState<boolean>(loadUsdOnly);
 
   useEffect(() => {
     try { window.localStorage?.setItem(TZ_LS_KEY, tz); } catch { /* quota / private mode */ }
   }, [tz]);
+
+  useEffect(() => {
+    try { window.localStorage?.setItem(USD_ONLY_LS_KEY, usdOnly ? "1" : "0"); } catch { /* ignore */ }
+  }, [usdOnly]);
 
   const tzIana = useMemo(() => TZ_OPTIONS.find(o => o.id === tz)?.iana, [tz]);
 
@@ -135,13 +148,14 @@ export function NewsScreen({ C }: Props) {
     const events = calendar?.items ?? [];
     const [from, to] = rangeWindow(range);
     return events
+      .filter(e => !usdOnly || e.country === "USD")
       .filter(e => impactFilter.has(e.impact))
       .filter(e => {
         const t = new Date(e.time).getTime();
         return t >= from.getTime() && t <= to.getTime();
       })
       .sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
-  }, [calendar, range, impactFilter]);
+  }, [calendar, range, impactFilter, usdOnly]);
 
   // Group events by day for Week/Month views. Today view stays flat (single day).
   const dayGroups = useMemo<Array<{ key: string; label: string; events: CalendarEvent[] }>>(() => {
@@ -203,8 +217,31 @@ export function NewsScreen({ C }: Props) {
         })}
       </div>
 
-      {/* Impact filter chips */}
+      {/* Impact + country filter chips */}
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+        <button
+          type="button"
+          aria-pressed={usdOnly}
+          onClick={() => setUsdOnly(v => !v)}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            padding: "5px 10px",
+            borderRadius: 999,
+            border: `1px solid ${usdOnly ? C.accent : C.border}`,
+            background: C.panel,
+            color: usdOnly ? C.text : C.muted,
+            fontFamily: MONO,
+            fontSize: 9,
+            letterSpacing: "0.08em",
+            fontWeight: 600,
+            cursor: "pointer",
+            opacity: usdOnly ? 1 : 0.7,
+          }}
+        >
+          {usdOnly ? "USD ONLY" : "ALL FX"}
+        </button>
         {ALL_IMPACTS.map(imp => {
           const active = impactFilter.has(imp);
           const color = impactColor(C, imp);
@@ -353,9 +390,22 @@ export function NewsScreen({ C }: Props) {
                         opacity: past ? 0.55 : 1,
                       }}
                     >
-                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11 }}>
-                        <span>{ev.title}</span>
-                        <span style={{ fontFamily: MONO, color: C.muted }}>{formatTime(ev.time, tzIana)}</span>
+                      <div style={{ display: "flex", justifyContent: "space-between", gap: 8, fontSize: 11 }}>
+                        <span style={{ flex: 1, minWidth: 0, display: "inline-flex", alignItems: "baseline", gap: 6 }}>
+                          <span
+                            style={{
+                              fontFamily: MONO,
+                              fontSize: 9,
+                              color: C.muted,
+                              letterSpacing: "0.05em",
+                              flexShrink: 0,
+                            }}
+                          >
+                            {ev.country}
+                          </span>
+                          <span style={{ minWidth: 0 }}>{ev.title}</span>
+                        </span>
+                        <span style={{ fontFamily: MONO, color: C.muted, flexShrink: 0 }}>{formatTime(ev.time, tzIana)}</span>
                       </div>
                       {(ev.forecast || ev.previous || ev.actual) && (
                         <div style={{ fontSize: 9, color: C.muted, marginTop: 3 }}>
