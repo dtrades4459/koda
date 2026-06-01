@@ -1,0 +1,47 @@
+name: news-headlines-cron
+
+# Schedule: every 30 minutes — refreshes the headlines cache.
+# Manual dispatch (Actions tab → Run workflow): also refreshes the calendar
+# cache, so the very first run after a deploy can populate both rows in one go.
+#
+# Sub-daily schedules require GitHub Actions because Vercel Hobby cron is daily-only.
+# The daily calendar refresh is wired separately in vercel.json.
+#
+# Required GitHub secret:
+#   CRON_SECRET — same value as the CRON_SECRET env var in Vercel
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+
+    steps:
+      - name: Trigger news-calendar (manual dispatch only)
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X GET "https://kodatrade.co.uk/api/cron?job=news-calendar" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            --max-time 60)
+          echo "news-calendar response: $STATUS"
+          if [ "$STATUS" -lt 200 ] || [ "$STATUS" -ge 300 ]; then
+            echo "news-calendar returned $STATUS — failing the job"
+            exit 1
+          fi
+
+      - name: Trigger news-headlines refresh
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X GET "https://kodatrade.co.uk/api/cron?job=news-headlines" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            --max-time 60)
+          echo "news-headlines response: $STATUS"
+          if [ "$STATUS" -lt 200 ] || [ "$STATUS" -ge 300 ]; then
+            echo "news-headlines returned $STATUS — failing the job"
+            exit 1
+          fi

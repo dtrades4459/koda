@@ -511,6 +511,183 @@ async function handleSync(req: Req, res: Res) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
+// Job: news-calendar  (ForexFactory → shared_kv)
+// ══════════════════════════════════════════════════════════════════════════════
+
+const FF_URL = "https://nfs.faireconomy.media/ff_calendar_thisweek.json";
+const NEWS_OWNER_ID = "00000000-0000-0000-0000-000000000000";
+
+type FFEvent = {
+  title?: string;
+  country?: string;
+  date?: string;
+  impact?: string;
+  forecast?: string;
+  previous?: string;
+  actual?: string;
+};
+
+function kebab(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+}
+
+function normaliseFFEvent(raw: FFEvent): Record<string, unknown> | null {
+  if (!raw.title || !raw.country || !raw.date) return null;
+  const time = raw.date;
+  const impactRaw = (raw.impact ?? "").toLowerCase();
+  const impact = ["high", "medium", "low", "holiday"].includes(impactRaw)
+    ? impactRaw
+    : "low";
+  const day = time.slice(0, 10);
+  const id = `ff-${kebab(raw.title)}-${day}`;
+  return {
+    id,
+    title: raw.title,
+    country: raw.country,
+    time,
+    impact,
+    forecast: raw.forecast ?? null,
+    previous: raw.previous ?? null,
+    actual: raw.actual ?? null,
+  };
+}
+
+async function handleNewsCalendar(req: Req, res: Res) {
+  if (!isCronAuthed(req)) return res.status(401).json({ error: "Unauthorized" });
+
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 10_000);
+    const upstream = await fetch(FF_URL, { signal: ctrl.signal });
+    clearTimeout(timer);
+
+    if (!upstream.ok) {
+      console.error("[news-calendar] upstream non-200:", upstream.status);
+      return res.status(200).json({ ok: false, reason: `upstream ${upstream.status}` });
+    }
+    const raw = (await upstream.json()) as unknown;
+    if (!Array.isArray(raw) || raw.length === 0) {
+      console.error("[news-calendar] upstream returned empty/invalid array");
+      return res.status(200).json({ ok: false, reason: "empty upstream" });
+    }
+
+    const events: Record<string, unknown>[] = [];
+    for (const item of raw) {
+      const ev = normaliseFFEvent(item as FFEvent);
+      if (ev) events.push(ev);
+    }
+    if (events.length === 0) {
+      console.error("[news-calendar] no valid events after normalization");
+      return res.status(200).json({ ok: false, reason: "no valid events" });
+    }
+
+    const admin = getAdminClient();
+    const value = { fetched_at: new Date().toISOString(), events };
+    const { error } = await admin.from("shared_kv").upsert({
+      key: "koda_news_calendar",
+      value,
+      owner_id: NEWS_OWNER_ID,
+    });
+    if (error) {
+      console.error("[news-calendar] upsert error:", error);
+      return res.status(500).json({ error: error.message });
+    }
+
+    return res.status(200).json({ ok: true, count: events.length });
+  } catch (err) {
+    console.error("[news-calendar] failed:", err);
+    return res.status(200).json({ ok: false, reason: "exception" });
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Job: news-headlines  (Marketaux → shared_kv)
+// ══════════════════════════════════════════════════════════════════════════════
+
+const MARKETAUX_URL = "https://api.marketaux.com/v1/news/all";
+
+type MarketauxArticle = {
+  uuid?: string;
+  title?: string;
+  description?: string;
+  url?: string;
+  source?: string;
+  published_at?: string;
+};
+
+function normaliseMarketauxArticle(raw: MarketauxArticle): Record<string, unknown> | null {
+  if (!raw.title || !raw.url || !raw.source || !raw.published_at) return null;
+  return {
+    id: raw.uuid ?? `${raw.source}-${raw.published_at}`,
+    title: raw.title,
+    source: raw.source,
+    url: raw.url,
+    published_at: raw.published_at,
+    snippet: raw.description ?? null,
+  };
+}
+
+async function handleNewsHeadlines(req: Req, res: Res) {
+  if (!isCronAuthed(req)) return res.status(401).json({ error: "Unauthorized" });
+
+  const apiKey = process.env.MARKETAUX_API_KEY;
+  if (!apiKey) {
+    console.error("[news-headlines] MARKETAUX_API_KEY not set");
+    return res.status(200).json({ ok: false, reason: "no api key" });
+  }
+
+  try {
+    const url = `${MARKETAUX_URL}?countries=us&language=en&limit=20&api_token=${apiKey}`;
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 10_000);
+    const upstream = await fetch(url, { signal: ctrl.signal });
+    clearTimeout(timer);
+
+    if (!upstream.ok) {
+      console.error("[news-headlines] upstream non-200:", upstream.status);
+      return res.status(200).json({ ok: false, reason: `upstream ${upstream.status}` });
+    }
+    const body = (await upstream.json()) as unknown;
+    if (
+      typeof body !== "object" ||
+      body === null ||
+      !Array.isArray((body as { data?: unknown[] }).data)
+    ) {
+      console.error("[news-headlines] invalid response shape");
+      return res.status(200).json({ ok: false, reason: "bad shape" });
+    }
+    const rawArticles = (body as { data: MarketauxArticle[] }).data;
+
+    const articles: Record<string, unknown>[] = [];
+    for (const item of rawArticles) {
+      const a = normaliseMarketauxArticle(item);
+      if (a) articles.push(a);
+    }
+    if (articles.length === 0) {
+      console.error("[news-headlines] no valid articles after normalization");
+      return res.status(200).json({ ok: false, reason: "no valid articles" });
+    }
+
+    const admin = getAdminClient();
+    const value = { fetched_at: new Date().toISOString(), articles };
+    const { error } = await admin.from("shared_kv").upsert({
+      key: "koda_news_headlines",
+      value,
+      owner_id: NEWS_OWNER_ID,
+    });
+    if (error) {
+      console.error("[news-headlines] upsert error:", error);
+      return res.status(500).json({ error: error.message });
+    }
+
+    return res.status(200).json({ ok: true, count: articles.length });
+  } catch (err) {
+    console.error("[news-headlines] failed:", err);
+    return res.status(200).json({ ok: false, reason: "exception" });
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
 // Router
 // ══════════════════════════════════════════════════════════════════════════════
 
@@ -522,6 +699,8 @@ export default async function handler(req: Req, res: Res) {
 
   if (job === "complete-challenges") return handleCompleteChallenges(req, res);
   if (job === "sync")                return handleSync(req, res);
+  if (job === "news-calendar")       return handleNewsCalendar(req, res);
+  if (job === "news-headlines")      return handleNewsHeadlines(req, res);
 
   if (job === 'daily-digest') {
     if (!isCronAuthed(req)) return res.status(401).json({ error: 'Unauthorized' });
@@ -530,5 +709,5 @@ export default async function handler(req: Req, res: Res) {
     return res.status(200).json({ ok: true });
   }
 
-  return res.status(400).json({ error: "?job= required: complete-challenges | sync | daily-digest" });
+  return res.status(400).json({ error: "?job= required: complete-challenges | sync | daily-digest | news-calendar | news-headlines" });
 }

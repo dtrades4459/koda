@@ -42,7 +42,7 @@ export default defineConfig({
     include: ["src/**/*.test.ts", "src/**/*.test.tsx", "api/**/*.test.ts"],
     exclude: ["tests/**", "node_modules/**"],
     environment: "jsdom",
-    setupFiles: ["@testing-library/jest-dom/vitest"],
+    setupFiles: ["@testing-library/jest-dom/vitest", "src/test-setup.ts"],
     // Single-fork prevents the Windows UNKNOWN spawn error when many test files run in parallel.
     pool: "forks",
     forks: { singleFork: true },

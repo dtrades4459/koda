@@ -69,6 +69,8 @@ A trading journal PWA for retail futures traders. Log trades, track stats (P&L, 
 | `src/data/profile.ts` | v2 typed CRUD against `public.profiles` (behind `newProfile` flag) |
 | `src/BetaGate.tsx` | Closed-beta password wall — shown before auth if `VITE_BETA_PASSWORD` is set |
 | `src/lib/posthog.ts` | PostHog analytics wrapper |
+| `api/push.ts` | `?action=subscribe` (save sub), `send` (per-user), `notify-circle` (authed, sends to circle members), `broadcast` (cron-secret-gated, sends to all subs) |
+| `api/telegram.ts` | Telegram webhook — admin commands: `/announce <msg>`, `/test`, `/help`; admin ID: `7587404723`; uses `TELEGRAM_BOT_TOKEN2` + `TELEGRAM_WEBHOOK_SECRET` |
 | `api/delete-account.ts` | POST — full user data wipe (broker tokens → trades → profiles → user_kv → shared_kv → auth.users) |
 | `api/feedback.ts` | POST → Telegram bot (@Tradrfeedbackbot) |
 | `api/broker/[action].ts` | Tradovate connect/disconnect |
@@ -102,6 +104,17 @@ A trading journal PWA for retail futures traders. Log trades, track stats (P&L, 
 - `id`, `circle_code`, `sender_id`, `sender_handle`, `sender_name`, `sender_avatar`, `body`, `created_at`
 - Has `REPLICA IDENTITY FULL` and is in `supabase_realtime` publication (migration `20260531_circle_messages_realtime.sql`)
 
+### `public.notification_subscriptions`
+- `user_id`, `endpoint`, `p256dh`, `auth_key`
+- Upsert on conflict `(user_id, endpoint)` — keeps latest subscription per browser/device
+- 410/404 expired subs are pruned automatically during broadcasts
+
+### `public.announcements`
+- `id`, `message`, `created_at`, `is_active`
+- Inserted/managed by Telegram admin bot `/announce` command
+- Frontend reads latest `WHERE is_active = true`; dismissal stored in `localStorage` keyed by `id`
+- **Requires migration** — see NEXT_SESSION.md §2A if not yet created
+
 ### `public.broker_connections` + `public.sync_events`
 - Broker token storage (AES-256-GCM encrypted) + sync audit log
 
@@ -127,11 +140,14 @@ A trading journal PWA for retail futures traders. Log trades, track stats (P&L, 
 | `RESEND_API_KEY` | Transactional email |
 | `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_EMAIL` | Web push |
 | `VITE_VAPID_PUBLIC_KEY` | Same as VAPID_PUBLIC_KEY — exposed to browser |
+| `TELEGRAM_BOT_TOKEN2` | Kōda admin bot token (distinct from feedback bot) |
+| `TELEGRAM_WEBHOOK_SECRET` | `x-telegram-bot-api-secret-token` verification value |
 | `VITE_SENTRY_DSN` | Optional Sentry DSN (leave blank to disable) |
 | `VITE_POSTHOG_KEY` / `VITE_POSTHOG_HOST` | PostHog analytics |
 | `VITE_BETA_PASSWORD` | Beta access code (currently `BETA_26`) |
 | `VITE_BETA_ENABLED` | Set to `"true"` to show BetaGate |
 | `VITE_KODA_ADMIN_UID` | Dylon's UID — gates KODA-GLOBAL challenge creation (`f38aae7d-e953-4a00-a5aa-5370677ca876`) |
+| `MARKETAUX_API_KEY` | Marketaux free-tier API token — used by `api/cron.ts` news-headlines job |
 
 > Never commit real credential values to CLAUDE.md or any tracked file.
 
@@ -191,6 +207,9 @@ Rollback: Vercel Dashboard → Deployments → previous green deploy → Promote
 - Beta access wall (BetaGate) — `VITE_BETA_PASSWORD` env var controlled
 - Prop firm eval mode — profit target, daily loss limit, max drawdown tracking
 - Feedback button → Telegram bot (@Tradrfeedbackbot)
+- Push notifications — OS-level; Settings toggle; circle messages trigger push to all other members
+- Telegram admin bot — `/announce <msg>` broadcasts push to all subscribers + shows in-app banner; `/test`, `/help`
+- In-app announcement banner — dismissible; fetches from `announcements` table; triggered by Telegram `/announce`
 - PWA — installable on iOS/Android
 
 ---
@@ -214,6 +233,13 @@ Rollback: Vercel Dashboard → Deployments → previous green deploy → Promote
 | Circle chat messages not live | `circle_messages` wasn't in `supabase_realtime` publication — added via migration + 8s poll fallback |
 | Feedback button intercepting chat Send | FAB positioned over Send on mobile — hidden when `view === "circles"` |
 | PostgrestError swallowed in chat | Not `instanceof Error` — extract `.message` from any object shape |
+| `serviceWorker.ready` hanging on iOS | `.ready` never resolves if SW not active → use `getRegistration()` + explicit `register('/sw.js')` fallback |
+| `applicationServerKey` rejected by browser | Must be `Uint8Array`, not raw base64url string → `vapidKey()` function in SettingsScreen converts correctly |
+| Push subscribe 500 (server) | `SUPABASE_ANON_KEY` not set in Vercel → use service-role client's `auth.getUser(token)` instead |
+| `notify-circle` wrong member lookup | Was querying `shared_kv` with key prefix → use `circle_members` table |
+| Telegram webhook 307 redirect | `kodatrade.co.uk` → `www.kodatrade.co.uk` 307; Telegram doesn't follow → webhook URL must use `www.` |
+| Telegram function dying before work | `res.status(200).json()` called before awaits — Vercel terminates function after response → moved all awaits before final res.json |
+| iOS P&L minus key missing | `inputMode="decimal"` has no `−` key on iOS → `type="text"` + `+/−` toggle buttons |
 
 ---
 
@@ -259,6 +285,8 @@ Koda.tsx is ~4100 lines. OneDrive can truncate large writes. Use Edit tool for t
 | `20260524_user_kv_rls.sql` | user_kv RLS hardening + shared_kv owner_id NOT NULL | ✅ |
 | `20260531_circle_messages_realtime.sql` | circle_messages → REPLICA IDENTITY FULL + supabase_realtime | ✅ |
 | `20260531_fix_rate_limit_owner_id.sql` | Fix rate limit to use sentinel owner_id | ✅ |
+| `20260601_notification_subscriptions.sql` | `notification_subscriptions` table (created manually in SQL Editor) | ✅ |
+| `20260601_announcements.sql` | `announcements` table + RLS (see NEXT_SESSION.md §2A — **run if not done**) | ⚠️ pending |
 
 ---
 
@@ -284,7 +312,7 @@ Koda.tsx is ~4100 lines. OneDrive can truncate large writes. Use Edit tool for t
 - [ ] TradingView chart embed on trade detail
 
 **Other**
-- [ ] Push notifications for circle activity
+- [x] Push notifications for circle activity ✅ shipped 2026-06-01
 - [ ] Google OAuth (wired, not configured in Supabase — remove button or configure)
 - [ ] Multiple accounts (prop eval 1, prop eval 2, personal)
 - [ ] Rithmic / NinjaTrader 8 / TopstepX live API connections

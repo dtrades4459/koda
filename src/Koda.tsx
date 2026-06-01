@@ -48,6 +48,8 @@ import { ConfluenceTracker } from "./components/ConfluenceTracker";
 import { FirstSessionSurvey } from "./components/FirstSessionSurvey";
 import { LoadingSplash } from "./components/LoadingSplash";
 import { OfflineBanner } from "./components/OfflineBanner";
+import { HomeNewsWidget } from "./components/HomeNewsWidget";
+import { NewsScreen } from "./NewsScreen";
 
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
 
@@ -72,7 +74,7 @@ const DEF_PROFILE: Profile = {
 };
 const OUTCOMES = ["Win","Loss","Breakeven"];
 const REACTIONS = ["FIRE","GEM","UP","TARGET","PAIN","MIND"];
-const TABS = ["home","stats","circles"];
+const TABS = ["home","news","stats","circles"];
 const STREAK_MILESTONES = [3, 7, 14, 30, 100];
 const STREAK_FLAVOUR: Record<number, string> = {
   3: "Three days of discipline.",
@@ -1360,6 +1362,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
 
   const NAV_TABS = [
     { id: "home",    label: "Home",    path: "M3 10l7-7 7 7v8a1 1 0 01-1 1H4a1 1 0 01-1-1z" },
+    { id: "news",    label: "News",    path: "M3 4h14v12H3zM6 7h8M6 10h8M6 13h5" },
     { id: "stats",   label: "Stats",   path: "M3 16V9M9 16V3M15 16v-5M18 16H2" },
     { id: "circles", label: "Circles", path: "M5 8a3 3 0 1 1 6 0 3 3 0 0 1-6 0zM12.5 11a3 3 0 0 1 4.5 2.5M3 17c0-2.5 2-3.8 5-3.8s5 1.3 5 3.8" },
   ];
@@ -1678,6 +1681,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
               {/* FEED */}
               {homeSection === "feed" && (
                 <div>
+                  <HomeNewsWidget C={C} onOpenNews={() => primaryNav("news")} />
                   {announcement && announcement.id !== announcementDismissedId && (
                     <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", background: `color-mix(in oklch, ${C.accent ?? "#60a5fa"} 8%, ${C.panel})`, border: `1px solid color-mix(in oklch, ${C.accent ?? "#60a5fa"} 25%, transparent)`, borderRadius: "12px", padding: "14px 16px", marginBottom: "16px" }}>
                       <div style={{ flex: 1 }}>
@@ -2676,7 +2680,13 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                   onPlanRefreshed={() => { void loadAll(); }}
                 />
               )}
+
             </div>
+          )}
+
+          {/* ══════════════════════════ NEWS ══════════════════════════ */}
+          {view === "news" && (
+            <NewsScreen C={C} />
           )}
 
           {/* ══════════════════════════ REVIEW INBOX ══════════════════════ */}
