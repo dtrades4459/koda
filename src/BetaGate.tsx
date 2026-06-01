@@ -84,6 +84,10 @@ export function BetaGate({ onUnlocked }: BetaGateProps) {
   const [loading,  setLoading]  = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
 
+  const [wlEmail,   setWlEmail]   = useState("");
+  const [wlLoading, setWlLoading] = useState(false);
+  const [wlResult,  setWlResult]  = useState<{ position: number; existing?: boolean } | "error" | null>(null);
+
   if (showWelcome) {
     return <BetaWelcome onClose={onUnlocked} />;
   }
@@ -118,6 +122,28 @@ export function BetaGate({ onUnlocked }: BetaGateProps) {
   function onKey(e: React.KeyboardEvent) {
     if (e.key === "Enter") attempt();
     if (error) setError(false);
+  }
+
+  async function joinWaitlist() {
+    if (!wlEmail.trim() || wlLoading) return;
+    setWlLoading(true);
+    try {
+      const res = await fetch("/api/waitlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: wlEmail.trim() }),
+      });
+      const json = await res.json();
+      if (res.ok || res.status === 409) {
+        setWlResult({ position: json.position, existing: json.existing });
+      } else {
+        setWlResult("error");
+      }
+    } catch {
+      setWlResult("error");
+    } finally {
+      setWlLoading(false);
+    }
   }
 
   return (
@@ -317,19 +343,79 @@ export function BetaGate({ onUnlocked }: BetaGateProps) {
           ))}
         </div>
 
-        {/* Footer */}
-        <div style={{
-          marginTop: 32,
-          fontFamily: MONO, fontSize: 10,
-          color: DIM, letterSpacing: "0.06em",
-        }}>
-          No code? DM{" "}
-          <a
-            href="https://instagram.com/dylon.trades"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ color: MINT, textDecoration: "none" }}
-          >@dylon.trades</a>{" "}on Instagram
+        {/* Waitlist */}
+        <div style={{ marginTop: 32 }}>
+          <div style={{
+            fontFamily: MONO, fontSize: 10, color: MUTED,
+            letterSpacing: "0.08em", textTransform: "uppercase" as const,
+            marginBottom: 10,
+          }}>
+            No invite code?
+          </div>
+
+          {wlResult === null || wlResult === "error" ? (
+            <>
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <input
+                  type="email"
+                  placeholder="your@email.com"
+                  value={wlEmail}
+                  disabled={wlLoading}
+                  onChange={e => { setWlEmail(e.target.value); if (wlResult === "error") setWlResult(null); }}
+                  onKeyDown={e => { if (e.key === "Enter") joinWaitlist(); }}
+                  style={{
+                    flex: 1,
+                    background: "transparent",
+                    border: "none",
+                    borderBottom: `1px solid ${wlResult === "error" ? RED : BORDER2}`,
+                    borderRadius: 0,
+                    color: TEXT,
+                    padding: "10px 0",
+                    fontSize: 13,
+                    outline: "none",
+                    fontFamily: BODY,
+                    letterSpacing: "0.02em",
+                    transition: "border-color 0.15s",
+                  }}
+                />
+                <button
+                  onClick={joinWaitlist}
+                  disabled={!wlEmail.trim() || wlLoading}
+                  style={{
+                    background: "transparent",
+                    border: `1px solid ${BORDER2}`,
+                    borderRadius: 999,
+                    color: wlEmail.trim() && !wlLoading ? TEXT : MUTED,
+                    padding: "8px 14px",
+                    fontSize: 12,
+                    fontWeight: 500,
+                    fontFamily: BODY,
+                    cursor: wlEmail.trim() && !wlLoading ? "pointer" : "not-allowed",
+                    whiteSpace: "nowrap" as const,
+                    transition: "color 0.15s",
+                  }}
+                >
+                  {wlLoading ? "Joining…" : "Join waitlist →"}
+                </button>
+              </div>
+              {wlResult === "error" && (
+                <div style={{ fontFamily: MONO, fontSize: 11, color: RED, marginTop: 8, letterSpacing: "0.04em" }}>
+                  Something went wrong — try again
+                </div>
+              )}
+            </>
+          ) : (
+            <div>
+              <div style={{ fontFamily: BODY, fontSize: 20, fontWeight: 700, color: MINT, letterSpacing: "-0.02em" }}>
+                {wlResult.existing
+                  ? `You're already on the list (#${wlResult.position}).`
+                  : `You're #${wlResult.position} on the list.`}
+              </div>
+              <div style={{ fontFamily: BODY, fontSize: 12, color: TEXT2, marginTop: 6 }}>
+                We'll email you when access opens.
+              </div>
+            </div>
+          )}
         </div>
 
       </div>
