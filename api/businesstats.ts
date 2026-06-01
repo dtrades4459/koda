@@ -8,6 +8,7 @@ import { isAuthorized, getChatId, type TelegramUpdate } from './lib/telegram/aut
 import { b } from './lib/telegram/format.js';
 import { getUserMetrics, formatUserMetrics } from './lib/metrics/users.js';
 import { getTradeMetrics, formatTradeMetrics } from './lib/metrics/trades.js';
+import { getRevenueMetrics, formatRevenueMetrics } from './lib/metrics/revenue.js';
 
 const TOKEN  = process.env.TELEGRAM_BUSINESSTATS_TOKEN!;
 const SECRET = process.env.TELEGRAM_BUSINESSTATS_SECRET!;
@@ -88,6 +89,12 @@ export default async function handler(req: Req, res: Res) {
         await sendMessage(chatId, '⏳ Fetching...');
         const m = await getTradeMetrics();
         await sendMessage(chatId, formatTradeMetrics(m));
+        break;
+      }
+      case '/revenue': {
+        await sendMessage(chatId, '⏳ Fetching...');
+        const m = await getRevenueMetrics();
+        await sendMessage(chatId, formatRevenueMetrics(m));
         break;
       }
       // Further commands added in subsequent tasks
