@@ -24,11 +24,14 @@ jobs:
       - name: Trigger news-calendar (manual dispatch only)
         if: github.event_name == 'workflow_dispatch'
         run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+          RESP=$(curl -s -w "\n__STATUS__:%{http_code}" \
             -X GET "https://www.kodatrade.co.uk/api/cron?job=news-calendar" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
             --max-time 60)
-          echo "news-calendar response: $STATUS"
+          STATUS="${RESP##*__STATUS__:}"
+          BODY="${RESP%__STATUS__:*}"
+          echo "news-calendar status: $STATUS"
+          echo "news-calendar body: $BODY"
           if [ "$STATUS" -lt 200 ] || [ "$STATUS" -ge 300 ]; then
             echo "news-calendar returned $STATUS — failing the job"
             exit 1
@@ -36,11 +39,14 @@ jobs:
 
       - name: Trigger news-headlines refresh
         run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+          RESP=$(curl -s -w "\n__STATUS__:%{http_code}" \
             -X GET "https://www.kodatrade.co.uk/api/cron?job=news-headlines" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
             --max-time 60)
-          echo "news-headlines response: $STATUS"
+          STATUS="${RESP##*__STATUS__:}"
+          BODY="${RESP%__STATUS__:*}"
+          echo "news-headlines status: $STATUS"
+          echo "news-headlines body: $BODY"
           if [ "$STATUS" -lt 200 ] || [ "$STATUS" -ge 300 ]; then
             echo "news-headlines returned $STATUS — failing the job"
             exit 1
