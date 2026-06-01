@@ -1,11 +1,13 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 // Kōda · useNews()
 //
-// Reads the two news cache rows from window.storage (shared_kv), parses them
-// defensively, and re-fetches when the window regains focus. No polling.
+// Reads the two news cache rows from public.news_cache (public-readable table),
+// parses them defensively, and re-fetches when the window regains focus.
+// No polling.
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { useCallback, useEffect, useState } from "react";
+import { supabase } from "../lib/supabase";
 import {
   parseCalendarCache,
   parseHeadlinesCache,
@@ -14,25 +16,18 @@ import {
   type NewsCache,
 } from "../lib/news";
 
-type StorageRow = { value: string } | null;
-type StorageShim = { get: (key: string, shared?: boolean) => Promise<StorageRow> };
-
-function getStorage(): StorageShim | null {
-  const w = window as unknown as { storage?: StorageShim };
-  return w.storage ?? null;
-}
-
 async function readCache<T>(
   key: string,
   parser: (raw: unknown) => NewsCache<T> | null,
 ): Promise<NewsCache<T> | null> {
-  const storage = getStorage();
-  if (!storage) return null;
   try {
-    const row = await storage.get(key, true);
-    if (!row) return null;
-    const parsed: unknown = JSON.parse(row.value);
-    return parser(parsed);
+    const { data, error } = await supabase
+      .from("news_cache")
+      .select("value")
+      .eq("key", key)
+      .maybeSingle();
+    if (error || !data) return null;
+    return parser(data.value);
   } catch {
     return null;
   }

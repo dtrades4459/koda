@@ -1,14 +1,11 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { DARK } from "../theme";
-import { HomeNewsWidget } from "./HomeNewsWidget";
-
-type StorageRow = { value: string } | null;
 
 const tomorrowIso = new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString();
 
-const calendarValue = JSON.stringify({
+const calendarValue = {
   fetched_at: new Date().toISOString(),
   events: [
     {
@@ -22,20 +19,28 @@ const calendarValue = JSON.stringify({
       actual: null,
     },
   ],
-});
+};
 
-function mockStorage(rows: Record<string, StorageRow>) {
-  (window as unknown as { storage: { get: (k: string) => Promise<StorageRow> } }).storage = {
-    get: vi.fn(async (key: string) => rows[key] ?? null),
-  };
-}
+interface Row { value: unknown }
+let rows: Record<string, Row | null> = {};
+
+vi.mock("../lib/supabase", () => ({
+  supabase: {
+    from: (_table: string) => ({
+      select: (_cols: string) => ({
+        eq: (_col: string, key: string) => ({
+          maybeSingle: async () => ({ data: rows[key] ?? null, error: null }),
+        }),
+      }),
+    }),
+  },
+}));
+
+import { HomeNewsWidget } from "./HomeNewsWidget";
 
 describe("HomeNewsWidget", () => {
   beforeEach(() => {
-    mockStorage({ koda_news_calendar: { value: calendarValue } });
-  });
-  afterEach(() => {
-    delete (window as unknown as { storage?: unknown }).storage;
+    rows = { koda_news_calendar: { value: calendarValue } };
   });
 
   it("shows the next high-impact event with title and label", async () => {
@@ -54,10 +59,8 @@ describe("HomeNewsWidget", () => {
   });
 
   it("renders empty state when no events cached", async () => {
-    mockStorage({});
+    rows = {};
     render(<HomeNewsWidget C={DARK} onOpenNews={() => {}} />);
-    expect(
-      await screen.findByText(/News loading/i),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/News loading/i)).toBeInTheDocument();
   });
 });

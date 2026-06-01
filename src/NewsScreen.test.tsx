@@ -1,10 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { DARK } from "./theme";
-import { NewsScreen } from "./NewsScreen";
-
-type StorageRow = { value: string } | null;
 
 const today = new Date();
 function isoAtHour(hour: number): string {
@@ -13,7 +10,7 @@ function isoAtHour(hour: number): string {
   return d.toISOString();
 }
 
-const calendarValue = JSON.stringify({
+const calendarValue = {
   fetched_at: new Date().toISOString(),
   events: [
     {
@@ -47,9 +44,9 @@ const calendarValue = JSON.stringify({
       actual: null,
     },
   ],
-});
+};
 
-const headlinesValue = JSON.stringify({
+const headlinesValue = {
   fetched_at: new Date().toISOString(),
   articles: [
     {
@@ -61,23 +58,31 @@ const headlinesValue = JSON.stringify({
       snippet: null,
     },
   ],
-});
+};
 
-function mockStorage(rows: Record<string, StorageRow>) {
-  (window as unknown as { storage: { get: (k: string) => Promise<StorageRow> } }).storage = {
-    get: vi.fn(async (key: string) => rows[key] ?? null),
-  };
-}
+interface Row { value: unknown }
+let rows: Record<string, Row | null> = {};
+
+vi.mock("./lib/supabase", () => ({
+  supabase: {
+    from: (_table: string) => ({
+      select: (_cols: string) => ({
+        eq: (_col: string, key: string) => ({
+          maybeSingle: async () => ({ data: rows[key] ?? null, error: null }),
+        }),
+      }),
+    }),
+  },
+}));
+
+import { NewsScreen } from "./NewsScreen";
 
 describe("NewsScreen", () => {
   beforeEach(() => {
-    mockStorage({
+    rows = {
       koda_news_calendar:  { value: calendarValue },
       koda_news_headlines: { value: headlinesValue },
-    });
-  });
-  afterEach(() => {
-    delete (window as unknown as { storage?: unknown }).storage;
+    };
   });
 
   it("renders today's events by default and hides next week", async () => {

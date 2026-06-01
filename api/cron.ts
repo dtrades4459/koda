@@ -515,7 +515,6 @@ async function handleSync(req: Req, res: Res) {
 // ══════════════════════════════════════════════════════════════════════════════
 
 const FF_URL = "https://nfs.faireconomy.media/ff_calendar_thisweek.json";
-const NEWS_OWNER_ID = "00000000-0000-0000-0000-000000000000";
 
 type FFEvent = {
   title?: string;
@@ -583,10 +582,10 @@ async function handleNewsCalendar(req: Req, res: Res) {
 
     const admin = getAdminClient();
     const value = { fetched_at: new Date().toISOString(), events };
-    const { error } = await admin.from("shared_kv").upsert({
+    const { error } = await admin.from("news_cache").upsert({
       key: "koda_news_calendar",
       value,
-      owner_id: NEWS_OWNER_ID,
+      updated_at: new Date().toISOString(),
     });
     if (error) {
       console.error("[news-calendar] upsert error:", error);
@@ -670,10 +669,10 @@ async function handleNewsHeadlines(req: Req, res: Res) {
 
     const admin = getAdminClient();
     const value = { fetched_at: new Date().toISOString(), articles };
-    const { error } = await admin.from("shared_kv").upsert({
+    const { error } = await admin.from("news_cache").upsert({
       key: "koda_news_headlines",
       value,
-      owner_id: NEWS_OWNER_ID,
+      updated_at: new Date().toISOString(),
     });
     if (error) {
       console.error("[news-headlines] upsert error:", error);

@@ -1,10 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
-import { useNews } from "./useNews";
 
-type StorageRow = { value: string } | null;
-
-const calendarValue = JSON.stringify({
+const calendarValue = {
   fetched_at: "2026-06-01T11:00:00.000Z",
   events: [
     {
@@ -18,9 +15,9 @@ const calendarValue = JSON.stringify({
       actual: null,
     },
   ],
-});
+};
 
-const headlinesValue = JSON.stringify({
+const headlinesValue = {
   fetched_at: "2026-06-01T11:30:00.000Z",
   articles: [
     {
@@ -32,23 +29,31 @@ const headlinesValue = JSON.stringify({
       snippet: null,
     },
   ],
-});
+};
 
-function mockStorage(rows: Record<string, StorageRow>) {
-  (window as unknown as { storage: { get: (k: string) => Promise<StorageRow> } }).storage = {
-    get: vi.fn(async (key: string) => rows[key] ?? null),
-  };
-}
+interface Row { value: unknown }
+let rows: Record<string, Row | null> = {};
+
+vi.mock("../lib/supabase", () => ({
+  supabase: {
+    from: (_table: string) => ({
+      select: (_cols: string) => ({
+        eq: (_col: string, key: string) => ({
+          maybeSingle: async () => ({ data: rows[key] ?? null, error: null }),
+        }),
+      }),
+    }),
+  },
+}));
+
+import { useNews } from "./useNews";
 
 describe("useNews", () => {
   beforeEach(() => {
-    mockStorage({
+    rows = {
       koda_news_calendar:  { value: calendarValue },
       koda_news_headlines: { value: headlinesValue },
-    });
-  });
-  afterEach(() => {
-    delete (window as unknown as { storage?: unknown }).storage;
+    };
   });
 
   it("loads and parses both caches", async () => {
@@ -58,19 +63,19 @@ describe("useNews", () => {
     expect(result.current.headlines?.items[0].source).toBe("Reuters");
   });
 
-  it("returns null caches when storage rows are missing", async () => {
-    mockStorage({});
+  it("returns null caches when rows are missing", async () => {
+    rows = {};
     const { result } = renderHook(() => useNews());
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.calendar).toBeNull();
     expect(result.current.headlines).toBeNull();
   });
 
-  it("returns null when stored value is malformed JSON", async () => {
-    mockStorage({
-      koda_news_calendar:  { value: "{not json" },
-      koda_news_headlines: { value: "{not json" },
-    });
+  it("returns null when stored value is malformed", async () => {
+    rows = {
+      koda_news_calendar:  { value: { unrelated: "shape" } },
+      koda_news_headlines: { value: 42 },
+    };
     const { result } = renderHook(() => useNews());
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.calendar).toBeNull();
