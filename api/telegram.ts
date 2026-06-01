@@ -11,7 +11,12 @@ type VercelResponse = { status(n: number): VercelResponse; json(d: unknown): Ver
 import { createClient } from "@supabase/supabase-js";
 import webpush from "web-push";
 
-const ADMIN_TELEGRAM_ID = 7587404723;
+const ADMIN_IDS = new Set(
+  (process.env.TELEGRAM_ALLOWED_USER_IDS ?? '7587404723')
+    .split(',')
+    .map(s => parseInt(s.trim(), 10))
+    .filter(n => !isNaN(n))
+);
 
 const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 
@@ -70,7 +75,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     message?: { from?: { id: number }; chat: { id: number }; text?: string };
   };
   const msg = update.message;
-  if (!msg?.text || msg.from?.id !== ADMIN_TELEGRAM_ID) return res.status(200).json({ ok: true });
+  if (!msg?.text || !ADMIN_IDS.has(msg.from?.id ?? 0)) return res.status(200).json({ ok: true });
 
   const text = msg.text.trim();
   const chatId = msg.chat.id;
