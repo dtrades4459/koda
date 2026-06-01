@@ -19,17 +19,17 @@ describe('getPostHogMetrics', () => {
   it('returns DAU, WAU, and summed event counts', async () => {
     process.env.POSTHOG_PERSONAL_API_KEY = 'phx_test';
     process.env.POSTHOG_PROJECT_ID       = '12345';
-    process.env.VITE_POSTHOG_HOST        = 'https://eu.posthog.com';
+    process.env.POSTHOG_HOST             = 'https://eu.posthog.com';
 
     // DAU response
-    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ result: [{ data: [3, 5], days: ['2026-05-31', '2026-06-01'] }] }) });
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ results: [{ data: [3, 5] }] }) });
     // WAU response
-    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ result: [{ data: [23], days: ['2026-05-26'] }] }) });
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ results: [{ data: [23] }] }) });
     // Events response
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({
-        result: [
+        results: [
           { action: { name: 'trade_logged' }, data: [10, 8, 9] },
           { action: { name: 'user_signed_up' }, data: [2, 1, 3] },
         ],

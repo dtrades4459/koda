@@ -11,44 +11,47 @@ export async function getPostHogMetrics(): Promise<PostHogMetrics | null> {
   const projectId = process.env.POSTHOG_PROJECT_ID;
   if (!apiKey || !projectId) return null;
 
-  const host    = (process.env.VITE_POSTHOG_HOST ?? 'https://us.posthog.com').replace(/\/$/, '');
+  const host    = (process.env.POSTHOG_HOST ?? 'https://us.posthog.com').replace(/\/$/, '');
   const headers = { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' };
 
-  async function trend(body: object) {
-    const res = await fetch(`${host}/api/projects/${projectId}/insights/trend/`, {
-      method: 'POST', headers, body: JSON.stringify(body),
+  async function trend(series: object[], dateFrom: string, interval: string) {
+    const res = await fetch(`${host}/api/projects/${projectId}/query/`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        query: {
+          kind: 'TrendsQuery',
+          series: (series as Record<string, unknown>[]).map(s => ({ kind: 'EventsNode', ...s })),
+          dateRange: { date_from: dateFrom },
+          interval,
+        },
+      }),
     });
-    if (!res.ok) throw new Error(`PostHog trend ${res.status}`);
-    return (await res.json()) as { result: { data: number[]; action?: { name: string } }[] };
+    if (!res.ok) throw new Error(`PostHog query ${res.status}`);
+    return (await res.json()) as { results: { data: number[]; action?: { name: string } }[] };
   }
 
   try {
-    const pageviewDau = { id: '$pageview', math: 'dau', type: 'events' };
-
     const [dauRes, wauRes, eventsRes] = await Promise.all([
-      trend({ events: [pageviewDau], date_from: '-1d', interval: 'day' }),
-      trend({ events: [pageviewDau], date_from: '-7d', interval: 'week' }),
-      trend({
-        events: [
-          { id: 'trade_logged',   math: 'total', type: 'events' },
-          { id: 'user_signed_up', math: 'total', type: 'events' },
-          { id: '$pageview',      math: 'total', type: 'events' },
-        ],
-        date_from: '-7d',
-        interval:  'day',
-      }),
+      trend([{ event: '$pageview', math: 'dau' }], '-1d', 'day'),
+      trend([{ event: '$pageview', math: 'dau' }], '-7d', 'week'),
+      trend([
+        { event: 'trade_logged',   math: 'total' },
+        { event: 'user_signed_up', math: 'total' },
+        { event: '$pageview',      math: 'total' },
+      ], '-7d', 'day'),
     ]);
 
     const lastOf = (arr: number[]) => arr.at(-1) ?? 0;
     const sumOf  = (arr: number[]) => arr.reduce((a, n) => a + n, 0);
 
-    const topEvents = eventsRes.result
+    const topEvents = eventsRes.results
       .map(r => ({ name: r.action?.name ?? 'unknown', count: sumOf(r.data) }))
       .sort((a, z) => z.count - a.count);
 
     return {
-      dau:       lastOf(dauRes.result[0]?.data ?? []),
-      wau:       lastOf(wauRes.result[0]?.data ?? []),
+      dau:       lastOf(dauRes.results[0]?.data ?? []),
+      wau:       lastOf(wauRes.results[0]?.data ?? []),
       topEvents,
     };
   } catch (err) {
