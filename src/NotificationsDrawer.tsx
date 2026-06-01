@@ -12,6 +12,7 @@
 
 import { useEffect, useRef } from "react";
 import type { Theme } from "./theme";
+import type { Circle } from "./types";
 import { MONO, BODY, DISPLAY, Kicker } from "./shared";
 
 interface Props {
@@ -19,10 +20,13 @@ interface Props {
   onClose: () => void;
   draftCount: number;
   onOpenInbox: () => void;
+  unreadMsgs: Record<string, number>;
+  circles: Circle[];
+  onOpenCircles: () => void;
   C: Theme;
 }
 
-export default function NotificationsDrawer({ open, onClose, draftCount, onOpenInbox, C }: Props) {
+export default function NotificationsDrawer({ open, onClose, draftCount, onOpenInbox, unreadMsgs, circles, onOpenCircles, C }: Props) {
   const ref = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -49,7 +53,8 @@ export default function NotificationsDrawer({ open, onClose, draftCount, onOpenI
 
   if (!open) return null;
 
-  const total = draftCount;
+  const unreadCircles = circles.filter(c => (unreadMsgs[c.code] || 0) > 0);
+  const total = draftCount + unreadCircles.length;
 
   return (
     <div
@@ -103,6 +108,21 @@ export default function NotificationsDrawer({ open, onClose, draftCount, onOpenI
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {unreadCircles.map(circle => {
+            const count = unreadMsgs[circle.code] || 0;
+            return (
+              <NotificationCard
+                key={circle.code}
+                C={C}
+                accent={C.accent ?? "#60a5fa"}
+                kicker={`${circle.emoji ?? "◆"} ${circle.name}`}
+                title={`${count} new message${count !== 1 ? "s" : ""}`}
+                body="New activity in your circle."
+                ctaLabel="View →"
+                onCta={onOpenCircles}
+              />
+            );
+          })}
           {draftCount > 0 && (
             <NotificationCard
               C={C}

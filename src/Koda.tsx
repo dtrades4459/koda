@@ -92,6 +92,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   const [trades, setTrades] = useState<Trade[]>([]);
   const [draftCount, setDraftCount] = useState(0);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [unreadMsgs, setUnreadMsgs] = useState<Record<string, number>>({});
   const [view, setView] = useState("home");
   const [viewHistory, setViewHistory] = useState<string[]>([]);
 
@@ -731,6 +732,31 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     kodaGlobalBackfillRef.current = profile.uid;
     joinCircleByCode(KODA_GLOBAL_CODE).catch(() => {});
   }, [loading, profile.uid, myCircles, joinCircleByCode, saveMyCircles]);
+
+  // Global circle-message listener — tracks unread counts across all joined
+  // circles while the user is anywhere in the app, not just in the Circles tab.
+  useEffect(() => {
+    if (loading || !profile.uid || myCircles.length === 0) return;
+    const channels = myCircles.map((circle: Circle) =>
+      supabase
+        .channel(`notif_chat_${circle.code}`)
+        .on("postgres_changes" as Parameters<ReturnType<typeof supabase.channel>["on"]>[0], {
+          event: "INSERT", schema: "public",
+          table: "circle_messages",
+          filter: `circle_code=eq.${circle.code}`,
+        }, (payload: { new: { sender_id?: string } }) => {
+          if (payload.new.sender_id === profile.uid) return;
+          setUnreadMsgs(prev => ({ ...prev, [circle.code]: (prev[circle.code] || 0) + 1 }));
+        })
+        .subscribe()
+    );
+    return () => { channels.forEach(ch => supabase.removeChannel(ch)); };
+  }, [loading, profile.uid, myCircles]);
+
+  // Clear unread counts when the user navigates to the Circles tab.
+  useEffect(() => {
+    if (view === "circles") setUnreadMsgs({});
+  }, [view]);
 
   async function handleCsvImport(newTrades: Trade[]) {
     if (!newTrades.length) { setShowCsvImport(false); return; }
@@ -1534,15 +1560,26 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
             )}
             {/* Right: bell + avatar (design spec) */}
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <div style={{ position: "relative" }}>
-                <IconButton C={C} icon="bell" onClick={() => setNotificationsOpen(o => !o)} label="Notifications" />
-                {draftCount > 0 && (
-                  <span aria-hidden style={{
-                    position: "absolute", top: 6, right: 6, width: 9, height: 9, borderRadius: 999,
-                    background: C.green ?? "#22c55e", border: `2px solid ${C.bg}`, pointerEvents: "none",
-                  }} />
-                )}
-              </div>
+              {(() => {
+                const totalUnread = draftCount + Object.values(unreadMsgs).reduce((a, b) => a + b, 0);
+                return (
+                  <div style={{ position: "relative" }}>
+                    <IconButton C={C} icon="bell" onClick={() => setNotificationsOpen(o => !o)} label="Notifications" />
+                    {totalUnread > 0 && (
+                      <span aria-hidden style={{
+                        position: "absolute", top: 4, right: 4,
+                        minWidth: 16, height: 16, borderRadius: 999,
+                        background: C.green ?? "#22c55e", border: `2px solid ${C.bg}`,
+                        pointerEvents: "none", display: "flex", alignItems: "center", justifyContent: "center",
+                        fontFamily: "monospace", fontSize: 9, fontWeight: 700, color: "#0A0A0A",
+                        padding: "0 3px",
+                      }}>
+                        {totalUnread > 99 ? "99+" : totalUnread}
+                      </span>
+                    )}
+                  </div>
+                );
+              })()}
               <button
                 onClick={() => { setView("home"); setHomeSection("settings"); }}
                 style={{ width: 36, height: 36, borderRadius: 999, background: `linear-gradient(135deg, ${C.orb1}, ${C.orb2})`, border: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontFamily: DISPLAY, fontWeight: 600, fontSize: 12, letterSpacing: "0.04em", cursor: "pointer", padding: 0 }}
@@ -4072,6 +4109,9 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
           onClose={() => setNotificationsOpen(false)}
           draftCount={draftCount}
           onOpenInbox={() => navigateTo("inbox")}
+          unreadMsgs={unreadMsgs}
+          circles={myCircles}
+          onOpenCircles={() => { setNotificationsOpen(false); navigateTo("circles"); }}
           C={C}
         />
         {toast && <Toast message={toast} onDone={() => setToast(null)} C={C} />}
