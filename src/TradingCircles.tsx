@@ -8,7 +8,19 @@ import { fetchSharedTrades, reactToSharedTrade, rowToSharedTrade } from "./data/
 import { SharedTradeCard } from "./components/SharedTradeCard";
 import type { CircleChallenge, ChallengeResult, FeedItem, CircleMessage, CircleMember } from "./types";
 
-export function TradingCircles({ myCircles, circlesView, setCirclesView, activeCircle, setActiveCircle, circleForm, setCircleForm, circleJoinCode, setCircleJoinCode, circleMsg, setCircleMsg, createCircle, joinCircle, publishToCircle, fetchCircleLeaderboard, profile, getMyCode, showToast, wins, losses, total, winRate, totalPnL, pnlPos, weekPnL, weekPnLPos, weekPnLStr, avgRR, streak, STRATEGY_NAMES, C, inp, sel, lbl, pillPrimary, pillGhost, following, followUser, unfollowUser, kickMember, leaveCircle, openProfile, isJoiningCircle, isCreatingCircle, totalPnlDollar, hasDollarData }: any) {
+export function TradingCircles({
+  myCircles, circlesView, setCirclesView, activeCircle, setActiveCircle,
+  circleForm, setCircleForm, circleJoinCode, setCircleJoinCode,
+  circleMsg, setCircleMsg, createCircle, joinCircle, publishToCircle,
+  fetchCircleLeaderboard, profile, getMyCode, showToast,
+  wins, losses, total, winRate, totalPnL, pnlPos,
+  weekPnL, weekPnLPos, weekPnLStr, avgRR, streak,
+  STRATEGY_NAMES, C, inp, sel, lbl, pillPrimary, pillGhost,
+  following, followUser, unfollowUser, kickMember, leaveCircle,
+  openProfile, isJoiningCircle, isCreatingCircle,
+  totalPnlDollar, hasDollarData, isPro,
+}:
+any) {
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [lbSort, setLbSort] = useState<"all" | "week">("all");
   const [loadingLB, setLoadingLB] = useState(false);
@@ -1076,8 +1088,8 @@ export function TradingCircles({ myCircles, circlesView, setCirclesView, activeC
                   <div style={{ fontFamily: MONO, fontSize: 11, color: C.muted, textAlign: "center", padding: 24 }}>Loading…</div>
                 )}
 
-                {/* Start Challenge \u2014 Pro owners only, no active challenge running */}
-                {activeCircle?.isOwner && isPro && !activeChallenge && (
+                {/* Start Challenge \u2014 Pro owners only, or K\u014dda admin in K\u014dda Global */}
+                {(activeCircle?.isOwner || (activeCircle?.code === KODA_GLOBAL_CODE && !!import.meta.env.VITE_KODA_ADMIN_UID && profile?.uid === import.meta.env.VITE_KODA_ADMIN_UID)) && isPro && !activeChallenge && (
                   <button
                     onClick={() => setShowChallengeSheet(true)}
                     style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 13px", background: C.panel, border: `1px solid ${C.border}`, borderRadius: 9, cursor: "pointer", marginBottom: 4, width: "100%" }}

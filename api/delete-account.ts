@@ -127,7 +127,7 @@ export default async function handler(req: Req, res: Res) {
     { name: "broker_connections", table: "broker_connections", col: "user_id" },
     { name: "sync_events",        table: "sync_events",        col: "user_id" },
     { name: "trades",             table: "trades",              col: "user_id" },
-    { name: "profiles",           table: "profiles",            col: "id"      },
+    { name: "profiles",           table: "profiles",            col: "user_id" },
     { name: "user_kv",            table: "user_kv",             col: "user_id" },
   ];
 

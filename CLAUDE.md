@@ -6,64 +6,43 @@
 
 ## Operating Rules
 
-These rules apply to every task in this repo.
-
 ### Rule 1 — Plan before code
 - Never touch a file before writing a plan.
 - Output the plan as a numbered checklist: files to touch, what changes in each, what could break, how you'll verify.
-- If anything unexpected happens mid-execution (failed test, wrong assumption, scope creep, surprising file state), STOP. Do not "push through." Re-plan from the new reality and show me the revised plan before continuing.
+- If anything unexpected happens mid-execution, STOP. Re-plan and show the revised plan before continuing.
 
 ### Rule 2 — Offload hard problems to sub-agents
-- For any task with multiple independent parts (refactor + tests + docs, multi-file investigation, parallel searches), spawn sub-agents via the Task tool.
-- Keep the main context clean: sub-agents do the deep digging and return summaries.
-- Main thread = orchestration and decisions only.
+- For any task with multiple independent parts, spawn sub-agents via the Agent tool.
+- Keep the main context clean. Sub-agents do deep digging and return summaries.
 
-### Rule 3 — Self-improvement loop
-- Every lesson learned (mistake made, wrong assumption corrected, surprising codebase behavior, user correction) gets appended to `tasks/lessons.md` as a rule.
-- Format: `- [YYYY-MM-DD] [category] Rule in imperative form.`
-- Before starting any task, read `tasks/lessons.md` and apply any relevant rules.
-- If a lesson contradicts a rule here, flag it — do not silently override.
-
-### Rule 4 — Prove it works
-- Nothing is marked done until:
-  1. Relevant tests run and pass (or new tests added if none existed).
-  2. Logs checked — no new errors or warnings introduced.
-  3. The change is verified end-to-end in the actual flow it affects, not just in isolation.
+### Rule 3 — Prove it works
+- Nothing is marked done until logs are checked and the change is verified end-to-end.
 - "It should work" is not done. "I ran it and here's the output" is done.
 
-### Rule 5 — Autonomous bug fixing
-- When a bug is presented:
-  1. Reproduce it first. Don't trust the description — confirm the symptom.
-  2. Go to the logs. Find the actual stack trace or error.
-  3. Trace to root cause — not the first plausible suspect, the actual cause.
-  4. Fix the root cause, not the symptom.
-  5. Add a test or log assertion that would have caught it.
-  6. Verify per Rule 4.
-- Do not ask permission to investigate. Investigate, then propose the fix.
-
----
+### Rule 4 — Autonomous bug fixing
+- Reproduce first. Go to logs. Trace to root cause, not first suspect. Fix root cause, not symptom.
 
 ---
 
 ## What Kōda is
 
-A trading journal PWA for retail traders. Users log trades, track stats (P&L, win rate, avg R), follow friends, and compete in Trading Circles. Built for mobile-first, installable as a home screen app on iOS and Android.
+A trading journal PWA for retail futures traders. Log trades, track stats (P&L, win rate, avg R), follow friends, and compete in Trading Circles. Mobile-first, installable as a home screen app on iOS/Android.
 
-**Live URL:** https://kodatrade.co.uk and https://www.kodatrade.co.uk (custom domain via GoDaddy → Vercel)
-**Vercel project:** tradr.dt (dylnyland4459-1994s-projects)
-**Supabase project ID:** vifwjwsndchnrpvfgrmg
-**GitHub:** public repo, auto-deploys to Vercel on push to main
+**Live URLs:** https://tradrjournal.xyz · https://kodatrade.co.uk (GoDaddy → Vercel)
+**Vercel project:** `tradr.dt` (account: `dylnyland4459-1994`)
+**Supabase project ID:** `vifwjwsndchnrpvfgrmg`
+**No git repo** — deploys are done directly via `vercel --prod` CLI from `C:\Users\Dylon\OneDrive\Desktop\koda`
 
 ---
 
 ## Stack
 
-- React 19 + TypeScript + Vite
-- Supabase (auth + KV tables + v2 relational schema)
+- React 19 + TypeScript + Vite (PWA via vite-plugin-pwa)
+- Supabase (auth + KV tables + v2 relational schema + Realtime)
 - Vercel (hosting + serverless functions in `api/` + Vercel Cron nightly for challenge completion)
-- Main app: `src/Koda.tsx` (~4067 lines — many screens extracted into separate files)
+- Main app: `src/Koda.tsx` (~4100 lines)
 - Auth wrapper: `src/KodaAuth.tsx`
-- Storage shim: `src/lib/storage.ts` (window.storage — wraps Supabase KV + localStorage cache)
+- Storage shim: `src/lib/storage.ts` (wraps Supabase KV + localStorage cache)
 
 ---
 
@@ -71,433 +50,241 @@ A trading journal PWA for retail traders. Users log trades, track stats (P&L, wi
 
 | File | Purpose |
 |------|---------|
-| `src/Koda.tsx` | Main app shell — state, routing, home/feed/circles/rules/sync/settings |
-| `src/KodaAuth.tsx` | Supabase auth wrapper, installs storage shim after sign-in |
+| `src/Koda.tsx` | Main app shell — state, routing, all tab screens |
+| `src/KodaAuth.tsx` | Supabase auth wrapper, installs storage shim on sign-in |
 | `src/lib/storage.ts` | `window.storage` shim: `get(key)`, `set(key, value, shared?)` |
-| `src/lib/log.ts` | Centralised logger — forwards to Sentry if loaded. Use instead of bare `console.error`. |
-| `src/lib/sentry.ts` | Optional Sentry init. No-op if `VITE_SENTRY_DSN` not set or `@sentry/react` not installed. |
-| `src/lib/flags.ts` | Feature flag util backed by localStorage. `isFlagOn("name")`. Toggle via `window.kodaFlags.enableFlag("name")`. |
-| `src/lib/tradovate.ts` | Client-side Tradovate helpers (auth, refresh, fills, FIFO matching). |
-| `src/DataSourcesScreen.tsx` | **NEW** Sync tab UI — broker cards, connect/disconnect modal, CSV import, sync audit log. |
-| `src/CsvImportPanel.tsx` | CSV import with auto-detect, analytics reveal, saved templates. Presets: Tradovate, Rithmic, TradingView, MT4/MT5, NinjaTrader 8, TopstepX, FTMO/MT5. |
-| `src/SettingsScreen.tsx` | Settings tab — profile edit, dark mode, export, delete account. |
-| `src/LogTradeScreen.tsx` | Log tab — trade entry form. |
-| `src/TradingCircles.tsx` | Circles tab — create/join, leaderboard, chat. |
-| `src/FriendsFeed.tsx` | Feed tab — follow activity. |
-| `src/OnboardingFlow.tsx` | 5-step onboarding flow. |
-| `src/ProfileModal.tsx` | Tap any name/avatar → profile modal with stats + follow/unfollow. |
-| `src/charts.tsx` | All chart components: PnL, equity curve, win rate, heatmaps, MAE/MFE, etc. |
-| `src/shared.tsx` | Shared constants (MONO, BODY fonts), AvatarCircle, stratCode helpers. |
-| `src/types.ts` | Trade, Profile, Circle, EvalAccount interfaces. |
-| `src/data/circles.ts` | Circles data layer — single source for circle key naming + RLS-safe writes. |
-| `src/data/follows.ts` | Follows data layer — per-row follow edges. |
-| `src/data/trades.ts` | v2 typed CRUD against `public.trades`. Behind `newTrades` flag when ready. |
-| `src/data/profile.ts` | v2 typed CRUD against `public.profiles`. Behind `newProfile` flag when ready. |
-| `src/data/bootstrap.ts` | v2 parallel typed loader. Will replace `loadAll()` when flags flip. |
-| `src/LotSizeCalculator.tsx` | **NEW** Futures-only position size calculator — floating ⚖️ button, bottom-sheet modal, 16 contracts. |
-| `src/BetaGate.tsx` | **NEW** Closed-beta password wall — shown before auth if `VITE_BETA_PASSWORD` is set. Unlock persists in localStorage. |
-| `src/lib/posthog.ts` | **NEW** PostHog analytics wrapper — `initPostHog`, `phIdentify`, `phCapture`, `phReset`. No-op if key not set. |
-| `src/main.tsx` | Mounts React, installs storage shim, calls `initSentry()` and `initPostHog()`. |
-| `api/broker/[action].ts` | POST /api/broker/connect — authenticates with Tradovate, encrypts tokens, upserts broker_connections. POST /api/broker/disconnect — deletes connection (user_id guard). |
-| `api/cron/sync.ts` | **NEW** GET (cron, every 5 min via GitHub Actions) + POST (manual) — FIFO fill matching, token refresh, idempotent trade upsert. |
-| `api/lib/cryptoUtils.ts` | **NEW** AES-256-GCM encrypt/decrypt for broker token storage. Requires `KODA_ENCRYPTION_KEY` env var. |
-| `api/lib/supabaseAdmin.ts` | **NEW** Service-role Supabase client + JWT verifier for serverless functions. |
-| `api/feedback.ts` | POST → Telegram bot. |
-| `api/tradovate.ts` | Tradovate API proxy (auth, accounts, positions, fills, contracts). |
-| `vercel.json` | CSP headers + Vercel Cron config (nightly → /api/cron/complete-challenges). Broker sync runs via GitHub Actions every 5 min instead. |
-| `supabase/migrations/001_rls_cleanup.sql` | Removes dead RLS branches, adds text_pattern_ops index. |
-| `supabase/migrations/002_v2_schema_additive.sql` | Creates v2 tables (profiles, trades, circles, circle_members, follows). |
-| `supabase/migrations/003_storage_bucket.sql` | Trade screenshot storage bucket + RLS. |
-| `supabase/migrations/004_plan_jwt_claims.sql` | JWT plan claim hook for Stripe billing. |
-| `supabase/migrations/005_broker_sync.sql` | **NEW** broker_connections + sync_events tables, external_id + review_status on trades. ✅ Run May 2026. |
-| `.github/workflows/ci.yml` | Runs lint + tsc + build on every PR. |
-| `DEPLOYMENT.md` | Step-by-step deploy runbook. |
-| `MIGRATION.md` | Plan for migrating live data off KV onto v2 tables. |
+| `src/lib/log.ts` | Centralised logger. Use instead of bare `console.error`. |
+| `src/lib/flags.ts` | Feature flag util. `isFlagOn("name")`. Toggle via `window.kodaFlags.enableFlag("name")`. |
+| `src/TradingCircles.tsx` | Circles tab — create/join, leaderboard, chat, challenges |
+| `src/FriendsFeed.tsx` | Feed tab |
+| `src/OnboardingFlow.tsx` | 5-step onboarding flow |
+| `src/components/FirstSessionSurvey.tsx` | Post-onboarding survey (prior tool, why they almost stopped) |
+| `src/SettingsScreen.tsx` | Settings tab — profile edit, dark mode, export, delete account |
+| `src/LogTradeScreen.tsx` | Log tab — trade entry form |
+| `src/charts.tsx` | All chart components |
+| `src/shared.tsx` | Shared constants, UI primitives |
+| `src/types.ts` | Trade, Profile, Circle, EvalAccount interfaces |
+| `src/data/circles.ts` | Circles data layer — single source for circle key naming + RLS-safe writes |
+| `src/data/trades.ts` | v2 typed CRUD against `public.trades` (behind `newTrades` flag) |
+| `src/data/profile.ts` | v2 typed CRUD against `public.profiles` (behind `newProfile` flag) |
+| `src/BetaGate.tsx` | Closed-beta password wall — shown before auth if `VITE_BETA_PASSWORD` is set |
+| `src/lib/posthog.ts` | PostHog analytics wrapper |
+| `api/delete-account.ts` | POST — full user data wipe (broker tokens → trades → profiles → user_kv → shared_kv → auth.users) |
+| `api/feedback.ts` | POST → Telegram bot (@Tradrfeedbackbot) |
+| `api/broker/[action].ts` | Tradovate connect/disconnect |
+| `api/cron/sync.ts` | Broker sync (every 5 min via GitHub Actions) |
+| `api/lib/supabaseAdmin.ts` | Service-role Supabase client + JWT verifier |
+| `vercel.json` | CSP headers + Vercel Cron config |
+| `supabase/migrations/` | All DB migrations (run manually in Supabase SQL Editor) |
 
 ---
 
 ## Supabase Data Model
 
 ### `user_kv` (private per-user)
-- `uid` — Supabase auth user ID
-- `key` — string key (e.g. `koda_profile`, `koda_trades`)
-- `value` — JSON blob
+- `user_id`, `key`, `value` (JSON)
 - RLS: user can only read/write their own rows
+- Key keys: `koda_profile`, `koda_trades`, `koda_circles`, `koda_following_{uid}`
 
 ### `shared_kv` (public-readable)
-- `key` — string key
-- `value` — JSON blob
-- RLS: anyone can read, only the owner can write
-- Used for: circle data, public profiles (`koda_profile_pub_{handle}`), friend feeds
+- `key`, `value` (JSON), `owner_id`
+- RLS: anyone can read, only `auth.uid() = owner_id` can write
+- Used for: circle metadata, member rows, leaderboard entries, public profiles
+- **`owner_id` is NOT NULL** — system keys use sentinel `'00000000-0000-0000-0000-000000000000'::uuid`
 
-### Key storage keys
-| Key | Table | Contents |
-|-----|-------|----------|
-| `koda_profile` | user_kv | Full profile (private) |
-| `koda_trades` | user_kv | Trade history |
-| `koda_profile_pub_{handle}` | shared_kv | Public profile (name, handle, avatar, bio, publicTrades flag) |
-| `koda_feed_{uid}` | shared_kv | Published trade feed for social/circles |
-| `koda_circle_{code}` | shared_kv | Circle data + members + leaderboard |
-| `koda_following_{uid}` | user_kv | Who the user follows |
+### `public.profiles` (v2 — live but behind `newProfile` flag)
+- One row per user: `user_id`, `handle`, `name`, `avatar`, `bio`, `onboarded`, `prefs` (jsonb), etc.
 
-> Legacy `tradr_*` keys were renamed to `koda_*` by migration `20260524000000_rename_tradr_kv_keys.sql`. All code uses the `koda_*` prefix.
+### `public.trades` (v2 — live)
+- One row per trade: `user_id`, `client_id`, `external_id`, `source`, `review_status`, etc.
 
-### `public.broker_connections` (v2 — live)
-Stores one row per user+broker account. Tokens encrypted at rest with AES-256-GCM.
-- `id` (uuid PK), `user_id` (FK auth.users), `broker` (text), `env` (demo/live)
-- `account_id`, `account_name` — human-readable Tradovate account name
-- `access_token_enc`, `refresh_token_enc` — AES-256-GCM encrypted, base64
-- `token_expires_at` — checked 10 min before expiry; auto-refreshed in cron
-- `sync_status` — connected / syncing / error / disconnected / paused
-- `sync_error`, `last_sync_at`
-- RLS: user can only see/modify their own rows
+### `public.circle_messages`
+- `id`, `circle_code`, `sender_id`, `sender_handle`, `sender_name`, `sender_avatar`, `body`, `created_at`
+- Has `REPLICA IDENTITY FULL` and is in `supabase_realtime` publication (migration `20260531_circle_messages_realtime.sql`)
 
-### `public.sync_events` (v2 — live)
-Immutable audit log of every sync attempt (success or failure).
-- `id`, `user_id`, `connection_id` (FK broker_connections), `broker`
-- `started_at`, `completed_at`, `trades_found`, `trades_new`, `error`
-- RLS: user can only read their own rows
-
-### `public.trades` additions (migration 005)
-- `external_id` — dedup key (format: `tv-{entryFillId}-{exitFillId}`)
-- `source` — `'manual'` | `'api'` (auto-synced)
-- `broker` — `'tradovate'` etc.
-- `raw_data` (jsonb) — original fill objects
-- `review_status` — `'draft'` | `'published'` | `'skipped'`
-  - Auto-synced trades land as `'draft'` — not shown in main journal until user publishes
-  - Manually logged trades default to `'published'`
+### `public.broker_connections` + `public.sync_events`
+- Broker token storage (AES-256-GCM encrypted) + sync audit log
 
 ---
 
 ## Vercel Environment Variables
 
-All must be set in Vercel dashboard → Settings → Environment Variables (Production + Preview):
-
 | Variable | Purpose |
 |----------|---------|
-| `VITE_SUPABASE_URL` | Supabase project URL (browser-safe) |
-| `VITE_SUPABASE_ANON_KEY` | Supabase anon key (browser-safe) |
-| `SUPABASE_URL` | Same URL — used by serverless functions |
-| `SUPABASE_ANON_KEY` | Anon key for server-side user-context API calls (distinct from service role) |
-| `SUPABASE_SERVICE_ROLE_KEY` | Service role key — bypasses RLS in cron/api functions |
-| `APP_URL` | Production URL — used in emails, Stripe redirects, CORS. e.g. `https://kodatrade.co.uk` |
-| `KODA_ENCRYPTION_KEY` | 64 hex chars (32 bytes) — AES-256-GCM key for broker token storage. Generate: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`. |
-| `CRON_SECRET` | Random string — sent as `x-cron-secret` header by GitHub Actions to authenticate GET /api/cron/sync |
-| `TRADOVATE_APP_ID` | Tradovate app ID |
-| `TRADOVATE_APP_VERSION` | Tradovate app version |
-| `TRADOVATE_CID` | Tradovate CID (numeric) |
-| `TRADOVATE_SEC` | Tradovate SEC secret |
-| `TELEGRAM_BOT_TOKEN` | Feedback bot token |
-| `TELEGRAM_CHAT_ID` | Feedback bot chat ID |
-| `STRIPE_SECRET_KEY` | Stripe secret key |
-| `STRIPE_WEBHOOK_SECRET` | Stripe webhook secret |
-| `STRIPE_PRICE_ID` | Stripe Pro price ID (legacy fallback — prefer `STRIPE_PRICE_ID_MONTHLY`) |
-| `STRIPE_PRICE_ID_MONTHLY` | Stripe monthly recurring price ID |
-| `STRIPE_PRICE_ID_ANNUAL` | Stripe annual recurring price ID (not live yet) |
-| `STRIPE_PROMO_CODE_ID_K0DA` | Stripe promo code object ID (promo_xxx) |
-| `STRIPE_PROMO_CODE_ID_FOUNDERS` | Stripe founders promo code object ID |
-| `STRIPE_PROMO_CODE_ID_BETA` | Stripe beta promo code object ID |
-| `RESEND_API_KEY` | Resend API key for transactional email (`re_...`) |
-| `VAPID_PUBLIC_KEY` | VAPID public key for web push notifications |
-| `VAPID_PRIVATE_KEY` | VAPID private key for web push notifications |
-| `VAPID_EMAIL` | VAPID contact email (e.g. `mailto:you@example.com`) |
-| `VITE_VAPID_PUBLIC_KEY` | Same as `VAPID_PUBLIC_KEY` — exposed to browser for push subscription |
-| `VITE_SENTRY_DSN` | Optional — leave blank to disable Sentry |
-| `VITE_APP_VERSION` | App version string for Sentry releases. Typically set by CI (git SHA). |
-| `VITE_POSTHOG_KEY` | PostHog project API key (`phc_...`). Leave blank to disable analytics. |
-| `VITE_POSTHOG_HOST` | PostHog host — `https://eu.i.posthog.com` (EU) or `https://us.i.posthog.com` (US). |
-| `VITE_BETA_PASSWORD` | Closed-beta invite code. If set, shows BetaGate before auth. Leave blank to disable. |
+| `VITE_SUPABASE_URL` | Supabase URL (browser) |
+| `VITE_SUPABASE_ANON_KEY` | Supabase anon key (browser) |
+| `SUPABASE_URL` | Supabase URL (serverless) |
+| `SUPABASE_ANON_KEY` | Supabase anon key (serverless) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service role key — bypasses RLS |
+| `APP_URL` | e.g. `https://kodatrade.co.uk` — used in CORS, emails |
+| `KODA_ENCRYPTION_KEY` | 64 hex chars — AES-256-GCM key for broker tokens |
+| `CRON_SECRET` | Auth header for GitHub Actions → `/api/cron/sync` |
+| `TRADOVATE_APP_ID` / `TRADOVATE_APP_VERSION` / `TRADOVATE_CID` / `TRADOVATE_SEC` | Tradovate API |
+| `TELEGRAM_BOT_TOKEN` | @Tradrfeedbackbot token |
+| `TELEGRAM_CHAT_ID` | Feedback group ID (currently `-5187303282`) |
+| `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` / `STRIPE_PRICE_ID_MONTHLY` / `STRIPE_PRICE_ID_ANNUAL` | Stripe billing |
+| `STRIPE_PROMO_CODE_ID_K0DA` / `STRIPE_PROMO_CODE_ID_FOUNDERS` / `STRIPE_PROMO_CODE_ID_BETA` | Stripe promos |
+| `RESEND_API_KEY` | Transactional email |
+| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_EMAIL` | Web push |
+| `VITE_VAPID_PUBLIC_KEY` | Same as VAPID_PUBLIC_KEY — exposed to browser |
+| `VITE_SENTRY_DSN` | Optional Sentry DSN (leave blank to disable) |
+| `VITE_POSTHOG_KEY` / `VITE_POSTHOG_HOST` | PostHog analytics |
+| `VITE_BETA_PASSWORD` | Beta access code (currently `BETA_26`) |
+| `VITE_BETA_ENABLED` | Set to `"true"` to show BetaGate |
+| `VITE_KODA_ADMIN_UID` | Dylon's UID — gates KODA-GLOBAL challenge creation (`f38aae7d-e953-4a00-a5aa-5370677ca876`) |
 
-> ⚠️ Never commit real credential values to CLAUDE.md or any tracked file. This file is in a public git repo.
+> Never commit real credential values to CLAUDE.md or any tracked file.
 
 ---
 
-## Profile Interface (key fields)
+## People / Beta Team
 
-```tsx
-interface Profile {
-  name: string;
-  handle: string;         // @username — auto-filled from name during onboarding
-  avatar: string;         // emoji (e.g. "🎯") or data:image/ or https:// URL
-  bio: string;
-  broker: string;
-  timezone: string;
-  onboarded: boolean;
-  publicTrades?: boolean; // toggle in settings — controls if trades show on public profile
-  instruments?: string[]; // futures they trade: ["ES", "NQ", "CL", ...]
-  socialLinks?: { twitter?: string }; // social handles collected at onboarding
-  uid?: string;
-  // ... targets, rules, checklist, etc.
-}
-```
-
-`DEF_PROFILE` = default profile object with all fields, including `instruments: []` and `socialLinks: {}`.
-
-**AvatarCircle** renders emoji avatars natively — if `avatar` is a short string (≤8 chars) that isn't a URL or data URI, it renders as an emoji at 50% of the circle size.
-
----
-
-## App Screens (tabs)
-
-- **Home / Overview** — dashboard, stats, feed sub-sections
-- **Log** — add/view trades
-- **Feed** — friend activity feed (FriendsFeed component)
-- **Circles** — Trading Circles (leaderboard, chat, join/create)
-- **Sync** — broker connections (Tradovate live sync) + CSV import + audit log
-- **Settings** — profile, preferences, public trades toggle, delete account
-
-Home tab has sub-nav: Overview · Circles · Execution · Rules · **Sync** · Settings
-
----
-
-## Features Built
-
-- Trade logging with P&L, R-multiple, notes, screenshots
-- Stats dashboard (win rate, avg R, streak, equity curve, MAE/MFE, session heatmaps)
-- Supabase persistence across devices via `window.storage`
-- Trading Circles — create/join by code, leaderboard, circle chat
-- Friend feed — follow by handle, see friends' trades
-- Clickable public profiles — tap any name/avatar to see ProfileModal (stats, trades, follow/unfollow)
-- "Public trades" privacy toggle in Settings
-- **5-step onboarding** — name + handle + emoji avatar, bio + Twitter/X, instruments multi-select, strategy, ready summary. localStorage backup prevents re-loop on network failure.
-- React Error Boundary wrapping the whole app
-- Feedback button → modal → POST `/api/feedback` → Telegram bot
-- Custom domain kodatrade.co.uk live via GoDaddy DNS → Vercel
-- PWA manifest, icons, iOS/Android installable
-- Stripe billing (Free / Pro / Elite) — checkout, portal, webhook, JWT plan claim
-- **Tradovate live sync** — connect account, encrypted token storage, 5-min Vercel Cron, FIFO fill→trade matching, idempotent upsert, token auto-refresh, manual sync trigger, sync audit log. ⚠️ Live broker UI hidden behind "Coming Soon" banner — requires Tradovate partner/API credentials.
-- **CSV import** — 7 broker presets with auto-detection: Tradovate, Rithmic, TradingView, MT4/MT5, NinjaTrader 8, TopstepX, FTMO/MT5. Analytics reveal, session auto-tagging, saved templates, dedup.
-- **Lot Size Calculator** — futures-only position sizer. Floating ⚖️ button bottom-left, bottom-sheet modal. 16 contracts (ES, MES, NQ, MNQ, RTY, M2K, YM, MYM, CL, MCL, GC, MGC, SI, NG, ZN, ZB). Risk by % of balance or fixed $. Outputs: contracts, actual risk, stop ticks, stop points, risk/contract.
-- **PostHog analytics** — `posthog-js` installed, init in `main.tsx`, EU cloud (`eu.i.posthog.com`). Key events: `trade_logged`, `trade_edited`, `csv_imported`, `calculator_opened`, user identified on load, reset on sign-out. Requires `VITE_POSTHOG_KEY` + `VITE_POSTHOG_HOST` in Vercel.
-- **Beta access wall** — `BetaGate.tsx` shown before auth when `VITE_BETA_PASSWORD` is set. Matches platform aesthetic (warm dark palette, IBM Plex Mono, editorial style). Unlock stored in localStorage (`tradr_beta_unlocked`). Existing users unaffected until env var is set.
-
----
-
-## Broker Sync Architecture
-
-```
-GitHub Actions Cron (GET /api/cron/sync every 5 min)
-  └─ x-cron-secret header auth
-  └─ fetchAll broker_connections where status = connected/error
-  └─ runWithConcurrency(10) → syncConnection(conn)
-        ├─ decrypt access token (AES-256-GCM)
-        ├─ refresh if expiring within 10 min
-        ├─ GET /fill/list from Tradovate
-        ├─ filter to fills newer than last_sync_at
-        ├─ resolveSymbols (contract IDs → names)
-        ├─ fillsToTradeRows() — FIFO queue matching per contract
-        │     external_id = "tv-{entryFillId}-{exitFillId}"
-        │     review_status = "draft"
-        ├─ upsert to public.trades ON CONFLICT (user_id, external_id) ignoreDuplicates
-        ├─ update broker_connections (sync_status, last_sync_at)
-        └─ insert sync_events (audit row)
-
-POST /api/cron/sync (manual trigger, JWT auth)
-  └─ same flow but only for the authenticated user, concurrency 5
-```
-
-**Token security:** Tradovate credentials are used once to get a token — never stored. Tokens stored as `base64(IV[12] || AuthTag[16] || Ciphertext)` in Postgres text columns. Key lives only in `KODA_ENCRYPTION_KEY` env var.
-
-**Deduplication:** `external_id` = `tv-{entryFillId}-{exitFillId}` + unique index on `(user_id, external_id)`. Re-running sync is fully idempotent.
-
-**Review Inbox pattern:** Auto-synced trades land as `review_status = 'draft'`. They don't appear in the main journal until the user enriches and publishes them. Review Inbox UI is built — `src/ReviewInboxScreen.tsx`, wired via Log-tab badge + CTA in `Koda.tsx`.
-
----
-
-## DNS Setup (kodatrade.co.uk)
-
-Registrar: GoDaddy
-Nameservers: ns39.domaincontrol.com / ns40.domaincontrol.com
-
-GoDaddy DNS records:
-- A record `@` → `76.76.21.21` (Vercel IP)
-- CNAME `www` → Vercel DNS
-
-Both `kodatrade.co.uk` and `www.kodatrade.co.uk` verified and live in Vercel.
-
----
-
-## Key Bugs Fixed (history — don't re-introduce)
-
-| Bug | Fix |
-|-----|-----|
-| `React is not defined` at runtime | `deleteConfirm` / `deletingAccount` used `React.useState` — changed to `useState` |
-| Onboarding loop for new users | Write `localStorage.setItem("tradr_onboarded", "1")` immediately in `onComplete`, before async Supabase save |
-| `isJoiningCircle is not defined` | State existed in Tradr but wasn't passed as prop to TradingCircles — add to JSX call and function signature. Same fix for `isCreatingCircle` |
-| ProfileModal "Profile not found" | Users hadn't re-saved since `profile_pub` key was added. Fall back to feed data (authorName/authorAvatar) when `profile_pub` not found |
-| Vercel runtime error `nodejs20.x` | Change all `api/*.ts` config to `runtime: "nodejs"` (not `"nodejs20.x"`) |
-| Fragment crash in TradingCircles | Stray `</>` inserted by Python rfind in wrong component — removed |
-| Unterminated string in CSV export | Literal newline inside join — changed to `"\\n"` |
-| Koda.tsx truncated to 0 bytes | OneDrive write race condition. Always use Python atomic write: write to `.tmp`, then `os.replace()`. Recovered via git. |
-| `Stripe.LatestApiVersion` TS error | Removed in Stripe SDK v22 — replace `as Stripe.LatestApiVersion` with `as any` in `api/stripe-checkout.ts` and `api/stripe-portal.ts`. |
-| Supabase `.catch()` TS error | Query builder returns `PromiseLike`, not `Promise` — replace `.then(() => {}).catch(() => {})` with `.then(() => {}, () => {})` (api/feedback.ts). |
-| git `index.lock` on OneDrive | Sandbox can't delete lock file via bash. User must run `Remove-Item .git\index.lock -Force` in their own PowerShell terminal. |
-| Vercel not auto-deploying | Pushes to feature branches create Preview deploys only. Merge to `main` for Production. If `git push` says "Everything up-to-date", trigger manual redeploy in Vercel → Deployments (uncheck build cache). |
-
----
-
-## Code Patterns
-
-### Writing large files (Koda.tsx etc.)
-Koda.tsx is ~4067 lines. OneDrive can truncate large writes. Always use Python atomic writes. After any large write, verify `wc -l src/Koda.tsx` is reasonable and `npm run build` passes.
-```python
-import os
-tmp = path + ".tmp"
-with open(tmp, "w", encoding="utf-8") as f:
-    f.write(content)
-os.replace(tmp, path)
-```
-
-### Storage reads/writes (legacy KV — current prod code path)
-```tsx
-// Private (user only)
-const data = await (window as any).storage.get("koda_profile");
-await (window as any).storage.set("koda_profile", JSON.stringify(profile));
-
-// Public (shared_kv)
-await (window as any).storage.set("koda_profile_pub_handle", JSON.stringify(pubProfile), true);
-```
-
-### Logging (use this instead of console.error)
-```tsx
-import { log, safe } from "./lib/log";
-
-log.error("loadAll.trades", err, { userId });
-
-// At an effect boundary:
-const trades = await safe("loadAll.trades", () => listTrades(uid), [] as Trade[]);
-```
-
-### Feature flags (for v2 cutovers)
-```tsx
-import { isFlagOn } from "./lib/flags";
-
-if (isFlagOn("newTrades")) {
-  // v2 data layer
-} else {
-  // legacy KV path
-}
-
-// Toggle from devtools:
-//   window.kodaFlags.enableFlag("newTrades"); location.reload();
-```
-
-### v2 data modules (when wiring in)
-Do NOT replace existing reads. Add a flagged branch alongside them, ship behind the flag, flip on for yourself, confirm, then promote. See `MIGRATION.md`.
-
-### Broker API calls (serverless only)
-Always import from `api/lib/` — never from `src/`. Service role key and encryption key are server-only.
-```ts
-import { tryDecrypt, encrypt } from "../lib/cryptoUtils";
-import { getAdminClient, getUserIdFromJwt } from "../lib/supabaseAdmin";
-```
-
----
-
-## What's Next / Backlog
-
-### Broker sync follow-ups
-
-- [x] Update `.env.example` with new required vars ✓ (`KODA_ENCRYPTION_KEY`, `CRON_SECRET`, `TRADOVATE_*` all present)
-- [ ] Add Rithmic/NinjaTrader 8/TopstepX live API connections (CSV covers import; API would enable live sync)
-
-### v2 data layer migration
-
-- [x] Run migration `001_rls_cleanup.sql` ✓ (May 2026)
-- [x] Run migration `002_v2_schema_additive.sql` ✓
-- [x] Run migration `005_broker_sync.sql` ✓ (May 2026)
-- [ ] Verify v2 profile path: `localStorage.tradr_flags = "newProfile"; location.reload();` → save profile → `select * from profiles;`
-- [ ] Wire follows v2 behind `newFollows` flag
-- [ ] Wire circles v2 behind `newCircles` flag
-- [ ] Wire trades v2 behind `newTrades` flag — riskiest, do last
-- [ ] Backfill script for trades (template in MIGRATION.md)
-
-### Architecture
-
-- [ ] Split `Koda.tsx` further — extract remaining inline screens
-- [ ] Move screenshots from base64-in-trade to Supabase Storage URLs
-- [ ] Replace N+1 `fetchCircleLeaderboard` with single SQL query against v2 schema
-- [ ] Set up branch protection on `main` (require CI `build` status check)
-- [ ] Add Playwright smoke test (sign in → log trade → join circle) on every preview deploy
-
-### Competitive roadmap
-
-Key competitors: TraderSync ($30–80/mo), Tradezella ($29–89/mo), Edgewonk ($197/yr), TradesViz ($0–30/mo).
-Kōda target pricing: Free tier · Pro $24.99/mo.
-
-**Tech stack (May 2026)**
-- Vercel — hosting + serverless + cron
-- GitHub — source control, auto-deploys to Vercel on push to `main`
-- Supabase — database, auth, storage
-- Sentry — error monitoring (wired, needs `VITE_SENTRY_DSN`)
-- PostHog — product analytics (wired, needs `VITE_POSTHOG_KEY` + `VITE_POSTHOG_HOST`)
-- Stripe — billing (Free / Pro / Elite)
-- Figma — UI/UX design
-
-**Sprint 1 — Close the core gap**
-- [x] Tradovate live sync — connect screen, fill→trade, 5-min cron ✓
-- [x] CSV import — Rithmic, NinjaTrader 8, TopstepX, FTMO/MT5 presets ✓
-- [x] Session time-of-day heatmap + day-of-week breakdown ✓
-- [x] Lot Size Calculator — futures-only, floating button, 16 contracts ✓
-- [x] PostHog analytics — wired, key events captured ✓
-- [x] Beta access wall — BetaGate component, env-var controlled ✓
-- [x] Review Inbox — publish draft trades from auto-sync ✓ (`src/ReviewInboxScreen.tsx`, Log-tab badge + CTA)
-
-**Sprint 2 — Psychology + Prop Firm**
-- [x] Per-trade emotional state field (Calm / FOMO / Revenge / Confident) + rule-adherence Y/N + mistake tag ✓ (`LogTradeScreen.tsx` Discipline/Emotional/Mistake cards)
-- [x] Prop firm account mode — evaluation targets (profit target, daily loss limit, max drawdown), live progress bars ✓ (`EvalAccountScreen.tsx` + Settings toggle + sub-nav Eval tab + Home dashboard mini-bars with red-warning thresholds)
-- [x] Discipline score card — "You followed your rules on 71% of trades this month" ✓ (`Koda.tsx` psychology stats tab: rule adherence %, mistake frequency, emotion × outcome)
-
-**Sprint 3 — Analytics, Streaks, Circles polish** ✓ (shipped 2026-05-29)
-- [x] P&L by Setup ranked bar chart — Analytics tab, period/metric/R-$ toggles ✓
-- [x] Streak milestone banner — fires at 3/7/14/30/100 days, deduped in user_kv ✓
-- [x] TradingCircles error toasts — create/join/chat all show toast on failure ✓
-
-**Sprint 4 — Advanced Analytics**
-- [ ] MAE/MFE per trade (broker data now available via sync)
-- [ ] Commission/fee tracking — gross vs. net P&L
-- [ ] Weekly report card — in-app summary, shareable image
-- [ ] Drill-down to individual trades per setup (Analytics tab v2)
-- [ ] Custom date range picker
-
-**Sprint 5 — Monetisation**
-- [x] Stripe billing integration ✓
-- [ ] Basic AI insights — rule-based pattern detection ("You make 80% of profit before 11am ET")
-- [ ] TradingView chart embed on trade detail view (entry/exit markers)
-
-### Other backlog
-
-- Real-time circle updates (Supabase broadcast — currently manual refresh)
-- Push notifications / email for circle activity
-- Google OAuth (wired but not configured in Supabase — remove button or configure)
-- Multiple accounts (prop eval 1, prop eval 2, personal)
-- Weekly/monthly auto-generated report card (shareable)
+| Person | Email | Role |
+|--------|-------|------|
+| Dylon Nyland | dnyland420@gmail.com | Founder / developer. Supabase UID: `f38aae7d-e953-4a00-a5aa-5370677ca876`, handle: `@dylontrades` |
+| Bruno Lopes | Bmlopes1986@gmail.com | Beta tester |
+| Dan Arnold | dannyarnold0509@gmail.com | Beta tester |
 
 ---
 
 ## Deploying
 
-**Never push directly to `main`.** Use feature branches + PRs.
+**No git repo** — deploy directly via Vercel CLI:
 
 ```powershell
-# From C:\Dev\tradr
-git checkout -b feat/short-description
-git add .
-git commit -m "describe change"
-git push -u origin feat/short-description
+cd "C:\Users\Dylon\OneDrive\Desktop\koda"
+vercel --prod
 ```
 
-GitHub will print a PR URL. CI runs (`lint + tsc + build`). Vercel posts a preview URL — smoke-test on phone + desktop. If clean, **Merge** in GitHub. Vercel auto-deploys to prod.
+Rollback: Vercel Dashboard → Deployments → previous green deploy → Promote to Production.
 
-Rollback: Vercel → Deployments → previous green deploy → Promote to Production.
-
-Branch protection on `main` — required status check is the `build` job from `.github/workflows/ci.yml`.
-
-See `DEPLOYMENT.md` for the full runbook including Supabase migrations and Sentry setup.
+**After any Supabase schema change**, run the migration SQL manually in Supabase SQL Editor, then run `NOTIFY pgrst, 'reload schema';` to flush the PostgREST schema cache.
 
 ---
 
-## People
+## App Screens
 
-- **Dylon** — founder/developer
-- **Bruno** — early tester, helped test circles/onboarding
+- **Home** — dashboard, P&L, stats, streaks
+- **Log** — add/view/edit trades, Review Inbox for auto-synced drafts
+- **Feed** — friend activity
+- **Circles** — Trading Circles (leaderboard, chat, challenges, join/create)
+- **Sync** — broker connections (Tradovate) + CSV import + audit log
+- **Settings** — profile, dark mode, export, delete account
+
+---
+
+## Features
+
+- Trade logging with P&L, R-multiple, notes, screenshots, emotional state, rule adherence
+- Stats dashboard (win rate, avg R, streak, equity curve, MAE/MFE, session heatmaps, day-of-week)
+- Supabase persistence across devices
+- Trading Circles — create/join by code, leaderboard (top 5 visible, rest blurred), live chat, challenges
+- Friend feed — follow by handle, see friends' trades
+- Public profiles — ProfileModal with stats + follow/unfollow
+- 5-step onboarding + post-onboarding survey (prior tool, almost-stopped reason)
+- First-session survey (shown after onboarding, before main app)
+- Stripe billing (Free / Pro / Elite)
+- Tradovate live sync — encrypted token storage, FIFO fill matching, idempotent upsert
+- CSV import — 7 broker presets (Tradovate, Rithmic, TradingView, MT4/MT5, NinjaTrader 8, TopstepX, FTMO/MT5)
+- Lot Size Calculator — 16 futures contracts, floating button
+- PostHog analytics — EU cloud
+- Beta access wall (BetaGate) — `VITE_BETA_PASSWORD` env var controlled
+- Prop firm eval mode — profit target, daily loss limit, max drawdown tracking
+- Feedback button → Telegram bot (@Tradrfeedbackbot)
+- PWA — installable on iOS/Android
+
+---
+
+## Key Bugs Fixed (don't re-introduce)
+
+| Bug | Fix |
+|-----|-----|
+| `React is not defined` at runtime | Used `React.useState` instead of imported `useState` |
+| Onboarding loop for new users | Write `localStorage.setItem("koda_onboarded_${uid}", "1")` immediately in `onComplete`, before async Supabase save |
+| `isJoiningCircle is not defined` | State in Koda.tsx wasn't passed as prop to TradingCircles — add to JSX call and function signature |
+| ProfileModal "Profile not found" | Fall back to feed data (authorName/authorAvatar) when `profile_pub` not found |
+| Vercel runtime error `nodejs20.x` | Change all `api/*.ts` config to `runtime: "nodejs"` |
+| Koda.tsx truncated to 0 bytes | OneDrive write race — always use atomic write (write to `.tmp`, then `os.replace()`) |
+| `Stripe.LatestApiVersion` TS error | Replace `as Stripe.LatestApiVersion` with `as any` |
+| `isOwner` crash for KODA-GLOBAL users | `isPro` was passed as prop to TradingCircles but never destructured — added to function signature |
+| Re-signup onboarding skipped | `clearStorageCache()` didn't clear `koda_onboarded_*` keys — now it does |
+| `delete-account` profiles not deleted | `col: "id"` should be `col: "user_id"` for profiles table |
+| `check_and_increment_rate_limit` failing | `shared_kv.owner_id` is NOT NULL — use sentinel UUID `'00000000-0000-0000-0000-000000000000'::uuid` |
+| Circle chat send `PGRST204` | `sender_handle` column was missing — added via `ALTER TABLE circle_messages ADD COLUMN IF NOT EXISTS sender_handle text` |
+| Circle chat messages not live | `circle_messages` wasn't in `supabase_realtime` publication — added via migration + 8s poll fallback |
+| Feedback button intercepting chat Send | FAB positioned over Send on mobile — hidden when `view === "circles"` |
+| PostgrestError swallowed in chat | Not `instanceof Error` — extract `.message` from any object shape |
+
+---
+
+## Code Patterns
+
+### Storage (current prod path)
+```tsx
+// Private
+const data = await storage.get("koda_profile");
+await storage.set("koda_profile", JSON.stringify(profile));
+
+// Shared (shared_kv)
+await storage.set("koda_circle_XXXX", JSON.stringify(meta), true);
+```
+
+### Feature flags
+```tsx
+import { isFlagOn } from "./lib/flags";
+if (isFlagOn("newProfile")) { /* v2 */ } else { /* legacy KV */ }
+// Toggle: window.kodaFlags.enableFlag("newProfile"); location.reload();
+```
+
+### KODA-GLOBAL
+- Circle code: `KODA_GLOBAL_CODE = "KODA-GLOBAL"` (from `src/hooks/useCircles.ts`)
+- `owner_id` in shared_kv is sentinel UUID — no real user owns it
+- Challenge creation gated on `VITE_KODA_ADMIN_UID` env var matching `profile.uid`
+
+### Writing large files
+Koda.tsx is ~4100 lines. OneDrive can truncate large writes. Use Edit tool for targeted changes. Verify build passes after any large edit.
+
+---
+
+## Migrations Applied (Supabase)
+
+| File | Description | Status |
+|------|-------------|--------|
+| `001_rls_cleanup.sql` | RLS policy cleanup + indexes | ✅ |
+| `002_v2_schema_additive.sql` | v2 tables: profiles, trades, circles, circle_members, follows | ✅ |
+| `003_storage_bucket.sql` | Trade screenshot storage bucket | ✅ |
+| `004_plan_jwt_claims.sql` | JWT plan claim hook for Stripe | ✅ |
+| `005_broker_sync.sql` | broker_connections + sync_events tables | ✅ |
+| `20260523_atomic_rate_limit.sql` | `check_and_increment_rate_limit` function | ✅ |
+| `20260524_user_kv_rls.sql` | user_kv RLS hardening + shared_kv owner_id NOT NULL | ✅ |
+| `20260531_circle_messages_realtime.sql` | circle_messages → REPLICA IDENTITY FULL + supabase_realtime | ✅ |
+| `20260531_fix_rate_limit_owner_id.sql` | Fix rate limit to use sentinel owner_id | ✅ |
+
+---
+
+## Open / Pending
+
+- **Telegram feedback**: @Tradrfeedbackbot needs to be added to group `-5187303282`. Even with correct chat ID, bot must be a group member to send messages. Verify by forwarding a message from the group to `@userinfobot` to confirm the group ID matches.
+- **v2 data migration**: profiles, follows, circles, trades all still reading from KV. Migration plan: dual-write behind feature flag, backfill, flip flag, delete old path. Do profile first (smallest blast radius), trades last.
+- **Split Koda.tsx**: ~4100 lines — extract remaining inline screens to reduce file size.
+- **Playwright smoke test**: sign in → log trade → join circle — run on every deploy.
+
+---
+
+## Backlog
+
+**Sprint 4 — Advanced Analytics**
+- [ ] MAE/MFE per trade (broker data available)
+- [ ] Commission/fee tracking (gross vs net P&L)
+- [ ] Drill-down to individual trades per setup
+- [ ] Custom date range picker
+
+**Sprint 5 — Monetisation**
+- [ ] Basic AI insights ("You make 80% of profit before 11am ET")
+- [ ] TradingView chart embed on trade detail
+
+**Other**
+- [ ] Push notifications for circle activity
+- [ ] Google OAuth (wired, not configured in Supabase — remove button or configure)
+- [ ] Multiple accounts (prop eval 1, prop eval 2, personal)
+- [ ] Rithmic / NinjaTrader 8 / TopstepX live API connections

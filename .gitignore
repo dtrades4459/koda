@@ -35,3 +35,4 @@ src/TRADR.tsx.tmp
 .superpowers/
 
 .vercel
+.env*

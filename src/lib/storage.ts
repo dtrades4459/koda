@@ -268,7 +268,12 @@ export function clearStorageCache(): void {
     const keys: string[] = [];
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);
-      if (k && (k.startsWith("koda__user__") || k.startsWith("koda__shared__"))) {
+      if (k && (
+        k.startsWith("koda__user__") ||
+        k.startsWith("koda__shared__") ||
+        k.startsWith("koda_onboarded_") ||
+        k === "koda_tour_done"
+      )) {
         keys.push(k);
       }
     }
