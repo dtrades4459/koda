@@ -11,7 +11,7 @@ import { MONO, BODY } from "./shared";
 import { useNews } from "./hooks/useNews";
 import type { CalendarEvent, Headline, Impact } from "./lib/news";
 
-type Range = "today" | "week" | "month";
+type Range = "today" | "week";
 
 type TzId = "local" | "et" | "london" | "utc";
 
@@ -49,13 +49,8 @@ function endOfDay(d: Date): Date {
 function rangeWindow(range: Range): [Date, Date] {
   const now = new Date();
   if (range === "today") return [startOfDay(now), endOfDay(now)];
-  if (range === "week") {
-    const end = new Date(now);
-    end.setDate(now.getDate() + 7);
-    return [startOfDay(now), endOfDay(end)];
-  }
   const end = new Date(now);
-  end.setDate(now.getDate() + 30);
+  end.setDate(now.getDate() + 7);
   return [startOfDay(now), endOfDay(end)];
 }
 
@@ -181,7 +176,7 @@ export function NewsScreen({ C }: Props) {
     >
       {/* Range pills */}
       <div style={{ display: "flex", gap: 4 }}>
-        {(["today", "week", "month"] as Range[]).map(r => {
+        {(["today", "week"] as Range[]).map(r => {
           const active = range === r;
           return (
             <button

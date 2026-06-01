@@ -92,11 +92,13 @@ describe("NewsScreen", () => {
     expect(screen.queryByText("Next week event")).not.toBeInTheDocument();
   });
 
-  it("switches to Month filter and shows next week event", async () => {
+  it("switches to Week filter and shows events within the next 7 days", async () => {
     render(<NewsScreen C={DARK} />);
     await screen.findByText("Today AM event");
-    await userEvent.click(screen.getByRole("button", { name: /MONTH/i }));
-    expect(await screen.findByText("Next week event")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: /^WEEK$/i }));
+    // Today's events still visible; the 10-days-out event is still outside the 7-day window
+    expect(screen.getByText("Today AM event")).toBeInTheDocument();
+    expect(screen.queryByText("Next week event")).not.toBeInTheDocument();
   });
 
   it("renders the headlines feed", async () => {
