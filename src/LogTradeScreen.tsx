@@ -212,12 +212,12 @@ export function LogTradeScreen({
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
         <Card C={T} pad={16}>
           <Kicker C={T}>P&L (R)</Kicker>
-          <input type="number" inputMode="decimal" name="pnl" value={form.pnl} onChange={handleChange} placeholder="+2.5"
+          <input type="text" inputMode="decimal" name="pnl" value={form.pnl} onChange={handleChange} placeholder="+2.5"
             style={{ ...inp, fontFamily: DISPLAY, fontSize: 28, fontWeight: 600, letterSpacing: "-0.02em", borderBottom: "none", padding: "8px 0 0" }} />
         </Card>
         <Card C={T} pad={16}>
           <Kicker C={T}>Net P&L</Kicker>
-          <input data-testid="trade-pnl-dollar" type="number" inputMode="decimal" name="pnlDollar" value={form.pnlDollar} onChange={handleChange} placeholder="$485"
+          <input data-testid="trade-pnl-dollar" type="text" inputMode="decimal" name="pnlDollar" value={form.pnlDollar} onChange={handleChange} placeholder="$485"
             style={{ ...inp, fontFamily: DISPLAY, fontSize: 28, fontWeight: 600, letterSpacing: "-0.02em", fontVariantNumeric: "tabular-nums", borderBottom: "none", padding: "8px 0 0" }} />
         </Card>
       </div>
