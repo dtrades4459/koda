@@ -9,6 +9,7 @@ import { b } from './lib/telegram/format.js';
 import { getUserMetrics, formatUserMetrics } from './lib/metrics/users.js';
 import { getTradeMetrics, formatTradeMetrics } from './lib/metrics/trades.js';
 import { getRevenueMetrics, formatRevenueMetrics } from './lib/metrics/revenue.js';
+import { getSentryMetrics, formatSentryMetrics } from './lib/metrics/errors.js';
 
 const TOKEN  = process.env.TELEGRAM_BUSINESSTATS_TOKEN!;
 const SECRET = process.env.TELEGRAM_BUSINESSTATS_SECRET!;
@@ -95,6 +96,16 @@ export default async function handler(req: Req, res: Res) {
         await sendMessage(chatId, '⏳ Fetching...');
         const m = await getRevenueMetrics();
         await sendMessage(chatId, formatRevenueMetrics(m));
+        break;
+      }
+      case '/errors': {
+        await sendMessage(chatId, '⏳ Fetching...');
+        const m = await getSentryMetrics();
+        if (!m) {
+          await sendMessage(chatId, '❌ Sentry not configured — set SENTRY_AUTH_TOKEN, SENTRY_ORG, SENTRY_PROJECT in Vercel env.');
+          break;
+        }
+        await sendMessage(chatId, formatSentryMetrics(m));
         break;
       }
       // Further commands added in subsequent tasks
