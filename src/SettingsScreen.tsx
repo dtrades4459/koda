@@ -70,6 +70,15 @@ export function SettingsScreen({
   isPro,
 }: SettingsScreenProps) {
   const [refreshingPlan, setRefreshingPlan] = React.useState(false);
+  const [pushEnabled, setPushEnabled] = React.useState(false);
+  const [pushLoading, setPushLoading] = React.useState(false);
+  React.useEffect(() => {
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
+    navigator.serviceWorker.ready
+      .then(reg => reg.pushManager.getSubscription())
+      .then(sub => setPushEnabled(!!sub))
+      .catch(() => {});
+  }, []);
   const inp: React.CSSProperties = {
     background: "transparent",
     border: "none",
@@ -394,23 +403,42 @@ export function SettingsScreen({
               <div style={{ fontFamily: MONO, fontSize: 10, color: C.muted, letterSpacing: "0.08em", marginTop: 2 }}>New circle activity, AI insights</div>
             </div>
             <button
+              disabled={pushLoading}
               onClick={async () => {
-                const { data: { session } } = await supabase.auth.getSession();
-                if (!session?.access_token) return;
-                const reg = await navigator.serviceWorker.ready;
-                const sub = await reg.pushManager.subscribe({
-                  userVisibleOnly: true,
-                  applicationServerKey: import.meta.env.VITE_VAPID_PUBLIC_KEY,
-                });
-                await fetch("/api/push?action=subscribe", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
-                  body: JSON.stringify(sub.toJSON()),
-                });
-                showToast("Push notifications enabled");
+                setPushLoading(true);
+                try {
+                  const reg = await navigator.serviceWorker.ready;
+                  if (pushEnabled) {
+                    const sub = await reg.pushManager.getSubscription();
+                    if (sub) await sub.unsubscribe();
+                    setPushEnabled(false);
+                    showToast("Push notifications disabled");
+                  } else {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    if (!session?.access_token) { showToast("Sign in required"); return; }
+                    const sub = await reg.pushManager.subscribe({
+                      userVisibleOnly: true,
+                      applicationServerKey: import.meta.env.VITE_VAPID_PUBLIC_KEY,
+                    });
+                    await fetch("/api/push?action=subscribe", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+                      body: JSON.stringify(sub.toJSON()),
+                    });
+                    setPushEnabled(true);
+                    showToast("Push notifications enabled");
+                  }
+                } catch {
+                  showToast("Couldn't update notifications — check browser permissions");
+                } finally {
+                  setPushLoading(false);
+                }
               }}
-              style={{ padding: "8px 14px", borderRadius: 999, background: C.live, color: "#0A0A0A", border: "none", fontFamily: MONO, fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase" as const, cursor: "pointer" }}
-            >Enable</button>
+              style={{ width: 38, height: 22, borderRadius: 999, border: "none", cursor: pushLoading ? "default" : "pointer", background: pushEnabled ? (C as any).live ?? C.green : C.border2, position: "relative", transition: "background 0.2s", boxShadow: pushEnabled ? `0 0 0 3px color-mix(in oklch, ${(C as any).live ?? C.green} 22%, transparent)` : "none", flexShrink: 0, opacity: pushLoading ? 0.6 : 1 }}
+              aria-label={pushEnabled ? "Disable push notifications" : "Enable push notifications"}
+            >
+              <div style={{ position: "absolute", top: 2, left: pushEnabled ? 18 : 2, width: 18, height: 18, borderRadius: "50%", background: "#fff", boxShadow: "0 1px 2px rgba(0,0,0,0.2)", transition: "left 0.2s" }} />
+            </button>
           </div>
         )}
         {/* Export CSV */}
