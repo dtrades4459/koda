@@ -19,6 +19,7 @@ export async function getUserMetrics(): Promise<UserMetrics> {
   ]);
 
   if (statsRes.error) throw new Error(`get_user_stats: ${statsRes.error.message}`);
+  if (waitlistRes.error) throw new Error(`waitlist count: ${waitlistRes.error.message}`);
 
   const s = statsRes.data as Record<string, number>;
   return {
