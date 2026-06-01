@@ -43,7 +43,7 @@ export async function getPostHogMetrics(): Promise<PostHogMetrics | null> {
     const sumOf  = (arr: number[]) => arr.reduce((a, n) => a + n, 0);
 
     const topEvents = eventsRes.result
-      .map(r => ({ name: (r as { action: { name: string } }).action?.name ?? 'unknown', count: sumOf(r.data) }))
+      .map(r => ({ name: r.action?.name ?? 'unknown', count: sumOf(r.data) }))
       .sort((a, z) => z.count - a.count);
 
     return {
