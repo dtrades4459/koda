@@ -38,8 +38,8 @@ export default defineConfig({
     }),
   ],
   test: {
-    // Only pick up *.test.ts files inside src/ — exclude Playwright tests in tests/
-    include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
+    // Only pick up *.test.ts files inside src/ and api/ — exclude Playwright tests in tests/
+    include: ["src/**/*.test.ts", "src/**/*.test.tsx", "api/**/*.test.ts"],
     exclude: ["tests/**", "node_modules/**"],
     environment: "jsdom",
     setupFiles: ["@testing-library/jest-dom/vitest"],
