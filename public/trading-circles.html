@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trading Circles — How Kōda makes journaling social without making it Twitter</title>
+  <meta name="description" content="Private trading groups with leaderboards, weekly challenges, real-time chat, and shared accountability. Built into the Kōda journal. No followers. No likes. Just your group." />
+  <link rel="canonical" href="https://kodatrade.co.uk/trading-circles.html" />
+  <meta name="theme-color" content="#0A0A0B" />
+  <meta name="color-scheme" content="dark" />
+  <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+
+  <meta property="og:title" content="Trading Circles — How Kōda makes journaling social" />
+  <meta property="og:description" content="Private trading groups with leaderboards, weekly challenges, real-time chat, and shared accountability. No followers. No likes. Just your group." />
+  <meta property="og:type" content="article" />
+  <meta property="og:url" content="https://kodatrade.co.uk/trading-circles.html" />
+  <meta property="og:image" content="/og-image.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Trading Circles — How Kōda makes journaling social" />
+  <meta name="twitter:description" content="Private trading groups with leaderboards, weekly challenges, real-time chat. No followers. No likes." />
+  <meta name="twitter:image" content="/og-image.png" />
+  <meta name="robots" content="index, follow" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "Trading Circles — How Kōda makes journaling social without making it Twitter",
+    "description": "Private trading groups with leaderboards, weekly challenges, real-time chat, and shared accountability.",
+    "image": "https://kodatrade.co.uk/og-image.png",
+    "datePublished": "2026-06-02",
+    "dateModified": "2026-06-02",
+    "author": { "@type": "Person", "name": "Dylon Nyland" },
+    "publisher": { "@type": "Organization", "name": "Kōda", "url": "https://kodatrade.co.uk/" },
+    "mainEntityOfPage": "https://kodatrade.co.uk/trading-circles.html"
+  }
+  </script>
+
+  <style>
+    :root { --bg: #0A0A0B; --panel: #131317; --panel2: #1A1A20; --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.13); --text: #F2F2EE; --text2: #A6A6A2; --muted: #65655F; --dim: #45453F; --live: oklch(0.84 0.14 175); --accent: oklch(0.74 0.16 250); --red: oklch(0.70 0.21 25); --green: oklch(0.78 0.18 152); }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: 'Geist', -apple-system, sans-serif; line-height: 1.55; }
+    body { padding: 0 24px 80px; }
+    .container { max-width: 720px; margin: 0 auto; }
+    header { padding: 32px 0 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text); }
+    .logo svg { display: block; }
+    .logo span { font-family: 'Geist', sans-serif; font-weight: 600; letter-spacing: 0.18em; font-size: 14px; }
+    .nav a { font-family: 'Geist Mono', monospace; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text2); text-decoration: none; margin-left: 22px; }
+    .nav a:hover { color: var(--text); }
+    .kicker { font-family: 'Geist Mono', monospace; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--live); display: inline-flex; align-items: center; gap: 6px; margin-top: 64px; }
+    .kicker::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--live); box-shadow: 0 0 8px var(--live); }
+    h1 { font-size: 42px; font-weight: 600; letter-spacing: -0.03em; line-height: 1.1; margin: 14px 0 16px; }
+    h1 em { font-style: italic; color: var(--live); font-weight: 600; }
+    .lede { font-size: 19px; color: var(--text2); margin: 0 0 8px; max-width: 600px; }
+    .byline { font-family: 'Geist Mono', monospace; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-top: 32px; }
+    h2 { font-size: 26px; font-weight: 600; letter-spacing: -0.02em; margin: 56px 0 14px; }
+    h3 { font-size: 16px; font-weight: 600; margin: 28px 0 6px; }
+    p { font-size: 16px; color: var(--text2); margin: 12px 0; }
+    p strong, li strong { color: var(--text); font-weight: 600; }
+    ul, ol { padding-left: 22px; margin: 10px 0 20px; }
+    li { color: var(--text2); font-size: 16px; margin: 8px 0; }
+    blockquote { margin: 22px 0; padding: 16px 20px; background: var(--panel); border-left: 3px solid var(--live); border-radius: 8px; }
+    blockquote p { color: var(--text); margin: 0; font-size: 15px; line-height: 1.6; }
+    .cta-row { display: flex; gap: 12px; flex-wrap: wrap; margin: 36px 0 20px; }
+    .cta { display: inline-block; padding: 13px 24px; border-radius: 999px; text-decoration: none; font-family: 'Geist', sans-serif; font-weight: 600; font-size: 14px; letter-spacing: 0.02em; }
+    .cta.primary { background: var(--text); color: var(--bg); }
+    .cta.ghost { background: transparent; color: var(--text); border: 1px solid var(--border2); }
+    .lb-mock { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; margin: 16px 0 24px; padding: 14px; font-family: 'Geist Mono', monospace; font-size: 12px; }
+    .lb-mock .row { display: grid; grid-template-columns: 32px 1fr auto; gap: 10px; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--border); }
+    .lb-mock .row:last-child { border-bottom: none; }
+    .lb-mock .rank { color: var(--muted); }
+    .lb-mock .rank.gold { color: var(--green); }
+    .lb-mock .pnl.pos { color: var(--green); font-weight: 600; }
+    .lb-mock .pnl.neg { color: var(--red); font-weight: 600; }
+    footer { margin-top: 80px; padding-top: 24px; border-top: 1px solid var(--border); font-family: 'Geist Mono', monospace; font-size: 11px; color: var(--muted); letter-spacing: 0.06em; display: flex; gap: 18px; flex-wrap: wrap; }
+    footer a { color: var(--text2); text-decoration: none; }
+    footer a:hover { color: var(--text); }
+    @media (max-width: 640px) {
+      body { padding: 0 18px 60px; }
+      h1 { font-size: 32px; }
+      .kicker { margin-top: 40px; }
+      h2 { font-size: 22px; }
+      .nav a { margin-left: 14px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <a class="logo" href="/" aria-label="Kōda home">
+        <svg width="36" height="20" viewBox="0 0 60 40" fill="none" stroke="#F2F2EE" stroke-width="2.4" stroke-linejoin="miter">
+          <polyline points="4,4 14,20 4,36"/>
+          <polyline points="18,4 28,20 18,36"/>
+          <polyline points="32,4 42,20 32,36"/>
+          <polyline points="46,4 56,20 46,36"/>
+        </svg>
+        <span>KŌDA</span>
+      </a>
+      <nav class="nav">
+        <a href="/">App</a>
+        <a href="/in-session-intervention.html">Intervention</a>
+        <a href="/changelog.html">Changelog</a>
+        <a href="/faq.html">FAQ</a>
+      </nav>
+    </header>
+
+    <div class="kicker">Social, but not Twitter</div>
+    <h1>Trading <em>Circles</em>.</h1>
+    <p class="lede">Private trading groups with leaderboards, weekly challenges, real-time chat, and shared accountability. No follower counts. No likes. No algorithm. Just your group.</p>
+    <div class="byline">By Dylon Nyland · 2 June 2026 · 3 min read</div>
+
+    <h2>Why solo journaling fails for most traders</h2>
+    <p>You log your trades. You review them on Sunday. The patterns are there. You vow to do better. Monday comes and you take the same FOMO entry you took last week.</p>
+    <p>The reason is simple: there's no one watching. Solo journaling rewards honesty with nothing. Discipline without accountability is just willpower, and willpower runs out by Wednesday afternoon.</p>
+
+    <h2>What a Circle is</h2>
+    <p>A <strong>Circle</strong> is a private trading group inside Kōda. Three to twenty traders, sharing journals, competing on a live leaderboard, running weekly challenges with each other. Created with a code, joined with a code, dissolved if it stops working.</p>
+    <p>It is the opposite of public Trading Twitter. There's no followers. No likes. No algorithm pushing the loudest trader to the top. Your circle sees your numbers because you chose to share them with people you trust — or with strangers running the same prop firm eval as you.</p>
+
+    <h2>The leaderboard</h2>
+    <p>Every Circle has a leaderboard ranked by your group's chosen metric: dollar P&amp;L, R-multiple, win rate, total trades, or average R per trade. Top three get medals. Everyone else gets a number. Updates as soon as anyone in the group publishes a new trade.</p>
+    <div class="lb-mock" aria-hidden="true">
+      <div class="row"><span class="rank gold">🥇</span><span>shoaib · 12 trades · 67% WR</span><span class="pnl pos">+$1,240</span></div>
+      <div class="row"><span class="rank">🥈</span><span>marcus · 9 trades · 56% WR</span><span class="pnl pos">+$880</span></div>
+      <div class="row"><span class="rank">🥉</span><span>keato · 14 trades · 50% WR</span><span class="pnl pos">+$410</span></div>
+      <div class="row"><span class="rank">04</span><span>You · 11 trades · 55% WR</span><span class="pnl pos">+$95</span></div>
+      <div class="row"><span class="rank">05</span><span>bruno · 6 trades · 33% WR</span><span class="pnl neg">−$120</span></div>
+    </div>
+    <p>You don't see anyone else's trade-by-trade entries unless they publish them. You see the totals. That's the line — competitive enough to keep you honest, private enough to keep you comfortable.</p>
+
+    <h2>Weekly challenges</h2>
+    <p>Anyone in the Circle can start a challenge. Trade a specific setup all week. Stay under your daily loss limit five days in a row. Hit a win rate target. The challenge tracks itself off your logged trades — no honour system, no manual marking.</p>
+    <p>When the week closes, the winner gets a trophy in the Circle's trophy case. The trophy case is the only thing in Kōda that's permanent.</p>
+
+    <h2>Real-time chat</h2>
+    <p>Every Circle has a live chat. Supabase Realtime delivers messages instantly. Push notifications hit your phone for new activity. You can react to other members' shared trades the same way you react to a message in Slack.</p>
+    <p>Chat is for the conversation that happens around the trade — the setup that didn't quite work, the rule you broke, the win you almost gave back. The journal is the record. The chat is the room.</p>
+
+    <blockquote>
+      <p>Solo accountability is a story you tell yourself. Group accountability is a number your friends can see. Kōda makes the number harder to lie about — yours and theirs.</p>
+    </blockquote>
+
+    <h2>What Circles do <em>not</em> do</h2>
+    <ul>
+      <li><strong>No follower counts.</strong> You're either in a Circle or you're not. There's no audience.</li>
+      <li><strong>No algorithm.</strong> Posts surface chronologically. The loudest trader doesn't beat the most consistent one.</li>
+      <li><strong>No public profiles by default.</strong> Your stats are visible to your Circle members. Nobody else.</li>
+      <li><strong>No DMs.</strong> Conversation lives in the Circle. If you want one-on-one, use signal.</li>
+      <li><strong>No paid promotion.</strong> You can't buy your way to the top of the leaderboard. You have to trade better.</li>
+    </ul>
+
+    <h2>How to start</h2>
+    <p>Inside Kōda, tap <strong>Circles</strong> in the bottom nav. Create one with a name and a metric, share the join code with the three to twenty people you actually want in. Or join an existing Circle if you have a code. Free users get one Circle. Pro unlocks unlimited.</p>
+    <div class="cta-row">
+      <a class="cta primary" href="/">Open Kōda →</a>
+      <a class="cta ghost" href="/in-session-intervention.html">See in-session intervention</a>
+    </div>
+
+    <footer>
+      <a href="/">Home</a>
+      <a href="/in-session-intervention.html">Intervention</a>
+      <a href="/faq.html">FAQ</a>
+      <a href="/changelog.html">Changelog</a>
+      <a href="/privacy.html">Privacy</a>
+      <a href="/terms.html">Terms</a>
+    </footer>
+  </div>
+</body>
+</html>
