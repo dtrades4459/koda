@@ -12,6 +12,7 @@ import { useTiltState } from "./hooks/useTiltState";
 import { useCircles } from "./hooks/useCircles";
 import { logInterventionEvent, linkTradeToRecentIntervention } from "./data/interventions";
 import { InterventionSheet } from "./components/InterventionSheet";
+import { InSessionStatsCard } from "./components/InSessionStatsCard";
 import type { TiltSignal } from "./lib/tilt";
 import type { CircleStats } from "./hooks/useCircles";
 import { getProfile, upsertProfile } from "./data/profile";
@@ -3407,6 +3408,9 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                       </div>
                     ))}
                   </div>
+
+                  {/* ── In-session check-ins (last 7d) ── */}
+                  {profile.uid && <InSessionStatsCard userUid={profile.uid} trades={trades} C={C} />}
 
                   {/* ── Discipline score card ── */}
                   {(() => {
