@@ -414,22 +414,43 @@ export function SettingsScreen({
                 Stop you mid-tilt before a bad trade
               </div>
             </div>
-            <input
-              type="checkbox"
-              checked={profile.prefs?.intervention?.enabled ?? true}
-              onChange={e => {
-                void saveProfile({
-                  ...profile,
-                  prefs: {
-                    ...(profile.prefs ?? {}),
-                    intervention: {
-                      ...(profile.prefs?.intervention ?? {}),
-                      enabled: e.target.checked,
-                    },
-                  },
-                });
-              }}
-            />
+            {(() => {
+              const on = profile.prefs?.intervention?.enabled ?? true;
+              const liveColor = (C as Record<string, string>).live ?? C.green;
+              return (
+                <button
+                  type="button"
+                  aria-label="Toggle in-session intervention"
+                  onClick={() => {
+                    void saveProfile({
+                      ...profile,
+                      prefs: {
+                        ...(profile.prefs ?? {}),
+                        intervention: {
+                          ...(profile.prefs?.intervention ?? {}),
+                          enabled: !on,
+                        },
+                      },
+                    });
+                  }}
+                  style={{
+                    width: "38px", height: "22px", borderRadius: "999px",
+                    border: "none", cursor: "pointer",
+                    background: on ? liveColor : C.border2,
+                    position: "relative", transition: "background 0.2s",
+                    boxShadow: on ? `0 0 0 3px color-mix(in oklch, ${liveColor} 22%, transparent)` : "none",
+                    flexShrink: 0,
+                  }}
+                >
+                  <div style={{
+                    position: "absolute", top: "2px", left: on ? "18px" : "2px",
+                    width: "18px", height: "18px", borderRadius: "50%",
+                    background: "#fff", boxShadow: "0 1px 2px rgba(0,0,0,0.2)",
+                    transition: "left 0.2s",
+                  }} />
+                </button>
+              );
+            })()}
           </div>
           <div style={{ fontFamily: MONO, fontSize: 10, color: C.muted, marginBottom: 8, letterSpacing: "0.08em", textTransform: "uppercase" }}>
             Cooldown when cancelled
