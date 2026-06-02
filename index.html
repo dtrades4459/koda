@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <title>Kōda OS — Trading Journal + Circles</title>
-    <meta name="description" content="The operating system for serious traders. Journal your trades, analyse your edge, compete in circles." />
+    <title>Kōda — The trading journal that stops you mid-tilt</title>
+    <meta name="description" content="The only trading journal with in-session intervention. Stop yourself before the revenge trade, not after. Built for futures traders. Mobile-first PWA." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
     <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
@@ -17,22 +17,79 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Kōda OS" />
     <meta name="mobile-web-app-capable" content="yes" />
-    <meta property="og:title" content="Kōda OS" />
-    <meta property="og:description" content="Kōda OS — the trading journal built for serious traders. Log trades, track your edge, compete in circles." />
+    <meta property="og:title" content="Kōda — The trading journal that stops you mid-tilt" />
+    <meta property="og:description" content="The only trading journal with in-session intervention. Stop yourself before the revenge trade, not after. Built for futures traders." />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="/og-image.png" />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Kōda OS" />
-    <meta name="twitter:description" content="Kōda OS — the trading journal built for serious traders." />
+    <meta name="twitter:title" content="Kōda — The trading journal that stops you mid-tilt" />
+    <meta name="twitter:description" content="The only trading journal with in-session intervention. Stop yourself before the revenge trade, not after." />
     <meta name="twitter:image" content="/og-image.png" />
     <meta name="robots" content="index, follow" />
     <link rel="canonical" href="https://kodatrade.co.uk/" />
+    <style>
+      /* SEO fallback shell — visible to crawlers + JS-disabled visitors.
+         React's createRoot replaces children of #root on mount, so users
+         never see this. Search engines (and Twitter/Slack unfurlers) do. */
+      .seo-shell { font-family: 'Geist', -apple-system, sans-serif; background: #0A0A0B; color: #F2F2EE; padding: 48px 24px; min-height: 100vh; box-sizing: border-box; line-height: 1.5; }
+      .seo-shell .container { max-width: 720px; margin: 0 auto; }
+      .seo-shell .kicker { font-family: 'Geist Mono', monospace; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: oklch(0.84 0.14 175); margin-bottom: 16px; }
+      .seo-shell h1 { font-size: 36px; font-weight: 600; letter-spacing: -0.03em; line-height: 1.1; margin: 0 0 16px; }
+      .seo-shell .lede { font-size: 18px; color: #A6A6A2; margin: 0 0 32px; line-height: 1.5; }
+      .seo-shell h2 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; margin: 40px 0 12px; }
+      .seo-shell h3 { font-size: 16px; font-weight: 600; margin: 24px 0 8px; }
+      .seo-shell p, .seo-shell li { font-size: 15px; color: #A6A6A2; }
+      .seo-shell ul { padding-left: 20px; margin: 8px 0 16px; }
+      .seo-shell li { margin: 6px 0; }
+      .seo-shell strong { color: #F2F2EE; font-weight: 600; }
+      .seo-shell .cta { display: inline-block; margin-top: 28px; padding: 14px 28px; background: #F2F2EE; color: #0A0A0B; border-radius: 999px; text-decoration: none; font-weight: 600; font-size: 14px; }
+      .seo-shell .footer { margin-top: 56px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.07); font-family: 'Geist Mono', monospace; font-size: 11px; color: #65655F; letter-spacing: 0.06em; }
+      .seo-shell .footer a { color: #A6A6A2; margin-right: 16px; }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"><div class="seo-shell"><div class="container">
+      <div class="kicker">● The wedge no other journal has</div>
+      <h1>The trading journal that stops you <em>mid-tilt</em>.</h1>
+      <p class="lede">Every other journal asks <em>"what went wrong?"</em> after the money's gone. Kōda asks <strong>"are you sure?"</strong> before you take the trade.</p>
+
+      <h2>How it works</h2>
+      <p>When you tap <strong>Log Trade</strong>, Kōda checks for tilt signals from your own logged activity:</p>
+      <ul>
+        <li>Two or more consecutive losses today</li>
+        <li>Already past 75% of your daily loss limit</li>
+        <li>Daily trade cap reached</li>
+        <li>Logging within ten minutes of a Loss</li>
+        <li>Last trade tagged FOMO, revenge, chased, moved-SL, or overtrading</li>
+      </ul>
+      <p>If the signals add up, the Log button opens an intervention — not the form. Continue if you're sure. Or cancel and the app locks Log for fifteen minutes (configurable). It's a circuit breaker for tilt, built into the journal.</p>
+
+      <h2>What else you get</h2>
+      <ul>
+        <li><strong>Auto-sync for Tradovate</strong> — connect once, fills land in your journal automatically</li>
+        <li><strong>CSV import</strong> for seven major brokers (Tradovate, Rithmic, TradingView, MT4/MT5, NinjaTrader 8, TopstepX, FTMO)</li>
+        <li><strong>Trading Circles</strong> — leaderboards, live chat, weekly challenges with your group</li>
+        <li><strong>Deterministic stats</strong> — every number is computed from your trades. No model. No guess.</li>
+        <li><strong>Prop firm eval mode</strong> — daily loss / drawdown / profit target tracking</li>
+        <li><strong>Mobile-first PWA</strong> — installable on iOS and Android, works offline</li>
+      </ul>
+
+      <h2>Who Kōda is for</h2>
+      <p>Retail futures traders running prop firm evals or live accounts. Day traders who tilt and don't want to. Anyone tired of post-mortem journals that grade their homework after they've already lost the money.</p>
+
+      <a class="cta" href="/">Open Kōda →</a>
+
+      <div class="footer">
+        <a href="/faq.html">FAQ</a>
+        <a href="/changelog.html">Changelog</a>
+        <a href="/privacy.html">Privacy</a>
+        <a href="/terms.html">Terms</a>
+        <a href="/cookies.html">Cookies</a>
+      </div>
+    </div></div></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
