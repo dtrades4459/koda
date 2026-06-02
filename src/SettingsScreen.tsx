@@ -138,7 +138,10 @@ export function SettingsScreen({
 
       {/* ── User card ── */}
       <div style={{ margin: "0 0 16px", borderRadius: 22, padding: 18, background: C.panel, border: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: 14 }}>
-        <div onClick={() => document.getElementById("avatarInput")?.click()} style={{ cursor: "pointer", position: "relative" }}>
+        {/* Label-wrapped file input — opens the native picker reliably across
+            iOS Safari, Android Chrome, and installed PWAs. Programmatic
+            input.click() on display:none inputs is blocked on some iOS builds. */}
+        <label htmlFor="avatarInput" style={{ cursor: "pointer", position: "relative", display: "inline-block" }} aria-label="Change profile photo">
           {(profileDraft.avatar || profile.avatar || "").startsWith("data:") || (profileDraft.avatar || profile.avatar || "").startsWith("http") ? (
             <AvatarCircle name={profile.name} avatar={profileDraft.avatar || profile.avatar} size={50} color={C.text} C={C} />
           ) : (
@@ -151,8 +154,25 @@ export function SettingsScreen({
               {(profileDraft.avatar || profile.avatar || profile.name?.[0] || "?").slice(0, 2).toUpperCase()}
             </div>
           )}
-        </div>
-        <input id="avatarInput" type="file" accept="image/jpeg,image/png" onChange={handleAvatarUpload} style={{ display: "none" }} />
+          {/* Camera icon overlay so users see the avatar is editable. */}
+          <span aria-hidden style={{
+            position: "absolute", bottom: -2, right: -2,
+            width: 20, height: 20, borderRadius: "50%",
+            background: (C as any).live ?? "oklch(0.84 0.14 175)",
+            border: `2px solid ${C.panel}`,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 10, color: "#0A0A0E", fontWeight: 700,
+          }}>+</span>
+        </label>
+        {/* The accept list includes HEIC/HEIF so iPhone photo-library uploads
+            don't get filtered out; handleAvatarUpload accepts any image/* MIME. */}
+        <input
+          id="avatarInput"
+          type="file"
+          accept="image/*"
+          onChange={handleAvatarUpload}
+          style={{ position: "absolute", width: 1, height: 1, padding: 0, margin: -1, overflow: "hidden", clip: "rect(0,0,0,0)", whiteSpace: "nowrap", border: 0 }}
+        />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontFamily: DISPLAY, fontSize: "15px", fontWeight: 600, color: C.text }}>{profile.name || "—"}</div>
           <div style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, marginTop: "2px" }}>
