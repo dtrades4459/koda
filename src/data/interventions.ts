@@ -8,6 +8,7 @@
 
 import { supabase } from "../lib/supabase";
 import { log } from "../lib/log";
+import { phCapture } from "../lib/posthog";
 import type { TiltSignalId } from "../lib/tilt";
 
 export type InterventionChoice = "continued" | "cancelled";
@@ -48,6 +49,14 @@ export async function logInterventionEvent(args: LogInterventionArgs): Promise<s
     log.error("interventions.log", error, { args });
     return null;
   }
+  try {
+    phCapture("intervention_fired", {
+      signals: args.signals,
+      critical: args.critical,
+      choice: args.choice,
+      session_date: args.sessionDate,
+    });
+  } catch { /* posthog optional / not configured */ }
   return (data as { id: string } | null)?.id ?? null;
 }
 
