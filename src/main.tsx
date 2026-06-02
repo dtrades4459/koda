@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import KodaAuth from "./KodaAuth";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { CookieConsent } from "./CookieConsent";
+import { InstallHint } from "./components/InstallHint";
 import { installStorage } from "./lib/storage";
 import { initSentry } from "./lib/sentry";
 import { initPostHog } from "./lib/posthog";
@@ -38,6 +39,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <ErrorBoundary>
       <KodaAuth />
       <CookieConsent />
+      <InstallHint />
     </ErrorBoundary>
   </React.StrictMode>
 );
