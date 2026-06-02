@@ -68,8 +68,10 @@ interface UseFeedParams {
   profile: Profile;
   /** Codes this user follows — from useFollows. Used in refreshFeed. */
   following: string[];
-  /** Call followUser from useFollows to actually write the follow edge. */
-  followUser: (code: string) => void | Promise<void>;
+  /** Call followUser from useFollows to actually write the follow edge.
+   *  Accepts optional name/handle so the follow edge can be enriched for
+   *  display in the People tab without a separate profile lookup later. */
+  followUser: (code: string, targetName?: string, targetHandle?: string) => void | Promise<void>;
   /** Returns the current user's short trading code. */
   getMyCode: () => string;
   /** Resolves an @handle → { code, name } from shared_kv. */
@@ -240,9 +242,10 @@ export function useFeed({
         setTimeout(() => setFollowHandleMsg(""), 2000);
         return;
       }
-      await followUser(resolved.code);
+      const norm = normaliseHandle(raw);
+      await followUser(resolved.code, resolved.name, norm);
       setFollowHandleInput("");
-      setFollowHandleMsg(`Now following @${normaliseHandle(raw)}.`);
+      setFollowHandleMsg(`Now following @${norm}.`);
       setTimeout(() => setFollowHandleMsg(""), 2500);
     } finally {
       setFollowHandleLoading(false);
@@ -262,10 +265,13 @@ export function useFeed({
   const refreshRef = useRef(refreshFeed);
   refreshRef.current = refreshFeed;
   useEffect(() => {
-    if (loading || !friends.length) return;
+    // Fire if the user has ANY source of inbound items — legacy friends OR
+    // follows. Previously this only checked friends, so follow-only users
+    // never got an auto-refresh and the feed went stale.
+    if (loading || (!friends.length && !following.length)) return;
     const id = setInterval(() => { refreshRef.current(); }, 2 * 60 * 1000);
     return () => clearInterval(id);
-  }, [loading, friends]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [loading, friends, following]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Return ────────────────────────────────────────────────────────────────
   return {

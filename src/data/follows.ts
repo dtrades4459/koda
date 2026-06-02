@@ -22,6 +22,12 @@ export interface FollowEdge {
   follower: string;
   target: string;
   at: string;
+  /** Display name + handle of the "other" party on this edge. On a follow row,
+   *  this is the target's info (so the follower can list "who I follow" by
+   *  name). On a follower row, this is the follower's info (so the target can
+   *  list "who follows me" by name). Optional — older rows omit these. */
+  name?: string;
+  handle?: string;
 }
 
 export const followKeys = {
@@ -96,13 +102,34 @@ export async function migrateLegacyFollows(myCode: string): Promise<void> {
 
 // ── Writes ──────────────────────────────────────────────────────────────────
 
-export async function followUser(input: { myCode: string; target: string }): Promise<void> {
+export async function followUser(input: {
+  myCode: string;
+  target: string;
+  /** Follower (me) display info — written into the follower edge so the target
+   *  can render their followers list with names + handles instead of codes. */
+  myName?: string;
+  myHandle?: string;
+  /** Target display info — written into the follow edge so I can render my
+   *  "following" list with names + handles instead of codes. */
+  targetName?: string;
+  targetHandle?: string;
+}): Promise<void> {
   const target = input.target.trim().toUpperCase();
   if (!target || target === input.myCode) return;
-  const edge: FollowEdge = { follower: input.myCode, target, at: new Date().toISOString() };
-  try { await storage.set(followKeys.follow(input.myCode, target), JSON.stringify(edge), true); }
+  const at = new Date().toISOString();
+  // follow edge: I own it; value carries TARGET's display info
+  const followEdge: FollowEdge = {
+    follower: input.myCode, target, at,
+    name: input.targetName, handle: input.targetHandle,
+  };
+  // follower edge: I own it (RLS safety); value carries MY display info
+  const followerEdge: FollowEdge = {
+    follower: input.myCode, target, at,
+    name: input.myName, handle: input.myHandle,
+  };
+  try { await storage.set(followKeys.follow(input.myCode, target), JSON.stringify(followEdge), true); }
   catch (e) { log.error("follows.followUser.follow", e, { target }); }
-  try { await storage.set(followKeys.follower(target, input.myCode), JSON.stringify(edge), true); }
+  try { await storage.set(followKeys.follower(target, input.myCode), JSON.stringify(followerEdge), true); }
   catch (e) { log.error("follows.followUser.follower", e, { target }); }
 }
 

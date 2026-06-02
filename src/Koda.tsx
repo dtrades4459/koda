@@ -75,7 +75,7 @@ const DEF_PROFILE: Profile = {
 };
 const OUTCOMES = ["Win","Loss","Breakeven"];
 const REACTIONS = ["FIRE","GEM","UP","TARGET","PAIN","MIND"];
-const TABS = ["home","news","stats","circles"];
+const TABS = ["home","news","stats","circles","social"];
 const STREAK_MILESTONES = [3, 7, 14, 30, 100];
 const STREAK_FLAVOUR: Record<number, string> = {
   3: "Three days of discipline.",
@@ -200,6 +200,16 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
       setAccessToken(sess?.access_token ?? "")
     );
     return () => _atSub.unsubscribe();
+  }, []);
+  // Supabase auth user UID — used by FriendsFeed for ownership checks.
+  const [myUid, setMyUid] = useState<string>("");
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const { data } = await supabase.auth.getUser();
+      if (alive) setMyUid(data.user?.id ?? "");
+    })();
+    return () => { alive = false; };
   }, []);
   useEffect(() => {
     if (!profile.uid || !disciplineScore) return;
@@ -1122,9 +1132,10 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   }
 
   // ── Follow system ───────────────────────────────────────────────────────
-  const { following, followers, followerProfiles, followUser, unfollowUser } = useFollows({
+  const { following, followers, followerProfiles, followingProfiles, followUser, unfollowUser } = useFollows({
     loading,
     getMyCode,
+    getMyProfile: () => ({ name: profile.name || "", handle: profile.handle || "" }),
     uid: profile.uid,
     showToast,
   });
@@ -1396,6 +1407,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     { id: "news",    label: "News",    path: "M3 4h14v12H3zM6 7h8M6 10h8M6 13h5" },
     { id: "stats",   label: "Stats",   path: "M3 16V9M9 16V3M15 16v-5M18 16H2" },
     { id: "circles", label: "Circles", path: "M5 8a3 3 0 1 1 6 0 3 3 0 0 1-6 0zM12.5 11a3 3 0 0 1 4.5 2.5M3 17c0-2.5 2-3.8 5-3.8s5 1.3 5 3.8" },
+    { id: "social",  label: "Social",  path: "M3 18v-1a4 4 0 014-4h2a4 4 0 014 4v1M11 7a3 3 0 11-6 0 3 3 0 016 0zM16 11a3 3 0 100-6 3 3 0 000 6zM17 18v-1a3 3 0 00-2-2.8" },
   ];
 
   // Sub-section config per main view — fed to the desktop SubNavDropdown so
@@ -2303,12 +2315,17 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                       followHandleInput={followHandleInput} setFollowHandleInput={setFollowHandleInput}
                       followHandleMsg={followHandleMsg} followHandleLoading={followHandleLoading}
                       followByHandle={followByHandle}
+                      followUser={followUser}
                       unfollowUser={unfollowUser}
                       following={following} followers={followers} followerProfiles={followerProfiles}
+                      followingProfiles={followingProfiles}
                       publishFeed={publishFeed} refreshFeed={refreshFeed} reactToFeed={reactToFeed as any}
                       myFeedReactions={myFeedReactions}
                       profile={profile} C={C as any} inp={inp} pillPrimary={pillPrimary}
                       openProfile={openProfile}
+                      myUid={myUid}
+                      recentTrades={trades}
+                      isDesktop={isDesktop}
                     />
                   </section>
                   )}
@@ -4172,6 +4189,23 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
               totalPnlDollar={totalPnlDollar}
               hasDollarData={hasDollarData}
               isPro={isPro}
+            />
+          )}
+
+          {/* ══════════════════════════ SOCIAL ══════════════════════════ */}
+          {view === "social" && (
+            <FriendsFeed
+              friends={friends} friendFeed={friendFeed as any} showAddFriend={showAddFriend} setShowAddFriend={setShowAddFriend}
+              followHandleInput={followHandleInput} setFollowHandleInput={setFollowHandleInput}
+              followHandleMsg={followHandleMsg} followHandleLoading={followHandleLoading}
+              followByHandle={followByHandle} followUser={followUser} unfollowUser={unfollowUser}
+              following={following} followers={followers} followerProfiles={followerProfiles}
+              followingProfiles={followingProfiles}
+              publishFeed={publishFeed} refreshFeed={refreshFeed} reactToFeed={reactToFeed as any} myFeedReactions={myFeedReactions} profile={profile}
+              C={C as any} inp={inp} pillPrimary={pillPrimary} openProfile={openProfile}
+              myUid={myUid}
+              recentTrades={trades}
+              isDesktop={isDesktop}
             />
           )}
           </div>{/* end main */}

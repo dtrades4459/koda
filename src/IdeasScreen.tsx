@@ -1,0 +1,202 @@
+import { type CSSProperties, useEffect, useState, useCallback } from "react";
+import { createClient } from "@supabase/supabase-js";
+import type { Idea, Trade } from "./types";
+import { MONO, BODY, DISPLAY } from "./shared";
+import { IdeaCard } from "./components/IdeaCard";
+import { IdeaComposer } from "./IdeaComposer";
+
+interface IdeasScreenProps {
+  myUid: string;
+  recentTrades: Trade[];
+  C: Record<string, string>;
+  inp: CSSProperties;
+  pillPrimary: (active: boolean) => CSSProperties;
+  isDesktop: boolean;
+}
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+async function uploadChart(file: Blob, filename: string): Promise<string> {
+  const path = `ideas/${filename}`;
+  const { error } = await supabase.storage.from("trade-screenshots").upload(path, file, {
+    contentType: "image/jpeg", upsert: false,
+  });
+  if (error) throw error;
+  const { data } = supabase.storage.from("trade-screenshots").getPublicUrl(path);
+  return data.publicUrl;
+}
+
+async function getToken(): Promise<string> {
+  const { data } = await supabase.auth.getSession();
+  return data.session?.access_token ?? "";
+}
+
+export function IdeasScreen({ myUid, recentTrades, C, inp, pillPrimary, isDesktop }: IdeasScreenProps) {
+  const [ideas, setIdeas] = useState<Idea[]>([]);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [composerOpen, setComposerOpen] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [chartLightbox, setChartLightbox] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [authToken, setAuthToken] = useState("");
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const t = await getToken();
+      if (alive) setAuthToken(t);
+    })();
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (alive) setAuthToken(session?.access_token ?? "");
+    });
+    return () => { alive = false; sub.subscription.unsubscribe(); };
+  }, []);
+
+  const load = useCallback(async (pageToLoad: number, append: boolean) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const token = await getToken();
+      const resp = await fetch(`/api/ideas?action=list&page=${pageToLoad}`, {
+        headers: { "Authorization": `Bearer ${token}` },
+      });
+      const data = await resp.json() as { ideas?: Idea[]; hasMore?: boolean; error?: string };
+      if (!resp.ok) throw new Error(data.error ?? "Failed to load");
+      setIdeas(prev => append ? [...prev, ...(data.ideas ?? [])] : (data.ideas ?? []));
+      setHasMore(!!data.hasMore);
+      setPage(pageToLoad);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to load");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      if (!alive) return;
+      await load(0, false);
+    })();
+    return () => { alive = false; };
+  }, [load]);
+
+  async function handleLike(id: string) {
+    const before = ideas.find(i => i.id === id);
+    if (!before) return;
+    setIdeas(prev => prev.map(i => i.id === id ? {
+      ...i,
+      likedByMe: !i.likedByMe,
+      likeCount: i.likeCount + (i.likedByMe ? -1 : 1),
+    } : i));
+    try {
+      const token = await getToken();
+      const resp = await fetch("/api/ideas?action=like", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify({ ideaId: id }),
+      });
+      const data = await resp.json() as { liked?: boolean; count?: number; error?: string };
+      if (!resp.ok) throw new Error(data.error ?? "Like failed");
+      setIdeas(prev => prev.map(i => i.id === id ? { ...i, likedByMe: !!data.liked, likeCount: data.count ?? i.likeCount } : i));
+    } catch {
+      setIdeas(prev => prev.map(i => i.id === id ? before : i));
+    }
+  }
+
+  function handlePosted(idea: Idea) {
+    setIdeas(prev => [idea, ...prev]);
+  }
+
+  const containerStyle: CSSProperties = { maxWidth: "680px", margin: "0 auto", paddingBottom: "120px" };
+
+  return (
+    <div data-testid="ideas-screen" style={containerStyle}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+        <div>
+          <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.16em", textTransform: "uppercase" as const, marginBottom: "4px" }}>Public · Chronological</div>
+          <div style={{ fontFamily: DISPLAY, fontSize: "22px", fontWeight: 500, color: C.text, letterSpacing: "-0.02em" }}>Ideas</div>
+        </div>
+        <button onClick={() => load(0, false)} disabled={loading}
+          style={{ background: "none", border: `1px solid ${C.border2 ?? C.border}`, borderRadius: "999px", width: "32px", height: "32px", color: C.muted, cursor: "pointer" }}>
+          &#8635;
+        </button>
+      </div>
+
+      {loading && ideas.length === 0 ? (
+        <div style={{ padding: "48px 20px", textAlign: "center", fontFamily: BODY, fontSize: "13px", color: C.muted }}>Loading…</div>
+      ) : ideas.length === 0 ? (
+        <div style={{ padding: "48px 20px", textAlign: "center" }}>
+          <div style={{ fontSize: "32px", marginBottom: "14px" }}>💡</div>
+          <div style={{ fontFamily: DISPLAY, fontSize: "16px", fontWeight: 500, color: C.text, marginBottom: "8px" }}>No ideas yet</div>
+          <div style={{ fontFamily: BODY, fontSize: "13px", color: C.muted }}>Be the first to post.</div>
+        </div>
+      ) : (
+        <>
+          {ideas.map(idea => (
+            <IdeaCard
+              key={idea.id}
+              idea={idea}
+              expanded={expandedId === idea.id}
+              C={C}
+              onLike={handleLike}
+              onExpand={(id) => setExpandedId(prev => prev === id ? null : id)}
+              onOpenChart={(url) => setChartLightbox(url)}
+            />
+          ))}
+          {hasMore && (
+            <button onClick={() => load(page + 1, true)} disabled={loading}
+              style={{ display: "block", margin: "16px auto", padding: "10px 22px",
+                background: "transparent", border: `1px solid ${C.border2 ?? C.border}`, borderRadius: "999px",
+                fontFamily: MONO, fontSize: "11px", color: C.muted, cursor: "pointer" }}>
+              {loading ? "…" : "Load more"}
+            </button>
+          )}
+        </>
+      )}
+
+      {error && <div style={{ padding: "10px 14px", color: C.red ?? "#f87171", fontFamily: BODY, fontSize: "12px" }}>{error}</div>}
+
+      <button
+        data-testid="idea-fab-new"
+        onClick={() => setComposerOpen(true)}
+        style={{
+          position: "fixed",
+          bottom: isDesktop ? "28px" : "calc(96px + env(safe-area-inset-bottom))",
+          right: "16px",
+          zIndex: 50,
+          background: C.text, color: C.bg, border: "none", borderRadius: "999px",
+          padding: "14px 20px", minHeight: "48px", cursor: "pointer",
+          fontFamily: MONO, fontSize: "11px", letterSpacing: "0.12em", textTransform: "uppercase" as const,
+          boxShadow: "0 4px 16px rgba(0,0,0,0.28)",
+        }}>
+        + New Idea
+      </button>
+
+      <IdeaComposer
+        open={composerOpen}
+        onClose={() => setComposerOpen(false)}
+        onPosted={handlePosted}
+        recentTrades={recentTrades}
+        myUid={myUid}
+        C={C}
+        inp={inp}
+        pillPrimary={pillPrimary}
+        isDesktop={isDesktop}
+        supabaseUploadChart={uploadChart}
+        authToken={authToken}
+      />
+
+      {chartLightbox && (
+        <div onClick={() => setChartLightbox(null)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.92)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", cursor: "zoom-out" }}>
+          <img src={chartLightbox} alt="" style={{ maxWidth: "100%", maxHeight: "100%", borderRadius: "10px" }} />
+        </div>
+      )}
+    </div>
+  );
+}

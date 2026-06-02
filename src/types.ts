@@ -192,3 +192,39 @@ export interface EvalAccount {
 }
 
 export type PropFirm = "Apex" | "TopstepX" | "FTMO" | "MyForexFunds" | "Other";
+
+export interface Idea {
+  id: string;
+  authorUid: string;
+  authorHandle: string;
+  authorName: string;
+  authorAvatar: string | null;
+  type: "pre" | "post";
+  title: string;
+  body: string;
+  instrument: string;
+  timeframe: string | null;
+  direction: "long" | "short" | "neutral";
+  entryPrice: string | null;
+  stopPrice: string | null;
+  targetPrice: string | null;
+  chartUrl: string | null;
+  linkedTradeId: number | null;
+  createdAt: string;
+  likeCount: number;
+  likedByMe: boolean;
+}
+
+export interface IdeaCreateInput {
+  type: "pre" | "post";
+  title: string;
+  body: string;
+  instrument: string;
+  timeframe: string | null;
+  direction: "long" | "short" | "neutral";
+  entryPrice: string | null;
+  stopPrice: string | null;
+  targetPrice: string | null;
+  chartUrl: string | null;
+  linkedTradeId: number | null;
+}

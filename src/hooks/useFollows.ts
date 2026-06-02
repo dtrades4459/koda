@@ -39,6 +39,9 @@ interface UseFollowsParams {
   loading: boolean;
   /** Returns the current user's short trading code. */
   getMyCode: () => string;
+  /** Returns the current user's display info — written into new follower edges
+   *  so the people following me see my real name/handle, not just my code. */
+  getMyProfile: () => { name: string; handle: string };
   /** Profile uid — used for the Realtime channel key. */
   uid: string | undefined;
   /** Toast callback. */
@@ -50,15 +53,18 @@ interface UseFollowsParams {
 /** One-time legacy migration per browser — guarded by localStorage flag. */
 const MIGRATION_FLAG = "koda_follows_migrated_v1";
 
-export function useFollows({ loading, getMyCode, uid, showToast }: UseFollowsParams) {
+export function useFollows({ loading, getMyCode, getMyProfile, uid, showToast }: UseFollowsParams) {
   const [following, setFollowing]           = useState<string[]>([]);
   const [followers, setFollowers]           = useState<string[]>([]);
-  const [followerProfiles, setFollowerProfiles] = useState<FollowerProfile[]>([]);
+  const [followerProfiles, setFollowerProfiles]   = useState<FollowerProfile[]>([]);
+  const [followingProfiles, setFollowingProfiles] = useState<FollowerProfile[]>([]);
 
   // ── Stable refs ────────────────────────────────────────────────────────────────────
   const syncFollowsRef = useRef<() => void>(() => {});
   const getMyCodeRef   = useRef(getMyCode);
   getMyCodeRef.current = getMyCode;
+  const getMyProfileRef = useRef(getMyProfile);
+  getMyProfileRef.current = getMyProfile;
 
   // ── Sync effect ───────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -79,11 +85,19 @@ export function useFollows({ loading, getMyCode, uid, showToast }: UseFollowsPar
 
         const followingSet  = new Set<string>();
         const followersSet  = new Set<string>();
-        const profiles: FollowerProfile[] = [];
+        const followingProfilesList: FollowerProfile[] = [];
+        const followerProfilesList:  FollowerProfile[] = [];
 
         for (const row of followRows || []) {
           const target = String(row.key).slice(followKeys.followPrefix(mc).length);
-          if (target) followingSet.add(target);
+          if (!target) continue;
+          followingSet.add(target);
+          try {
+            const edge = JSON.parse(row.value || "{}");
+            followingProfilesList.push({ code: target, name: edge.name || target, handle: edge.handle || "" });
+          } catch {
+            followingProfilesList.push({ code: target, name: target, handle: "" });
+          }
         }
 
         for (const row of followerRows || []) {
@@ -92,15 +106,16 @@ export function useFollows({ loading, getMyCode, uid, showToast }: UseFollowsPar
           followersSet.add(follower);
           try {
             const edge = JSON.parse(row.value || "{}");
-            profiles.push({ code: follower, name: edge.name || follower, handle: edge.handle || "" });
+            followerProfilesList.push({ code: follower, name: edge.name || follower, handle: edge.handle || "" });
           } catch {
-            profiles.push({ code: follower, name: follower, handle: "" });
+            followerProfilesList.push({ code: follower, name: follower, handle: "" });
           }
         }
 
         setFollowing(Array.from(followingSet));
         setFollowers(Array.from(followersSet));
-        setFollowerProfiles(profiles);
+        setFollowerProfiles(followerProfilesList);
+        setFollowingProfiles(followingProfilesList);
       } catch { /* network blip — keep previous state */ }
     }
 
@@ -126,17 +141,34 @@ export function useFollows({ loading, getMyCode, uid, showToast }: UseFollowsPar
 
   // ── Follow / unfollow mutations ────────────────────────────────────────────────────────
 
-  async function followUser(code: string) {
+  async function followUser(code: string, targetName?: string, targetHandle?: string) {
     const target = code.trim().toUpperCase();
     if (!target) return;
     const mc = getMyCodeRef.current();
     if (target === mc) { showToast("That's you"); return; }
-    if (following.includes(target)) return;
+    if (following.includes(target)) { showToast("Already following"); return; }
 
     setFollowing(prev => [...prev, target]);
+    // Optimistically enrich the local list so the People tab shows the name
+    // immediately, before the Realtime sync round-trip returns.
+    if (targetName || targetHandle) {
+      setFollowingProfiles(prev => [
+        ...prev.filter(p => p.code !== target),
+        { code: target, name: targetName || target, handle: targetHandle || "" },
+      ]);
+    }
+
+    const me = getMyProfileRef.current();
 
     try {
-      await kvFollowUser({ myCode: mc, target });
+      await kvFollowUser({
+        myCode: mc,
+        target,
+        myName: me.name || undefined,
+        myHandle: me.handle || undefined,
+        targetName,
+        targetHandle,
+      });
     } catch (e) {
       log.error("useFollows.followUser", e, { target });
     }
@@ -149,6 +181,7 @@ export function useFollows({ loading, getMyCode, uid, showToast }: UseFollowsPar
     const mc = getMyCodeRef.current();
 
     setFollowing(prev => prev.filter(c => c !== target));
+    setFollowingProfiles(prev => prev.filter(p => p.code !== target));
 
     try {
       await kvUnfollowUser({ myCode: mc, target });
@@ -158,5 +191,5 @@ export function useFollows({ loading, getMyCode, uid, showToast }: UseFollowsPar
     showToast("Unfollowed");
   }
 
-  return { following, followers, followerProfiles, followUser, unfollowUser };
+  return { following, followers, followerProfiles, followingProfiles, followUser, unfollowUser };
 }
