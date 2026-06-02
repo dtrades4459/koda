@@ -174,3 +174,28 @@ describe("revenge_window signal", () => {
     expect(state.signals.find(s => s.id === "revenge_window")).toBeDefined();
   });
 });
+
+describe("tilt_emotion signal", () => {
+  it("does not fire when last trade has no tilt emotion", () => {
+    const trades = [mkTrade({ date: TODAY, outcome: "Win", emotions: "disciplined,patient" })];
+    const state = evaluateTilt(trades, EMPTY_PROFILE, NOW);
+    expect(state.signals.find(s => s.id === "tilt_emotion")).toBeUndefined();
+  });
+
+  it("fires when last trade is tagged 'revenge'", () => {
+    const trades = [mkTrade({ date: TODAY, outcome: "Loss", emotions: "revenge,fomo" })];
+    const state = evaluateTilt(trades, EMPTY_PROFILE, NOW);
+    const sig = state.signals.find(s => s.id === "tilt_emotion");
+    expect(sig).toBeDefined();
+    expect(sig?.label).toMatch(/REVENGE/i);
+  });
+
+  it("fires for any of: fomo, revenge, chased, movedsl, overtrading", () => {
+    const ids = ["fomo", "revenge", "chased", "movedsl", "overtrading"];
+    for (const id of ids) {
+      const trades = [mkTrade({ date: TODAY, outcome: "Loss", emotions: id })];
+      const state = evaluateTilt(trades, EMPTY_PROFILE, NOW);
+      expect(state.signals.find(s => s.id === "tilt_emotion"), id).toBeDefined();
+    }
+  });
+});

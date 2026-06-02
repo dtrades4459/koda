@@ -111,5 +111,27 @@ export function evaluateTilt(
     }
   }
 
+  // ── tilt_emotion ─────────────────────────────────────────────────────────
+  const TILT_TAGS = ["fomo", "revenge", "chased", "movedsl", "overtrading"] as const;
+  if (last) {
+    const haystack = (last.emotions ?? "").toLowerCase();
+    let hit: string | undefined;
+    let hitIndex = Infinity;
+    for (const tag of TILT_TAGS) {
+      const idx = haystack.indexOf(tag);
+      if (idx !== -1 && idx < hitIndex) {
+        hit = tag;
+        hitIndex = idx;
+      }
+    }
+    if (hit) {
+      signals.push({
+        id: "tilt_emotion",
+        label: `Last trade tagged ${hit.toUpperCase()}`,
+        critical: false,
+      });
+    }
+  }
+
   return { active: false, critical: false, signals, evaluatedAt: now };
 }
