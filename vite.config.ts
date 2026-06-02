@@ -18,6 +18,11 @@ export default defineConfig({
 
       // Register the service worker automatically on every page load.
       registerType: "autoUpdate",
+      // Suppress the auto-injected <script src="/registerSW.js"> tag — it 404s
+      // under injectManifest strategy (registerSW.js isn't emitted). main.tsx
+      // explicitly calls navigator.serviceWorker.register("/sw.js") on load,
+      // which covers the registration path.
+      injectRegister: false,
 
       injectManifest: {
         // Only precache compiled JS/CSS/HTML -- never trade data or screenshots.
