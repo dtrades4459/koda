@@ -66,5 +66,27 @@ export function evaluateTilt(
     });
   }
 
+  // ── daily_loss_75 / daily_loss_90 ────────────────────────────────────────
+  const maxLoss = parseFloat(_profile.maxDailyLoss ?? "");
+  if (isFinite(maxLoss) && maxLoss > 0) {
+    const netPnl = todays.reduce((sum, t) => sum + (parseFloat(t.pnlDollar) || 0), 0);
+    if (netPnl < 0) {
+      const pctOfLimit = Math.abs(netPnl) / maxLoss;
+      if (pctOfLimit >= 0.9) {
+        signals.push({
+          id: "daily_loss_90",
+          label: `-${Math.round(pctOfLimit * 100)}% of daily loss limit`,
+          critical: true,
+        });
+      } else if (pctOfLimit >= 0.75) {
+        signals.push({
+          id: "daily_loss_75",
+          label: `-${Math.round(pctOfLimit * 100)}% of daily loss limit`,
+          critical: false,
+        });
+      }
+    }
+  }
+
   return { active: false, critical: false, signals, evaluatedAt: now };
 }

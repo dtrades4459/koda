@@ -75,3 +75,40 @@ describe("consec_losses signal", () => {
     expect(state.signals.find(s => s.id === "consec_losses")).toBeUndefined();
   });
 });
+
+describe("daily_loss signals", () => {
+  it("does not fire when maxDailyLoss is unset", () => {
+    const trades = [mkTrade({ date: TODAY, outcome: "Loss", pnlDollar: "-200" })];
+    const state = evaluateTilt(trades, EMPTY_PROFILE, NOW);
+    expect(state.signals.find(s => s.id?.startsWith("daily_loss"))).toBeUndefined();
+  });
+
+  it("fires daily_loss_75 at 75% of limit", () => {
+    const trades = [
+      mkTrade({ date: TODAY, outcome: "Loss", pnlDollar: "-150" }),
+      mkTrade({ date: TODAY, outcome: "Loss", pnlDollar: "-26" }),
+    ];
+    const state = evaluateTilt(trades, { ...EMPTY_PROFILE, maxDailyLoss: "200" }, NOW);
+    const sig = state.signals.find(s => s.id === "daily_loss_75");
+    expect(sig).toBeDefined();
+    expect(sig?.label).toBe("-88% of daily loss limit");
+    expect(sig?.critical).toBe(false);
+  });
+
+  it("fires daily_loss_90 at 90% of limit and marks critical", () => {
+    const trades = [mkTrade({ date: TODAY, outcome: "Loss", pnlDollar: "-185" })];
+    const state = evaluateTilt(trades, { ...EMPTY_PROFILE, maxDailyLoss: "200" }, NOW);
+    const sig = state.signals.find(s => s.id === "daily_loss_90");
+    expect(sig).toBeDefined();
+    expect(sig?.critical).toBe(true);
+  });
+
+  it("does not fire if net P&L is positive even with losses logged", () => {
+    const trades = [
+      mkTrade({ date: TODAY, outcome: "Loss", pnlDollar: "-50" }),
+      mkTrade({ date: TODAY, outcome: "Win",  pnlDollar: "300" }),
+    ];
+    const state = evaluateTilt(trades, { ...EMPTY_PROFILE, maxDailyLoss: "200" }, NOW);
+    expect(state.signals.find(s => s.id?.startsWith("daily_loss"))).toBeUndefined();
+  });
+});
