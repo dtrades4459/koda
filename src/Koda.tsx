@@ -3274,6 +3274,29 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                 <div style={{ fontFamily: DISPLAY, fontSize: "26px", fontWeight: 500, letterSpacing: "-0.02em", marginTop: "4px", color: C.text }}>
                   Your <span style={{ fontWeight: 600 }}>edge</span> this quarter
                 </div>
+                {/* Deterministic-stats badge — computed, not LLM-guessed */}
+                <div
+                  title="Every number here is computed from your logged trades. No model. No guess."
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    marginTop: "10px",
+                    padding: "4px 10px",
+                    borderRadius: "999px",
+                    border: `1px solid color-mix(in oklch, ${C.live} 30%, transparent)`,
+                    background: `color-mix(in oklch, ${C.live} 8%, transparent)`,
+                    fontFamily: MONO,
+                    fontSize: "9px",
+                    letterSpacing: "0.14em",
+                    textTransform: "uppercase",
+                    color: C.live,
+                    fontWeight: 600,
+                  }}
+                >
+                  <span style={{ width: 5, height: 5, borderRadius: "50%", background: C.live, boxShadow: `0 0 6px ${C.live}` }} />
+                  Computed · not LLM-guessed
+                </div>
               </div>
               {/* pill tabs + controls */}
               {!isDesktop && (<>
