@@ -153,7 +153,10 @@ export function BetaGate({ onUnlocked }: BetaGateProps) {
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      padding: "24px",
+      // Extra bottom padding so the fixed CookieConsent banner can't sit on
+      // top of the waitlist form when the page is short enough to fit in
+      // one viewport (mobile especially).
+      padding: "24px 24px calc(120px + env(safe-area-inset-bottom)) 24px",
       position: "relative",
       overflow: "hidden",
     }}>
