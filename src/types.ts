@@ -77,6 +77,13 @@ export interface Profile {
   // First-session survey fields
   priorTool?: string;
   almostStoppedReason?: string;
+  prefs?: {
+    intervention?: {
+      enabled?: boolean;
+      cooldownMin?: 0 | 5 | 15 | 30;
+    };
+    [k: string]: unknown;
+  };
 }
 
 export interface CircleMember {
