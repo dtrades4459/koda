@@ -156,6 +156,12 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [trades, profile.maxTradesPerDay, profile.maxDailyLoss],
   );
+  function discGradeColor(grade: string): string {
+    if (grade === "A+" || grade === "A") return C.green;
+    if (grade === "B") return C.accent;
+    if (grade === "C") return C.warn;
+    return C.red;
+  }
   const [editingProfile, setEditingProfile] = useState(false);
   const [profileDraft, setProfileDraft] = useState<Profile>(DEF_PROFILE);
   const [commentInputs, setCommentInputs] = useState<Record<number, string>>({});
@@ -3325,22 +3331,75 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
 
                   {/* ── Discipline score card ── */}
                   {(() => {
-                    const month = new Date().toISOString().slice(0, 7);
-                    const monthTrades = trades.filter(t => t.date?.startsWith(month));
-                    const tagged = monthTrades.filter(t => t.ruleAdherence !== null && t.ruleAdherence !== undefined);
-                    if (tagged.length < 3) return null;
-                    const followedPct = Math.round(tagged.filter(t => t.ruleAdherence === true).length / tagged.length * 100);
-                    const grade = followedPct >= 80 ? "Excellent" : followedPct >= 60 ? "Good" : followedPct >= 40 ? "Needs work" : "Struggling";
-                    const gradeColor = followedPct >= 80 ? C.green : followedPct >= 60 ? C.accent : followedPct >= 40 ? C.warn : C.red;
-                    return (
-                      <div style={{ borderRadius: "22px", padding: "18px 20px", background: C.panel, border: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: "16px" }}>
-                        <div style={{ width: "48px", height: "48px", borderRadius: "50%", border: `3px solid ${gradeColor}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                          <span style={{ fontFamily: DISPLAY, fontSize: "15px", fontWeight: 700, color: gradeColor }}>{followedPct}%</span>
+                    if (!disciplineScore) {
+                      const anyTagged = trades.some(t => t.ruleAdherence !== null && t.ruleAdherence !== undefined);
+                      if (!anyTagged) return null;
+                      return (
+                        <div style={{ borderRadius: "22px", padding: "18px 20px", background: C.panel, border: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: "16px" }}>
+                          <div style={{ width: "64px", height: "64px", flexShrink: 0, position: "relative" }}>
+                            <svg width="64" height="64" viewBox="0 0 64 64" style={{ transform: "rotate(-90deg)", display: "block" }}>
+                              <circle cx="32" cy="32" r="26" fill="none" stroke={C.border2} strokeWidth="5" />
+                            </svg>
+                            <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                              <span style={{ fontFamily: MONO, fontSize: "11px", color: C.muted }}>—</span>
+                            </div>
+                          </div>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "4px" }}>Discipline · 7-day</div>
+                            <div style={{ fontFamily: BODY, fontSize: "12px", color: C.muted, lineHeight: 1.5 }}>Tag rule adherence on 3+ trades this week to unlock your score.</div>
+                          </div>
                         </div>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "4px" }}>Discipline · This month</div>
-                          <div style={{ fontFamily: BODY, fontSize: "13px", color: C.text, lineHeight: 1.5 }}>
-                            You followed your rules on <strong style={{ color: gradeColor }}>{followedPct}%</strong> of trades — <span style={{ color: C.muted }}>{grade}.</span>
+                      );
+                    }
+
+                    const gc = discGradeColor(disciplineScore.grade);
+                    const circumference = 2 * Math.PI * 26;
+                    const offset = circumference * (1 - disciplineScore.score / 100);
+
+                    const pillColor = (pct: number) => pct >= 0.72 ? C.green : pct >= 0.45 ? C.warn : C.red;
+                    const pillBorder = (pct: number) => `color-mix(in oklch, ${pillColor(pct)} 30%, transparent)`;
+
+                    const pills: Array<{ label: string; pct: number }> = [
+                      { label: `Rules ${disciplineScore.breakdown.rules.earned / disciplineScore.breakdown.rules.max >= 0.72 ? "✓" : "✗"}`, pct: disciplineScore.breakdown.rules.earned / disciplineScore.breakdown.rules.max },
+                    ];
+                    if (disciplineScore.breakdown.tradeLimit)
+                      pills.push({ label: `Trades ${disciplineScore.breakdown.tradeLimit.earned / disciplineScore.breakdown.tradeLimit.max >= 0.72 ? "✓" : "✗"}`, pct: disciplineScore.breakdown.tradeLimit.earned / disciplineScore.breakdown.tradeLimit.max });
+                    if (disciplineScore.breakdown.lossLimit)
+                      pills.push({ label: `Loss limit ${disciplineScore.breakdown.lossLimit.earned / disciplineScore.breakdown.lossLimit.max >= 0.72 ? "✓" : "✗"}`, pct: disciplineScore.breakdown.lossLimit.earned / disciplineScore.breakdown.lossLimit.max });
+                    pills.push({ label: `Awareness ${disciplineScore.breakdown.awareness.earned === disciplineScore.breakdown.awareness.max ? "✓" : "✗"}`, pct: disciplineScore.breakdown.awareness.earned / disciplineScore.breakdown.awareness.max });
+
+                    const rulesPct = Math.round((disciplineScore.breakdown.rules.earned / disciplineScore.breakdown.rules.max) * 100);
+
+                    return (
+                      <div style={{ borderRadius: "22px", padding: "18px 20px", background: C.panel, border: `1px solid ${C.border}` }}>
+                        <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "14px" }}>Discipline · 7-day</div>
+                        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                          <div style={{ width: "64px", height: "64px", flexShrink: 0, position: "relative" }}>
+                            <svg width="64" height="64" viewBox="0 0 64 64" style={{ transform: "rotate(-90deg)", display: "block" }}>
+                              <circle cx="32" cy="32" r="26" fill="none" stroke={C.border2} strokeWidth="5" />
+                              <circle cx="32" cy="32" r="26" fill="none" stroke={gc} strokeWidth="5"
+                                strokeDasharray={circumference} strokeDashoffset={offset} strokeLinecap="round" />
+                            </svg>
+                            <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                              <span style={{ fontFamily: DISPLAY, fontSize: "17px", fontWeight: 700, color: gc, lineHeight: 1, letterSpacing: "-0.02em" }}>{disciplineScore.score}</span>
+                              <span style={{ fontFamily: MONO, fontSize: "8px", color: C.muted, letterSpacing: "0.08em" }}>/100</span>
+                            </div>
+                          </div>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontFamily: BODY, fontSize: "13px", color: C.text, lineHeight: 1.5, marginBottom: "10px" }}>
+                              Rules followed on <strong style={{ fontWeight: 700, color: gc }}>{rulesPct}%</strong> of trades — grade <strong style={{ color: gc }}>{disciplineScore.grade}</strong> this week.
+                            </div>
+                            <div style={{ display: "flex", gap: "5px", flexWrap: "wrap" }}>
+                              {pills.map(p => (
+                                <span key={p.label} style={{
+                                  fontFamily: MONO, fontSize: "9px", letterSpacing: "0.06em", textTransform: "uppercase",
+                                  padding: "3px 8px", borderRadius: "999px",
+                                  color: pillColor(p.pct),
+                                  border: `1px solid ${pillBorder(p.pct)}`,
+                                  background: C.panel2,
+                                }}>{p.label}</span>
+                              ))}
+                            </div>
                           </div>
                         </div>
                       </div>
