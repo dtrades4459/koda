@@ -1413,6 +1413,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     { id: "calendar", label: "Calendar" },
     { id: "weekly", label: "Weekly" },
     { id: "psychology", label: "Psychology" },
+    { id: "discipline", label: "Discipline" },
     { id: "heatmap", label: "Heatmap" },
     { id: "maemfe", label: "MAE/MFE" },
     { id: "insights", label: "Insights" },
@@ -3757,6 +3758,179 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                     );
                   })()}
                 </section> : <ProLock C={C} label="Psychology Stats" description="Rule adherence tracking, emotional tagging, and discipline scoring." onUpgrade={() => setShowUpgrade(true)} />
+              )}
+
+              {statsTab === "discipline" && (
+                <section style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                  {(() => {
+                    if (!disciplineScore) {
+                      return (
+                        <div style={{ padding: "48px 0", textAlign: "center" }}>
+                          <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "8px" }}>Discipline · 7-day</div>
+                          <div style={{ fontFamily: BODY, fontSize: "13px", color: C.muted }}>Tag rule adherence on 3+ trades this week to unlock your score.</div>
+                        </div>
+                      );
+                    }
+
+                    const gc = discGradeColor(disciplineScore.grade);
+                    const circumference = 2 * Math.PI * 26;
+                    const offset = circumference * (1 - disciplineScore.score / 100);
+
+                    const dragNames: Record<string, string> = {
+                      rules: "Rule Adherence",
+                      tradeLimit: "Trade Limit",
+                      lossLimit: "Loss Limit",
+                      awareness: "Mistake Awareness",
+                    };
+                    const dragDescriptions: Record<string, (ds: DisciplineScore) => string> = {
+                      rules: (ds) => {
+                        const pct = Math.round((ds.breakdown.rules.earned / ds.breakdown.rules.max) * 100);
+                        const cost = Math.round(ds.breakdown.rules.max - ds.breakdown.rules.earned);
+                        return `You followed your rules on only ${pct}% of tagged trades — costing ~${cost} pts. Tighten up your setup discipline to push your grade higher.`;
+                      },
+                      tradeLimit: (ds) => {
+                        const cost = Math.round(ds.breakdown.tradeLimit!.max - ds.breakdown.tradeLimit!.earned);
+                        return `Trade limit was exceeded on one or more days this week — costing ~${cost} pts. Respect your daily trade cap.`;
+                      },
+                      lossLimit: (ds) => {
+                        const cost = Math.round(ds.breakdown.lossLimit!.max - ds.breakdown.lossLimit!.earned);
+                        return `Loss limit was breached on one or more days this week — costing ~${cost} pts. Respect your daily stop to push into the next grade.`;
+                      },
+                      awareness: (ds) => {
+                        const cost = Math.round(ds.breakdown.awareness.max - ds.breakdown.awareness.earned);
+                        return `When you broke your rules, you only tagged the mistake ${Math.round((ds.breakdown.awareness.earned / ds.breakdown.awareness.max) * 100)}% of the time — costing ~${cost} pts. Tag every rule break to earn full awareness points.`;
+                      },
+                    };
+
+                    type SigRow = { key: string; name: string; desc: string; earned: number; max: number };
+                    const sigRows: SigRow[] = [
+                      { key: "rules", name: "Rule Adherence", desc: "% of tagged trades where rules were followed", earned: disciplineScore.breakdown.rules.earned, max: disciplineScore.breakdown.rules.max },
+                      ...(disciplineScore.breakdown.tradeLimit ? [{ key: "tradeLimit", name: "Trade Limit", desc: "% of days within your max trades per day", earned: disciplineScore.breakdown.tradeLimit.earned, max: disciplineScore.breakdown.tradeLimit.max }] : []),
+                      ...(disciplineScore.breakdown.lossLimit  ? [{ key: "lossLimit",  name: "Loss Limit",  desc: "% of days that respected your max daily loss", earned: disciplineScore.breakdown.lossLimit.earned,  max: disciplineScore.breakdown.lossLimit.max  }] : []),
+                      { key: "awareness", name: "Mistake Awareness", desc: "Of rule breaks, % where you tagged the mistake", earned: disciplineScore.breakdown.awareness.earned, max: disciplineScore.breakdown.awareness.max },
+                    ];
+
+                    const sigNumColor = (pct: number) => pct >= 0.72 ? C.green : pct >= 0.45 ? C.warn : C.red;
+
+                    const sparkData = disciplineLog.slice(-7);
+                    const minScore = 40, maxScore = 100;
+                    const sparkW = 300, sparkH = 48, sparkPad = 4;
+                    const toX = (i: number) => sparkData.length < 2 ? sparkW / 2 : (i / (sparkData.length - 1)) * sparkW;
+                    const toY = (s: number) => sparkH - sparkPad - ((s - minScore) / (maxScore - minScore)) * (sparkH - sparkPad * 2);
+
+                    const priorData = disciplineLog.slice(-14, -7);
+                    const delta = sparkData.length >= 2 && priorData.length >= 1
+                      ? sparkData[sparkData.length - 1].score - Math.round(priorData.reduce((s, e) => s + e.score, 0) / priorData.length)
+                      : null;
+
+                    return (
+                      <>
+                        {/* ── Score hero ── */}
+                        <div>
+                          <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "10px" }}>This week</div>
+                          <div style={{ padding: "18px", borderRadius: "16px", border: `1px solid ${C.border}`, background: `color-mix(in oklch, ${gc} 8%, ${C.panel})`, display: "flex", alignItems: "center", gap: "16px" }}>
+                            <div>
+                              <div style={{ fontFamily: DISPLAY, fontSize: "52px", fontWeight: 700, letterSpacing: "-0.03em", color: gc, lineHeight: 1 }}>{disciplineScore.score}</div>
+                              <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.10em", marginTop: "4px" }}>/100</div>
+                            </div>
+                            <div style={{ flex: 1 }}>
+                              <div style={{ fontFamily: DISPLAY, fontSize: "34px", fontWeight: 700, letterSpacing: "-0.02em", color: gc, lineHeight: 1 }}>{disciplineScore.grade}</div>
+                              <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.12em", textTransform: "uppercase", marginTop: "4px" }}>7-day rolling · {disciplineScore.taggedCount} trades tagged</div>
+                              <div style={{ height: "3px", background: C.border2, borderRadius: "2px", overflow: "hidden", marginTop: "10px" }}>
+                                <div style={{ width: `${disciplineScore.score}%`, height: "100%", borderRadius: "2px", background: gc, transition: "width 0.4s ease" }} />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* ── Drag callout ── */}
+                        {disciplineScore.dragSignal && (
+                          <div style={{ padding: "12px 14px", borderRadius: "12px", background: `color-mix(in oklch, ${C.red} 6%, ${C.panel})`, border: `1px solid color-mix(in oklch, ${C.red} 18%, transparent)` }}>
+                            <div style={{ fontFamily: MONO, fontSize: "9px", letterSpacing: "0.12em", textTransform: "uppercase", color: C.red, marginBottom: "4px" }}>Dragging your score</div>
+                            <div style={{ fontFamily: BODY, fontSize: "12px", color: C.text2, lineHeight: 1.5 }}>
+                              <strong style={{ color: C.text, fontWeight: 600 }}>{dragNames[disciplineScore.dragSignal]}</strong>{" — "}
+                              {dragDescriptions[disciplineScore.dragSignal]?.(disciplineScore)}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* ── Signal breakdown ── */}
+                        <div>
+                          <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "10px" }}>Signal Breakdown</div>
+                          <div style={{ display: "flex", flexDirection: "column", gap: "1px", background: C.border, borderRadius: "16px", overflow: "hidden", border: `1px solid ${C.border}` }}>
+                            {sigRows.map(row => {
+                              const pct = row.earned / row.max;
+                              return (
+                                <div key={row.key} style={{ background: C.panel, padding: "13px 16px", display: "flex", alignItems: "center", gap: "14px" }}>
+                                  <div style={{ flex: 1, minWidth: 0 }}>
+                                    <div style={{ fontFamily: BODY, fontSize: "12px", fontWeight: 500, color: C.text, marginBottom: "2px" }}>{row.name}</div>
+                                    <div style={{ fontFamily: MONO, fontSize: "9px", letterSpacing: "0.06em", color: C.muted }}>{row.desc}</div>
+                                    <div style={{ height: "2px", background: C.border2, borderRadius: "1px", overflow: "hidden", marginTop: "8px" }}>
+                                      <div style={{ width: `${Math.round(pct * 100)}%`, height: "100%", borderRadius: "1px", background: C.accent, transition: "width 0.4s ease" }} />
+                                    </div>
+                                  </div>
+                                  <div style={{ fontFamily: MONO, fontSize: "12px", fontWeight: 700, flexShrink: 0, minWidth: "36px", textAlign: "right", color: sigNumColor(pct) }}>
+                                    {Math.round(row.earned)}/{row.max}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* ── 7-day trend sparkline ── */}
+                        {sparkData.length >= 2 && (
+                          <div>
+                            <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "10px" }}>7-day trend</div>
+                            <div style={{ padding: "16px", borderRadius: "16px", border: `1px solid ${C.border}`, background: C.panel }}>
+                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "14px" }}>
+                                <span style={{ fontFamily: BODY, fontSize: "13px", fontWeight: 500, color: C.text }}>Score history</span>
+                                {delta !== null && (
+                                  <span style={{ fontFamily: MONO, fontSize: "10px", color: delta >= 0 ? C.green : C.red }}>
+                                    {delta >= 0 ? "+" : ""}{delta} vs last week
+                                  </span>
+                                )}
+                              </div>
+                              <svg width="100%" height={sparkH} viewBox={`0 0 ${sparkW} ${sparkH}`} preserveAspectRatio="none" style={{ overflow: "visible", display: "block" }}>
+                                <polygon
+                                  points={`0,${sparkH} ${sparkData.map((e, i) => `${toX(i)},${toY(e.score)}`).join(" ")} ${sparkW},${sparkH}`}
+                                  fill={`color-mix(in oklch, ${C.accent} 8%, transparent)`}
+                                />
+                                <polyline
+                                  points={sparkData.map((e, i) => `${toX(i)},${toY(e.score)}`).join(" ")}
+                                  fill="none" stroke={C.accent} strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round"
+                                />
+                                {sparkData.map((e, i) => {
+                                  const isToday = i === sparkData.length - 1;
+                                  return (
+                                    <g key={e.date}>
+                                      <circle cx={toX(i)} cy={toY(e.score)} r={isToday ? 4 : 2.5} fill={isToday ? C.accent : `color-mix(in oklch, ${C.accent} 50%, transparent)`} />
+                                      {isToday && (
+                                        <text x={toX(i) - 6} y={toY(e.score) - 9} fontFamily={MONO} fontSize="9" fill={C.accent} textAnchor="end">{e.score}</text>
+                                      )}
+                                    </g>
+                                  );
+                                })}
+                              </svg>
+                              <div style={{ display: "flex", justifyContent: "space-between", marginTop: "6px" }}>
+                                {sparkData.map((e, i) => {
+                                  const d = new Date(e.date + "T12:00:00");
+                                  const labels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+                                  const isToday = i === sparkData.length - 1;
+                                  return (
+                                    <span key={e.date} style={{ fontFamily: MONO, fontSize: "8px", letterSpacing: "0.06em", color: isToday ? C.accent : C.muted }}>
+                                      {labels[d.getDay()]}
+                                    </span>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
+                </section>
               )}
 
               {statsTab === "heatmap" && (
