@@ -1,5 +1,7 @@
 import { type CSSProperties, useState } from "react";
 import { AvatarCircle, MONO, BODY, DISPLAY } from "./shared";
+import { IdeasScreen } from "./IdeasScreen";
+import type { Trade } from "./types";
 
 const REACTIONS = ["FIRE", "GEM", "UP", "TARGET", "PAIN", "MIND"] as const;
 type Reaction = (typeof REACTIONS)[number];
@@ -42,10 +44,12 @@ interface FriendsFeedProps {
   followHandleMsg: string;
   followHandleLoading: boolean;
   followByHandle: () => void;
+  followUser: (code: string, targetName?: string, targetHandle?: string) => void | Promise<void>;
   unfollowUser: (code: string) => void;
   following: string[];
   followers: string[];
   followerProfiles: FriendProfile[];
+  followingProfiles: FriendProfile[];
   publishFeed: () => Promise<void>;
   refreshFeed: () => Promise<void>;
   reactToFeed: (authorCode: string, tradeId: string, rx: string) => void;
@@ -55,16 +59,21 @@ interface FriendsFeedProps {
   inp: CSSProperties;
   pillPrimary: (active: boolean) => CSSProperties;
   openProfile?: (handle: string) => void;
+  myUid: string;
+  recentTrades: Trade[];
+  isDesktop: boolean;
 }
 
 export function FriendsFeed({
   friends, friendFeed, showAddFriend, setShowAddFriend,
   followHandleInput, setFollowHandleInput, followHandleMsg, followHandleLoading,
-  followByHandle, unfollowUser, following, followers, followerProfiles,
+  followByHandle, followUser, unfollowUser,
+  following, followers, followerProfiles, followingProfiles,
   publishFeed, refreshFeed, reactToFeed, myFeedReactions, profile,
   C, inp, pillPrimary, openProfile,
+  myUid, recentTrades, isDesktop,
 }: FriendsFeedProps) {
-  const [tab, setTab] = useState<"feed" | "people">("feed");
+  const [tab, setTab] = useState<"feed" | "ideas" | "people">("feed");
 
   const followingCount = following?.length ?? 0;
   const followerCount = followerProfiles?.length ?? 0;
@@ -73,7 +82,7 @@ export function FriendsFeed({
   const orb2 = C.orb2 ?? "oklch(0.45 0.20 268)";
   const cardBg = `color-mix(in srgb, ${C.text} 3%, transparent)`;
 
-  const tabBtn = (id: "feed" | "people", label: string) => (
+  const tabBtn = (id: "feed" | "ideas" | "people", label: string) => (
     <button key={id} onClick={() => setTab(id)} style={{
       background: "none", border: "none", padding: "0 0 6px 0", cursor: "pointer",
       fontFamily: MONO, fontSize: "11px", letterSpacing: "0.08em",
@@ -102,7 +111,7 @@ export function FriendsFeed({
           </div>
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px" }}>
             <div style={{ fontFamily: DISPLAY, fontSize: "26px", fontWeight: 500, color: C.text, letterSpacing: "-0.02em", lineHeight: 1.1 }}>
-              What your <span style={{ fontWeight: 600 }}>circle</span> is trading
+              What your <span style={{ fontWeight: 600 }}>network</span> is trading
             </div>
             <div style={{ display: "flex", gap: "8px", alignItems: "center", flexShrink: 0, marginTop: "4px" }}>
               {tab === "feed" && friends.length > 0 && (
@@ -126,6 +135,7 @@ export function FriendsFeed({
           </div>
           <div style={{ display: "flex", gap: "16px", marginTop: "14px" }}>
             {tabBtn("feed", "Feed")}
+            {tabBtn("ideas", "Ideas")}
             {tabBtn("people", `People${followingCount ? ` · ${followingCount}` : ""}`)}
           </div>
         </div>
@@ -139,19 +149,13 @@ export function FriendsFeed({
             background: C.surfaceGlass ?? "rgba(28,28,34,0.55)",
             backdropFilter: "blur(20px) saturate(140%)",
           }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div>
-                <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.16em", marginBottom: "3px", textTransform: "uppercase" as const }}>
-                  YOUR HANDLE
-                </div>
-                <div style={{ fontFamily: MONO, fontSize: "14px", color: C.text, letterSpacing: "0.04em" }}>
-                  @{profile?.handle || "—"}
-                </div>
+            <div>
+              <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.16em", marginBottom: "3px", textTransform: "uppercase" as const }}>
+                YOUR HANDLE
               </div>
-              <button onClick={async () => { await publishFeed(); }}
-                style={{ background: "none", border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "6px 12px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.08em", color: C.muted }}>
-                Publish feed
-              </button>
+              <div style={{ fontFamily: MONO, fontSize: "14px", color: C.text, letterSpacing: "0.04em" }}>
+                @{profile?.handle || "—"}
+              </div>
             </div>
             <div>
               <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.16em", marginBottom: "8px", textTransform: "uppercase" as const }}>
@@ -305,11 +309,6 @@ export function FriendsFeed({
                               {item.authorHandle ? `@${item.authorHandle}` : "@trader"} · {item.date}
                             </div>
                           </div>
-                          <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
-                            <circle cx="5" cy="10" r="1.5" fill={C.muted} />
-                            <circle cx="10" cy="10" r="1.5" fill={C.muted} />
-                            <circle cx="15" cy="10" r="1.5" fill={C.muted} />
-                          </svg>
                         </div>
 
                         {/* Trade card */}
@@ -378,6 +377,14 @@ export function FriendsFeed({
                         )}
 
                         {/* Reactions */}
+                        {(() => {
+                          const hasAnyReactions = REACTIONS.some(rx => {
+                            const raw = (item.reactions ?? {})[rx];
+                            const count = typeof raw === "number" ? raw : (Array.isArray(raw) ? raw.length : 0);
+                            return count > 0;
+                          });
+                          const iReactedToAny = REACTIONS.some(rx => myFeedReactions?.has(`${item.authorCode}_${item.tradeId}_${rx}`));
+                          return (
                         <div style={{ marginTop: "12px", display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" }}>
                           {REACTIONS.map(rx => {
                             const raw = (item.reactions ?? {})[rx];
@@ -400,7 +407,7 @@ export function FriendsFeed({
                               </button>
                             );
                           })}
-                          {!REACTIONS.some(rx => myFeedReactions?.has(`${item.authorCode}_${item.tradeId}_${rx}`)) && (
+                          {!hasAnyReactions && !iReactedToAny && (
                             <div style={{ display: "flex", gap: "4px" }}>
                               {REACTIONS.map(rx => (
                                 <button key={rx}
@@ -431,12 +438,28 @@ export function FriendsFeed({
                             </svg>
                           </button>
                         </div>
+                        );
+                        })()}
                       </div>
                     );
                   })}
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* IDEAS tab */}
+        {tab === "ideas" && (
+          <div style={{ marginTop: "20px" }}>
+            <IdeasScreen
+              myUid={myUid}
+              recentTrades={recentTrades}
+              C={C}
+              inp={inp}
+              pillPrimary={pillPrimary}
+              isDesktop={isDesktop}
+            />
           </div>
         )}
 
@@ -466,7 +489,13 @@ export function FriendsFeed({
                     </div>
                     <div style={{ borderRadius: "22px", overflow: "hidden", border: `1px solid ${C.border}`, background: C.panel }}>
                       {following.map((code, idx) => {
-                        const f = friends.find(x => x.code === code) ?? { code, name: code, handle: "" } as FriendProfile;
+                        // Prefer the enriched follow-edge profile (name + handle written into
+                        // the follow row at follow-time). Fall back to legacy `friends`, then
+                        // to a code-only stub for ancient rows that predate enrichment.
+                        const f =
+                          followingProfiles.find(x => x.code === code) ??
+                          friends.find(x => x.code === code) ??
+                          ({ code, name: code, handle: "" } as FriendProfile);
                         const followsBack = followers?.includes(code);
                         return (
                           <div key={code} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "14px 16px", borderBottom: idx < following.length - 1 ? `1px solid ${C.border}` : "none" }}>
@@ -526,7 +555,7 @@ export function FriendsFeed({
                                 MUTUAL
                               </span>
                             ) : (
-                              <button onClick={() => { setFollowHandleInput(f.handle || f.code); followByHandle(); }}
+                              <button onClick={() => followUser(f.code, f.name, f.handle)}
                                 style={{ background: C.text, color: C.bg, border: "none", borderRadius: "999px", padding: "6px 14px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.06em" }}>
                                 Follow back
                               </button>

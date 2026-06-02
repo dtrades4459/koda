@@ -6,7 +6,83 @@ import { readCircleMembers } from "./data/circles";
 import { createChallenge, fetchActiveChallenge, fetchTrophies } from "./data/circlesChallenges";
 import { fetchSharedTrades, reactToSharedTrade, rowToSharedTrade } from "./data/circlesSharedTrades";
 import { SharedTradeCard } from "./components/SharedTradeCard";
-import type { CircleChallenge, ChallengeResult, FeedItem, CircleMessage, CircleMember } from "./types";
+import type { Circle, CircleChallenge, ChallengeResult, FeedItem, CircleMessage, CircleMember, Profile } from "./types";
+import type { Theme } from "./theme";
+
+interface LeaderboardEntry {
+  memberCode: string;
+  name: string;
+  handle?: string;
+  alias?: string;
+  total: number;
+  winRate: number;
+  totalPnL: number;
+  totalPnLDollar?: number;
+  pnlPercent?: number;
+  topStrategy?: string;
+  streak?: { count: number; type: "Win" | "Loss" };
+  avgRR?: number;
+  updatedAt?: string;
+}
+
+interface CircleFormShape {
+  name: string;
+  description: string;
+  strategy: string;
+  privacy: "public" | "private";
+  emoji?: string;
+  metric?: "dollar" | "r" | "winrate" | "trades" | "avgr";
+}
+
+export interface TradingCirclesProps {
+  myCircles: Circle[];
+  circlesView: "browse" | "create" | "join" | "detail";
+  setCirclesView: React.Dispatch<React.SetStateAction<"browse" | "create" | "join" | "detail">>;
+  activeCircle: Circle | null | any;
+  setActiveCircle: React.Dispatch<React.SetStateAction<Circle | null | any>>;
+  circleForm: CircleFormShape;
+  setCircleForm: React.Dispatch<React.SetStateAction<CircleFormShape>>;
+  circleJoinCode: string;
+  setCircleJoinCode: React.Dispatch<React.SetStateAction<string>>;
+  circleMsg: string;
+  setCircleMsg: React.Dispatch<React.SetStateAction<string>>;
+  createCircle: () => void | Promise<void>;
+  joinCircle: () => void | Promise<void>;
+  publishToCircle: (code: string) => void | Promise<void>;
+  fetchCircleLeaderboard: (circle: Circle, sort: "all" | "week") => Promise<LeaderboardEntry[]>;
+  profile: Profile;
+  getMyCode: () => string;
+  showToast: (message: string) => void;
+  wins: number;
+  losses: number;
+  total: number;
+  winRate: string | number;
+  totalPnL: number;
+  pnlPos: boolean;
+  weekPnL: number;
+  weekPnLPos: boolean;
+  weekPnLStr: string | number;
+  avgRR: string | number;
+  streak: { count: number; type: "Win" | "Loss" } | null;
+  STRATEGY_NAMES: string[];
+  C: Theme;
+  inp: React.CSSProperties;
+  sel: React.CSSProperties;
+  lbl: React.CSSProperties;
+  pillPrimary: (active: boolean) => React.CSSProperties;
+  pillGhost: React.CSSProperties;
+  following: string[];
+  followUser: (code: string) => void | Promise<void>;
+  unfollowUser: (code: string) => void | Promise<void>;
+  kickMember: (circleCode: string, memberCode: string) => Promise<void> | void;
+  leaveCircle: (circleCode: string) => Promise<void> | void;
+  openProfile?: (handle: string) => void;
+  isJoiningCircle: boolean;
+  isCreatingCircle: boolean;
+  totalPnlDollar: number;
+  hasDollarData: boolean;
+  isPro: boolean;
+}
 
 export function TradingCircles({
   myCircles, circlesView, setCirclesView, activeCircle, setActiveCircle,
@@ -19,8 +95,7 @@ export function TradingCircles({
   following, followUser, unfollowUser, kickMember, leaveCircle,
   openProfile, isJoiningCircle, isCreatingCircle,
   totalPnlDollar, hasDollarData, isPro,
-}:
-any) {
+}: TradingCirclesProps) {
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [lbSort, setLbSort] = useState<"all" | "week">("all");
   const [loadingLB, setLoadingLB] = useState(false);
@@ -46,6 +121,30 @@ any) {
   const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
   const [feedLoading, setFeedLoading] = useState(false);
   const feedBottomRef = useRef<HTMLDivElement>(null);
+  const [showLeaveSheet, setShowLeaveSheet] = useState(false);
+
+  const TROPHY_GOLD = "#A88C50";
+
+  function Skeleton({ height = 14, width = "100%", radius = 6, mb = 0 }: { height?: number; width?: number | string; radius?: number; mb?: number }) {
+    return (
+      <div style={{ height, width, borderRadius: radius, marginBottom: mb,
+        background: `linear-gradient(90deg, ${C.panel} 0%, ${C.border2} 50%, ${C.panel} 100%)`,
+        backgroundSize: "200% 100%", animation: "kShimmer 1.4s ease-in-out infinite" }} />
+    );
+  }
+  function SkeletonRow({ avatar = true, lines = 2 }: { avatar?: boolean; lines?: number }) {
+    return (
+      <div style={{ display: "flex", gap: 12, padding: "14px 0", borderBottom: `1px solid ${C.border}`, alignItems: "center" }}>
+        {avatar && <div style={{ width: 36, height: 36, borderRadius: "50%", background: C.panel, flexShrink: 0,
+          backgroundImage: `linear-gradient(90deg, ${C.panel} 0%, ${C.border2} 50%, ${C.panel} 100%)`,
+          backgroundSize: "200% 100%", animation: "kShimmer 1.4s ease-in-out infinite" }} />}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
+          <Skeleton height={12} width="55%" />
+          {lines > 1 && <Skeleton height={10} width="35%" />}
+        </div>
+      </div>
+    );
+  }
   const [composeText, setComposeText] = useState("");
   const [composeSending, setComposeSending] = useState(false);
 
@@ -473,9 +572,6 @@ any) {
                     <div style={{ fontFamily: DISPLAY, fontSize: "22px", fontWeight: 600, color: C.text, marginTop: "8px", letterSpacing: "-0.02em" }}>{circle.name}</div>
                     <div style={{ fontSize: "12px", color: C.text2, marginTop: "4px", fontFamily: MONO }}>{circle.code} · {circle.members?.length || 1} members</div>
                   </div>
-                  {myRank > 0 && (
-                    <div style={{ padding: "6px 12px", borderRadius: "999px", background: C.text, color: C.bg, fontSize: "11px", fontWeight: 600, fontFamily: BODY }}>#{myRank}</div>
-                  )}
                 </div>
                 {/* Avatar stack */}
                 <div style={{ display: "flex", marginTop: "18px", alignItems: "center", position: "relative", zIndex: 1 }}>
@@ -650,7 +746,7 @@ any) {
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "14px" }}>
             <button onClick={() => { setCirclesView("browse"); setActiveCircle(null); setLeaderboard([]); }} style={{ ...pillGhost, padding: "8px 14px" }}>‹ BACK</button>
             {!activeCircle.isOwner && (
-              <button onClick={() => { if (window.confirm(`Leave "${activeCircle.name}"? You can rejoin with the code.`)) leaveCircle(activeCircle.code); }}
+              <button onClick={() => setShowLeaveSheet(true)}
                 style={{ background: "transparent", color: C.muted, border: `0.5px solid ${C.border2}`, borderRadius: "999px", padding: "8px 14px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase" }}>
                 Leave
               </button>
@@ -836,7 +932,18 @@ any) {
             {circleTab === "feed" && (
               <div style={{ paddingBottom: 90, display: "flex", flexDirection: "column", gap: 8 }}>
                 {feedLoading && (
-                  <div style={{ fontFamily: MONO, fontSize: 11, color: C.muted, textAlign: "center", padding: 24 }}>Loading…</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    {[0,1,2].map(i => (
+                      <div key={i} style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 12, padding: 12 }}>
+                        <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 10 }}>
+                          <div style={{ width: 26, height: 26, borderRadius: "50%", background: C.panel, backgroundImage: `linear-gradient(90deg, ${C.panel} 0%, ${C.border2} 50%, ${C.panel} 100%)`, backgroundSize: "200% 100%", animation: "kShimmer 1.4s ease-in-out infinite" }} />
+                          <Skeleton height={10} width="40%" />
+                        </div>
+                        <Skeleton height={14} width="70%" mb={8} />
+                        <Skeleton height={10} width="55%" />
+                      </div>
+                    ))}
+                  </div>
                 )}
 
                 {feedItems.map(item => {
@@ -912,7 +1019,9 @@ any) {
                   </div>
                 )}
                 {loadingLB ? (
-                  <div style={{ padding: "28px 0", fontFamily: BODY, fontSize: "13px", color: C.muted, fontStyle: "italic" }}>Loading…</div>
+                  <div>
+                    {[0,1,2,3,4].map(i => <SkeletonRow key={i} />)}
+                  </div>
                 ) : leaderboard.length === 0 ? (
                   <div style={{ padding: "40px 24px", textAlign: "center", background: C.panel, borderRadius: "12px" }}>
                     <div style={{ fontFamily: MONO, fontSize: "24px", color: C.border2, marginBottom: "12px" }}>—</div>
@@ -924,7 +1033,7 @@ any) {
                     {(() => {
                       const myCode = getMyCode();
                       const myIdx = leaderboard.findIndex(e => e.memberCode === myCode);
-                      const renderRow = (entry: typeof leaderboard[number], i: number, blur: boolean) => {
+                      const renderRow = (entry: typeof leaderboard[number], i: number) => {
                         const isMe = entry.memberCode === myCode;
                         const md = metricDisplay(entry, activeCircle);
                         const pPos = md.raw >= 0;
@@ -933,9 +1042,8 @@ any) {
                         const isExpanded = expandedMember === entry.memberCode;
                         const isFollowing = (following || []).includes(entry.memberCode);
                         const medal = MEDALS[i] || null;
-                        const isBlurred = blur && !isMe;
                         return (
-                          <div key={entry.memberCode} style={{ borderBottom: `1px solid ${C.border}`, background: isFirst ? `${C.green}08` : "transparent", filter: isBlurred ? "blur(4px)" : "none", userSelect: isBlurred ? "none" : "auto", pointerEvents: isBlurred ? "none" : "auto", opacity: isBlurred ? 0.6 : 1 }}>
+                          <div key={entry.memberCode} style={{ borderBottom: `1px solid ${C.border}`, background: isFirst ? `${C.green}08` : "transparent" }}>
                             <div
                               onClick={() => setExpandedMember(isExpanded ? null : entry.memberCode)}
                               style={{ padding: "16px 0", display: "grid", gridTemplateColumns: "auto 1fr auto", alignItems: "center", gap: "14px", cursor: "pointer", paddingLeft: isExpanded ? "10px" : 0, paddingRight: isExpanded ? "10px" : 0 }}>
@@ -1003,7 +1111,7 @@ any) {
                       };
                       return (
                         <>
-                          {leaderboard.slice(0, 5).map((entry, i) => renderRow(entry, i, false))}
+                          {leaderboard.slice(0, 5).map((entry, i) => renderRow(entry, i))}
                           {myIdx >= 5 && (
                             <>
                               <div style={{ padding: "10px 0", display: "flex", alignItems: "center", gap: "10px" }}>
@@ -1011,12 +1119,12 @@ any) {
                                 <span style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.14em", textTransform: "uppercase" }}>Your Position</span>
                                 <div style={{ flex: 1, height: "1px", background: C.border }} />
                               </div>
-                              {renderRow(leaderboard[myIdx], myIdx, false)}
+                              {renderRow(leaderboard[myIdx], myIdx)}
                             </>
                           )}
                           {leaderboard.slice(5).map((entry, i) => {
                             if (myIdx >= 5 && entry.memberCode === myCode) return null;
-                            return renderRow(entry, i + 5, false);
+                            return renderRow(entry, i + 5);
                           })}
                         </>
                       );
@@ -1031,9 +1139,16 @@ any) {
               const myId = profile?.uid;
               return (
                 <div>
-                  <div style={{ borderTop: `1px solid ${C.border}`, minHeight: "260px", maxHeight: "420px", overflowY: "auto", paddingTop: "8px" }}>
+                  <div style={{ borderTop: `1px solid ${C.border}`, minHeight: "260px", maxHeight: "min(60dvh, 520px)", overflowY: "auto", paddingTop: "8px" }}>
                     {chatLoading
-                      ? <div style={{ padding: "40px 0", textAlign: "center", fontFamily: BODY, fontSize: "13px", color: C.muted, fontStyle: "italic" }}>Loading…</div>
+                      ? <div style={{ padding: "12px 0", display: "flex", flexDirection: "column", gap: 14 }}>
+                          {[{ side: "left", w: "70%" }, { side: "right", w: "55%" }, { side: "left", w: "60%" }, { side: "right", w: "45%" }].map((row, i) => (
+                            <div key={i} style={{ display: "flex", justifyContent: row.side === "right" ? "flex-end" : "flex-start", gap: 8 }}>
+                              {row.side === "left" && <div style={{ width: 28, height: 28, borderRadius: "50%", background: C.panel, backgroundImage: `linear-gradient(90deg, ${C.panel} 0%, ${C.border2} 50%, ${C.panel} 100%)`, backgroundSize: "200% 100%", animation: "kShimmer 1.4s ease-in-out infinite", flexShrink: 0 }} />}
+                              <div style={{ background: C.panel, height: 32, width: row.w, borderRadius: "16px", backgroundImage: `linear-gradient(90deg, ${C.panel} 0%, ${C.border2} 50%, ${C.panel} 100%)`, backgroundSize: "200% 100%", animation: "kShimmer 1.4s ease-in-out infinite" }} />
+                            </div>
+                          ))}
+                        </div>
                       : chatMessages.length === 0
                         ? <div style={{ padding: "48px 0", textAlign: "center" }}>
                             <div style={{ fontFamily: MONO, fontSize: "22px", color: C.border2, marginBottom: "10px", letterSpacing: "0.14em" }}>· · ·</div>
@@ -1083,36 +1198,44 @@ any) {
               const members = activeCircle?.members || [];
               return (
                 <div style={{ borderTop: `1px solid ${C.border}` }}>
-                  {membersLoading && (
+                  {membersLoading && members.length === 0 && (
+                    <div>
+                      {[0,1,2].map(i => <SkeletonRow key={i} />)}
+                    </div>
+                  )}
+                  {membersLoading && members.length > 0 && (
                     <div style={{ padding: "8px 0 0", fontFamily: MONO, fontSize: "10px", color: C.muted }}>Refreshing…</div>
                   )}
                   {members.length === 0 && !membersLoading ? (
                     <div style={{ padding: "28px 0", fontFamily: BODY, fontSize: "13px", color: C.muted, fontStyle: "italic" }}>
                       No members found. Members appear here after they open the app.
                     </div>
-                  ) : (members as (CircleMember & { alias?: string; isOwner?: boolean })[]).map((m, idx) => {
+                  ) : (members as (CircleMember & { alias?: string; isOwner?: boolean; handle?: string })[]).map((m, idx) => {
                     const isMe = m.code === getMyCode();
                     const isFollowing = (following || []).includes(m.code);
                     const lbEntry = (leaderboard as { memberCode: string; totalPnL: number; winRate: number }[]).find(e => e.memberCode === m.code);
+                    const canViewProfile = !!openProfile && !!m.handle;
+                    const onProfileClick = canViewProfile ? () => openProfile!(m.handle!) : undefined;
                     return (
                       <div key={m.code || idx} style={{ display: "flex", alignItems: "center", gap: "14px", padding: "14px 0", borderBottom: `1px solid ${C.border}` }}>
-                        <div style={{ width: "40px", height: "40px", borderRadius: "50%", background: C.panel, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: DISPLAY, fontSize: "18px", flexShrink: 0, border: `1px solid ${C.border}` }}>
+                        <div onClick={onProfileClick} style={{ width: "40px", height: "40px", borderRadius: "50%", background: C.panel, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: DISPLAY, fontSize: "18px", flexShrink: 0, border: `1px solid ${C.border}`, cursor: canViewProfile ? "pointer" : "default" }}>
                           {m.avatar?.startsWith("http")
                             ? <img src={m.avatar} style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />
                             : <span style={{ fontFamily: DISPLAY, fontSize: "14px", fontWeight: 600 }}>{(m.name || "?").slice(0, 2).toUpperCase()}</span>
                           }
                         </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
+                        <div onClick={onProfileClick} style={{ flex: 1, minWidth: 0, cursor: canViewProfile ? "pointer" : "default" }}>
                           <div style={{ display: "flex", alignItems: "baseline", gap: "8px" }}>
                             <span style={{ fontFamily: DISPLAY, fontSize: "16px", fontWeight: 500, color: C.text, letterSpacing: "-0.01em" }}>{m.name || "Trader"}</span>
                             {isMe && <span style={{ fontFamily: MONO, fontSize: "9px", color: C.green, letterSpacing: "0.12em" }}>· YOU</span>}
                             {(m.code === activeCircle.createdBy || m.isOwner) ? <span style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.1em" }}>OWNER</span> : null}
                           </div>
-                          {m.alias && <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.06em", marginTop: "2px" }}>{m.alias}</div>}
+                          {m.handle && <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.04em", marginTop: "2px" }}>@{m.handle}</div>}
+                          {!m.handle && m.alias && <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.06em", marginTop: "2px" }}>{m.alias}</div>}
                           {lbEntry && <div style={{ fontFamily: MONO, fontSize: "10px", color: lbEntry.totalPnL >= 0 ? C.green : C.red, letterSpacing: "0.06em", marginTop: "2px" }}>{lbEntry.totalPnL >= 0 ? "+" : ""}{lbEntry.totalPnL.toFixed(1)}R · {Number(lbEntry.winRate ?? 0).toFixed(0)}% WR</div>}
                         </div>
                         {!isMe && (
-                          <button onClick={() => isFollowing ? unfollowUser(m.code) : followUser(m.code)}
+                          <button onClick={(e) => { e.stopPropagation(); if (isFollowing) { unfollowUser(m.code); } else { followUser(m.code); } }}
                             style={{ background: isFollowing ? "transparent" : C.text, color: isFollowing ? C.muted : C.bg, border: `1px solid ${isFollowing ? C.border2 : C.text}`, borderRadius: "999px", padding: "6px 14px", cursor: "pointer", fontFamily: MONO, fontSize: "9px", letterSpacing: "0.1em", textTransform: "uppercase" as const, flexShrink: 0 }}>
                             {isFollowing ? "✓" : "+Follow"}
                           </button>
@@ -1128,7 +1251,17 @@ any) {
             {circleTab === "trophies" && (
               <div style={{ display: "flex", flexDirection: "column", gap: 6, paddingTop: 4 }}>
                 {trophiesLoading && (
-                  <div style={{ fontFamily: MONO, fontSize: 11, color: C.muted, textAlign: "center", padding: 24 }}>Loading…</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    {[0,1].map(i => (
+                      <div key={i} style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 10, padding: "13px 15px", display: "flex", alignItems: "center", gap: 14 }}>
+                        <div style={{ width: 1, height: 36, background: C.border2, flexShrink: 0 }} />
+                        <div style={{ flex: 1 }}>
+                          <Skeleton height={14} width="45%" mb={6} />
+                          <Skeleton height={10} width="30%" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 )}
 
                 {/* Start Challenge \u2014 Pro owners only, or K\u014dda admin in K\u014dda Global */}
@@ -1167,8 +1300,8 @@ any) {
                   <>
                     <div style={{ fontFamily: MONO, fontSize: 9, fontWeight: 700, letterSpacing: "0.12em", color: C.muted, textTransform: "uppercase", padding: "8px 0 6px" }}>Past Challenges</div>
                     {trophies.map(r => (
-                      <div key={r.id} style={{ background: C.panel, border: `1px solid ${C.border}`, borderTop: "1.5px solid #A88C50", borderRadius: 10, padding: "13px 15px", display: "flex", alignItems: "center", gap: 14 }}>
-                        <div style={{ fontFamily: MONO, fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", color: "#A88C50", writingMode: "vertical-lr", transform: "rotate(180deg)", flexShrink: 0, textTransform: "uppercase" }}>1st</div>
+                      <div key={r.id} style={{ background: C.panel, border: `1px solid ${C.border}`, borderTop: `1.5px solid ${TROPHY_GOLD}`, borderRadius: 10, padding: "13px 15px", display: "flex", alignItems: "center", gap: 14 }}>
+                        <div style={{ fontFamily: MONO, fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", color: TROPHY_GOLD, writingMode: "vertical-lr", transform: "rotate(180deg)", flexShrink: 0, textTransform: "uppercase" }}>1st</div>
                         <div style={{ width: 1, height: 36, background: C.border2, flexShrink: 0 }} />
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontFamily: DISPLAY, fontSize: 14, fontWeight: 700, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -1228,6 +1361,39 @@ any) {
               </button>
             </div>
           )}
+        </div>
+      )}
+      {/* Leave circle confirmation sheet */}
+      {showLeaveSheet && activeCircle && (
+        <div
+          onClick={() => setShowLeaveSheet(false)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 50, display: "flex", alignItems: "flex-end", justifyContent: "center" }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{ width: "100%", maxWidth: 420, background: C.panel, borderRadius: "16px 16px 0 0", padding: "22px 18px 30px", border: `1px solid ${C.border2}`, borderBottom: "none", animation: "kRise 0.32s ease-out" }}
+          >
+            <div style={{ fontFamily: DISPLAY, fontSize: 18, fontWeight: 600, color: C.text, marginBottom: 8, letterSpacing: "-0.01em" }}>
+              Leave “{activeCircle.name}”?
+            </div>
+            <div style={{ fontFamily: BODY, fontSize: 13, color: C.text2, lineHeight: 1.55, marginBottom: 22 }}>
+              You can rejoin anytime with the code <span style={{ fontFamily: MONO, color: C.text }}>{activeCircle.code}</span>.
+            </div>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button
+                onClick={() => setShowLeaveSheet(false)}
+                style={{ flex: 1, padding: "12px 0", borderRadius: 999, background: "transparent", color: C.text, border: `1px solid ${C.border2}`, fontFamily: MONO, fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer" }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => { leaveCircle(activeCircle.code); setShowLeaveSheet(false); }}
+                style={{ flex: 1, padding: "12px 0", borderRadius: 999, background: C.red, color: "#fff", border: "none", fontFamily: MONO, fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer", fontWeight: 600 }}
+              >
+                Leave
+              </button>
+            </div>
+          </div>
         </div>
       )}
       {/* Challenge creation bottom sheet */}
