@@ -10,6 +10,7 @@ import React from "react";
 import type { Profile } from "./types";
 import { AvatarCircle, Kicker, MONO, BODY, DISPLAY } from "./shared";
 import { supabase } from "./lib/supabase";
+import { subscribeToPush } from "./lib/push";
 
 export interface SettingsScreenProps {
   C: Record<string, string>;
@@ -79,13 +80,6 @@ export function SettingsScreen({
       .catch(() => {});
   }, []);
 
-  function vapidKey(): Uint8Array {
-    const base64 = (import.meta.env.VITE_VAPID_PUBLIC_KEY as string)
-      .replace(/-/g, "+").replace(/_/g, "/");
-    const padded = base64 + "=".repeat((4 - base64.length % 4) % 4);
-    const raw = atob(padded);
-    return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
-  }
   const inp: React.CSSProperties = {
     background: "transparent",
     border: "none",
@@ -524,38 +518,23 @@ export function SettingsScreen({
               onClick={async () => {
                 setPushLoading(true);
                 try {
-                  let reg = await navigator.serviceWorker.getRegistration();
-                  if (!reg) {
-                    const r = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
-                    await navigator.serviceWorker.ready;
-                    reg = r;
-                  }
                   if (pushEnabled) {
-                    const sub = await reg.pushManager.getSubscription();
+                    // Disable path: just unsubscribe locally. The next broadcast
+                    // round will prune the dead row server-side automatically.
+                    const reg = await navigator.serviceWorker.getRegistration();
+                    const sub = await reg?.pushManager.getSubscription();
                     if (sub) await sub.unsubscribe();
                     setPushEnabled(false);
                     showToast("Push notifications disabled");
                   } else {
-                    const permission = await Notification.requestPermission();
-                    if (permission === "denied") { showToast("Notifications blocked — allow them in your browser settings"); return; }
-                    if (permission !== "granted") { showToast("Notification permission not granted"); return; }
-                    const { data: { session } } = await supabase.auth.getSession();
-                    if (!session?.access_token) { showToast("Sign in required"); return; }
-                    const sub = await reg.pushManager.subscribe({
-                      userVisibleOnly: true,
-                      applicationServerKey: vapidKey() as BufferSource,
-                    });
-                    const res = await fetch("/api/push?action=subscribe", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
-                      body: JSON.stringify(sub.toJSON()),
-                    });
-                    if (!res.ok) { showToast(`Server error ${res.status} — try again`); return; }
-                    setPushEnabled(true);
-                    showToast("Push notifications enabled");
+                    const result = await subscribeToPush();
+                    if (result.ok) {
+                      setPushEnabled(true);
+                      showToast("Push notifications enabled");
+                    } else {
+                      showToast(result.message);
+                    }
                   }
-                } catch (err) {
-                  showToast(`Push failed: ${err instanceof Error ? err.message : String(err)}`);
                 } finally {
                   setPushLoading(false);
                 }
