@@ -272,16 +272,20 @@ export function TradingCircles({
     setComposeSending(true);
     setComposeText("");
     try {
-      await supabase.from("circle_messages").insert({
+      const { error } = await supabase.from("circle_messages").insert({
         circle_code: activeCircle.code,
         sender_id: profile.uid,
         sender_name: profile.name || "Trader",
         sender_handle: profile.handle || "",
         text,
       });
+      if (error) throw error;
       loadFeed(activeCircle);
-    } catch {
+    } catch (e) {
+      // Restore the typed text so it isn't lost AND tell the user the send failed.
       setComposeText(text);
+      showToast("Couldn't send — check your connection");
+      console.error("[KODA][circles.chat.send]", e);
     }
     setComposeSending(false);
   }
@@ -920,8 +924,20 @@ export function TradingCircles({
                       {s === "all" ? "ALL TIME" : "THIS WEEK"}
                     </button>
                   ))}
-                  <button onClick={async () => { setLoadingLB(true); const e = await fetchCircleLeaderboard(activeCircle, lbSort); setLeaderboard(e); setLoadingLB(false); }}
-                    style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "11px" }}>↻</button>
+                  <button
+                    disabled={loadingLB}
+                    onClick={async () => {
+                      if (loadingLB) return;
+                      setLoadingLB(true);
+                      try {
+                        const e = await fetchCircleLeaderboard(activeCircle, lbSort);
+                        setLeaderboard(e);
+                      } finally {
+                        setLoadingLB(false);
+                      }
+                    }}
+                    style={{ background: "none", border: "none", color: loadingLB ? C.dim : C.muted, cursor: loadingLB ? "default" : "pointer", fontFamily: MONO, fontSize: "11px", opacity: loadingLB ? 0.5 : 1 }}
+                  >↻</button>
                 </div>
               )}
             </div>
