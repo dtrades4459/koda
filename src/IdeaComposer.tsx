@@ -95,7 +95,8 @@ export function IdeaComposer({
 
   const backdropStyle: CSSProperties = {
     position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)",
-    zIndex: 100, display: "flex",
+    // Above the bottom-nav (z-index 30) AND the Feedback FAB (z-index 998).
+    zIndex: 1000, display: "flex",
     alignItems: isDesktop ? "center" : "flex-end",
     justifyContent: "center",
   };
@@ -108,7 +109,12 @@ export function IdeaComposer({
     maxWidth: isDesktop ? "560px" : "100%",
     maxHeight: isDesktop ? "90vh" : "92vh",
     overflowY: "auto",
-    padding: "18px 18px calc(24px + env(safe-area-inset-bottom))",
+    // Extra bottom padding on mobile so the Post button clears the bottom-nav
+    // pill (which sits at the same position with a lower z-index but still
+    // pulls the eye). Desktop keeps the original tight padding.
+    padding: isDesktop
+      ? "18px 18px calc(24px + env(safe-area-inset-bottom))"
+      : "18px 18px calc(110px + env(safe-area-inset-bottom))",
     display: "flex", flexDirection: "column", gap: "12px",
   };
 
