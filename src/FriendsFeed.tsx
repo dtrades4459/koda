@@ -243,9 +243,11 @@ export function FriendsFeed({
                         Live
                       </div>
                     </div>
-                    {following.map((code, idx) => {
+                    {following.map((code) => {
                       const f = friends.find(x => x.code === code) ?? { code, name: code, handle: "" } as FriendProfile;
-                      const hue = 200 + idx * 30;
+                      // Stable per-code hue so colors don't shift when the list reorders.
+                      const hueSeed = code.split("").reduce((s, c) => s + c.charCodeAt(0), 0);
+                      const hue = 200 + (hueSeed * 17) % 360;
                       return (
                         <div key={code}
                           onClick={() => openProfile && f.handle && openProfile(f.handle)}

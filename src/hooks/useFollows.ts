@@ -171,6 +171,11 @@ export function useFollows({ loading, getMyCode, getMyProfile, uid, showToast }:
       });
     } catch (e) {
       log.error("useFollows.followUser", e, { target });
+      // Roll back the optimistic add so the UI doesn't lie about success.
+      setFollowing(prev => prev.filter(c => c !== target));
+      setFollowingProfiles(prev => prev.filter(p => p.code !== target));
+      showToast("Couldn't follow — try again");
+      return;
     }
     showToast("Following");
   }
@@ -180,6 +185,9 @@ export function useFollows({ loading, getMyCode, getMyProfile, uid, showToast }:
     if (!target) return;
     const mc = getMyCodeRef.current();
 
+    // Snapshot the existing profile so we can restore on rollback.
+    const previousProfile = followingProfiles.find(p => p.code === target);
+
     setFollowing(prev => prev.filter(c => c !== target));
     setFollowingProfiles(prev => prev.filter(p => p.code !== target));
 
@@ -187,6 +195,13 @@ export function useFollows({ loading, getMyCode, getMyProfile, uid, showToast }:
       await kvUnfollowUser({ myCode: mc, target });
     } catch (e) {
       log.error("useFollows.unfollowUser", e, { target });
+      // Roll back so the UI matches reality.
+      setFollowing(prev => prev.includes(target) ? prev : [...prev, target]);
+      if (previousProfile) {
+        setFollowingProfiles(prev => prev.some(p => p.code === target) ? prev : [...prev, previousProfile]);
+      }
+      showToast("Couldn't unfollow — try again");
+      return;
     }
     showToast("Unfollowed");
   }
