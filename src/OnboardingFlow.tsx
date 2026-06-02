@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { MONO, BODY, DISPLAY, KodaMarkFilled } from "./shared";
+import { subscribeToPush } from "./lib/push";
 
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
-export const ONBOARDING_STEPS = ["welcome", "instruments", "strategy", "ready"] as const;
+export const ONBOARDING_STEPS = ["welcome", "instruments", "strategy", "notifications", "ready"] as const;
 export type OnboardingStep = typeof ONBOARDING_STEPS[number];
 
 export const AVATAR_EMOJIS = [
@@ -116,6 +117,8 @@ export function OnboardingFlow({ C, onComplete }: {
   const [nameErr, setNameErr] = useState("");
   const [instruments, setInstruments] = useState<string[]>([]);
   const [strategy, setStrategy] = useState<string>("");
+  const [pushBusy, setPushBusy] = useState(false);
+  const [pushMsg, setPushMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
 
   function onNameChange(v: string) {
     setName(v);
@@ -349,9 +352,87 @@ export function OnboardingFlow({ C, onComplete }: {
           </div>
         )}
 
-        {step === "ready" && (
+        {step === "notifications" && (
           <div style={{ animation: "rise 0.3s ease" }}>
             <StepBadge n={4} />
+            <Heading line1="Stay in" line2="the loop." />
+            <p style={{ fontSize: "14px", color: C.muted, lineHeight: 1.7, marginBottom: "20px" }}>
+              Get a push when your circle posts a trade, when a challenge ends, and when your in-session intervention cooldown lifts.
+            </p>
+
+            <div style={{
+              padding: "14px 16px", borderRadius: "14px",
+              background: C.panel, border: `1px solid ${C.border}`,
+              marginBottom: "20px",
+            }}>
+              <div style={{
+                fontFamily: MONO, fontSize: "10px", letterSpacing: "0.16em",
+                textTransform: "uppercase" as const, color: C.muted, marginBottom: "10px",
+              }}>What we send</div>
+              <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "8px" }}>
+                {[
+                  "New activity in your Trading Circle",
+                  "Weekly challenge results",
+                  "Daily digest of your edge",
+                  "Cooldown lifted — you can log again",
+                ].map(t => (
+                  <li key={t} style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "13px", color: C.text }}>
+                    <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: (C as any).live ?? C.green, flexShrink: 0 }} />
+                    <span>{t}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {pushMsg && (
+              <div style={{
+                padding: "10px 14px", borderRadius: "10px",
+                background: pushMsg.kind === "ok" ? "rgba(34,197,94,0.08)" : "rgba(239,68,68,0.08)",
+                border: `1px solid ${pushMsg.kind === "ok" ? "rgba(34,197,94,0.24)" : "rgba(239,68,68,0.24)"}`,
+                color: pushMsg.kind === "ok" ? "#22c55e" : "#ef4444",
+                fontFamily: MONO, fontSize: "11px", marginBottom: "16px", lineHeight: 1.5,
+              }}>
+                {pushMsg.text}
+              </div>
+            )}
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              <button
+                disabled={pushBusy}
+                onClick={async () => {
+                  if (pushBusy) return;
+                  setPushBusy(true);
+                  setPushMsg(null);
+                  const result = await subscribeToPush();
+                  setPushBusy(false);
+                  if (result.ok) {
+                    setPushMsg({ kind: "ok", text: "Notifications enabled. Heading to the app…" });
+                    setTimeout(() => goNext(), 700);
+                  } else {
+                    setPushMsg({ kind: "err", text: result.message });
+                  }
+                }}
+                style={pillPrimary(!pushBusy)}
+              >
+                {pushBusy ? "Asking permission…" : pushMsg?.kind === "ok" ? "✓ Enabled" : "Enable notifications"}
+              </button>
+              <button
+                onClick={() => { setPushMsg(null); goNext(); }}
+                style={{
+                  background: "transparent", color: C.muted, border: "none",
+                  fontFamily: MONO, fontSize: "11px", letterSpacing: "0.1em",
+                  textTransform: "uppercase" as const, cursor: "pointer", padding: "10px 0",
+                }}
+              >
+                Maybe later
+              </button>
+            </div>
+          </div>
+        )}
+
+        {step === "ready" && (
+          <div style={{ animation: "rise 0.3s ease" }}>
+            <StepBadge n={5} />
             <h1 style={{
               fontFamily: DISPLAY, fontSize: "clamp(32px, 8vw, 44px)", fontWeight: 700,
               letterSpacing: "-0.03em", lineHeight: 1.05, color: C.text, marginBottom: "16px",
