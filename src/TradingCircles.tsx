@@ -1030,7 +1030,6 @@ export function TradingCircles({
                   <div style={{ borderTop: `1px solid ${C.border}` }}>
                     {(() => {
                       const myCode = getMyCode();
-                      const myIdx = leaderboard.findIndex(e => e.memberCode === myCode);
                       const renderRow = (entry: typeof leaderboard[number], i: number) => {
                         const isMe = entry.memberCode === myCode;
                         const md = metricDisplay(entry, activeCircle);
@@ -1109,21 +1108,7 @@ export function TradingCircles({
                       };
                       return (
                         <>
-                          {leaderboard.slice(0, 5).map((entry, i) => renderRow(entry, i))}
-                          {myIdx >= 5 && (
-                            <>
-                              <div style={{ padding: "10px 0", display: "flex", alignItems: "center", gap: "10px" }}>
-                                <div style={{ flex: 1, height: "1px", background: C.border }} />
-                                <span style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.14em", textTransform: "uppercase" }}>Your Position</span>
-                                <div style={{ flex: 1, height: "1px", background: C.border }} />
-                              </div>
-                              {renderRow(leaderboard[myIdx], myIdx)}
-                            </>
-                          )}
-                          {leaderboard.slice(5).map((entry, i) => {
-                            if (myIdx >= 5 && entry.memberCode === myCode) return null;
-                            return renderRow(entry, i + 5);
-                          })}
+                          {leaderboard.map((entry, i) => renderRow(entry, i))}
                         </>
                       );
                     })()}
