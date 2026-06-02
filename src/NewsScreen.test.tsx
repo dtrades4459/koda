@@ -34,6 +34,16 @@ const calendarValue = {
       actual: null,
     },
     {
+      id: "ev-today-low",
+      title: "Today low event",
+      country: "USD",
+      time: isoAtHour(16),
+      impact: "low",
+      forecast: null,
+      previous: null,
+      actual: null,
+    },
+    {
       id: "ev-next-week",
       title: "Next week event",
       country: "USD",
@@ -85,18 +95,18 @@ describe("NewsScreen", () => {
     };
   });
 
-  it("renders today's events by default and hides next week", async () => {
+  it("renders today high and medium events, hides low-impact and next-week events", async () => {
     render(<NewsScreen C={DARK} />);
     expect(await screen.findByText("Today AM event")).toBeInTheDocument();
     expect(screen.getByText("Today PM event")).toBeInTheDocument();
+    expect(screen.queryByText("Today low event")).not.toBeInTheDocument();
     expect(screen.queryByText("Next week event")).not.toBeInTheDocument();
   });
 
-  it("switches to Week filter and shows events within the next 7 days", async () => {
+  it("switches to Week filter and shows high+medium events within the next 7 days", async () => {
     render(<NewsScreen C={DARK} />);
     await screen.findByText("Today AM event");
     await userEvent.click(screen.getByRole("button", { name: /^WEEK$/i }));
-    // Today's events still visible; the 10-days-out event is still outside the 7-day window
     expect(screen.getByText("Today AM event")).toBeInTheDocument();
     expect(screen.queryByText("Next week event")).not.toBeInTheDocument();
   });
@@ -112,10 +122,8 @@ describe("NewsScreen", () => {
 
   it("expands forecast/previous/actual when an event card with details is tapped", async () => {
     render(<NewsScreen C={DARK} />);
-    // Forecast value is hidden by default
     expect(await screen.findByText("Today AM event")).toBeInTheDocument();
     expect(screen.queryByText("3.2%")).not.toBeInTheDocument();
-    // Tap the card → details appear
     await userEvent.click(screen.getByText("Today AM event"));
     expect(await screen.findByText("3.2%")).toBeInTheDocument();
     expect(screen.getByText("3.4%")).toBeInTheDocument();
@@ -124,15 +132,11 @@ describe("NewsScreen", () => {
     expect(screen.getByText("ACTUAL")).toBeInTheDocument();
   });
 
-  it("hides medium-impact events when the MED chip is toggled off", async () => {
+  it("does not render impact filter chip buttons", async () => {
     render(<NewsScreen C={DARK} />);
-    // Both today events visible initially
-    expect(await screen.findByText("Today AM event")).toBeInTheDocument();
-    expect(screen.getByText("Today PM event")).toBeInTheDocument();
-    // Toggle MED chip off
-    await userEvent.click(screen.getByRole("button", { name: /MED/i, pressed: true }));
-    // Medium event hidden; high event still visible
-    expect(screen.queryByText("Today PM event")).not.toBeInTheDocument();
-    expect(screen.getByText("Today AM event")).toBeInTheDocument();
+    await screen.findByText("Today AM event");
+    expect(screen.queryByRole("button", { name: /HIGH/i, pressed: true })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /MED/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /LOW/i })).not.toBeInTheDocument();
   });
 });

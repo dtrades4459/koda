@@ -99,8 +99,6 @@ function staleHours(fetchedAtIso: string): number {
   return (Date.now() - new Date(fetchedAtIso).getTime()) / 3600_000;
 }
 
-const ALL_IMPACTS: ReadonlyArray<Impact> = ["high", "medium", "low", "holiday"];
-
 function loadTz(): TzId {
   if (typeof window === "undefined") return "local";
   const stored = window.localStorage?.getItem(TZ_LS_KEY);
@@ -120,7 +118,6 @@ function loadUsdOnly(): boolean {
 export function NewsScreen({ C }: Props) {
   const { calendar, headlines } = useNews();
   const [range, setRange] = useState<Range>("today");
-  const [impactFilter, setImpactFilter] = useState<Set<Impact>>(() => new Set(ALL_IMPACTS));
   const [tz, setTz] = useState<TzId>(loadTz);
   const [usdOnly, setUsdOnly] = useState<boolean>(loadUsdOnly);
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
@@ -144,28 +141,18 @@ export function NewsScreen({ C }: Props) {
 
   const tzIana = useMemo(() => TZ_OPTIONS.find(o => o.id === tz)?.iana, [tz]);
 
-  function toggleImpact(impact: Impact) {
-    setImpactFilter(prev => {
-      const next = new Set(prev);
-      if (next.has(impact)) next.delete(impact);
-      else next.add(impact);
-      if (next.size === 0) return prev;
-      return next;
-    });
-  }
-
   const filteredEvents = useMemo<CalendarEvent[]>(() => {
     const events = calendar?.items ?? [];
     const [from, to] = rangeWindow(range);
     return events
       .filter(e => !usdOnly || e.country === "USD")
-      .filter(e => impactFilter.has(e.impact))
+      .filter(e => e.impact === "high" || e.impact === "medium")
       .filter(e => {
         const t = new Date(e.time).getTime();
         return t >= from.getTime() && t <= to.getTime();
       })
       .sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
-  }, [calendar, range, impactFilter, usdOnly]);
+  }, [calendar, range, usdOnly]);
 
   // Group events by day for Week/Month views. Today view stays flat (single day).
   const dayGroups = useMemo<Array<{ key: string; label: string; events: CalendarEvent[] }>>(() => {
@@ -227,7 +214,7 @@ export function NewsScreen({ C }: Props) {
         })}
       </div>
 
-      {/* Impact + country filter chips */}
+      {/* Country filter */}
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
         <button
           type="button"
@@ -252,45 +239,6 @@ export function NewsScreen({ C }: Props) {
         >
           {usdOnly ? "USD ONLY" : "ALL FX"}
         </button>
-        {ALL_IMPACTS.map(imp => {
-          const active = impactFilter.has(imp);
-          const color = impactColor(C, imp);
-          return (
-            <button
-              key={imp}
-              type="button"
-              aria-pressed={active}
-              onClick={() => toggleImpact(imp)}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 6,
-                padding: "5px 10px",
-                borderRadius: 999,
-                border: `1px solid ${active ? color : C.border}`,
-                background: C.panel,
-                color: active ? C.text : C.muted,
-                fontFamily: MONO,
-                fontSize: 9,
-                letterSpacing: "0.08em",
-                fontWeight: 600,
-                cursor: "pointer",
-                opacity: active ? 1 : 0.55,
-              }}
-            >
-              <span
-                style={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: "50%",
-                  background: active ? color : C.muted,
-                  display: "inline-block",
-                }}
-              />
-              {imp.toUpperCase()}
-            </button>
-          );
-        })}
       </div>
 
       {/* Calendar section */}
