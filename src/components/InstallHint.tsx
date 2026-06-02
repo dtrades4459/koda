@@ -20,6 +20,7 @@
 import { useEffect, useState } from "react";
 
 const DISMISS_KEY = "koda_install_hint_dismissed";
+const COOKIE_CONSENT_KEY = "koda_cookie_consent";
 const SHOW_DELAY_MS = 3000;
 
 function isIOS(): boolean {
@@ -44,12 +45,38 @@ export function InstallHint() {
 
   useEffect(() => {
     if (!isIOS() || isStandalone()) return;
-    try {
-      if (localStorage.getItem(DISMISS_KEY) === "1") return;
-    } catch { /* localStorage blocked — show anyway */ }
 
-    const t = setTimeout(() => setShow(true), SHOW_DELAY_MS);
-    return () => clearTimeout(t);
+    // Wait for the cookie consent banner to be dismissed so the two
+    // bottom-pinned banners don't stack on top of each other. Poll the
+    // localStorage key the CookieConsent component sets on Accept/Reject.
+    let mounted = true;
+    let pollId: number | null = null;
+    let showTimer: number | null = null;
+
+    const tryShow = () => {
+      try {
+        if (localStorage.getItem(DISMISS_KEY) === "1") return false;
+        const consent = localStorage.getItem(COOKIE_CONSENT_KEY);
+        if (consent !== "accepted" && consent !== "rejected") return false;
+      } catch { /* fall through and show */ }
+      showTimer = window.setTimeout(() => { if (mounted) setShow(true); }, SHOW_DELAY_MS);
+      return true;
+    };
+
+    if (!tryShow()) {
+      pollId = window.setInterval(() => {
+        if (tryShow() && pollId !== null) {
+          window.clearInterval(pollId);
+          pollId = null;
+        }
+      }, 1000);
+    }
+
+    return () => {
+      mounted = false;
+      if (pollId !== null) window.clearInterval(pollId);
+      if (showTimer !== null) window.clearTimeout(showTimer);
+    };
   }, []);
 
   function dismiss() {
