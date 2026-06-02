@@ -133,5 +133,9 @@ export function evaluateTilt(
     }
   }
 
-  return { active: false, critical: false, signals, evaluatedAt: now };
+  const critical = signals.some(s => s.critical);
+  const nonCritical = signals.length - signals.filter(s => s.critical).length;
+  const active = critical || nonCritical >= 2;
+
+  return { active, critical, signals, evaluatedAt: now };
 }

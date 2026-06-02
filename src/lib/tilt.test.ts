@@ -199,3 +199,47 @@ describe("tilt_emotion signal", () => {
     }
   });
 });
+
+describe("firing rule", () => {
+  it("does not fire with 0 signals", () => {
+    const state = evaluateTilt([], EMPTY_PROFILE, NOW);
+    expect(state.active).toBe(false);
+    expect(state.critical).toBe(false);
+  });
+
+  it("does not fire with 1 non-critical signal", () => {
+    const trades = [
+      mkTrade({ date: TODAY, outcome: "Loss", entryTime: "2026-06-02T19:30:00Z" }),
+      mkTrade({ date: TODAY, outcome: "Loss", entryTime: "2026-06-02T19:32:00Z" }),
+    ];
+    // Only consec_losses fires here (no maxDailyLoss set, no emotion tag,
+    // exit-time would matter for revenge but not provided here)
+    const state = evaluateTilt(trades, EMPTY_PROFILE, NOW);
+    const onlyConsec = state.signals.length === 1 && state.signals[0].id === "consec_losses";
+    expect(onlyConsec).toBe(true);
+    expect(state.active).toBe(false);
+  });
+
+  it("fires with 2 non-critical signals", () => {
+    const trades = [
+      mkTrade({
+        date: TODAY, outcome: "Loss", emotions: "revenge",
+        entryTime: "2026-06-02T19:30:00Z",
+      }),
+      mkTrade({
+        date: TODAY, outcome: "Loss", emotions: "revenge",
+        entryTime: "2026-06-02T19:55:00Z", exitTime: "2026-06-02T19:55:00Z",
+      }),
+    ];
+    const state = evaluateTilt(trades, EMPTY_PROFILE, NOW);
+    expect(state.active).toBe(true);
+    expect(state.critical).toBe(false);
+  });
+
+  it("fires (critical) with 1 critical signal", () => {
+    const trades = [mkTrade({ date: TODAY, outcome: "Loss", pnlDollar: "-185" })];
+    const state = evaluateTilt(trades, { ...EMPTY_PROFILE, maxDailyLoss: "200" }, NOW);
+    expect(state.active).toBe(true);
+    expect(state.critical).toBe(true);
+  });
+});
