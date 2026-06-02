@@ -5,7 +5,7 @@
 // No React, no side-effects — safe to unit-test in isolation.
 // ═══════════════════════════════════════════════════════════════════════════════
 
-import type { Trade } from "../types";
+import type { Trade, Profile } from "../types";
 
 // ── R:R calculator ────────────────────────────────────────────────────────────
 
@@ -199,6 +199,136 @@ export function computeWeeklyRecap(
     bestDay,
     worstDay,
     ruleAdherencePct,
+    taggedCount: tagged.length,
+  };
+}
+
+// ── Discipline score ──────────────────────────────────────────────────────────
+
+export interface DisciplineScore {
+  score: number;
+  grade: string;
+  breakdown: {
+    rules:      { earned: number; max: number };
+    tradeLimit: { earned: number; max: number } | null;
+    lossLimit:  { earned: number; max: number } | null;
+    awareness:  { earned: number; max: number };
+  };
+  dragSignal: "rules" | "tradeLimit" | "lossLimit" | "awareness" | null;
+  window: { start: string; end: string };
+  taggedCount: number;
+}
+
+export interface DisciplineLogEntry {
+  date:  string;
+  score: number;
+  grade: string;
+}
+
+export function calcDisciplineScore(
+  trades: Pick<Trade, "date" | "pnl" | "pnlDollar" | "ruleAdherence" | "mistake">[],
+  profile: Pick<Profile, "maxTradesPerDay" | "maxDailyLoss">,
+  windowStart?: Date,
+): DisciplineScore | null {
+  const end = new Date();
+  end.setHours(23, 59, 59, 999);
+  const start = windowStart ? new Date(windowStart) : new Date(end);
+  if (!windowStart) start.setDate(end.getDate() - 6);
+  start.setHours(0, 0, 0, 0);
+
+  const fmt = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+  const startStr = fmt(start);
+  const endStr   = fmt(end);
+
+  const windowTrades = trades.filter(t => t.date && t.date >= startStr && t.date <= endStr);
+  const tagged = windowTrades.filter(t => t.ruleAdherence !== null && t.ruleAdherence !== undefined);
+
+  if (tagged.length < 3) return null;
+
+  // ── Rule Adherence (max 40) ──
+  const RULES_MAX = 40;
+  const rulesEarned = (tagged.filter(t => t.ruleAdherence === true).length / tagged.length) * RULES_MAX;
+
+  // ── Trading days (days with ≥1 trade) ──
+  const tradingDays = [...new Set(windowTrades.map(t => t.date).filter(Boolean))] as string[];
+
+  // ── Trade Limit (max 25) ──
+  const TRADE_MAX = 25;
+  const maxTrades = parseFloat(profile.maxTradesPerDay ?? "");
+  const tradeLimitOn = !isNaN(maxTrades) && maxTrades > 0;
+  let tradeLimitEarned = 0;
+
+  if (tradeLimitOn) {
+    const countByDay: Record<string, number> = {};
+    windowTrades.forEach(t => { if (t.date) countByDay[t.date] = (countByDay[t.date] ?? 0) + 1; });
+    const within = tradingDays.filter(d => (countByDay[d] ?? 0) <= maxTrades).length;
+    tradeLimitEarned = tradingDays.length > 0 ? (within / tradingDays.length) * TRADE_MAX : TRADE_MAX;
+  }
+
+  // ── Loss Limit (max 25) ──
+  const LOSS_MAX = 25;
+  const maxLoss = parseFloat(profile.maxDailyLoss ?? "");
+  const lossLimitOn = !isNaN(maxLoss) && maxLoss > 0;
+  let lossLimitEarned = 0;
+
+  if (lossLimitOn) {
+    const pnlByDay: Record<string, number> = {};
+    windowTrades.forEach(t => {
+      if (t.date) pnlByDay[t.date] = (pnlByDay[t.date] ?? 0) + (parseFloat(t.pnlDollar as string) || 0);
+    });
+    const respected = tradingDays.filter(d => (pnlByDay[d] ?? 0) >= -maxLoss).length;
+    lossLimitEarned = tradingDays.length > 0 ? (respected / tradingDays.length) * LOSS_MAX : LOSS_MAX;
+  }
+
+  // ── Mistake Awareness (max 10) ──
+  const AWARE_MAX = 10;
+  const broke = tagged.filter(t => t.ruleAdherence === false);
+  const awarenessEarned = broke.length === 0
+    ? AWARE_MAX
+    : (broke.filter(t => t.mistake && t.mistake !== "None").length / broke.length) * AWARE_MAX;
+
+  // ── Weight redistribution ──
+  const totalMax = RULES_MAX + (tradeLimitOn ? TRADE_MAX : 0) + (lossLimitOn ? LOSS_MAX : 0) + AWARE_MAX;
+  const scale = 100 / totalMax;
+
+  const score = Math.min(100, Math.round(
+    rulesEarned * scale +
+    (tradeLimitOn ? tradeLimitEarned : 0) * scale +
+    (lossLimitOn  ? lossLimitEarned  : 0) * scale +
+    awarenessEarned * scale
+  ));
+
+  // ── Grade ──
+  const grade =
+    score >= 95 ? "A+" :
+    score >= 85 ? "A"  :
+    score >= 70 ? "B"  :
+    score >= 55 ? "C"  :
+    score >= 40 ? "D"  : "F";
+
+  // ── Drag signal ──
+  const candidates: Array<{ key: NonNullable<DisciplineScore["dragSignal"]>; pct: number }> = [
+    { key: "rules",    pct: rulesEarned    / RULES_MAX },
+    { key: "awareness", pct: awarenessEarned / AWARE_MAX },
+  ];
+  if (tradeLimitOn) candidates.push({ key: "tradeLimit", pct: tradeLimitEarned / TRADE_MAX });
+  if (lossLimitOn)  candidates.push({ key: "lossLimit",  pct: lossLimitEarned  / LOSS_MAX  });
+  candidates.sort((a, b) => a.pct - b.pct);
+  const dragSignal = candidates[0].pct < 0.72 ? candidates[0].key : null;
+
+  return {
+    score,
+    grade,
+    breakdown: {
+      rules:      { earned: parseFloat(rulesEarned.toFixed(2)),      max: RULES_MAX },
+      tradeLimit: tradeLimitOn ? { earned: parseFloat(tradeLimitEarned.toFixed(2)), max: TRADE_MAX } : null,
+      lossLimit:  lossLimitOn  ? { earned: parseFloat(lossLimitEarned.toFixed(2)),  max: LOSS_MAX  } : null,
+      awareness:  { earned: parseFloat(awarenessEarned.toFixed(2)),  max: AWARE_MAX },
+    },
+    dragSignal,
+    window: { start: startStr, end: endStr },
     taggedCount: tagged.length,
   };
 }

@@ -4,7 +4,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { describe, it, expect } from "vitest";
-import { calcRR, calcWinRate, calcStreak, calcTotalPnL } from "./stats";
+import { calcRR, calcWinRate, calcStreak, calcTotalPnL, calcDisciplineScore } from "./stats";
 
 // ── calcRR ────────────────────────────────────────────────────────────────────
 
@@ -131,5 +131,178 @@ describe("calcTotalPnL", () => {
 
   it("handles numeric pnl values (not just strings)", () => {
     expect(calcTotalPnL([{ pnl: 1.5 as any }, { pnl: 2.5 as any }])).toBeCloseTo(4);
+  });
+});
+
+// ── calcDisciplineScore ───────────────────────────────────────────────────────
+
+function makeTrade(overrides: {
+  date?: string;
+  pnlDollar?: string;
+  ruleAdherence?: boolean | null;
+  mistake?: string | null;
+} = {}) {
+  const today = new Date().toISOString().split("T")[0];
+  return {
+    date: today,
+    pnl: "1",
+    pnlDollar: "100",
+    ruleAdherence: true,
+    mistake: null,
+    ...overrides,
+  };
+}
+
+const baseProfile = { maxTradesPerDay: "", maxDailyLoss: "" };
+
+describe("calcDisciplineScore", () => {
+  it("returns null when fewer than 3 trades have ruleAdherence tagged", () => {
+    const trades = [makeTrade(), makeTrade()];
+    expect(calcDisciplineScore(trades, baseProfile)).toBeNull();
+  });
+
+  it("returns null when no trades in the 7-day window", () => {
+    const old = makeTrade({ date: "2020-01-01" });
+    expect(calcDisciplineScore([old, old, old], baseProfile)).toBeNull();
+  });
+
+  it("returns null when trades exist but none have ruleAdherence set", () => {
+    const trades = [
+      makeTrade({ ruleAdherence: null }),
+      makeTrade({ ruleAdherence: null }),
+      makeTrade({ ruleAdherence: null }),
+    ];
+    expect(calcDisciplineScore(trades, baseProfile)).toBeNull();
+  });
+
+  it("returns score and grade for 3+ tagged trades (limits unset)", () => {
+    const trades = [makeTrade(), makeTrade(), makeTrade()];
+    const result = calcDisciplineScore(trades, baseProfile);
+    expect(result).not.toBeNull();
+    expect(result!.score).toBe(100);
+    expect(result!.grade).toBe("A+");
+  });
+
+  it("perfect awareness when there are zero rule-breaking trades", () => {
+    const trades = [makeTrade({ ruleAdherence: true }), makeTrade(), makeTrade()];
+    const result = calcDisciplineScore(trades, baseProfile)!;
+    expect(result.breakdown.awareness.earned).toBe(result.breakdown.awareness.max);
+  });
+
+  it("computes rule adherence correctly", () => {
+    const trades = [
+      makeTrade({ ruleAdherence: true }),
+      makeTrade({ ruleAdherence: true }),
+      makeTrade({ ruleAdherence: false, mistake: "Chased entry" }),
+    ];
+    const result = calcDisciplineScore(trades, baseProfile)!;
+    const pct = result.breakdown.rules.earned / result.breakdown.rules.max;
+    expect(pct).toBeCloseTo(0.667, 2);
+  });
+
+  it("awareness: full pts when all rule breaks are tagged with a mistake", () => {
+    const trades = [
+      makeTrade({ ruleAdherence: true }),
+      makeTrade({ ruleAdherence: true }),
+      makeTrade({ ruleAdherence: false, mistake: "Chased entry" }),
+    ];
+    const result = calcDisciplineScore(trades, baseProfile)!;
+    expect(result.breakdown.awareness.earned).toBe(result.breakdown.awareness.max);
+  });
+
+  it("awareness: zero pts when rule breaks have no mistake tag", () => {
+    const trades = [
+      makeTrade({ ruleAdherence: true }),
+      makeTrade({ ruleAdherence: true }),
+      makeTrade({ ruleAdherence: false, mistake: null }),
+    ];
+    const result = calcDisciplineScore(trades, baseProfile)!;
+    expect(result.breakdown.awareness.earned).toBe(0);
+  });
+
+  it("awareness: 'None' mistake tag counts as untagged", () => {
+    const trades = [
+      makeTrade({ ruleAdherence: true }),
+      makeTrade({ ruleAdherence: true }),
+      makeTrade({ ruleAdherence: false, mistake: "None" }),
+    ];
+    const result = calcDisciplineScore(trades, baseProfile)!;
+    expect(result.breakdown.awareness.earned).toBe(0);
+  });
+
+  it("redistributes weight when trade limit unset", () => {
+    const trades = [makeTrade(), makeTrade(), makeTrade()];
+    const result = calcDisciplineScore(trades, { maxTradesPerDay: "", maxDailyLoss: "" })!;
+    expect(result.breakdown.tradeLimit).toBeNull();
+    expect(result.breakdown.lossLimit).toBeNull();
+    expect(result.score).toBe(100);
+  });
+
+  it("includes trade limit signal when maxTradesPerDay is set", () => {
+    const today = new Date().toISOString().split("T")[0];
+    const trades = [
+      makeTrade({ date: today }),
+      makeTrade({ date: today }),
+      makeTrade({ date: today }),
+      makeTrade({ date: today }),
+    ];
+    const result = calcDisciplineScore(trades, { maxTradesPerDay: "3", maxDailyLoss: "" })!;
+    expect(result.breakdown.tradeLimit).not.toBeNull();
+    expect(result.breakdown.tradeLimit!.earned).toBe(0);
+  });
+
+  it("includes loss limit signal when maxDailyLoss is set", () => {
+    const today = new Date().toISOString().split("T")[0];
+    // Net daily P&L: -300 + -200 + -100 = -600, which breaches the $500 limit
+    const trades = [
+      makeTrade({ date: today, pnlDollar: "-300" }),
+      makeTrade({ date: today, pnlDollar: "-200", ruleAdherence: true }),
+      makeTrade({ date: today, pnlDollar: "-100", ruleAdherence: true }),
+    ];
+    const result = calcDisciplineScore(trades, { maxTradesPerDay: "", maxDailyLoss: "500" })!;
+    expect(result.breakdown.lossLimit).not.toBeNull();
+    expect(result.breakdown.lossLimit!.earned).toBe(0);
+  });
+
+  it("grade thresholds are correct", () => {
+    const trades = [makeTrade(), makeTrade(), makeTrade()];
+    const result = calcDisciplineScore(trades, baseProfile)!;
+    expect(["A+", "A", "B", "C", "D", "F"]).toContain(result.grade);
+  });
+
+  it("dragSignal is null when all signals are performing well (>=72%)", () => {
+    const trades = [makeTrade(), makeTrade(), makeTrade()];
+    const result = calcDisciplineScore(trades, baseProfile)!;
+    expect(result.dragSignal).toBeNull();
+  });
+
+  it("dragSignal identifies the worst-performing signal", () => {
+    const trades = [
+      makeTrade({ ruleAdherence: false, mistake: null }),
+      makeTrade({ ruleAdherence: false, mistake: null }),
+      makeTrade({ ruleAdherence: true }),
+    ];
+    const result = calcDisciplineScore(trades, baseProfile)!;
+    expect(["rules", "awareness"]).toContain(result.dragSignal);
+  });
+
+  it("window field contains correct start and end dates", () => {
+    const trades = [makeTrade(), makeTrade(), makeTrade()];
+    const result = calcDisciplineScore(trades, baseProfile)!;
+    expect(result.window.start).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(result.window.end).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(result.window.end >= result.window.start).toBe(true);
+  });
+
+  it("taggedCount reflects trades with non-null ruleAdherence in window", () => {
+    // 3 tagged (true/true/false) + 1 untagged (null) → taggedCount should be 3
+    const trades = [
+      makeTrade({ ruleAdherence: true }),
+      makeTrade({ ruleAdherence: true }),
+      makeTrade({ ruleAdherence: false, mistake: null }),
+      makeTrade({ ruleAdherence: null }),
+    ];
+    const result = calcDisciplineScore(trades, baseProfile)!;
+    expect(result.taggedCount).toBe(3);
   });
 });
