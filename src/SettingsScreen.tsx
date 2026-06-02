@@ -402,6 +402,75 @@ export function SettingsScreen({
           )}
         </div>
 
+        {/* Discipline — In-Session Intervention settings */}
+        <div style={{ borderBottom: `1px solid ${C.border}`, padding: "14px 16px" }}>
+          <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.16em", textTransform: "uppercase", color: C.muted, marginBottom: 12 }}>
+            Discipline
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+            <div>
+              <div style={{ fontFamily: BODY, fontSize: 14, color: C.text }}>In-session intervention</div>
+              <div style={{ fontFamily: MONO, fontSize: 10, color: C.muted, letterSpacing: "0.08em", marginTop: 2 }}>
+                Stop you mid-tilt before a bad trade
+              </div>
+            </div>
+            <input
+              type="checkbox"
+              checked={profile.prefs?.intervention?.enabled ?? true}
+              onChange={e => {
+                void saveProfile({
+                  ...profile,
+                  prefs: {
+                    ...(profile.prefs ?? {}),
+                    intervention: {
+                      ...(profile.prefs?.intervention ?? {}),
+                      enabled: e.target.checked,
+                    },
+                  },
+                });
+              }}
+            />
+          </div>
+          <div style={{ fontFamily: MONO, fontSize: 10, color: C.muted, marginBottom: 8, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+            Cooldown when cancelled
+          </div>
+          <div style={{ display: "flex", gap: 6 }}>
+            {([0, 5, 15, 30] as const).map(min => {
+              const current = profile.prefs?.intervention?.cooldownMin ?? 15;
+              const active = current === min;
+              return (
+                <button
+                  key={min}
+                  type="button"
+                  onClick={() => {
+                    void saveProfile({
+                      ...profile,
+                      prefs: {
+                        ...(profile.prefs ?? {}),
+                        intervention: {
+                          ...(profile.prefs?.intervention ?? {}),
+                          cooldownMin: min,
+                        },
+                      },
+                    });
+                  }}
+                  style={{
+                    flex: 1, padding: "8px 0",
+                    background: active ? C.live : "transparent",
+                    border: `1px solid ${active ? C.live : C.border2}`,
+                    color: active ? "#0A0A0E" : C.text2,
+                    borderRadius: 999, fontFamily: MONO, fontSize: 11,
+                    letterSpacing: "0.06em", textTransform: "uppercase",
+                    cursor: "pointer",
+                  }}
+                >
+                  {min === 0 ? "Off" : `${min} min`}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Push notifications */}
         {("serviceWorker" in navigator && "PushManager" in window) && (
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", borderBottom: `1px solid ${C.border}` }}>
