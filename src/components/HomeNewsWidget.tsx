@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 // Kōda · HomeNewsWidget
 //
-// Hero card (next high-impact event + countdown) + horizontal week strip.
+// Hero card (next high-or-medium impact event + countdown).
 // Mounted on the main Home feed view. Tapping anywhere opens the full News page.
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -51,22 +51,15 @@ export function HomeNewsWidget({ C, onOpenNews }: Props) {
     return () => clearInterval(id);
   }, []);
 
-  const upcoming = useMemo<CalendarEvent[]>(() => {
-    const events = calendar?.items ?? [];
-    return events
-      .filter(e => new Date(e.time).getTime() > now)
-      .sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
-  }, [calendar, now]);
-
   const hero = useMemo<CalendarEvent | null>(() => {
-    const high = upcoming.find(e => e.impact === "high");
-    return high ?? upcoming[0] ?? null;
-  }, [upcoming]);
-
-  const strip = useMemo<CalendarEvent[]>(() => {
-    if (!hero) return [];
-    return upcoming.filter(e => e.id !== hero.id).slice(0, 6);
-  }, [upcoming, hero]);
+    const events = calendar?.items ?? [];
+    return (
+      events
+        .filter(e => e.impact === "high" || e.impact === "medium")
+        .filter(e => new Date(e.time).getTime() > now)
+        .sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime())[0] ?? null
+    );
+  }, [calendar, now]);
 
   if (!hero) {
     return (
@@ -91,102 +84,52 @@ export function HomeNewsWidget({ C, onOpenNews }: Props) {
   const countdownMs = new Date(hero.time).getTime() - now;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-      <button
-        type="button"
-        data-testid="home-news-hero"
-        onClick={onOpenNews}
+    <button
+      type="button"
+      data-testid="home-news-hero"
+      onClick={onOpenNews}
+      style={{
+        textAlign: "left",
+        background: C.panel,
+        border: `1px solid ${C.border}`,
+        borderRadius: 12,
+        padding: 14,
+        cursor: "pointer",
+        color: C.text,
+        width: "100%",
+      }}
+    >
+      <div
         style={{
-          textAlign: "left",
-          background: C.panel,
-          border: `1px solid ${C.border}`,
-          borderRadius: 12,
-          padding: 14,
-          cursor: "pointer",
-          color: C.text,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 6,
         }}
       >
-        <div
+        <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.1em", color: C.muted }}>
+          NEXT HIGH/MED EVENT
+        </span>
+        <span
           style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: 6,
+            fontFamily: MONO,
+            fontSize: 9,
+            letterSpacing: "0.08em",
+            color: heroColor,
           }}
         >
-          <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.1em", color: C.muted }}>
-            NEXT EVENT
-          </span>
-          <span
-            style={{
-              fontFamily: MONO,
-              fontSize: 9,
-              letterSpacing: "0.08em",
-              color: heroColor,
-            }}
-          >
-            ● {hero.impact.toUpperCase()}
-          </span>
-        </div>
-        <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 6 }}>{hero.title}</div>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-          <span style={{ fontFamily: MONO, fontSize: 22, letterSpacing: "-0.02em" }}>
-            {formatCountdown(countdownMs)}
-          </span>
-          <span style={{ fontSize: 11, color: C.muted }}>
-            {formatLocalDayTime(hero.time)}
-          </span>
-        </div>
-      </button>
-
-      {strip.length > 0 && (
-        <div
-          data-testid="home-news-strip"
-          onClick={onOpenNews}
-          style={{
-            display: "flex",
-            gap: 6,
-            overflowX: "auto",
-            paddingBottom: 4,
-            cursor: "pointer",
-          }}
-        >
-          {strip.map(ev => {
-            const c = impactColor(C, ev.impact);
-            return (
-              <div
-                key={ev.id}
-                style={{
-                  minWidth: 88,
-                  background: C.panel,
-                  border: `1px solid ${C.border}`,
-                  borderTop: `2px solid ${c}`,
-                  borderRadius: 8,
-                  padding: 8,
-                  color: C.text,
-                }}
-              >
-                <div style={{ fontFamily: MONO, fontSize: 9, color: C.muted }}>
-                  {formatLocalDayTime(ev.time)}
-                </div>
-                <div style={{ fontSize: 10, marginTop: 4, lineHeight: 1.2, fontWeight: 600 }}>
-                  {ev.title}
-                </div>
-                <div
-                  style={{
-                    fontSize: 8,
-                    marginTop: 6,
-                    letterSpacing: "0.08em",
-                    color: c,
-                  }}
-                >
-                  {ev.impact.toUpperCase()}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
+          ● {hero.impact.toUpperCase()}
+        </span>
+      </div>
+      <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 6 }}>{hero.title}</div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+        <span style={{ fontFamily: MONO, fontSize: 22, letterSpacing: "-0.02em" }}>
+          {formatCountdown(countdownMs)}
+        </span>
+        <span style={{ fontSize: 11, color: C.muted }}>
+          {formatLocalDayTime(hero.time)}
+        </span>
+      </div>
+    </button>
   );
 }
