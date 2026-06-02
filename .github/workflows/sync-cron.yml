@@ -1,16 +1,17 @@
 name: broker-sync
 
-# Runs every 5 minutes and hits the sync endpoint.
-# This replaces the Vercel Cron (which requires a Pro plan for sub-daily schedules).
-# The repo is public so GitHub Actions minutes are free with no monthly cap.
+# DORMANT — Tradovate API credentials are not currently provisioned, so this
+# workflow has been disabled until they are. When credentials land, uncomment
+# the `schedule:` block below to re-enable the 5-minute sync. workflow_dispatch
+# is preserved so the endpoint can still be smoke-tested manually from the
+# Actions tab.
 #
-# Required GitHub secret:
+# Required GitHub secret (when re-enabled):
 #   CRON_SECRET — same value as the CRON_SECRET env var in Vercel
 
 on:
-  schedule:
-    - cron: "*/5 * * * *"
-  # Allow manual trigger from the Actions tab for debugging
+  # schedule:
+  #   - cron: "*/5 * * * *"
   workflow_dispatch:
 
 jobs:
