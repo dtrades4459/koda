@@ -439,7 +439,7 @@ export function CornerGlow({ C, corner = "tl", opacity = 0.55 }: {
 
 // ─── GHOST WORD ─────────────────────────────────────────────────────────────
 // Ultra-display stenciled word behind hero blocks — editorial heft.
-export function GhostWord({ word = "EDGE", C, isDark = true, fontSize = 200, bottom, top, left, right, align = "left" }: {
+export function GhostWord({ word = "EDGE", isDark = true, fontSize = 200, bottom, top, left, right, align = "left" }: {
   word?: string; C: Theme; isDark?: boolean; fontSize?: number;
   bottom?: number | string; top?: number | string; left?: number | string; right?: number | string;
   align?: "left" | "center" | "right";

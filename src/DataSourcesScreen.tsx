@@ -49,51 +49,11 @@ interface SyncEvent {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function _relativeTime(iso: string | null): string {
-  if (!iso) return "—";
-  const diff = Date.now() - new Date(iso).getTime();
-  const s = Math.floor(diff / 1000);
-  if (s < 60)  return "just now";
-  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
-  if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
-  return `${Math.floor(s / 86400)}d ago`;
-}
-
 function fmtDate(iso: string | null): string {
   if (!iso) return "—";
   const d = new Date(iso);
   return d.toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 }
-
-const _STATUS_LABEL: Record<string, string> = {
-  connected:    "Live",
-  syncing:      "Syncing…",
-  error:        "Error",
-  disconnected: "Disconnected",
-  paused:       "Paused",
-};
-
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
-function _StatusDot({ status, C }: { status: string; C: Theme }) {
-  const col =
-    status === "connected"    ? C.green :
-    status === "syncing"      ? C.warn  :
-    status === "error"        ? C.red   :
-    C.muted;
-  return (
-    <span style={{
-      display: "inline-block",
-      width: 8, height: 8,
-      borderRadius: "50%",
-      background: col,
-      boxShadow: status === "syncing" ? `0 0 6px ${col}` : undefined,
-      marginRight: 6,
-      flexShrink: 0,
-    }} />
-  );
-}
-
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
@@ -134,9 +94,6 @@ export function DataSourcesScreen({
   // Disconnect confirmation
   const [pendingDisconnect, setPendingDisconnect] = useState<string | null>(null);
   const [disconnecting, setDisconnecting] = useState(false);
-
-  // Manual sync state
-  const [_syncing, setSyncing] = useState(false);
 
   // CSV panel visibility
   const [showCsv, setShowCsv] = useState(false);
@@ -234,30 +191,10 @@ export function DataSourcesScreen({
     }
   }
 
-  async function _handleManualSync() {
-    setSyncing(true);
-    try {
-      const r = await fetch("/api/cron?job=sync", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
-      });
-      const data = await r.json();
-      if (!r.ok || !data.ok) { showToast("Sync failed: " + (data.error ?? "unknown error")); return; }
-      const total = (data.results ?? []).reduce((s: number, x: any) => s + (x.tradesNew ?? 0), 0);
-      showToast(total > 0 ? `✓ Synced — ${total} new trade${total !== 1 ? "s" : ""} imported` : "✓ Synced — no new trades");
-      await fetchConnections();
-      await fetchAudit();
-    } catch {
-      showToast("Sync failed — network error.");
-    } finally {
-      setSyncing(false);
-    }
-  }
-
   // ── Shared styles ─────────────────────────────────────────────────────────
 
   const card: React.CSSProperties = {
-    background: C.card ?? C.surface ?? "#1a1a2e",
+    background: C.panel,
     borderRadius: 14,
     padding: "14px 16px",
     marginBottom: 10,
@@ -275,22 +212,22 @@ export function DataSourcesScreen({
     fontSize: 14,
     fontWeight: 500,
     background:
-      variant === "primary" ? (C.accent ?? "#7c3aed") :
+      variant === "primary" ? C.accent :
       variant === "danger"  ? "#ef4444" :
-      C.surface2 ?? C.surface ?? "#2a2a3e",
+      C.panel2,
     color:
       variant === "primary" ? "#fff" :
       variant === "danger"  ? "#fff" :
-      C.text ?? "#e2e8f0",
+      C.text,
   });
 
   const input: React.CSSProperties = {
     width: "100%",
     padding: "10px 12px",
     borderRadius: 10,
-    border: `1px solid ${C.border ?? "#333"}`,
-    background: C.surface2 ?? "#2a2a3e",
-    color: C.text ?? "#e2e8f0",
+    border: `1px solid ${C.border}`,
+    background: C.panel2,
+    color: C.text,
     fontFamily: BODY,
     fontSize: 14,
     boxSizing: "border-box",
@@ -478,7 +415,7 @@ export function DataSourcesScreen({
           onClick={e => { if (e.target === e.currentTarget) setShowConnect(false); }}
         >
           <div style={{
-            background: C.card ?? "#1a1a2e",
+            background: C.panel,
             width: "100%", maxWidth: 480,
             borderRadius: "20px 20px 0 0",
             padding: "24px 20px 36px",
@@ -499,8 +436,8 @@ export function DataSourcesScreen({
                   style={{
                     flex: 1, padding: "9px 0", borderRadius: 10, border: "none",
                     cursor: "pointer", fontFamily: BODY, fontSize: 14, fontWeight: 600,
-                    background: connectEnv === env ? (C.accent ?? "#7c3aed") : (C.surface2 ?? "#2a2a3e"),
-                    color: connectEnv === env ? "#fff" : (C.muted ?? "#888"),
+                    background: connectEnv === env ? C.accent : C.panel2,
+                    color: connectEnv === env ? "#fff" : C.muted,
                   }}
                 >
                   {env === "live" ? "🟢 Live" : "🟡 Demo"}
@@ -576,7 +513,7 @@ export function DataSourcesScreen({
           onClick={e => { if (e.target === e.currentTarget) setPendingDisconnect(null); }}
         >
           <div style={{
-            background: C.card ?? "#1a1a2e",
+            background: C.panel,
             borderRadius: 18, padding: "24px 20px",
             width: "100%", maxWidth: 380,
           }}>

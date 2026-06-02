@@ -75,7 +75,7 @@ function draftToTrade(row: DraftRow, baseId: number): Trade {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function ReviewInboxScreen({ userId, trades, saveTrades, onCountChange, C, navigateTo }: ReviewInboxScreenProps) {
+export function ReviewInboxScreen({ userId, trades, saveTrades, onCountChange, C }: ReviewInboxScreenProps) {
   const [drafts, setDrafts]               = useState<DraftRow[]>([]);
   const [loading, setLoading]             = useState(true);
   const [acting, setActing]               = useState<Set<string>>(new Set());

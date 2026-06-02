@@ -495,8 +495,8 @@ export function CsvImportPanel({ existingTrades, onImport, onClose, allStrategyN
 
     if (isExcel) {
       readXlsxFile(file).then(rows => {
-        const csv = rows.map(row =>
-          row.map(cell => {
+        const csv = (rows as unknown as unknown[][]).map(row =>
+          row.map((cell: unknown) => {
             if (cell === null || cell === undefined) return "";
             // Excel stores dates as local midnight. toISOString() converts to UTC
             // and silently shifts the date back a day in any timezone west of UTC

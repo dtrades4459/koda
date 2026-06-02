@@ -78,7 +78,7 @@ export function IdeaCard({ idea, expanded = false, C, onLike, onExpand, onOpenCh
             onClick={(e) => { e.stopPropagation(); onOpenChart?.(idea.chartUrl!); }}
             style={{
               width: "56px", height: "56px", flexShrink: 0,
-              background: `${C.surface ?? "#252535"} center/cover no-repeat url("${idea.chartUrl}")`,
+              background: `${C.panel} center/cover no-repeat url("${idea.chartUrl}")`,
               border: "none", borderRadius: "8px", cursor: "pointer", padding: 0,
             }}
             aria-label="Open chart"

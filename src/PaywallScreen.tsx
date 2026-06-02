@@ -28,7 +28,6 @@ export function PaywallScreen({
   stripeCustomerId,
   cancelledFromStripe = false,
   isOnboarding = false,
-  onSuccess,
   onSkip,
 }: {
   C: Record<string, string>;

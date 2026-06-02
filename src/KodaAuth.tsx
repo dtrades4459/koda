@@ -5,8 +5,7 @@ import type { Session } from "@supabase/supabase-js";
 import Koda from "./Koda";
 import { BetaGate, betaEnabled, isBetaUnlocked } from "./BetaGate";
 import { DARK } from "./theme";
-import type { Theme } from "./theme";
-import { KodaMark, FloatingInput, TealArrowBtn, GlassOrb, GhostWord, Kicker, MONO, BODY, DISPLAY } from "./shared";
+import { KodaMark, FloatingInput, Kicker, MONO, BODY, DISPLAY } from "./shared";
 
 // â”€â”€â”€ THEME (dark-only for auth surfaces) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const C = DARK;

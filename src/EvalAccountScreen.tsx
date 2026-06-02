@@ -82,7 +82,7 @@ function StatCard({ label, value, sub, C }: { label: string; value: string; sub?
 
 type EvalStatus = "passing" | "at_risk" | "failed";
 
-function evalStatus(targetPct: number, ddPct: number, dailyPct: number): EvalStatus {
+function evalStatus(_targetPct: number, ddPct: number, dailyPct: number): EvalStatus {
   if (ddPct >= 100 || dailyPct >= 100) return "failed";
   if (ddPct >= 75 || dailyPct >= 75) return "at_risk";
   return "passing";
@@ -270,7 +270,7 @@ export default function EvalAccountScreen({ profile, trades, C, onEditTargets }:
           <div style={{ padding: "16px 16px 10px" }}>
             <Kicker C={C}>Recent trades</Kicker>
           </div>
-          {recent.map((t, i) => {
+          {recent.map((t) => {
             const pnlNum = parseFloat(t.pnlDollar as string) || 0;
             const rNum   = parseFloat(t.pnl) || 0;
             return (

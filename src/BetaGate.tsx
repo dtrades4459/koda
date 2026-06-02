@@ -44,7 +44,6 @@ function unlock() {
 
 // ── Palette — matches DARK theme in Koda.tsx ─────────────────────────────────
 const BG      = "#0A0A0B";
-const PANEL   = "#131317";
 const BORDER  = "rgba(255,255,255,0.07)";
 const BORDER2 = "rgba(255,255,255,0.13)";
 const TEXT    = "#F2F2EE";

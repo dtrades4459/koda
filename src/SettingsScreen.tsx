@@ -8,8 +8,7 @@
 
 import React from "react";
 import type { Profile } from "./types";
-import { AvatarCircle, Card, Kicker, MONO, BODY, DISPLAY } from "./shared";
-import type { Theme } from "./theme";
+import { AvatarCircle, Kicker, MONO, BODY, DISPLAY } from "./shared";
 import { supabase } from "./lib/supabase";
 
 export interface SettingsScreenProps {
@@ -434,7 +433,7 @@ export function SettingsScreen({
                     if (!session?.access_token) { showToast("Sign in required"); return; }
                     const sub = await reg.pushManager.subscribe({
                       userVisibleOnly: true,
-                      applicationServerKey: vapidKey(),
+                      applicationServerKey: vapidKey() as BufferSource,
                     });
                     const res = await fetch("/api/push?action=subscribe", {
                       method: "POST",

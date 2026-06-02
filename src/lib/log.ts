@@ -40,14 +40,39 @@ export const log = {
     if (err instanceof Error) {
       sentry.captureException?.(err, { tags: { scope }, extra: ctx });
     } else {
-      sentry.captureMessage?.(String(err), {
+      sentry.captureMessage?.(extractMessage(err), {
         level: "error",
         tags: { scope },
-        extra: ctx,
+        extra: { ...(ctx ?? {}), original: safeSerialize(err) },
       });
     }
   },
 };
+
+// Pull a human-readable string out of anything thrown. Plain objects (e.g. a
+// PostgrestError or a fetch Response shape) used to land in Sentry as the
+// title "[object Object]" via String(err) — useless for triage. Try common
+// fields first, fall back to JSON, fall back to a tag.
+function extractMessage(err: unknown): string {
+  if (typeof err === "string") return err;
+  if (err == null) return "Unknown error (null/undefined)";
+  if (typeof err !== "object") return String(err);
+  const o = err as Record<string, unknown>;
+  const candidates = [o.message, o.error_description, o.error, o.statusText, o.code, o.name];
+  for (const c of candidates) {
+    if (typeof c === "string" && c.length > 0) return c;
+  }
+  const json = safeSerialize(err);
+  return json === "{}" ? "Unknown error (empty object)" : json;
+}
+
+function safeSerialize(value: unknown): string {
+  try {
+    return JSON.stringify(value, (_k, v) => (v instanceof Error ? { name: v.name, message: v.message, stack: v.stack } : v));
+  } catch {
+    return "[unserialisable]";
+  }
+}
 
 /**
  * Wrap an async function so any thrown error is logged with a scope and a

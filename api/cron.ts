@@ -475,7 +475,7 @@ async function handleSync(req: Req, res: Res) {
     if (!conns?.length) return res.status(200).json({ ok: true, results: [], message: "No connected accounts" });
 
     const results = await runWithConcurrency(
-      (conns ?? []).map((conn) => () => syncConnection(conn)),
+      (conns ?? []).map((conn: unknown) => () => syncConnection(conn as Parameters<typeof syncConnection>[0])),
       5
     );
 
@@ -495,7 +495,7 @@ async function handleSync(req: Req, res: Res) {
     if (!conns?.length) return res.status(200).json({ ok: true, synced: 0 });
 
     const results = (await runWithConcurrency(
-      (conns ?? []).map((conn) => () => syncConnection(conn)),
+      (conns ?? []).map((conn: unknown) => () => syncConnection(conn as Parameters<typeof syncConnection>[0])),
       10
     )) as { tradesNew: number; error?: unknown }[];
 

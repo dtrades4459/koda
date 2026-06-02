@@ -73,7 +73,7 @@ async function handleHealth(chatId: number) {
 
   // Stripe
   try {
-    await new Stripe(process.env.STRIPE_SECRET_KEY ?? '', { apiVersion: '2025-05-28.basil' }).balance.retrieve();
+    await new Stripe(process.env.STRIPE_SECRET_KEY ?? '', { apiVersion: '2025-05-28.basil' as any }).balance.retrieve();
     checks.push({ name: 'Stripe', ok: true });
   } catch (e) {
     checks.push({ name: 'Stripe', ok: false, detail: String(e) });

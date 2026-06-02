@@ -480,7 +480,7 @@ export function mergeTradingViewStrategyRows(
         ...(isOpen ? { "__openPosition": "1" } : {}),
       };
     })
-    .filter((r): r is Record<string, string> => r !== null);
+    .filter((r): r is NonNullable<typeof r> => r !== null) as Record<string, string>[];
 }
 
 // ── Futures point value table ─────────────────────────────────────────────────

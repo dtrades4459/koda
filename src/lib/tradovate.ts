@@ -336,7 +336,7 @@ export function fillsToTrades(fills: TradovateFill[]): any[] {
 /** Build a single Trade object from a matched entry + exit fill. */
 function makeTrade(
   entry: TradovateFill,
-  exit: TradovateFill,
+  _exit: TradovateFill,
   qty: number,
   rawPnl: number,
   index: number

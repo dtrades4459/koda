@@ -9,7 +9,7 @@
 
 import React from "react";
 import type { Trade } from "./types";
-import { Card, Kicker, Pill, FloatingInput, MONO, BODY, DISPLAY } from "./shared";
+import { Card, Kicker, Pill, MONO, BODY, DISPLAY } from "./shared";
 import type { Theme } from "./theme";
 import { SESSIONS, BIAS, EMOTION_TAGS, MISTAKE_TAGS, getEmotionTags } from "./tradeConstants";
 

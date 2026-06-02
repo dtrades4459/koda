@@ -12,7 +12,6 @@ export function generateInsights(trades: Trade[]): Insight[] {
   const insights: Insight[] = [];
   if (!trades.length) return [{ kicker: "START", text: "Log your first trade to get personalised feedback.", type: "info" }];
   const wins = trades.filter(t => t.outcome === "Win").length;
-  const losses = trades.filter(t => t.outcome === "Loss").length;
   const wr = trades.length ? wins / trades.length : 0;
   const sesStats: Record<string, { w: number; total: number }> = {};
   trades.forEach(t => { if (!t.session) return; if (!sesStats[t.session]) sesStats[t.session] = { w: 0, total: 0 }; if (t.outcome === "Win") sesStats[t.session].w++; sesStats[t.session].total++; });
@@ -378,7 +377,7 @@ export function DailyInsights({ trades, C, useDollar }: ChartProps & { useDollar
     {label:"Less Profitable Day",primary:fval(worst),secondary:fday(worst),sub:"",color:C.red},
     bt?{label:"Best Trade",primary:ftv(bt),secondary:`${bt.direction||bt.bias||""} ${bt.pair}`.trim(),sub:bt.date,color:C.green}:null,
     wort?{label:"Worst Trade",primary:ftv(wort),secondary:`${wort.direction||wort.bias||""} ${wort.pair}`.trim(),sub:wort.date,color:C.red}:null,
-  ].filter(Boolean);
+  ].filter((c): c is NonNullable<typeof c> => c !== null);
   return (
     <div>
       <div style={{ fontSize:"10px", color:C.muted, fontFamily:MONO, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:"12px" }}>Daily Insights</div>
@@ -447,7 +446,7 @@ export function CalendarView({ trades, C, onDayClick }: ChartProps & { onDayClic
             ? `${displayVal >= 0 ? "+" : ""}$${Math.abs(displayVal).toFixed(0)}`
             : `${displayVal >= 0 ? "+" : ""}${displayVal.toFixed(1)}`) : "";
           return (
-            <div key={i} onClick={() => data && onDayClick(key)}
+            <div key={i} onClick={() => data && onDayClick?.(key)}
               style={{ border: `1px solid ${isToday ? C.text : C.border}`, padding: "6px 3px", textAlign: "center", cursor: data ? "pointer" : "default", minHeight: "44px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: "2px", background: "transparent" }}>
               <div style={{ fontSize: "11px", color: isToday ? C.text : C.text2, fontFamily: MONO }}>{d}</div>
               {data && <div style={{ fontSize: "10px", color: textCol, fontFamily: MONO, letterSpacing: "0.04em" }}>{displayStr}</div>}
@@ -705,8 +704,8 @@ export function DayOfWeekChart({ trades, C }: ChartProps) {
 // ─── MAE/MFE SCATTER CHART ────────────────────────────────────────────────────
 export function MAEMFEChart({ trades, C }: ChartProps) {
   const pts = trades.filter(t => t.mae && t.mfe).map(t => ({
-    mae: parseFloat(t.mae) || 0,
-    mfe: parseFloat(t.mfe) || 0,
+    mae: parseFloat(t.mae ?? "") || 0,
+    mfe: parseFloat(t.mfe ?? "") || 0,
     pnl: parseFloat(t.pnl) || 0,
     outcome: t.outcome,
     pair: t.pair,

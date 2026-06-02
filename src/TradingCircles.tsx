@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect, useRef } from "react";
 import { supabase } from "./lib/supabase";
-import { SectionKicker, StrategyPill, Toast, stratCode, KodaMark, MONO, BODY, DISPLAY, EmptyCirclesState, CornerGlow } from "./shared";
+import { StrategyPill, stratCode, KodaMark, MONO, BODY, DISPLAY, EmptyCirclesState, CornerGlow } from "./shared";
 import { KODA_GLOBAL_CODE } from "./hooks/useCircles";
 import { readCircleMembers } from "./data/circles";
 import { createChallenge, fetchActiveChallenge, fetchTrophies } from "./data/circlesChallenges";
@@ -18,26 +18,26 @@ interface LeaderboardEntry {
   winRate: number;
   totalPnL: number;
   totalPnLDollar?: number;
-  pnlPercent?: number;
-  topStrategy?: string;
-  streak?: { count: number; type: "Win" | "Loss" };
+  pnlPercent?: number | null;
+  topStrategy?: string | null;
+  streak?: { count: number; type: string } | null;
   avgRR?: number;
-  updatedAt?: string;
+  updatedAt?: string | null;
 }
 
 interface CircleFormShape {
   name: string;
   description: string;
   strategy: string;
-  privacy: "public" | "private";
-  emoji?: string;
-  metric?: "dollar" | "r" | "winrate" | "trades" | "avgr";
+  privacy: string;
+  emoji: string;
+  metric: string;
 }
 
 export interface TradingCirclesProps {
   myCircles: Circle[];
-  circlesView: "browse" | "create" | "join" | "detail";
-  setCirclesView: React.Dispatch<React.SetStateAction<"browse" | "create" | "join" | "detail">>;
+  circlesView: string;
+  setCirclesView: React.Dispatch<React.SetStateAction<string>>;
   activeCircle: Circle | null | any;
   setActiveCircle: React.Dispatch<React.SetStateAction<Circle | null | any>>;
   circleForm: CircleFormShape;
@@ -49,7 +49,7 @@ export interface TradingCirclesProps {
   createCircle: () => void | Promise<void>;
   joinCircle: () => void | Promise<void>;
   publishToCircle: (code: string) => void | Promise<void>;
-  fetchCircleLeaderboard: (circle: Circle, sort: "all" | "week") => Promise<LeaderboardEntry[]>;
+  fetchCircleLeaderboard: (circle: Circle, sort?: "all" | "week") => Promise<LeaderboardEntry[]>;
   profile: Profile;
   getMyCode: () => string;
   showToast: (message: string) => void;
@@ -57,13 +57,13 @@ export interface TradingCirclesProps {
   losses: number;
   total: number;
   winRate: string | number;
-  totalPnL: number;
+  totalPnL: number | string;
   pnlPos: boolean;
   weekPnL: number;
   weekPnLPos: boolean;
   weekPnLStr: string | number;
   avgRR: string | number;
-  streak: { count: number; type: "Win" | "Loss" } | null;
+  streak: { count: number; type: string | null } | null;
   STRATEGY_NAMES: string[];
   C: Theme;
   inp: React.CSSProperties;
@@ -87,10 +87,10 @@ export interface TradingCirclesProps {
 export function TradingCircles({
   myCircles, circlesView, setCirclesView, activeCircle, setActiveCircle,
   circleForm, setCircleForm, circleJoinCode, setCircleJoinCode,
-  circleMsg, setCircleMsg, createCircle, joinCircle, publishToCircle,
+  circleMsg, createCircle, joinCircle, publishToCircle,
   fetchCircleLeaderboard, profile, getMyCode, showToast,
-  wins, losses, total, winRate, totalPnL, pnlPos,
-  weekPnL, weekPnLPos, weekPnLStr, avgRR, streak,
+  wins, losses, winRate, totalPnL, pnlPos,
+  avgRR,
   STRATEGY_NAMES, C, inp, sel, lbl, pillPrimary, pillGhost,
   following, followUser, unfollowUser, kickMember, leaveCircle,
   openProfile, isJoiningCircle, isCreatingCircle,
@@ -515,7 +515,6 @@ export function TradingCircles({
 
   // ── Derived circle stats ──────────────────────────────────────────────
   const myRank = leaderboard.findIndex((e: any) => e.memberCode === getMyCode()) + 1;
-  const leader = leaderboard[0];
   const circleAvgWR = leaderboard.length > 0
     ? Math.round(leaderboard.reduce((s: number, e: any) => s + (e.winRate || 0), 0) / leaderboard.length)
     : 0;

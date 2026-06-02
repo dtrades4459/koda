@@ -1,7 +1,7 @@
 import { storage } from "./lib/storage";
 import type React from "react";
 import { useState, useEffect, useMemo } from "react";
-import { MONO, BODY, DISPLAY, AvatarCircle, Kicker, GlassOrb } from "./shared";
+import { MONO, BODY, DISPLAY, GlassOrb } from "./shared";
 
 export function ProfileModal({ handle, myCode, following, followUser, unfollowUser, onClose, C }: any) {
   const [pubProfile, setPubProfile] = useState<any>(null);

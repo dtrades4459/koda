@@ -103,7 +103,7 @@ export function TourOverlay({ C, onDone }: { C: any; onDone: () => void }) {
 }
 
 // ─── ONBOARDING FLOW ──────────────────────────────────────────────────────────
-export function OnboardingFlow({ C, allStrategyNames, onComplete }: {
+export function OnboardingFlow({ C, onComplete }: {
   C: any;
   allStrategyNames: string[];
   onComplete: (data: OnboardingData) => Promise<void>;

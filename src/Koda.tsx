@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { supabase } from "./lib/supabase";
 import type { User } from "@supabase/supabase-js";
 import { onStorageError, storage } from "./lib/storage";
-import { calcRR, calcWinRate, calcStreak, calcWeeklyPnL, calcTotalPnL, calcDisciplineScore } from "./lib/stats";
+import { calcRR, calcStreak, calcDisciplineScore } from "./lib/stats";
 import type { DisciplineScore, DisciplineLogEntry } from "./lib/stats";
 import { log } from "./lib/log";
 import { isFlagOn } from "./lib/flags";
@@ -17,19 +17,19 @@ import { KODA_GLOBAL_CODE } from "./hooks/useCircles";
 import { STRATEGIES, STRATEGY_NAMES, getAllStrategiesMap, addExtraStrategies } from "./data/strategies";
 import { useTradovate } from "./hooks/useTradovate";
 
-import type { TradeComment, ReactionMap, Trade, Profile, CircleMember, Circle, Insight, StrategyDef } from "./types";
-import { AvatarCircle, Badge, SectionKicker, StrategyPill, StrategySelect, SubNavDropdown, GearButton, Toast, ToastStack, KodaMarkFilled, KodaMark, CrownIcon, GlassOrb, CornerGlow, GhostWord, TickMotif, TealArrowBtn, Pill, Card, Kicker, Delta, ScreenHeader, IconButton, FloatingInput, EmptyState, outcomeColor, outcomeLetter, stratCode, stratShort, compressImage, MONO, BODY, DISPLAY, EmptyTradesState, ErrorOfflineState, CelebrationOverlay } from "./shared";
-import type { ToastKind, ToastItem } from "./shared";
+import type { TradeComment, ReactionMap, Trade, Profile, Circle, Insight, StrategyDef } from "./types";
+import { AvatarCircle, SectionKicker, StrategySelect, SubNavDropdown, GearButton, Toast, ToastStack, KodaMarkFilled, KodaMark, GlassOrb, Pill, Card, Kicker, Delta, IconButton, EmptyState, outcomeColor, outcomeLetter, stratCode, stratShort, compressImage, MONO, BODY, DISPLAY, EmptyTradesState, CelebrationOverlay } from "./shared";
+import type { ToastItem } from "./shared";
 import { TradingCircles } from "./TradingCircles";
 import { FriendsFeed } from "./FriendsFeed";
-import { MiniSparkline, PnLChart, MonthlyPnLChart, WinRateChart, TradeDurationChart, NetDailyPnLChart, DailyCumulativePnLChart, TradeStatCards, AvgStatsCards, DailyInsights, CalendarView, DrawdownCurve, SessionHeatmap, TimeOfDayChart, DayOfWeekChart, MAEMFEChart, generateInsights } from "./charts";
+import { PnLChart, MonthlyPnLChart, WinRateChart, TradeDurationChart, NetDailyPnLChart, DailyCumulativePnLChart, TradeStatCards, AvgStatsCards, DailyInsights, CalendarView, DrawdownCurve, SessionHeatmap, TimeOfDayChart, DayOfWeekChart, MAEMFEChart, generateInsights } from "./charts";
 import { CsvImportPanel } from "./CsvImportPanel";
 import { DataSourcesScreen } from "./DataSourcesScreen";
 import { ProfileModal } from "./ProfileModal";
 import { SettingsScreen } from "./SettingsScreen";
 import { LogTradeScreen } from "./LogTradeScreen";
 import { ReviewInboxScreen } from "./ReviewInboxScreen";
-import { SESSIONS, BIAS, EMOTION_TAGS, getEmotionTags, EMPTY_TRADE } from "./tradeConstants";
+import { EMOTION_TAGS, getEmotionTags, EMPTY_TRADE } from "./tradeConstants";
 import { TourOverlay, OnboardingFlow } from "./OnboardingFlow";
 import type { OnboardingData } from "./OnboardingFlow";
 import { UpgradeModal } from "./UpgradeModal";
@@ -150,7 +150,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   // the paywall check is correct before loadAll() finishes.
   const [profile, setProfile] = useState<Profile>({ ...DEF_PROFILE, plan: jwtPlan ?? "free" });
   const FOUNDER_EMAILS = new Set(["dnyland420@gmail.com", "bmlopes1986@gmail.com", "dannyarnold0509@gmail.com"]);
-  const isPro = !isFlagOn("paywall") || FOUNDER_EMAILS.has((user.email ?? "").toLowerCase()) || profile.plan === "pro" || profile.plan === "elite";
+  const isPro = !isFlagOn("paywall") || FOUNDER_EMAILS.has((user?.email ?? "").toLowerCase()) || profile.plan === "pro" || profile.plan === "elite";
   const disciplineScore = useMemo(
     () => calcDisciplineScore(trades, profile),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -165,7 +165,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   const [editingProfile, setEditingProfile] = useState(false);
   const [profileDraft, setProfileDraft] = useState<Profile>(DEF_PROFILE);
   const [commentInputs, setCommentInputs] = useState<Record<number, string>>({});
-  const [pnlMode, setPnlMode] = useState<"r" | "$">("$");
+  const [pnlMode] = useState<"r" | "$">("$");
   const [timeMode, setTimeMode] = useState<"week" | "all">("week");
   // Follow system — state + sync managed by useFollows (wired below after getMyCode).
   const [viewProfile, setViewProfile] = useState<string | null>(null);
@@ -179,14 +179,8 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   const [toast, setToast] = useState<string | null>(null);
   // ── Toast v2 (stacked, 4 kinds) ──
   const [toastsV2, setToastsV2] = useState<ToastItem[]>([]);
-  const toastIdRef = useRef(0);
   const [celebration, setCelebration] = useState<{ kind: "trade" | "streak" | "pro" | "loss" | "streak-loss"; streakCount?: number; tradeStats?: { winRate: number; avgR: number; streak: number } } | null>(null);
   const [streakBanner, setStreakBanner] = useState<{ streakCount: number } | null>(null);
-  const showToastV2 = useCallback((kind: ToastKind, title: string, body?: string) => {
-    const id = ++toastIdRef.current;
-    setToastsV2(prev => [...prev, { id, kind, title, body, ts: Date.now() }]);
-    setTimeout(() => setToastsV2(prev => prev.filter(t => t.id !== id)), 6000);
-  }, []);
   const dismissToast = useCallback((id: number) => {
     setToastsV2(prev => prev.filter(t => t.id !== id));
   }, []);
@@ -215,7 +209,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     if (!profile.uid || !disciplineScore) return;
     (async () => {
       const raw = await storage.get("koda_discipline_log");
-      const log: DisciplineLogEntry[] = raw ? JSON.parse(raw) : [];
+      const log: DisciplineLogEntry[] = raw ? JSON.parse(raw.value) : [];
       setDisciplineLog(log);
       const today = new Date().toISOString().split("T")[0];
       if (log.length > 0 && log[log.length - 1].date === today) return;
@@ -235,13 +229,13 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   const [stratRules, setStratRules] = useState<Record<string, CheckItem[]>>(() => Object.fromEntries(STRATEGY_NAMES.map(s => [s, STRATEGIES[s].rules.map((t: string, i: number) => ({ id: i + 1, text: t }))])));
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [checklistTab, setChecklistTab] = useState("pretrade");
-  const [editingCheckItem, setEditingCheckItem] = useState<CheckItem | null>(null);
-  const [editingRule, setEditingRule] = useState<CheckItem | null>(null);
+  const [editingCheckItem, setEditingCheckItem] = useState<number | null>(null);
+  const [editingRule, setEditingRule] = useState<number | null>(null);
   const [newCheckText, setNewCheckText] = useState("");
   const [newRuleText, setNewRuleText] = useState("");
   const [addingCheck, setAddingCheck] = useState(false);
   const [addingRule, setAddingRule] = useState(false);
-  const [calDayTrades, setCalDayTrades] = useState<Trade[] | null>(null);
+  const [calDayTrades, setCalDayTrades] = useState<{ key: string; trades: Trade[] } | null>(null);
   const [statsTab, setStatsTab] = useState("performance");
   const [disciplineLog, setDisciplineLog] = useState<DisciplineLogEntry[]>([]);
   const [setupPeriod, setSetupPeriod] = useState<"month" | "all">("month");
@@ -276,7 +270,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   // Custom strategies: user-defined, same shape as built-ins (name, code, setups, checklist, rules).
   // Merged into STRATEGIES global on load so stratCode/stratShort keep working unchanged.
   const [customStrategies, setCustomStrategies] = useState<StrategyDef[]>([]);
-  const allStrategyNames = [...STRATEGY_NAMES, ...customStrategies.map((s: StrategyDef & { name: string }) => s.name)];
+  const allStrategyNames = [...STRATEGY_NAMES, ...customStrategies.map((s) => s.name ?? "").filter(Boolean)];
   // Custom-strategy editor state
   const [showStrategyEditor, setShowStrategyEditor] = useState(false);
   const [editingStrategy, setEditingStrategy] = useState<string | null>(null);
@@ -284,7 +278,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
 
   // CSV import panel state
   const [showCsvImport, setShowCsvImport] = useState(false);
-  const [isImportingCsv, setIsImportingCsv] = useState(false);
+  const [, setIsImportingCsv] = useState(false);
   const [taggerTrades, setTaggerTrades] = useState<Trade[] | null>(null);
   const [taggerMode, setTaggerMode] = useState<"fresh-import" | "resume">("fresh-import");
   const [showUpgrade, setShowUpgrade] = useState(false);
@@ -568,7 +562,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     setLoading(false);
   }
 
-  async function saveCustomStrategies(u: Array<StrategyDef & { name: string }>) {
+  async function saveCustomStrategies(u: StrategyDef[]) {
     // Rebuild extra strategies from the new set (replaces stale entries).
     addExtraStrategies(Object.fromEntries(u.map((s) => [s.name, s as StrategyDef])));
     setCustomStrategies(u);
@@ -580,36 +574,36 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     setStrategyDraft({ name: "", code: "", setups: [], checklist: [], rules: [] });
     setShowStrategyEditor(true);
   }
-  function openEditStrategy(s: StrategyDef & { name: string }) {
-    setEditingStrategy(s.name);
-    setStrategyDraft({ ...s, setups: [...(s.setups || [])], checklist: [...(s.checklist || [])], rules: [...(s.rules || [])] });
+  function openEditStrategy(s: StrategyDef) {
+    setEditingStrategy(s.name ?? "");
+    setStrategyDraft({ name: s.name ?? "", code: s.code, setups: [...(s.setups || [])], checklist: [...(s.checklist || [])], rules: [...(s.rules || [])] });
     setShowStrategyEditor(true);
   }
   async function saveStrategyDraft() {
     const d = strategyDraft;
     if (!d.name.trim()) { showToast("Name required"); return; }
     const code = (d.code || d.name).replace(/[^A-Z0-9]/gi, "").slice(0, 4).toUpperCase() || "NEW";
-    const clean = { name: d.name.trim(), code, setups: d.setups.filter((x: string) => x?.trim()), checklist: d.checklist.filter((x: { text?: string }) => x?.text?.trim()), rules: d.rules.filter((x: { text?: string }) => x?.text?.trim()) };
+    const clean = { name: d.name.trim(), code, setups: d.setups.filter((x: string) => x?.trim()), checklist: (d.checklist as unknown as { text?: string }[]).filter((x) => x?.text?.trim()), rules: (d.rules as unknown as { text?: string }[]).filter((x) => x?.text?.trim()) };
     // Block overwriting a built-in.
     if (STRATEGY_NAMES.includes(clean.name) && editingStrategy !== clean.name) { showToast("Name clashes with a built-in"); return; }
-    let u;
-    if (editingStrategy) u = customStrategies.map((s: StrategyDef & { name: string }) => s.name === editingStrategy ? clean : s);
-    else u = [...customStrategies, clean];
+    let u: StrategyDef[];
+    if (editingStrategy) u = customStrategies.map((s) => s.name === editingStrategy ? (clean as unknown as StrategyDef) : s);
+    else u = [...customStrategies, clean as unknown as StrategyDef];
     await saveCustomStrategies(u);
     // Seed checklist/rules state so the Check tab can render the new strategy immediately.
     if (!stratChecklists[clean.name]) {
-      const cl = clean.checklist.length ? clean.checklist : [];
+      const cl = (clean.checklist.length ? clean.checklist : []) as unknown as CheckItem[];
       await saveStratChecklists({ ...stratChecklists, [clean.name]: cl });
     }
     if (!stratRules[clean.name]) {
-      const rl = clean.rules.length ? clean.rules : [];
+      const rl = (clean.rules.length ? clean.rules : []) as unknown as CheckItem[];
       await saveStratRules({ ...stratRules, [clean.name]: rl });
     }
     setShowStrategyEditor(false);
     showToast(editingStrategy ? "Strategy updated" : "Strategy added");
   }
   async function deleteCustomStrategy(name: string) {
-    const u = customStrategies.filter((s: StrategyDef & { name: string }) => s.name !== name);
+    const u = customStrategies.filter((s) => s.name !== name);
     await saveCustomStrategies(u);
     const cl = { ...stratChecklists }; delete cl[name]; await saveStratChecklists(cl);
     const rl = { ...stratRules }; delete rl[name]; await saveStratRules(rl);
@@ -668,7 +662,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     tradovateSession, tradovatePositions,
     tradovateConnecting, tradovateSyncing,
     tradovateError, tradovateForm,
-    setTradovateSession, setTradovateForm, setTradovateError,
+    setTradovateForm,
     connectTradovate, refreshTradovatePositions,
     syncTradovateFills, disconnectTradovate,
   } = useTradovate({ loading, trades, saveTrades, showToast });
@@ -724,7 +718,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     circleMsg, setCircleMsg,
     circleLatestMsgs,
     isCreatingCircle, isJoiningCircle,
-    saveMyCircles, myMemberRecord, readCircleMembers,
+    saveMyCircles,
     createCircle, joinCircle, joinCircleByCode, kickMember, leaveCircle,
     publishToCircle, fetchCircleLeaderboard,
   } = useCircles({
@@ -953,7 +947,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
       if (hitMilestone) {
         try {
           const raw = await (window as any).storage.get("koda_streak_milestones");
-          const parsed = raw ? JSON.parse(raw) : [];
+          const parsed = raw ? JSON.parse(raw.value ?? raw) : [];
           const shown: number[] = Array.isArray(parsed) ? parsed : [];
           if (!shown.includes(hitMilestone)) {
             await (window as any).storage.set("koda_streak_milestones", JSON.stringify([...shown, hitMilestone]));
@@ -1159,7 +1153,6 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   const {
     friends, friendFeed, myFeedReactions,
     showAddFriend, setShowAddFriend,
-    friendCodeInput, setFriendCodeInput, friendMsg, addFriend, removeFriend, saveFriends,
     followHandleInput, setFollowHandleInput, followHandleMsg, followHandleLoading, followByHandle,
     publishFeed, refreshFeed, reactToFeed,
   } = useFeed({ loading, trades, profile, following, followUser, getMyCode, resolveHandle });
@@ -1297,9 +1290,6 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     }
   }
 
-  // Friends = mutual follows (I follow them + they follow me).
-  const friendCodes = following.filter(c => followers.includes(c));
-
   // Stats — memoised so derived values only recompute when `trades` changes.
   const { wins, losses, bes, total, winRate, totalPnL } = useMemo(() => {
     const wins    = trades.filter(t => t.outcome === "Win").length;
@@ -1317,7 +1307,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   const {
     weekTrades, weekPnL, weekPnLStr, weekPnLPos,
     hasDollarData, totalPnlDollar, weekPnlDollar,
-    rrTrades, avgRR, streak, stratStats, sessionStats, pairStats,
+    avgRR, streak, stratStats, sessionStats,
   } = useMemo(() => {
     const now = new Date();
     const day = now.getDay();
@@ -1391,7 +1381,6 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
 
   const checkedCount = checkItems.filter((i: { id: number; text: string }) => isChecked(i.id)).length;
   const totalItems = checkItems.length;
-  const scorePct = totalItems ? Math.round((checkedCount / totalItems) * 100) : 0;
   const insights = useMemo(() => generateInsights(trades), [trades]);
   const _allStratMap = useMemo(() => getAllStrategiesMap(), [customStrategies]);
   const allSetups = useMemo(
@@ -1492,7 +1481,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
       <OnboardingFlow
         C={C}
         allStrategyNames={allStrategyNames}
-        onComplete={async ({ name, handle, avatar, bio, twitter, instruments, strategy }: OnboardingData) => {
+        onComplete={async ({ name, handle, avatar, bio, twitter, instruments }: OnboardingData) => {
           // Set localStorage immediately so a refresh won't re-show onboarding
           // even if the Supabase write hasn't completed yet.
           try { localStorage.setItem(`koda_onboarded_${profile.uid}`, "1"); } catch {}
@@ -3487,7 +3476,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                       <div style={{ padding: "14px 14px 10px" }}>
                         <div style={{ fontFamily: MONO, fontSize: "10px", fontWeight: 500, letterSpacing: "0.16em", textTransform: "uppercase", color: C.muted }}>Session breakdown</div>
                       </div>
-                      {Object.entries(sessionStats).map(([session, v], i, arr) => {
+                      {Object.entries(sessionStats).map(([session, v]) => {
                         const wr = v.w + v.l > 0 ? ((v.w / (v.w + v.l)) * 100).toFixed(0) : "0";
                         return (
                           <div key={session} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 14px", borderTop: `1px solid ${C.border}` }}>
@@ -3790,8 +3779,6 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                     }
 
                     const gc = discGradeColor(disciplineScore.grade);
-                    const circumference = 2 * Math.PI * 26;
-                    const offset = circumference * (1 - disciplineScore.score / 100);
 
                     const dragNames: Record<string, string> = {
                       rules: "Rule Adherence",
@@ -4023,9 +4010,9 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                 <SectionKicker label={`${checklistTab === "rules" ? "RULES" : "PRE-TRADE"} · ${stratShort(activeStrategy).toUpperCase()}`} C={C} />
                 <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
                   <StrategySelect strategies={allStrategyNames} value={activeStrategy} onChange={(s: string) => { setActiveStrategy(s); setEditingCheckItem(null); setEditingRule(null); }} C={C} align="right" />
-                  {customStrategies.find((s: StrategyDef & { name: string }) => s.name === activeStrategy) && (
+                  {customStrategies.find((s) => s.name === activeStrategy) && (
                     <>
-                      <button onClick={() => openEditStrategy(customStrategies.find((s: StrategyDef & { name: string }) => s.name === activeStrategy))}
+                      <button onClick={() => { const s = customStrategies.find((s) => s.name === activeStrategy); if (s) openEditStrategy(s); }}
                         style={{ background: "transparent", border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "6px 12px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", color: C.muted }}>
                         Edit
                       </button>
