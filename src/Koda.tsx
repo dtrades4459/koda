@@ -2,7 +2,8 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { supabase } from "./lib/supabase";
 import type { User } from "@supabase/supabase-js";
 import { onStorageError, storage } from "./lib/storage";
-import { calcRR, calcWinRate, calcStreak, calcWeeklyPnL, calcTotalPnL } from "./lib/stats";
+import { calcRR, calcWinRate, calcStreak, calcWeeklyPnL, calcTotalPnL, calcDisciplineScore } from "./lib/stats";
+import type { DisciplineScore, DisciplineLogEntry } from "./lib/stats";
 import { log } from "./lib/log";
 import { isFlagOn } from "./lib/flags";
 import { useFollows } from "./hooks/useFollows";
@@ -150,6 +151,11 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   const [profile, setProfile] = useState<Profile>({ ...DEF_PROFILE, plan: jwtPlan ?? "free" });
   const FOUNDER_EMAILS = new Set(["dnyland420@gmail.com", "bmlopes1986@gmail.com", "dannyarnold0509@gmail.com"]);
   const isPro = !isFlagOn("paywall") || FOUNDER_EMAILS.has((user.email ?? "").toLowerCase()) || profile.plan === "pro" || profile.plan === "elite";
+  const disciplineScore = useMemo(
+    () => calcDisciplineScore(trades, profile),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [trades, profile.maxTradesPerDay, profile.maxDailyLoss],
+  );
   const [editingProfile, setEditingProfile] = useState(false);
   const [profileDraft, setProfileDraft] = useState<Profile>(DEF_PROFILE);
   const [commentInputs, setCommentInputs] = useState<Record<number, string>>({});
@@ -189,6 +195,24 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     );
     return () => _atSub.unsubscribe();
   }, []);
+  useEffect(() => {
+    if (!profile.uid || !disciplineScore) return;
+    (async () => {
+      const raw = await storage.get("koda_discipline_log");
+      const log: DisciplineLogEntry[] = raw ? JSON.parse(raw) : [];
+      setDisciplineLog(log);
+      const today = new Date().toISOString().split("T")[0];
+      if (log.length > 0 && log[log.length - 1].date === today) return;
+      const newEntry: DisciplineLogEntry = {
+        date: today,
+        score: disciplineScore.score,
+        grade: disciplineScore.grade,
+      };
+      const updated = [...log.filter(e => e.date !== today), newEntry].slice(-30);
+      setDisciplineLog(updated);
+      await storage.set("koda_discipline_log", JSON.stringify(updated));
+    })();
+  }, [profile.uid, disciplineScore?.score]);
   const [activeStrategy, setActiveStrategy] = useState(STRATEGY_NAMES[0]);
   type CheckItem = { id: number; text: string };
   const [stratChecklists, setStratChecklists] = useState<Record<string, CheckItem[]>>(() => Object.fromEntries(STRATEGY_NAMES.map(s => [s, STRATEGIES[s].checklist.map((t: string, i: number) => ({ id: i + 1, text: t }))])));
@@ -203,6 +227,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   const [addingRule, setAddingRule] = useState(false);
   const [calDayTrades, setCalDayTrades] = useState<Trade[] | null>(null);
   const [statsTab, setStatsTab] = useState("performance");
+  const [disciplineLog, setDisciplineLog] = useState<DisciplineLogEntry[]>([]);
   const [setupPeriod, setSetupPeriod] = useState<"month" | "all">("month");
   const [setupMetric, setSetupMetric] = useState<"pnl" | "winrate" | "trades">("pnl");
   const [setupDollar, setSetupDollar] = useState(false);
