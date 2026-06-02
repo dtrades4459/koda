@@ -28,10 +28,19 @@
 
 A trading journal PWA for retail futures traders. Log trades, track stats (P&L, win rate, avg R), follow friends, and compete in Trading Circles. Mobile-first, installable as a home screen app on iOS/Android.
 
-**Live URLs:** https://tradrjournal.xyz · https://kodatrade.co.uk (GoDaddy → Vercel)
+**Live URLs:** https://kodatrade.co.uk (primary) · https://tradrjournal.xyz (legacy) (GoDaddy → Vercel)
 **Vercel project:** `tradr.dt` (account: `dylnyland4459-1994`)
 **Supabase project ID:** `vifwjwsndchnrpvfgrmg`
-**No git repo** — deploys are done directly via `vercel --prod` CLI from `C:\Users\Dylon\OneDrive\Desktop\koda`
+**Git repo:** `https://github.com/dtrades4459/koda.git` (`main`). **Pushes to main auto-deploy via Vercel** — `git push origin main` IS the deploy. `npm run build` locally before pushing to catch missing-import failures.
+**Working dir:** `C:\Users\Dylon\OneDrive\Desktop\koda`
+
+### Pre-commit hook (`.husky/pre-commit`)
+
+Runs `lint-staged` → `eslint`, then `npm run typecheck`, then a regex check that **blocks** new staged additions matching:
+- `: any` annotations (use a proper type or `unknown` + type guard)
+- `eslint-disable` comments other than `react-hooks/exhaustive-deps`
+
+Do **not** bypass with `--no-verify`. If the hook fails, fix the underlying issue. Caveat: `git add <file>` stages the **whole** working-tree state of that file — if a file had prior uncommitted edits, run `git diff --staged <file>` before `git commit` to confirm you're only shipping intended changes. (See incident 2026-06-02: stray `IdeasScreen` import bundled into an audit commit broke prod for ~5 min.)
 
 ---
 
@@ -73,6 +82,10 @@ A trading journal PWA for retail futures traders. Log trades, track stats (P&L, 
 | `src/components/HomeNewsWidget.tsx` | Hero countdown + week strip widget on Home feed |
 | `src/hooks/useNews.ts` | Reads `news_cache` rows via supabase, parses defensively, refetches on visibility change |
 | `src/lib/news.ts` | News types (`CalendarEvent`, `Headline`, `Impact`, `NewsCache<T>`) + defensive parsers |
+| `src/IdeasScreen.tsx` | Ideas tab feed — paginated list, composer trigger, optimistic likes, chart lightbox |
+| `src/IdeaComposer.tsx` | New-idea form (modal on desktop, bottom sheet on mobile) — type toggle, structured fields, optional chart, optional linked trade |
+| `src/components/IdeaCard.tsx` | Idea card — collapsed + expanded modes; renders chart thumbnail (collapsed) or full chart (expanded) |
+| `api/ideas.ts` | `?action=list` (paginated, with like counts + `liked_by_me`), `create`, `like` (toggle), `delete` — all auth-gated |
 | `api/push.ts` | `?action=subscribe` (save sub), `send` (per-user), `notify-circle` (authed, sends to circle members), `broadcast` (cron-secret-gated, sends to all subs) |
 | `api/telegram.ts` | Telegram webhook — admin commands: `/announce <msg>`, `/test`, `/help`; admin ID: `7587404723`; uses `TELEGRAM_BOT_TOKEN2` + `TELEGRAM_WEBHOOK_SECRET` |
 | `api/cron.ts` | Cron router. `?job=complete-challenges` (daily), `sync` (5min via GH Action), `daily-digest` (daily), `news-calendar` (daily via Vercel cron, fetches ForexFactory), `news-headlines` (every 30min via GH Action, fetches Marketaux). All gated by `Bearer CRON_SECRET`. |
@@ -128,6 +141,20 @@ A trading journal PWA for retail futures traders. Log trades, track stats (P&L, 
 - Refreshed by `api/cron.ts` jobs `news-calendar` (Vercel daily cron) and `news-headlines` (GitHub Actions every 30min)
 - RLS: public select; writes via service role only (no insert policy needed)
 - Created via migration `20260601_news_cache.sql`
+
+### `public.ideas`
+- One row per published Idea (pre-trade setup or post-trade breakdown)
+- Columns: `id uuid`, `author_uid uuid → auth.users`, denorm `author_handle/name/avatar`, `type 'pre'|'post'`, `title` (≤120), `body` (≤4000), `instrument` (≤32), `timeframe`, `direction 'long'|'short'|'neutral'`, `entry_price/stop_price/target_price/chart_url/linked_trade_id`, `created_at`
+- Indexes: `created_at desc`, `author_uid`
+- RLS: all authenticated read; insert/delete only where `auth.uid() = author_uid`
+- Created via migration `20260602_ideas.sql`
+
+### `public.idea_likes`
+- One row per (idea, user) like — UNIQUE `(idea_id, user_uid)`
+- FK cascade on both `idea_id` and `user_uid`
+- RLS: all authenticated read; insert/delete only own rows
+- Toggle behaviour lives in `api/ideas.ts?action=like` — inserts or deletes the row, returns `{liked, count}`
+- Created via migration `20260602_ideas.sql`
 
 ### `public.broker_connections` + `public.sync_events`
 - Broker token storage (AES-256-GCM encrypted) + sync audit log
@@ -197,12 +224,12 @@ Rollback: Vercel Dashboard → Deployments → previous green deploy → Promote
 - **Home** — dashboard, P&L, stats, streaks, news widget at top
 - **News** — top-level tab; US economic calendar (Today/Week) + headlines feed; impact + USD-only + timezone filters
 - **Log** — add/view/edit trades, Review Inbox for auto-synced drafts
-- **Feed** — friend activity
 - **Circles** — Trading Circles (leaderboard, chat, challenges, join/create)
+- **Social** — `Feed` / `Ideas` / `People` sub-tabs (renders `src/FriendsFeed.tsx`). Feed is the follow-graph activity stream; Ideas is the chronological public Ideas board (renders `src/IdeasScreen.tsx` embedded); People is following/followers management.
 - **Sync** — broker connections (Tradovate) + CSV import + audit log
 - **Settings** — profile, dark mode, export, delete account
 
-Bottom-nav tabs (mobile): Home / News / Stats / Circles. Sub-sections under Home accessed via the dropdown (Analytics, Rules & Checklist, Sync & Log, Journal).
+Bottom-nav tabs (mobile): Home / News / Stats / Circles / Social. Sub-sections under Home accessed via the dropdown (Analytics, Rules & Checklist, Sync & Log, Journal).
 
 ---
 
@@ -260,6 +287,8 @@ Bottom-nav tabs (mobile): Home / News / Stats / Circles. Sub-sections under Home
 | iOS P&L minus key missing | `inputMode="decimal"` has no `−` key on iOS → `type="text"` + `+/−` toggle buttons |
 | News cron returned 500 (FK violation) | `shared_kv.owner_id` has FK to `auth.users`; sentinel UUID isn't there. Created dedicated `news_cache` table instead. |
 | GH Actions news cron hit 307 redirect | `kodatrade.co.uk` → `www.kodatrade.co.uk` 307; bare-domain curl fails. Workflow uses `www.kodatrade.co.uk/api/cron?job=...`. |
+| Vercel prod build `UNRESOLVED_IMPORT ./IdeasScreen` after audit commit `a05c9e3` | `git add src/FriendsFeed.tsx` staged the whole working-tree state, including a prior local-only `import { IdeasScreen }` line whose target wasn't in git yet. Fixed by committing the full Ideas feature set (`85b5041`). Always `git diff --staged` after `git add` when the file had prior local edits. |
+| Members tab "Follow" button broke build with `no-unused-expressions` lint error | Used a ternary expression as a statement: `isFollowing ? unfollowUser(c) : followUser(c);` — convert to `if/else` instead. |
 
 ---
 

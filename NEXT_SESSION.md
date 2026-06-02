@@ -1,63 +1,80 @@
 # Kōda — pickup for next session
 
-**Session closed:** 2026-06-01 (Monday — beta launch day).
+**Session closed:** 2026-06-02 (Tuesday — late afternoon).
 **Beta launched:** live at kodatrade.co.uk
+**Latest prod deploy:** `tradr-9wnuaupa3` (Vercel, ● Ready)
+**Latest commit:** `85b5041` (on `main`, pushed)
 
 This doc is the single source of truth for resuming work. Read this first.
 
 ---
 
-## 1 · What shipped this session
+## 1 · What shipped this session (2026-06-02)
 
-| # | Commit | What |
-|---|---|---|
-| 1 | `8868c8d` | Fix `api/cron.ts` cors origin header cast — all 3 API files now type-clean |
-| prev | (consolidation) | **API consolidation** — 12 serverless functions → 7; merged `cron/complete-challenges + cron/sync → api/cron.ts`, `stripe-checkout + stripe-portal + stripe-webhook → api/stripe.ts`, `reset-password + feedback + delete-account → api/account.ts`; all call sites updated |
-| prev | (telegram fix) | **Feedback → Telegram group** — `TELEGRAM_CHAT_ID` updated to group chat ID `-4755923562` in Vercel env |
+### Morning — Ideas section + follow-system polish
 
-All deployed to production (READY, no TS errors in build output).
+| # | What | Notes |
+|---|------|-------|
+| 1 | **Ideas section** | New 5th nav tab `Social` → sub-tabs `Friends · Ideas · People`. Pre-trade setups and post-trade breakdowns. Fully structured: title, body, instrument, direction, timeframe, entry/stop/target, optional chart image, optional linked trade. Public chronological feed with like-only social. Desktop modal composer, mobile bottom sheet. |
+| 2 | **Ideas DB** | `public.ideas` + `public.idea_likes` tables with full RLS. Migration `supabase/migrations/20260602_ideas.sql` (manually applied via Supabase SQL Editor). |
+| 3 | **Ideas API** | New serverless function `api/ideas.ts` — `?action=list \| create \| like \| delete`. Auth via Bearer JWT. List action joins like counts + `liked_by_me`. |
+| 4 | **Ideas frontend** | `src/IdeasScreen.tsx` (feed list + paging + composer trigger + chart lightbox), `src/IdeaComposer.tsx` (form modal/sheet), `src/components/IdeaCard.tsx` (collapsed + expanded modes). Chart uploads go client-side direct to existing `trade-screenshots` bucket (path `ideas/`). |
+| 5 | **Idea unit test** | `src/IdeasScreen.test.tsx` — empty state + card render via mocked `fetch` and Supabase client. Both pass. |
+| 6 | **Spec + plan** | `docs/superpowers/specs/2026-06-02-ideas-design.md`, `docs/superpowers/plans/2026-06-02-ideas-section.md`. |
+| 7 | **Follow system — 6 bugs fixed** | (a) "Follow back" button no longer suffers a state-race; calls `followUser` directly with the row's name/handle. (b) Following list now shows real names + `@handles` not codes — `followUser` writes target info into the follow edge row. (c) Followers list same — follower edge row now carries the follower's name/handle. (d) Feed auto-refresh now gates on `friends.length \|\| following.length` (was `friends.length` only — follow-only users had stale feeds). (e) "Already following" toast distinct from "Following". (f) Optimistic enrichment of `followingProfiles` on follow so name appears immediately. Files: `src/data/follows.ts`, `src/hooks/useFollows.ts`, `src/hooks/useFeed.ts`, `src/Koda.tsx`, `src/FriendsFeed.tsx`. Backward-compatible — old follow rows fall back to code-as-name. |
+
+### Afternoon — Circles + Social audit pass (commits `a05c9e3` + `85b5041`)
+
+| # | What | Notes |
+|---|------|-------|
+| 1 | **`TradingCircles.tsx` typed** | Replaced `: any` props with full `TradingCirclesProps` interface (+ `LeaderboardEntry`, `CircleFormShape`). One known carve-out: `activeCircle` typed as `Circle \| null \| any` because two internals (line ~408 leaderboard fetch, ~861 setActiveCircle updater) reject strict null narrowing; full clean-up belongs in the [[KodaContext refactor]] (see §5). |
+| 2 | **Circles browse — stale rank badge** | Removed `#myRank` chip from the featured browse card — `leaderboard` state was only populated after entering a detail view, so the badge was always stale or empty on first paint. |
+| 3 | **Circles Leave dialog** | Replaced `window.confirm` with a bottom sheet (matches existing challenge-creation sheet pattern, uses `kRise` keyframe). |
+| 4 | **Circles chat scroll** | `maxHeight: 420px` → `min(60dvh, 520px)` for mobile keyboards. |
+| 5 | **Circles dead `blur` param** | Removed from `renderRow` and 3 call sites in the leaderboard — never wired up. |
+| 6 | **Circles Members tab — View Profile** | Avatar + name now tap-opens the profile when the member has a `handle`; surfaces `@handle` in place of the opaque `alias`. |
+| 7 | **Trophy gold const** | Hardcoded `#A88C50` → `TROPHY_GOLD` constant at top of `TradingCircles.tsx`. |
+| 8 | **Loading skeletons** | Bare `"Loading…"` text in Circle Feed / Leaderboard / Chat / Trophies / Members replaced with shimmer skeletons (reuses existing `kShimmer` keyframe from `index.css`). |
+| 9 | **Social header rename** | `"What your circle is trading"` → `"What your network is trading"` — resolves naming clash with the Circles tab. |
+| 10 | **Social reaction double-render** | Ghost reaction picker now only renders when post has **zero** reactions AND user hasn't reacted; previously duplicated when others reacted but user hadn't. |
+| 11 | **Social dead UI removed** | Stripped the no-handler 3-dot kebab on feed posts and the misplaced "Publish feed" button from the Follow panel (useFeed auto-publishes on debounce). |
+
+### Deploy incident worth remembering
+
+Audit commit `a05c9e3` pushed to main → Vercel went `● Error` in 7s with `UNRESOLVED_IMPORT — Could not resolve './IdeasScreen' in src/FriendsFeed.tsx`. Root cause: `git add src/FriendsFeed.tsx` scooped up a prior **uncommitted** `import { IdeasScreen } from "./IdeasScreen"` line; the IdeasScreen module was still untracked locally. Recovery: bundled the full Ideas feature set into a follow-up commit (`85b5041 — feat(ideas+social): ship Ideas section and wire Social tab end-to-end`, 11 files / +1258 / −23). Prod went green 30s later. **Lesson:** when committing a file that had prior local edits, `git diff --staged <file>` before `git commit`.
+
+All deployed to production (READY).
 
 ---
 
-## 2 · CRITICAL OUTSTANDING ACTION — do this NOW
+## 2 · CRITICAL OUTSTANDING ACTIONS
 
-### Update Stripe Dashboard webhook URL
-
-The webhook URL changed when `api/stripe-webhook.ts` was merged into `api/stripe.ts`.
-
-**Old URL:** `https://kodatrade.co.uk/api/stripe-webhook`
-**New URL:** `https://kodatrade.co.uk/api/stripe?action=webhook`
-
-Until this is updated in the Stripe Dashboard, **subscription events and payment confirmations will silently fail**.
-
-Steps:
-1. Stripe Dashboard → Developers → Webhooks
-2. Find the existing webhook pointing to `/api/stripe-webhook`
-3. Edit → update endpoint URL to `https://kodatrade.co.uk/api/stripe?action=webhook`
-4. Save
-5. Send a test event to verify 200 response
+None currently. The `announcements` SQL, the Stripe webhook URL, and the `ideas` SQL migration are all confirmed applied.
 
 ---
 
-## 3 · Serverless function inventory (7 / 12 Hobby limit)
+## 3 · Serverless function inventory (10 / 12 Hobby limit)
 
 | File | Routes |
 |---|---|
 | `api/account.ts` | `?action=reset-password`, `beta-unlock`, `join-waitlist`, `feedback`, `delete` |
 | `api/stripe.ts` | `?action=checkout`, `portal`, `webhook` |
-| `api/cron.ts` | `?job=complete-challenges`, `sync` |
+| `api/cron.ts` | `?job=complete-challenges`, `sync`, `daily-digest`, `news-calendar`, `news-headlines` |
 | `api/auth.ts` | (unchanged) |
 | `api/tradovate.ts` | (unchanged) |
 | `api/circles.ts` | (unchanged) |
 | `api/og.ts` | (unchanged) |
+| `api/push.ts` | `?action=subscribe`, `send`, `notify-circle`, `broadcast` |
+| `api/telegram.ts` | Telegram webhook — `/announce`, `/test`, `/help` |
+| `api/ideas.ts` | `?action=list`, `create`, `like`, `delete` |
 
-5 slots free for future features.
+2 slots free.
 
 ---
 
 ## 4 · Batch 2 — sign-up compliance (still outstanding)
 
-Needs UK Ltd details to land. Per `FUNNEL_AUDIT.md` §A2 + §A9:
+Needs UK Ltd details. Per `FUNNEL_AUDIT.md` §A2 + §A9:
 - T&Cs + Privacy + unticked marketing-opt-in checkboxes on `src/KodaAuth.tsx`
 - UK Ltd disclosure in `public/privacy.html`, `public/terms.html`, `public/cookies.html`, `src/KodaAuth.tsx` footer
 
@@ -72,15 +89,18 @@ Needs UK Ltd details to land. Per `FUNNEL_AUDIT.md` §A2 + §A9:
 
 ## 5 · Deferred post-launch
 
-- **M2**: Switch `trade-screenshots` bucket from public → private; replace `getPublicUrl()` with signed URLs
-- **M7**: Circle messages sender trigger
-- The 134 `: any` / `as any` cleanup across 24 files
+- **M2**: Switch `trade-screenshots` bucket from public → private; replace `getPublicUrl()` with signed URLs (Ideas chart uploads use the same bucket — they'll need signed URLs too)
+- The 134 `: any` / `as any` cleanup across 24 files (TradingCircles was tightened 2026-06-02 PM — still has a small `Circle | null | any` carve-out and ~25 inner-render `any` warnings; full pass needs Context refactor)
 - `Trade` numeric-type refactor
-- `TradingCircles` 29-prop drilling → `KodaContext`
+- **`TradingCircles` → `KodaContext`** — props are typed (`TradingCirclesProps`) but still drilled 30+ deep from `Koda.tsx`. Move to a Context so we can drop the `Circle | null | any` carve-out and stop manual prop threading. (Same pattern needed for `FriendsFeed`.)
 - Marketing landing site
 - Resend SDK + transactional emails + weekly recap cron
 - Meta / TikTok / Google pixels
 - Referral programme
+- `VITE_KODA_ADMIN_UID` — already in CLAUDE.md env vars; wire up challenge creation guard in `TradingCircles.tsx`
+- **Ideas v2** — comments, trending/popular sort, following-only filter, pre-trade → linked outcome trade flow, idea edit, push notifications on new ideas from people you follow
+- **Social feed dollar P&L** — `FriendsFeed` always renders trade P&L as R-multiples (`${item.pnl}R`). Dollar-mode traders look broken to their followers. Fix: add `pnlDollar?: string` to `useFeed.FeedItem`, populate from `t.pnlDollar` in `publishFeed`, branch display in `FriendsFeed.tsx`. Migration-free since old rows just won't have the field.
+- **Social pull-to-refresh** — `useFeed` already auto-refreshes every 2 min; pull-to-refresh would be the polish layer (gesture or refresh-on-tab-focus).
 
 ---
 
@@ -89,15 +109,20 @@ Needs UK Ltd details to land. Per `FUNNEL_AUDIT.md` §A2 + §A9:
 ```bash
 # Dev
 npm run dev                  # http://localhost:5173
-npm run typecheck            # tsc --noEmit (also runs on pre-commit)
+npm run typecheck            # tsc --noEmit (composite — silently passes child errors; use `npx tsc -p tsconfig.app.json` for strict app check)
 npm run lint
 npm test -- --run            # unit tests
 npm run test:e2e             # Playwright, auto-starts dev server
+
+# Deploy
+vercel              # preview (gated by Vercel SSO)
+vercel --prod       # production → kodatrade.co.uk
 ```
 
 **Stable selectors:**
-- Bottom nav: `[data-testid="nav-home"]` / `nav-log` / `nav-history` / `nav-stats` / `nav-circles`
+- Bottom nav: `[data-testid="nav-home"]` / `nav-news` / `nav-stats` / `nav-circles` / `nav-social`
 - Auth: `[data-testid="auth-submit"]`
 - Trade form: `[data-testid="trade-pair"]` / `trade-pnl-dollar` / `trade-save`
+- Ideas: `[data-testid="ideas-screen"]` / `idea-fab-new` / `idea-composer` / `idea-card-{id}` / `idea-like-{id}` / `idea-chart-thumb-{id}`
 
-**OneDrive warning still in force.** Large writes to `Koda.tsx` can be truncated — `wc -l` after big deletes.
+**OneDrive warning still in force.** Large writes to `Koda.tsx` should use Edit, not Write — file is ~4150 lines and can truncate on direct overwrite.
