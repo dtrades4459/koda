@@ -4360,8 +4360,9 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
           </div>
         )}
 
-        {/* ── Feedback floating button — hidden on circles tab to avoid overlapping chat Send ── */}
-        {view !== "circles" && (
+        {/* ── Feedback floating button — hidden on circles (overlaps chat Send)
+            and social (overlaps the "+ New Idea" FAB on the Ideas sub-tab) ── */}
+        {view !== "circles" && view !== "social" && (
           <button
             onClick={() => setFeedbackOpen(true)}
             style={{ position: "fixed", bottom: isDesktop ? "28px" : "calc(96px + env(safe-area-inset-bottom))", right: "16px", zIndex: 998, background: C.text, color: C.bg, border: "none", borderRadius: "999px", padding: "12px 20px", minHeight: "44px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", boxShadow: "0 2px 12px rgba(0,0,0,0.25)", display: "flex", alignItems: "center" }}>
