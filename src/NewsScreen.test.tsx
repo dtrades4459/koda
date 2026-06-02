@@ -44,6 +44,16 @@ const calendarValue = {
       actual: null,
     },
     {
+      id: "ev-soon-low",
+      title: "Soon low event",
+      country: "USD",
+      time: new Date(today.getTime() + 3 * 24 * 3600 * 1000).toISOString(),
+      impact: "low",
+      forecast: null,
+      previous: null,
+      actual: null,
+    },
+    {
       id: "ev-next-week",
       title: "Next week event",
       country: "USD",
@@ -108,6 +118,9 @@ describe("NewsScreen", () => {
     await screen.findByText("Today AM event");
     await userEvent.click(screen.getByRole("button", { name: /^WEEK$/i }));
     expect(screen.getByText("Today AM event")).toBeInTheDocument();
+    // "Soon low event" is within 7 days but excluded by the impact filter
+    expect(screen.queryByText("Soon low event")).not.toBeInTheDocument();
+    // "Next week event" is beyond 7 days and also excluded
     expect(screen.queryByText("Next week event")).not.toBeInTheDocument();
   });
 
