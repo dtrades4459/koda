@@ -33,6 +33,28 @@
   <p class="sub">Every update, shipped by one founder at 2am.</p>
 
   <div class="entry">
+    <div class="entry-date">June 2026</div>
+    <div class="entry-title">In-session intervention — the wedge</div>
+    <hr/>
+    <ul>
+      <li><span class="tag new">New</span> <a href="/in-session-intervention.html"><strong>In-Session Intervention</strong></a> — Kōda now intercepts you when you tap Log Trade after 2+ losses, near your daily limit, in a revenge window, or with a tilt-emotion tag on your last trade. 5 signals, configurable cooldown, no broker API required</li>
+      <li><span class="tag new">New</span> Discipline Settings — toggle the feature on/off and pick your cooldown duration (Off / 5 / 15 / 30 min)</li>
+      <li><span class="tag new">New</span> In-Session Check-Ins card — Stats tab shows your 7-day rollup of fired / continued / cancelled events</li>
+      <li><span class="tag new">New</span> Ideas section — pre-trade setups + post-trade breakdowns. Public chronological feed, like-only social, optional chart + linked trade</li>
+      <li><span class="tag new">New</span> News tab — economic calendar (ForexFactory) + headlines (Marketaux). High + medium impact only, timezone picker, USD / all-FX toggle</li>
+      <li><span class="tag improved">Improved</span> Stats tab — new "Computed · not LLM-guessed" badge under the title. Every number Kōda shows is from your logged trades. No model. No guess.</li>
+      <li><span class="tag improved">Improved</span> Discipline toggle now matches the dark-mode pill-switch instead of a native checkbox</li>
+      <li><span class="tag improved">Improved</span> Paywall lead feature reordered — in-session intervention is now the first thing on the upgrade screen</li>
+      <li><span class="tag improved">Improved</span> Landing page now has real indexable content for search engines and link unfurlers (X, Slack, iMessage)</li>
+      <li><span class="tag improved">Improved</span> OG image upgraded from SVG to PNG with summary_large_image card — links now unfurl as full preview cards</li>
+      <li><span class="tag fix">Fix</span> registerSW.js 404 — vite-plugin-pwa was injecting a redundant script tag on every page</li>
+      <li><span class="tag fix">Fix</span> 268 latent TypeScript errors cleaned up — the typecheck command was silently passing against the wrong tsconfig</li>
+      <li><span class="tag fix">Fix</span> Sentry was reporting <code>[object Object]</code> for any non-Error throw — now extracts the real message</li>
+      <li><span class="tag fix">Fix</span> Broker-sync cron disabled — was hitting Tradovate every 5 min with no provisioned credentials</li>
+    </ul>
+  </div>
+
+  <div class="entry">
     <div class="entry-date">May 2026</div>
     <div class="entry-title">Kōda v2 — The visual pass</div>
     <hr/>
