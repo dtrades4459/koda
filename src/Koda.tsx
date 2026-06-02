@@ -8,7 +8,11 @@ import { log } from "./lib/log";
 import { isFlagOn } from "./lib/flags";
 import { useFollows } from "./hooks/useFollows";
 import { useFeed } from "./hooks/useFeed";
+import { useTiltState } from "./hooks/useTiltState";
 import { useCircles } from "./hooks/useCircles";
+import { logInterventionEvent, linkTradeToRecentIntervention } from "./data/interventions";
+import { InterventionSheet } from "./components/InterventionSheet";
+import type { TiltSignal } from "./lib/tilt";
 import type { CircleStats } from "./hooks/useCircles";
 import { getProfile, upsertProfile } from "./data/profile";
 import { upsertTrade as upsertTradeV2, deleteTradeByClientId as deleteTradeV2ByClientId } from "./data/trades";
@@ -151,6 +155,63 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   const [profile, setProfile] = useState<Profile>({ ...DEF_PROFILE, plan: jwtPlan ?? "free" });
   const FOUNDER_EMAILS = new Set(["dnyland420@gmail.com", "bmlopes1986@gmail.com", "dannyarnold0509@gmail.com"]);
   const isPro = !isFlagOn("paywall") || FOUNDER_EMAILS.has((user?.email ?? "").toLowerCase()) || profile.plan === "pro" || profile.plan === "elite";
+
+  // ── In-Session Intervention ─────────────────────────────────────────────────
+  // Pure tilt evaluator + cooldown lockout. See:
+  //   docs/superpowers/specs/2026-06-02-in-session-intervention-design.md
+  // The sheet/modal is rendered at the bottom of this component near other modals.
+  const tilt = useTiltState({ trades, profile });
+  const [interventionOpen, setInterventionOpen] = useState(false);
+  const [interventionSignals, setInterventionSignals] = useState<TiltSignal[]>([]);
+  function todayLocalDate(): string {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  }
+  function formatLockCountdown(msRemaining: number): string {
+    const total = Math.max(0, Math.ceil(msRemaining / 1000));
+    const m = Math.floor(total / 60);
+    const s = total % 60;
+    return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  }
+  function attemptLog(): void {
+    if (tilt.lockedUntil !== null && tilt.lockedUntil > Date.now()) {
+      showToast(`Cooling off — ${formatLockCountdown(tilt.lockedUntil - Date.now())} remaining`);
+      return;
+    }
+    if (tilt.settings.enabled && tilt.state.active) {
+      setInterventionSignals(tilt.state.signals);
+      setInterventionOpen(true);
+      return;
+    }
+    navigateTo("log");
+  }
+  async function handleInterventionContinue(): Promise<void> {
+    setInterventionOpen(false);
+    if (profile.uid) {
+      await logInterventionEvent({
+        userUid: profile.uid,
+        signals: interventionSignals.map(s => s.id),
+        critical: interventionSignals.some(s => s.critical),
+        choice: "continued",
+        sessionDate: todayLocalDate(),
+      });
+    }
+    navigateTo("log");
+  }
+  async function handleInterventionCancel(): Promise<void> {
+    setInterventionOpen(false);
+    if (profile.uid) {
+      await logInterventionEvent({
+        userUid: profile.uid,
+        signals: interventionSignals.map(s => s.id),
+        critical: interventionSignals.some(s => s.critical),
+        choice: "cancelled",
+        sessionDate: todayLocalDate(),
+      });
+    }
+    await tilt.startCooldown(interventionSignals.map(s => s.id));
+  }
+
   const disciplineScore = useMemo(
     () => calcDisciplineScore(trades, profile),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -641,6 +702,12 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   }
 
   async function saveTrades(u: Trade[]) {
+    // Detect single-new-trade case so we can link it to any unlinked recent
+    // intervention event. Bulk imports (length jump > 1) and edits (same length)
+    // are intentionally NOT linked.
+    const isNewTrade = u.length === trades.length + 1;
+    const newTradeId = isNewTrade ? u[u.length - 1]?.id ?? null : null;
+
     setTrades(u);
     // Always write KV — safety net + fast reads during migration window
     try {
@@ -654,6 +721,11 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
       // Fire-and-forget parallel upserts — do not block KV write
       Promise.all(u.map(t => upsertTradeV2(appTradeToV2Payload(t, uid))))
         .catch(e => log.error("saveTrades.v2", e));
+    }
+
+    // Link the new trade to its triggering intervention event, if any.
+    if (newTradeId !== null && profile.uid) {
+      void linkTradeToRecentIntervention(profile.uid, newTradeId);
     }
   }
   // ── Tradovate ─────────────────────────────────────────────────────────────
@@ -1852,7 +1924,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                         {/* QuickAction card row (design: 4 vertical cards) */}
                         <div style={{ display: "flex", gap: "8px", marginTop: "12px" }}>
                           {[
-                            { label: "Log", icon: "M5 4h10v12H5zM7 7h6M7 10h6M7 13h4", action: () => navigateTo("log"), primary: true, testId: "nav-log" },
+                            { label: "Log", icon: "M5 4h10v12H5zM7 7h6M7 10h6M7 13h4", action: () => { attemptLog(); }, primary: true, testId: "nav-log" },
                             { label: "Import", icon: "M10 3v10M6 9l4 4 4-4M3 16h14", action: () => { setView("home"); setHomeSection("sync"); }, primary: false, testId: undefined },
                             { label: "Insights", icon: "M5 4l1.5 3L10 8l-3.5 1L5 12l-1.5-3L0 8l3.5-1zM14 9l1 2 2 1-2 1-1 2-1-2-2-1 2-1z", action: () => { primaryNav("stats"); setStatsTab("insights"); }, primary: false, testId: undefined },
                             { label: "Rules", icon: "M4 4h12v12H4zM7 8h6M7 11h6M7 14h3", action: () => navigateTo("checklist"), primary: false, testId: undefined },
@@ -2080,7 +2152,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                           </p>
                         </div>
                         <div style={{ display: "flex", flexDirection: "column", gap: "10px", width: "100%", maxWidth: "240px" }}>
-                          <button onClick={() => navigateTo("log")} style={{ background: C.text, color: C.bg, border: "none", borderRadius: "999px", padding: "13px 24px", fontFamily: MONO, fontSize: "11px", letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: 700, cursor: "pointer" }}>
+                          <button onClick={() => attemptLog()} style={{ background: C.text, color: C.bg, border: "none", borderRadius: "999px", padding: "13px 24px", fontFamily: MONO, fontSize: "11px", letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: 700, cursor: "pointer" }}>
                             Log your first trade →
                           </button>
                           <button onClick={() => { setAutoOpenCsv(true); navigateTo("sync"); }} style={{ background: "transparent", color: C.muted, border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "11px 24px", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer" }}>
@@ -2901,7 +2973,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
               {filteredTrades.length === 0 ? (
                 trades.length === 0 ? (
                   // True empty — no trades at all yet
-                  <EmptyTradesState C={C} onLog={() => navigateTo("log")} onSync={() => { setHomeSection("sync"); primaryNav("home"); }} />
+                  <EmptyTradesState C={C} onLog={() => attemptLog()} onSync={() => { setHomeSection("sync"); primaryNav("home"); }} />
                 ) : (
                   // Filters active, nothing matches
                   <div style={{ textAlign: "center", padding: "60px 0", color: C.muted, fontSize: "13px", fontFamily: BODY, fontStyle: "italic" }}>
@@ -3213,7 +3285,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                   <GearButton onClick={() => { setView("home"); setHomeSection("settings"); }} active={false} C={C} />
               </>)}
 
-              {statsTab === "performance" && total === 0 && <EmptyState C={C} icon="&#128202;" headline="Your stats live here." body="Log your first trade and watch your edge emerge — win rate, R-multiples, streaks, and more." cta="Log a trade →" onCta={() => navigateTo("log")} />}
+              {statsTab === "performance" && total === 0 && <EmptyState C={C} icon="&#128202;" headline="Your stats live here." body="Log your first trade and watch your edge emerge — win rate, R-multiples, streaks, and more." cta="Log a trade →" onCta={() => attemptLog()} />}
 
               {statsTab === "performance" && total > 0 && (
                 <>
@@ -3553,7 +3625,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
               {statsTab === "strategies" && (
                 <>
                   {Object.keys(stratStats).length === 0 ? (
-                    <EmptyState C={C} icon="◆" headline="No strategy data yet." body="Assign a strategy when logging trades to see your edge breakdown here." cta="Log a trade →" onCta={() => navigateTo("log")} />
+                    <EmptyState C={C} icon="◆" headline="No strategy data yet." body="Assign a strategy when logging trades to see your edge breakdown here." cta="Log a trade →" onCta={() => attemptLog()} />
                   ) : (
                   <>
                   <section>
@@ -4452,6 +4524,15 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
             onClose={() => { setShowUpgrade(false); setMandatoryUpgrade(false); }}
           />
         )}
+
+        <InterventionSheet
+          open={interventionOpen}
+          signals={interventionSignals}
+          C={C}
+          isMobile={!isDesktop}
+          onContinue={() => { void handleInterventionContinue(); }}
+          onCancel={() => { void handleInterventionCancel(); }}
+        />
 
 
         {viewProfile && (
