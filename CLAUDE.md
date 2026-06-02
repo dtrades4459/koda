@@ -82,6 +82,12 @@ Do **not** bypass with `--no-verify`. If the hook fails, fix the underlying issu
 | `src/components/HomeNewsWidget.tsx` | Hero countdown + week strip widget on Home feed |
 | `src/hooks/useNews.ts` | Reads `news_cache` rows via supabase, parses defensively, refetches on visibility change |
 | `src/lib/news.ts` | News types (`CalendarEvent`, `Headline`, `Impact`, `NewsCache<T>`) + defensive parsers |
+| `src/lib/tilt.ts` | Pure tilt evaluator — `evaluateTilt(trades, profile, now)`. No React, no DB. 5 signals + firing rule. Test in `src/lib/tilt.test.ts` (22 cases). |
+| `src/hooks/useTiltState.ts` | Memoised evaluator + cooldown read/write to `koda_intervention_lockout` user_kv key. Reads `profile.prefs.intervention` for settings. |
+| `src/data/interventions.ts` | CRUD against `public.intervention_events`. `logInterventionEvent`, `linkTradeToRecentIntervention`, `getInterventionStats`. Emits `intervention_fired` PostHog event. |
+| `src/components/InterventionSheet.tsx` | Presentational sheet (mobile) / modal (desktop). Backdrop tap = same as Cancel button. No silent dismiss. |
+| `src/components/InterventionGate.tsx` | Reusable gate wrapper — passthrough / cooldown pill / tap intercept. Not yet wired into Koda.tsx (centralised `attemptLog()` handler used instead). |
+| `src/components/InSessionStatsCard.tsx` | Stats-tab card showing 7-day intervention rollup. Hides when no events. |
 | `src/IdeasScreen.tsx` | Ideas tab feed — paginated list, composer trigger, optimistic likes, chart lightbox |
 | `src/IdeaComposer.tsx` | New-idea form (modal on desktop, bottom sheet on mobile) — type toggle, structured fields, optional chart, optional linked trade |
 | `src/components/IdeaCard.tsx` | Idea card — collapsed + expanded modes; renders chart thumbnail (collapsed) or full chart (expanded) |
@@ -255,6 +261,7 @@ Bottom-nav tabs (mobile): Home / News / Stats / Circles / Social. Sub-sections u
 - Telegram admin bot — `/announce <msg>` broadcasts push to all subscribers + shows in-app banner; `/test`, `/help`
 - In-app announcement banner — dismissible; fetches from `announcements` table; triggered by Telegram `/announce`
 - News section — economic calendar (ForexFactory) + headlines feed (Marketaux). Free for all users. Home widget shows next high-impact event + week strip. Full page has Today/Week range pills, impact filter chips, USD-only/all-FX toggle, timezone picker (Local/ET/London/UTC), tap-to-expand cards with FORECAST/PREVIOUS/ACTUAL.
+- **In-session intervention v1** — Log Trade tap intercepted when tilt signals are active. 5 signals: `consec_losses`, `daily_loss_75`/`90`, `trade_cap_at`, `revenge_window`, `tilt_emotion`. Firing rule: 1 critical OR 2+ non-critical. Surface: bottom-sheet (mobile) / centred modal (desktop). Cancel starts a user-configurable cooldown (default 15 min, off/5/15/30). All events recorded in `public.intervention_events`; PostHog event `intervention_fired`; 7-day Stats card surfaces fired/continued/cancelled rollup. Settings: SettingsScreen "Discipline" section. Spec + plan: `docs/superpowers/{specs,plans}/2026-06-02-in-session-intervention-*.md`.
 - PWA — installable on iOS/Android
 
 ---
@@ -337,6 +344,7 @@ Koda.tsx is ~4100 lines. OneDrive can truncate large writes. Use Edit tool for t
 | `20260601_notification_subscriptions.sql` | `notification_subscriptions` table (created manually in SQL Editor) | ✅ |
 | `20260601_announcements.sql` | `announcements` table + RLS (see NEXT_SESSION.md §2A — **run if not done**) | ⚠️ pending |
 | `20260601_news_cache.sql` | `news_cache` table (public read, service-role writes) for the News section | ✅ |
+| `20260603_intervention_events.sql` | `intervention_events` table + RLS for in-session intervention v1 | ✅ |
 
 ---
 

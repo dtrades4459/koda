@@ -1,17 +1,47 @@
 # Kōda — pickup for next session
 
-**Session closed:** 2026-06-02 (Tuesday — late afternoon).
+**Session closed:** 2026-06-02 (Tuesday — evening).
 **Beta launched:** live at kodatrade.co.uk
 **Latest prod deploy:** `tradr-9wnuaupa3` (Vercel, ● Ready)
-**Latest commit:** `85b5041` (on `main`, pushed)
+**Latest commit on main (local, NOT pushed):** in-session intervention v1 series ending with the docs commit.
+**Last pushed commit:** `85b5041`
 
 This doc is the single source of truth for resuming work. Read this first.
 
 ---
 
-## 1 · What shipped this session (2026-06-02)
+## 0 · What shipped this session (2026-06-02 evening) — IN-SESSION INTERVENTION v1
 
-### Morning — Ideas section + follow-system polish
+The wedge feature for the 3-week sprint. End-to-end working locally, NOT YET PUSHED — Dylon's call on when to deploy.
+
+### Architecture
+- **Pure evaluator** — `src/lib/tilt.ts` returns `TiltState` from `evaluateTilt(trades, profile, now)`. 5 signals: consec_losses, daily_loss_75/90, trade_cap_at, revenge_window, tilt_emotion. Firing rule: any 1 critical OR ≥ 2 non-critical. 22 unit tests.
+- **Hook** — `src/hooks/useTiltState.ts` memoises the evaluator and reads/writes cooldown lockout to `user_kv` key `koda_intervention_lockout`. 3 unit tests.
+- **Data layer** — `src/data/interventions.ts` — `logInterventionEvent`, `linkTradeToRecentIntervention`, `getInterventionStats`. Emits PostHog `intervention_fired`.
+- **Surfaces** — `InterventionSheet.tsx` (mobile bottom-sheet + desktop modal), `InterventionGate.tsx` (reusable but not wired — see note below), `InSessionStatsCard.tsx` (7-day rollup on Stats tab).
+- **Wiring in Koda.tsx** — Centralised `attemptLog()` handler replaces 5 direct `navigateTo("log")` entry points (Home QuickAction chip + 4 EmptyState CTAs). `saveTrades()` extended to link new trades to recent unlinked intervention events. **`InterventionGate` component was NOT used** — the bottom nav has no Log tab and wrapping the QuickAction chip would have broken its flex layout. Component is kept for future use.
+- **Settings** — `SettingsScreen.tsx` now has a "Discipline" section: enable/disable toggle + cooldown selector (Off / 5 / 15 / 30 min, default 15).
+- **DB** — migration `supabase/migrations/20260603_intervention_events.sql` applied by Dylon at session time. Table is live.
+
+### Test status
+- 23 test files / **310 passing** (was 272 at session start)
+- `npm run typecheck` clean across app + api
+- `npm run build` green
+- Playwright spec `tests/in-session-intervention.spec.ts` written but only runs when `TEST_EMAIL`/`TEST_PASSWORD` env vars are set
+
+### Spec + plan
+- Spec: `docs/superpowers/specs/2026-06-02-in-session-intervention-design.md`
+- Plan: `docs/superpowers/plans/2026-06-02-in-session-intervention-v1.md` (all 19 tasks complete)
+
+### Open follow-ups
+- **Push to deploy.** All 19 task commits are local-only. Push when ready.
+- **Demo recording.** Plan §12 describes the 3-take phone capture for launch content.
+- **Future v2 considerations:** explicit "Start session" button, configurable signal thresholds, prop-firm drawdown-breach signal, intervention firing on CSV imports / broker auto-syncs.
+- **InterventionGate component is unused.** Either delete it in a future cleanup pass or use it when adding the visible cooldown pill to the bottom nav (currently the cooldown is a toast-only signal).
+
+---
+
+## 1 · What shipped earlier this session (2026-06-02 morning) — Ideas section + follow-system polish
 
 | # | What | Notes |
 |---|------|-------|
