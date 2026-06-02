@@ -15,3 +15,63 @@ describe("evaluateTilt", () => {
     expect(state.signals).toEqual([]);
   });
 });
+
+function mkTrade(over: Partial<Trade>): Trade {
+  return {
+    id: over.id ?? Math.floor(Math.random() * 1e9),
+    date: over.date ?? "2026-06-02",
+    pair: over.pair ?? "ES",
+    session: "", bias: "", strategy: "", setup: "",
+    entryPrice: "", slPrice: "", tpPrice: "", rr: "",
+    outcome: over.outcome ?? "Win",
+    pnl: over.pnl ?? "0",
+    pnlDollar: over.pnlDollar ?? "0",
+    notes: "", emotions: over.emotions ?? "",
+    screenshot: "",
+    comments: [], reactions: {},
+    entryTime: over.entryTime,
+    exitTime: over.exitTime,
+  };
+}
+
+const NOW = Date.parse("2026-06-02T20:00:00Z");
+const TODAY = "2026-06-02";
+
+describe("consec_losses signal", () => {
+  it("does not fire with 1 loss", () => {
+    const trades = [mkTrade({ date: TODAY, outcome: "Loss", entryTime: "2026-06-02T19:55:00Z" })];
+    const state = evaluateTilt(trades, EMPTY_PROFILE, NOW);
+    expect(state.signals.find(s => s.id === "consec_losses")).toBeUndefined();
+  });
+
+  it("fires when last 2 trades are losses", () => {
+    const trades = [
+      mkTrade({ date: TODAY, outcome: "Loss", entryTime: "2026-06-02T19:30:00Z" }),
+      mkTrade({ date: TODAY, outcome: "Loss", entryTime: "2026-06-02T19:55:00Z" }),
+    ];
+    const state = evaluateTilt(trades, EMPTY_PROFILE, NOW);
+    const sig = state.signals.find(s => s.id === "consec_losses");
+    expect(sig).toBeDefined();
+    expect(sig?.label).toBe("2 consecutive losses");
+    expect(sig?.critical).toBe(false);
+  });
+
+  it("does not count yesterday's losses", () => {
+    const trades = [
+      mkTrade({ date: "2026-06-01", outcome: "Loss", entryTime: "2026-06-01T19:30:00Z" }),
+      mkTrade({ date: "2026-06-01", outcome: "Loss", entryTime: "2026-06-01T19:55:00Z" }),
+    ];
+    const state = evaluateTilt(trades, EMPTY_PROFILE, NOW);
+    expect(state.signals.find(s => s.id === "consec_losses")).toBeUndefined();
+  });
+
+  it("resets after a Win", () => {
+    const trades = [
+      mkTrade({ date: TODAY, outcome: "Loss", entryTime: "2026-06-02T19:00:00Z" }),
+      mkTrade({ date: TODAY, outcome: "Loss", entryTime: "2026-06-02T19:30:00Z" }),
+      mkTrade({ date: TODAY, outcome: "Win",  entryTime: "2026-06-02T19:45:00Z" }),
+    ];
+    const state = evaluateTilt(trades, EMPTY_PROFILE, NOW);
+    expect(state.signals.find(s => s.id === "consec_losses")).toBeUndefined();
+  });
+});
