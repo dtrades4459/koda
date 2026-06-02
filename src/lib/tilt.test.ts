@@ -112,3 +112,25 @@ describe("daily_loss signals", () => {
     expect(state.signals.find(s => s.id?.startsWith("daily_loss"))).toBeUndefined();
   });
 });
+
+describe("trade_cap_at signal", () => {
+  it("does not fire when maxTradesPerDay is unset", () => {
+    const trades = Array.from({ length: 10 }, (_, i) =>
+      mkTrade({ date: TODAY, outcome: "Win", entryTime: `2026-06-02T${10 + i}:00:00Z` }),
+    );
+    const state = evaluateTilt(trades, EMPTY_PROFILE, NOW);
+    expect(state.signals.find(s => s.id === "trade_cap_at")).toBeUndefined();
+  });
+
+  it("fires (critical) when today's trade count equals cap", () => {
+    const trades = [
+      mkTrade({ date: TODAY, outcome: "Win", entryTime: "2026-06-02T10:00:00Z" }),
+      mkTrade({ date: TODAY, outcome: "Win", entryTime: "2026-06-02T11:00:00Z" }),
+      mkTrade({ date: TODAY, outcome: "Win", entryTime: "2026-06-02T12:00:00Z" }),
+    ];
+    const state = evaluateTilt(trades, { ...EMPTY_PROFILE, maxTradesPerDay: "3" }, NOW);
+    const sig = state.signals.find(s => s.id === "trade_cap_at");
+    expect(sig).toBeDefined();
+    expect(sig?.critical).toBe(true);
+  });
+});

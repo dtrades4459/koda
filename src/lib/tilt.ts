@@ -88,5 +88,15 @@ export function evaluateTilt(
     }
   }
 
+  // ── trade_cap_at ─────────────────────────────────────────────────────────
+  const maxTrades = parseFloat(_profile.maxTradesPerDay ?? "");
+  if (isFinite(maxTrades) && maxTrades > 0 && todays.length >= maxTrades) {
+    signals.push({
+      id: "trade_cap_at",
+      label: "Daily trade cap reached",
+      critical: true,
+    });
+  }
+
   return { active: false, critical: false, signals, evaluatedAt: now };
 }
