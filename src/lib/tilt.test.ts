@@ -134,3 +134,43 @@ describe("trade_cap_at signal", () => {
     expect(sig?.critical).toBe(true);
   });
 });
+
+describe("revenge_window signal", () => {
+  it("does not fire when last trade was a Win", () => {
+    const trades = [mkTrade({
+      date: TODAY, outcome: "Win",
+      entryTime: "2026-06-02T19:50:00Z", exitTime: "2026-06-02T19:55:00Z",
+    })];
+    const state = evaluateTilt(trades, EMPTY_PROFILE, NOW);
+    expect(state.signals.find(s => s.id === "revenge_window")).toBeUndefined();
+  });
+
+  it("fires when last trade was a Loss closed within 10 minutes", () => {
+    const trades = [mkTrade({
+      date: TODAY, outcome: "Loss",
+      entryTime: "2026-06-02T19:50:00Z", exitTime: "2026-06-02T19:55:00Z",
+    })];
+    const state = evaluateTilt(trades, EMPTY_PROFILE, NOW);
+    const sig = state.signals.find(s => s.id === "revenge_window");
+    expect(sig).toBeDefined();
+    expect(sig?.label).toBe("Within 10 min of a loss");
+  });
+
+  it("does not fire 15 minutes after the loss", () => {
+    const trades = [mkTrade({
+      date: TODAY, outcome: "Loss",
+      entryTime: "2026-06-02T19:30:00Z", exitTime: "2026-06-02T19:45:00Z",
+    })];
+    const state = evaluateTilt(trades, EMPTY_PROFILE, NOW);
+    expect(state.signals.find(s => s.id === "revenge_window")).toBeUndefined();
+  });
+
+  it("falls back to entryTime when exitTime is missing", () => {
+    const trades = [mkTrade({
+      date: TODAY, outcome: "Loss",
+      entryTime: "2026-06-02T19:55:00Z",
+    })];
+    const state = evaluateTilt(trades, EMPTY_PROFILE, NOW);
+    expect(state.signals.find(s => s.id === "revenge_window")).toBeDefined();
+  });
+});

@@ -98,5 +98,18 @@ export function evaluateTilt(
     });
   }
 
+  // ── revenge_window ───────────────────────────────────────────────────────────
+  const last = todays[todays.length - 1];
+  if (last && last.outcome === "Loss") {
+    const lastTs = Date.parse(last.exitTime ?? last.entryTime ?? "");
+    if (isFinite(lastTs) && now - lastTs <= 10 * 60 * 1000) {
+      signals.push({
+        id: "revenge_window",
+        label: "Within 10 min of a loss",
+        critical: false,
+      });
+    }
+  }
+
   return { active: false, critical: false, signals, evaluatedAt: now };
 }
