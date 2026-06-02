@@ -36,3 +36,4 @@ src/TRADR.tsx.tmp
 
 .vercel
 .env*
+.gstack/
