@@ -1713,7 +1713,6 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
               {/* FEED */}
               {homeSection === "feed" && (
                 <div>
-                  <HomeNewsWidget C={C} onOpenNews={() => primaryNav("news")} />
                   {announcement && announcement.id !== announcementDismissedId && (
                     <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", background: `color-mix(in oklch, ${C.accent ?? "#60a5fa"} 8%, ${C.panel})`, border: `1px solid color-mix(in oklch, ${C.accent ?? "#60a5fa"} 25%, transparent)`, borderRadius: "12px", padding: "14px 16px", marginBottom: "16px" }}>
                       <div style={{ flex: 1 }}>
@@ -1726,6 +1725,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                       }} style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontSize: "18px", padding: "0 0 0 4px", lineHeight: 1, flexShrink: 0 }}>×</button>
                     </div>
                   )}
+                  <HomeNewsWidget C={C} onOpenNews={() => primaryNav("news")} />
                   {streakBanner && (
                     <div style={{ display: "flex", alignItems: "center", gap: "12px", background: C.panel, border: `1px solid ${C.green}44`, borderLeft: `3px solid ${C.green}`, borderRadius: "12px", padding: "12px 14px", marginBottom: "20px" }}>
                       <span style={{ fontSize: "20px" }}>🔥</span>
