@@ -26,22 +26,31 @@
   <p class="sub">Everything you need to know about Kōda.</p>
 
   <div class="q">What is Kōda?</div>
-  <div class="a">Kōda is an AI-powered trading journal for serious traders. It tracks your P&amp;L, win rate, R-multiples, and discipline so you can find your edge — not just your entries.</div>
+  <div class="a">Kōda is the trading journal that intercepts you before a bad trade — not after. Tap Log Trade after consecutive losses, near your daily limit, or with a tilt-emotion tag on your last entry, and the form doesn't open. A sheet does. <a href="/in-session-intervention.html">Read how in-session intervention works.</a></div>
+
+  <div class="q">How does the in-session intervention know I'm tilting?</div>
+  <div class="a">Five signals drawn from your own logged activity: consecutive losses today, percent of your daily loss limit hit, daily trade cap reached, tapping Log within 10 minutes of a Loss, and tilt-emotion tags on your last trade (FOMO, revenge, chased, moved-SL, overtrading). Any one critical signal or any two non-critical signals fires the intervention. No model. No broker API. No guess.</div>
+
+  <div class="q">Can I turn the intervention off or adjust the cooldown?</div>
+  <div class="a">Yes. Settings → Discipline. The feature has a toggle, and the cooldown that fires when you tap Cancel is selectable: Off, 5, 15, or 30 minutes. Default is 15 minutes.</div>
 
   <div class="q">Is my trade data private?</div>
-  <div class="a">Yes. Your trade data is stored in your private Supabase database and is never shared or sold. Row-level security ensures only you can read your trades.</div>
+  <div class="a">Yes. Your trades, intervention events, and all journal data are stored in your private Supabase row-level-security partition. Only you can read your own data. No public profiles by default.</div>
 
   <div class="q">What's the difference between Free and Pro?</div>
-  <div class="a">Free gives you unlimited manual trade logging, basic stats, and one circle. Pro adds auto-import via Tradovate, unlimited circles, the prop firm tracker, Kōda AI insights, and priority support.</div>
+  <div class="a">Free gives you unlimited manual trade logging, basic stats, and CSV import. Pro adds the in-session intervention, Trading Circles, advanced analytics (heatmaps, MAE/MFE, drawdown curves), prop firm mode, Discipline Score, and weekly digest emails.</div>
 
   <div class="q">How do I import trades from my broker?</div>
-  <div class="a">Go to Home → Sync. You can connect Tradovate for live auto-import, or upload a CSV export from any platform — Kōda auto-detects the format.</div>
+  <div class="a">Go to Home → Sync. CSV import works for seven major brokers: Tradovate, Rithmic, TradingView, MT4, MT5, NinjaTrader 8, TopstepX, and FTMO. Live auto-sync via Tradovate API is in beta.</div>
 
   <div class="q">Does Kōda support futures?</div>
-  <div class="a">Yes. The Lot Size Calculator includes full specs for ES, NQ, MES, MNQ, CL, GC, and more. The journal tracks R-multiples and P&amp;L for both futures and forex.</div>
+  <div class="a">Yes — futures-first. The Lot Size Calculator includes full specs for ES, NQ, MES, MNQ, CL, GC and 11 other contracts. The journal tracks R-multiples and dollar P&amp;L. Prop firm eval mode is purpose-built for Apex, TopStep, and FTMO traders.</div>
 
-  <div class="q">How do Circles work?</div>
-  <div class="a">Circles are private groups where traders share journals, run challenges, and compare stats. You can join by code or discover public circles. Free users get one circle; Pro unlocks unlimited.</div>
+  <div class="q">How do Trading Circles work?</div>
+  <div class="a">Circles are private groups where traders share journals, run weekly challenges, and compete on leaderboards. You can join by code, share a link, or create your own. Real-time chat, push notifications, and accountability built in.</div>
+
+  <div class="q">Is Kōda a mobile app?</div>
+  <div class="a">Kōda is a Progressive Web App (PWA) — installable on iOS and Android from your browser, works offline, no app-store middleman. Add to Home Screen on iOS or Install from Chrome menu on Android.</div>
 
   <div class="q">Can I cancel my Pro subscription?</div>
   <div class="a">Yes, any time from Settings → Billing. Your Pro access continues until the end of the billing period.</div>
