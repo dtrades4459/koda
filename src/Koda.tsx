@@ -1144,6 +1144,19 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     if (file.size > 5 * 1024 * 1024) { showToast("Avatar too large — max 5MB"); return; }
     if (!file.type.startsWith("image/")) { showToast("File must be an image"); return; }
     showToast("Uploading avatar…");
+
+    // Persist through to the saved profile so the header avatar updates
+    // immediately and survives a refresh. Without this the upload only
+    // wrote to profileDraft and the user had to tap Save to lock it in,
+    // which wasn't obvious from the photo card UX.
+    const persistAvatar = async (avatarValue: string) => {
+      setProfileDraft((d) => ({ ...d, avatar: avatarValue }));
+      // Base the saved profile on the in-progress draft so any other fields
+      // the user was editing aren't clobbered by an avatar change.
+      const base = editingProfile ? profileDraft : profile;
+      await saveProfile({ ...base, avatar: avatarValue });
+    };
+
     try {
       const compressed = await compressImage(file, 300);
       const res = await fetch(compressed);
@@ -1153,13 +1166,13 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
       const { error } = await supabase.storage.from("trade-screenshots").upload(path, blob, { contentType: "image/jpeg", upsert: true });
       if (error) throw error;
       const { data: urlData } = supabase.storage.from("trade-screenshots").getPublicUrl(path);
-      setProfileDraft((d) => ({ ...d, avatar: urlData.publicUrl }));
+      await persistAvatar(urlData.publicUrl);
       showToast("Avatar updated");
     } catch (err) {
       log.error("avatar.upload", err);
       // Fall back to base64 so the user still sees their new avatar
       const compressed = await compressImage(file, 300);
-      setProfileDraft((d) => ({ ...d, avatar: compressed }));
+      await persistAvatar(compressed);
       showToast("Saved locally (Storage unavailable)");
     }
   }
