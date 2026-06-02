@@ -11,10 +11,11 @@ const ACCENT = "#89CFF0";
 const VALID_PROMO_CODES = new Set(["K0DA", "FOUNDERS", "BETA_26"]);
 
 const FEATURES = [
+  { label: "In-Session Intervention", detail: "stops you mid-tilt before a bad trade" },
+  { label: "Trading Circles", detail: "leaderboards, challenges & accountability" },
+  { label: "Advanced Analytics", detail: "heatmaps, MAE/MFE, drawdown curves" },
   { label: "Prop Firm Mode", detail: "eval dashboard & risk tracker" },
-  { label: "Live Trade Cards", detail: "stream your journal to circles in real time" },
-  { label: "Trading Circles", detail: "community, leaderboards & accountability" },
-  { label: "Discipline Score", detail: "weekly pattern detection & self-assessment" },
+  { label: "Discipline Score", detail: "weekly pattern detection & rule adherence" },
   { label: "Weekly Email Digest", detail: "your edge, summarised" },
 ];
 

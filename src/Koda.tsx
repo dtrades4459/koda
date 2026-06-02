@@ -175,6 +175,10 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
   }
   function attemptLog(): void {
+    // Free users skip the gate entirely — in-session is a Pro feature.
+    // During beta `isPro` is true for everyone (paywall flag is off), so
+    // beta users still get the intervention.
+    if (!isPro) { navigateTo("log"); return; }
     if (tilt.lockedUntil !== null && tilt.lockedUntil > Date.now()) {
       showToast(`Cooling off — ${formatLockCountdown(tilt.lockedUntil - Date.now())} remaining`);
       return;
