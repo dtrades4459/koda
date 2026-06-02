@@ -530,9 +530,12 @@ export function SettingsScreen({
       <div style={{ textAlign: "center", padding: "24px 16px 0", fontFamily: MONO, fontSize: 10, color: C.dim, letterSpacing: "0.12em" }}>
         KŌDA v1.0 · BUILD {new Date().getFullYear()}.05
       </div>
-      <div style={{ display: "flex", gap: 16, justifyContent: "center", padding: "8px 0" }}>
-        <a href="/privacy.html" target="_blank" rel="noopener" style={{ fontFamily: MONO, fontSize: 10, color: C.muted, letterSpacing: "0.08em", textDecoration: "none" }}>Privacy</a>
-        <a href="/terms.html" target="_blank" rel="noopener" style={{ fontFamily: MONO, fontSize: 10, color: C.muted, letterSpacing: "0.08em", textDecoration: "none" }}>Terms</a>
+      <div style={{ display: "flex", gap: 20, justifyContent: "center", padding: "8px 0 32px" }}>
+        <a href="/privacy.html" target="_blank" rel="noopener" style={{ fontFamily: MONO, fontSize: 11, color: C.text2, letterSpacing: "0.08em", textDecoration: "none" }}>Privacy</a>
+        <span style={{ color: C.border2 }}>·</span>
+        <a href="/terms.html" target="_blank" rel="noopener" style={{ fontFamily: MONO, fontSize: 11, color: C.text2, letterSpacing: "0.08em", textDecoration: "none" }}>Terms</a>
+        <span style={{ color: C.border2 }}>·</span>
+        <a href="/cookies.html" target="_blank" rel="noopener" style={{ fontFamily: MONO, fontSize: 11, color: C.text2, letterSpacing: "0.08em", textDecoration: "none" }}>Cookies</a>
       </div>
     </div>
   );
