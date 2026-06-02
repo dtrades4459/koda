@@ -149,6 +149,7 @@ export function TradingCircles({
   const [composeSending, setComposeSending] = useState(false);
 
   const CIRCLE_EMOJIS = ["◆","▲","●","■","⬡","◈","△","○","□","✦"];
+  const MEDALS = ["🥇","🥈","🥉"];
 
   // Returns the primary metric label + formatted value for a leaderboard entry
   function metricDisplay(entry: any, circle: any): { val: string; raw: number; label: string } {
@@ -797,7 +798,7 @@ export function TradingCircles({
                 return (
                   <div key={e.memberCode} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 16px", borderTop: i === 0 ? `1px solid ${C.green}22` : `1px solid ${C.border}`, background: i === 0 ? `${C.green}08` : "transparent" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                      <span style={{ fontFamily: MONO, fontSize: "13px", color: i === 0 ? C.green : C.muted, letterSpacing: "0.06em", minWidth: "24px" }}>{String(i + 1).padStart(2, "0")}</span>
+                      <span style={{ fontFamily: MONO, fontSize: "13px" }}>{MEDALS[i]}</span>
                       <span style={{ fontFamily: DISPLAY, fontSize: "15px", fontWeight: 500, color: C.text, letterSpacing: "-0.01em" }}>{e.name}</span>
                       {isMe && <span style={{ fontFamily: MONO, fontSize: "9px", color: C.green, letterSpacing: "0.12em" }}>YOU</span>}
                     </div>
@@ -1038,13 +1039,14 @@ export function TradingCircles({
                         const pnlCol = isFirst && pPos ? C.green : pPos ? C.text : C.red;
                         const isExpanded = expandedMember === entry.memberCode;
                         const isFollowing = (following || []).includes(entry.memberCode);
+                        const medal = MEDALS[i] || null;
                         return (
                           <div key={entry.memberCode} style={{ borderBottom: `1px solid ${C.border}`, background: isFirst ? `${C.green}08` : "transparent" }}>
                             <div
                               onClick={() => setExpandedMember(isExpanded ? null : entry.memberCode)}
                               style={{ padding: "16px 0", display: "grid", gridTemplateColumns: "auto 1fr auto", alignItems: "center", gap: "14px", cursor: "pointer", paddingLeft: isExpanded ? "10px" : 0, paddingRight: isExpanded ? "10px" : 0 }}>
                               <span style={{ fontFamily: MONO, fontSize: "13px", color: isFirst ? C.green : C.muted, letterSpacing: "0.06em", minWidth: "28px" }}>
-                                {String(i + 1).padStart(2, "0")}
+                                {medal || String(i + 1).padStart(2, "0")}
                               </span>
                               <div style={{ minWidth: 0 }}>
                                 <div style={{ display: "flex", alignItems: "baseline", gap: "8px", flexWrap: "wrap" }}>
