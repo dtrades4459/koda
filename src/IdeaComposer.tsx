@@ -57,11 +57,19 @@ export function IdeaComposer({
     try {
       let chartUrl: string | null = null;
       if (chartFile) {
-        const dataUri = await compressImage(chartFile, 1600);
-        const res = await fetch(dataUri);
-        const blob = await res.blob();
-        const filename = `idea-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
-        chartUrl = await supabaseUploadChart(blob, filename);
+        try {
+          const dataUri = await compressImage(chartFile, 1600);
+          const res = await fetch(dataUri);
+          const blob = await res.blob();
+          const filename = `idea-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
+          chartUrl = await supabaseUploadChart(blob, filename);
+        } catch (uploadErr) {
+          // Mid-deploy SW activation + Safari surface this as the cryptic
+          // "Load failed". Name the step so we know whether the chart upload
+          // or the API POST is the culprit.
+          const msg = uploadErr instanceof Error ? uploadErr.message : String(uploadErr);
+          throw new Error(`Chart upload failed (${msg}). Remove the chart and try again, or wait 30s and retry.`);
+        }
       }
 
       const payload: IdeaCreateInput = {
