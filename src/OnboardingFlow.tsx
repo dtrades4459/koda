@@ -440,9 +440,22 @@ export function OnboardingFlow({ C, onComplete }: {
               You're in,<br />
               <span style={{ fontStyle: "italic", fontWeight: 500, color: C.text2 }}>{name || "trader"}.</span>
             </h1>
-            <p style={{ fontSize: "14px", color: C.muted, lineHeight: 1.7, marginBottom: "32px" }}>
-              You've been added to the Kōda circle. Log your first trade — the stats follow automatically.
+            <p style={{ fontSize: "15px", color: C.text2, lineHeight: 1.65, marginBottom: "20px" }}>
+              You've been added to the Kōda Global circle. Log your first trade — the stats follow automatically.
             </p>
+
+            <div style={{
+              padding: "14px 16px", marginBottom: "28px",
+              background: C.panel, borderRadius: 12,
+              borderLeft: `3px solid ${C.live}`,
+            }}>
+              <p style={{ fontSize: "13px", color: C.text2, lineHeight: 1.6, margin: 0 }}>
+                Hi, I'm Dylon. I built Kōda because I needed it — same journals you've tried, same Sunday reviews, same Monday mistakes. The thing that actually moved the needle for me was being interrupted mid-decision. That's the wedge here.
+              </p>
+              <p style={{ fontSize: "12px", color: C.muted, marginTop: 10, marginBottom: 0, fontFamily: BODY }}>
+                — Dylon · @dylontrades
+              </p>
+            </div>
 
             <div style={{
               borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}`,

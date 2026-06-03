@@ -156,8 +156,8 @@ export function IdeasScreen({ myUid, recentTrades, C, inp, pillPrimary, isDeskto
       ) : ideas.length === 0 ? (
         <div style={{ padding: "48px 20px", textAlign: "center" }}>
           <div style={{ fontSize: "32px", marginBottom: "14px" }}>💡</div>
-          <div style={{ fontFamily: DISPLAY, fontSize: "16px", fontWeight: 500, color: C.text, marginBottom: "8px" }}>No ideas yet</div>
-          <div style={{ fontFamily: BODY, fontSize: "13px", color: C.muted }}>Be the first to post.</div>
+          <div style={{ fontFamily: DISPLAY, fontSize: "18px", fontWeight: 500, color: C.text, marginBottom: "8px" }}>Nothing posted yet today.</div>
+          <div style={{ fontFamily: BODY, fontSize: "14px", color: C.text2, maxWidth: 280, margin: "0 auto", lineHeight: 1.55 }}>Drop a setup before the open or a breakdown after the close. Either earns the spot.</div>
         </div>
       ) : (
         <>

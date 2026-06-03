@@ -492,15 +492,15 @@ export function FriendsFeed({
             {followingCount === 0 && followerCount === 0 ? (
               <div style={{ padding: "48px 20px", textAlign: "center" }}>
                 <div style={{ fontSize: "28px", marginBottom: "12px" }}>&#128269;</div>
-                <div style={{ fontFamily: DISPLAY, fontSize: "17px", fontWeight: 500, color: C.muted, marginBottom: "6px" }}>
-                  Nobody yet
+                <div style={{ fontFamily: DISPLAY, fontSize: "20px", fontWeight: 500, color: C.text, marginBottom: "8px" }}>
+                  No one in your corner yet.
                 </div>
-                <div style={{ fontFamily: BODY, fontSize: "13px", color: C.muted, lineHeight: 1.6, marginBottom: "18px" }}>
-                  Share your handle with other traders to build your network.
+                <div style={{ fontFamily: BODY, fontSize: "14px", color: C.text2, lineHeight: 1.55, marginBottom: "20px", maxWidth: 300, margin: "0 auto 20px" }}>
+                  Trading goes better when someone else can see your numbers. Follow a handle, share yours, build the room.
                 </div>
                 <button onClick={() => setShowAddFriend(true)}
-                  style={{ background: C.text, color: C.bg, border: "none", borderRadius: "999px", padding: "10px 22px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase" as const }}>
-                  + Follow someone
+                  style={{ background: C.text, color: C.bg, border: "none", borderRadius: "999px", padding: "11px 22px", cursor: "pointer", fontFamily: BODY, fontSize: "13px", fontWeight: 600 }}>
+                  Follow someone
                 </button>
               </div>
             ) : (

@@ -2236,17 +2236,17 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "16px", padding: "40px 24px", background: C.panel, border: `1px solid ${C.border}`, borderRadius: "16px" }}>
                         <KodaMarkFilled size={52} bg={C.bg} />
                         <div>
-                          <p style={{ fontFamily: DISPLAY, fontSize: "20px", fontWeight: 700, color: C.text, letterSpacing: "-0.02em", marginBottom: "8px" }}>Your edge starts here</p>
-                          <p style={{ fontFamily: BODY, fontSize: "13px", color: C.muted, lineHeight: 1.6, maxWidth: "260px", margin: "0 auto" }}>
-                            Log your first trade and Kōda will start tracking your P&amp;L, win rate, and patterns.
+                          <p style={{ fontFamily: DISPLAY, fontSize: "22px", fontWeight: 700, color: C.text, letterSpacing: "-0.02em", marginBottom: "10px" }}>One trade. That's all it takes.</p>
+                          <p style={{ fontFamily: BODY, fontSize: "14px", color: C.text2, lineHeight: 1.6, maxWidth: "280px", margin: "0 auto" }}>
+                            Win, loss, scratch — it doesn't matter. Log it and your stats start growing legs.
                           </p>
                         </div>
                         <div style={{ display: "flex", flexDirection: "column", gap: "10px", width: "100%", maxWidth: "240px" }}>
-                          <button onClick={() => attemptLog()} style={{ background: C.text, color: C.bg, border: "none", borderRadius: "999px", padding: "13px 24px", fontFamily: MONO, fontSize: "11px", letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: 700, cursor: "pointer" }}>
+                          <button onClick={() => attemptLog()} style={{ background: C.text, color: C.bg, border: "none", borderRadius: "999px", padding: "13px 24px", fontFamily: BODY, fontSize: "14px", fontWeight: 600, cursor: "pointer" }}>
                             Log your first trade →
                           </button>
-                          <button onClick={() => { setAutoOpenCsv(true); navigateTo("sync"); }} style={{ background: "transparent", color: C.muted, border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "11px 24px", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer" }}>
-                            Or sync trades
+                          <button onClick={() => { setAutoOpenCsv(true); navigateTo("sync"); }} style={{ background: "transparent", color: C.text2, border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "11px 24px", fontFamily: BODY, fontSize: "12px", cursor: "pointer" }}>
+                            or sync trades from your broker
                           </button>
                         </div>
                       </div>
@@ -3398,7 +3398,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                   <GearButton onClick={() => { setView("home"); setHomeSection("settings"); }} active={false} C={C} />
               </>)}
 
-              {statsTab === "performance" && total === 0 && <EmptyState C={C} icon="&#128202;" headline="Your stats live here." body="Log your first trade and watch your edge emerge — win rate, R-multiples, streaks, and more." cta="Log a trade →" onCta={() => attemptLog()} />}
+              {statsTab === "performance" && total === 0 && <EmptyState C={C} icon="&#128202;" headline="Stats need trades to live in." body="Log a trade. Then another. Win rate, R-multiples, streaks — they show up when you do." cta="Log a trade →" onCta={() => attemptLog()} />}
 
               {statsTab === "performance" && total > 0 && (
                 <>
@@ -3741,7 +3741,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
               {statsTab === "strategies" && (
                 <>
                   {Object.keys(stratStats).length === 0 ? (
-                    <EmptyState C={C} icon="◆" headline="No strategy data yet." body="Assign a strategy when logging trades to see your edge breakdown here." cta="Log a trade →" onCta={() => attemptLog()} />
+                    <EmptyState C={C} icon="◆" headline="Tag your setups." body="Assign a strategy when you log a trade. After a few entries this breakdown tells you which setup actually pays you." cta="Log a trade →" onCta={() => attemptLog()} />
                   ) : (
                   <>
                   <section>

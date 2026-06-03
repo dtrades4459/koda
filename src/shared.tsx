@@ -729,18 +729,18 @@ export function EmptyTradesState({ C, onLog, onSync }: { C: Theme; onLog: () => 
         <path d="M58 20l3 3 5-6" stroke={C.live} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
       </svg>
       <div>
-        <div style={{ fontFamily: DISPLAY, fontSize: 22, fontWeight: 600, color: C.text, letterSpacing: "-0.01em" }}>Your journal awaits.</div>
-        <div style={{ fontSize: 13, color: C.text2, marginTop: 8, maxWidth: 260, lineHeight: 1.6 }}>
-          Log a trade to start seeing your win rate, average R, and edge patterns.
+        <div style={{ fontFamily: DISPLAY, fontSize: 22, fontWeight: 600, color: C.text, letterSpacing: "-0.01em" }}>Day one.</div>
+        <div style={{ fontSize: 14, color: C.text2, marginTop: 8, maxWidth: 280, lineHeight: 1.6 }}>
+          First trade goes here. Win or loss — the number doesn't matter, just start.
         </div>
       </div>
       <button onClick={onLog} style={{
         marginTop: 4, padding: "13px 28px", borderRadius: 999,
         background: C.text, color: C.bg, border: "none",
-        fontFamily: MONO, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase" as const, fontWeight: 600, cursor: "pointer",
+        fontFamily: BODY, fontSize: 13, letterSpacing: "0.01em", fontWeight: 600, cursor: "pointer",
       }}>Log first trade</button>
-      <div style={{ fontFamily: MONO, fontSize: 10, color: C.muted, letterSpacing: "0.12em", marginTop: 4 }}>
-        OR <span onClick={onSync} style={{ color: C.live, cursor: "pointer" }}>connect Tradovate</span> · <span onClick={onSync} style={{ color: C.accent, cursor: "pointer" }}>import CSV</span>
+      <div style={{ fontFamily: BODY, fontSize: 12, color: C.muted, marginTop: 4 }}>
+        or <span onClick={onSync} style={{ color: C.live, cursor: "pointer" }}>connect Tradovate</span> · <span onClick={onSync} style={{ color: C.accent, cursor: "pointer" }}>import CSV</span>
       </div>
     </div>
   );
@@ -762,14 +762,14 @@ export function EmptyCirclesState({ C, onDiscover, onJoin }: { C: Theme; onDisco
         ))}
       </div>
       <div>
-        <div style={{ fontFamily: DISPLAY, fontSize: 22, fontWeight: 600, color: C.text }}>Don't trade alone.</div>
-        <div style={{ fontSize: 13, color: C.text2, marginTop: 8, maxWidth: 270, lineHeight: 1.6 }}>
-          Join the Kōda Global circle, find a niche group, or create your own with friends.
+        <div style={{ fontFamily: DISPLAY, fontSize: 22, fontWeight: 600, color: C.text }}>Trading alone is the fast way to repeat bad habits.</div>
+        <div style={{ fontSize: 14, color: C.text2, marginTop: 10, maxWidth: 290, lineHeight: 1.6 }}>
+          Join the Kōda Global circle, find a group running your prop firm, or create your own with a code.
         </div>
       </div>
       <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
-        <button onClick={onDiscover} style={{ padding: "11px 18px", borderRadius: 999, background: C.live, color: C.bg, border: "none", fontFamily: MONO, fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase" as const, cursor: "pointer" }}>Discover</button>
-        <button onClick={onJoin} style={{ padding: "11px 18px", borderRadius: 999, background: "transparent", color: C.text, border: `1px solid ${C.border2}`, fontFamily: MONO, fontSize: 11, fontWeight: 500, letterSpacing: "0.08em", textTransform: "uppercase" as const, cursor: "pointer" }}>Join by code</button>
+        <button onClick={onDiscover} style={{ padding: "11px 18px", borderRadius: 999, background: C.live, color: C.bg, border: "none", fontFamily: BODY, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Discover</button>
+        <button onClick={onJoin} style={{ padding: "11px 18px", borderRadius: 999, background: "transparent", color: C.text, border: `1px solid ${C.border2}`, fontFamily: BODY, fontSize: 13, fontWeight: 500, cursor: "pointer" }}>Join by code</button>
       </div>
     </div>
   );
@@ -785,9 +785,9 @@ export function EmptyInboxState({ C }: { C: Theme }) {
         </svg>
       </div>
       <div>
-        <div style={{ fontFamily: DISPLAY, fontSize: 22, fontWeight: 600, color: C.text }}>All clear.</div>
-        <div style={{ fontSize: 13, color: C.text2, marginTop: 8, maxWidth: 260, lineHeight: 1.6 }}>
-          New circle activity, follower pings, and Kōda AI insights will land here.
+        <div style={{ fontFamily: DISPLAY, fontSize: 22, fontWeight: 600, color: C.text }}>Quiet in here.</div>
+        <div style={{ fontSize: 14, color: C.text2, marginTop: 8, maxWidth: 280, lineHeight: 1.6 }}>
+          Circle activity, follow pings, and discipline nudges will land in this lane.
         </div>
       </div>
     </div>

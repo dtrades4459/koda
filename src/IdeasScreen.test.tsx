@@ -74,7 +74,7 @@ describe("IdeasScreen", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(/No ideas yet/i)).toBeInTheDocument();
+      expect(screen.getByText(/Nothing posted yet today/i)).toBeInTheDocument();
     });
   });
 
