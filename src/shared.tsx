@@ -527,9 +527,10 @@ export function TealArrowBtn({ C, size = 36, onClick }: {
 
 // ─── FLOATING INPUT ─────────────────────────────────────────────────────────
 // Label-floats-up input with mono kicker label.
-export function FloatingInput({ C, label, value, placeholder, action, onChange, type }: {
+export function FloatingInput({ C, label, value, placeholder, action, onChange, type, inputRef }: {
   C: Theme; label: string; value?: string; placeholder?: string;
   action?: React.ReactNode; onChange?: (v: string) => void; type?: string;
+  inputRef?: React.Ref<HTMLInputElement>;
 }) {
   return (
     <div style={{
@@ -548,6 +549,7 @@ export function FloatingInput({ C, label, value, placeholder, action, onChange, 
         }}>{label}</div>
         {onChange ? (
           <input
+            ref={inputRef}
             type={type || "text"}
             value={value || ""}
             placeholder={placeholder}

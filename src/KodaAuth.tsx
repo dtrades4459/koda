@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import { supabase } from "./lib/supabase";
 import { installStorage, clearStorageCache } from "./lib/storage";
 import type { Session } from "@supabase/supabase-js";
@@ -44,9 +44,11 @@ const USERNAME_DOMAIN = "users.kodatrade.co.uk";
 const usernameToEmail = (u: string) => `${u.toLowerCase().trim()}@${USERNAME_DOMAIN}`;
 const USERNAME_RE = /^[a-z0-9_]{3,20}$/;
 
-function AuthForm({ onSuccess, initialError = "", onModeChange }: {
+function AuthForm({ onSuccess, initialError = "", onModeChange, modeRequest }: {
   onSuccess: () => void; initialError?: string;
   onModeChange?: (m: "signin" | "signup") => void;
+  /** Parent can request a mode switch + focus by bumping `nonce`. */
+  modeRequest?: { mode: "signin" | "signup"; nonce: number };
 }) {
   const [mode,          setMode]          = useState<AuthMode>("signin");
   const [username,      setUsername]      = useState("");
@@ -56,6 +58,7 @@ function AuthForm({ onSuccess, initialError = "", onModeChange }: {
   const [error,         setError]         = useState(initialError);
   const [msg,           setMsg]           = useState("");
   const [recoveryEmail, setRecoveryEmail] = useState("");
+  const usernameInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
@@ -63,6 +66,17 @@ function AuthForm({ onSuccess, initialError = "", onModeChange }: {
     });
     return () => subscription.unsubscribe();
   }, []);
+
+  // External mode-switch trigger from LandingPage CTA buttons. Nonce changes
+  // even when the same mode is re-requested so consecutive clicks still
+  // re-focus the input.
+  useEffect(() => {
+    if (!modeRequest) return;
+    setMode(modeRequest.mode);
+    setError(""); setMsg("");
+    onModeChange?.(modeRequest.mode);
+    requestAnimationFrame(() => usernameInputRef.current?.focus());
+  }, [modeRequest?.nonce]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleSubmit() {
     const u = username.toLowerCase().trim();
@@ -242,7 +256,7 @@ function AuthForm({ onSuccess, initialError = "", onModeChange }: {
       <form onSubmit={e => { e.preventDefault(); handleSubmit(); }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <FloatingInput C={C} label="Username" value={username} placeholder={mode === "signup" ? "pick a handle" : "yourname"}
-            onChange={v => setUsername(v.toLowerCase())} />
+            onChange={v => setUsername(v.toLowerCase())} inputRef={usernameInputRef} />
 
           <FloatingInput C={C} label="Password" value={password} placeholder={mode === "signup" ? "min. 6 characters" : "••••••••"}
             onChange={v => setPassword(v)} type="password" />
@@ -300,6 +314,22 @@ function parseOAuthError(): string {
 function LandingPage({ onSuccess }: { onSuccess: () => void }) {
   const [oauthError] = useState(() => parseOAuthError());
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
+  const [modeRequest, setModeRequest] = useState<{ mode: "signin" | "signup"; nonce: number } | undefined>();
+  const authRef     = useRef<HTMLElement>(null);
+  const featuresRef = useRef<HTMLElement>(null);
+
+  const handleStarted = () => {
+    setModeRequest({ mode: "signup", nonce: Date.now() });
+    authRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+  const handleSeeAction = () => {
+    featuresRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+  const handleSignIn = () => {
+    setModeRequest({ mode: "signin", nonce: Date.now() });
+    authRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
   return (
     <div className="koda-landing" style={{
       minHeight: "100dvh", background: C.bg, color: C.text, fontFamily: BODY,
@@ -307,17 +337,25 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
     }}>
       <style>{`
         *{box-sizing:border-box;margin:0;padding:0;}
-        html,body{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}
+        html,body{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;scroll-behavior:smooth;}
         @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-        @keyframes orbDrift{0%,100%{transform:scale(1) translate(0,0)}50%{transform:scale(1.06) translate(20px,-12px)}}
+        @keyframes orbDrift{0%,100%{transform:translateX(-50%) scale(1) translate(0,0)}50%{transform:translateX(-50%) scale(1.06) translate(20px,-12px)}}
+        @media (prefers-reduced-motion: reduce){
+          *{animation:none!important;transition:none!important;scroll-behavior:auto!important;}
+        }
 
         .koda-landing input::placeholder{color:${C.dim};font-weight:400;}
         .koda-landing input:focus{border-bottom-color:${C.text}!important;}
-        .koda-landing button:hover:not(:disabled){opacity:0.85;}
+        .koda-landing button:hover:not(:disabled),
+        .koda-landing a:hover{opacity:0.85;}
         .koda-landing button:active:not(:disabled){transform:scale(0.98);}
+        .koda-landing a{text-decoration:none;color:inherit;}
 
         .koda-shell{max-width:1440px;margin:0 auto;padding:24px 24px 80px;position:relative;z-index:1;}
         .koda-grid{display:grid;grid-template-columns:1fr;gap:56px;margin-top:56px;}
+
+        .koda-mast-nav{display:none;}
+        @media(min-width:720px){.koda-mast-nav{display:flex;gap:26px;}}
 
         @media(min-width:900px){
           .koda-shell{padding:36px 56px 96px;}
@@ -337,9 +375,40 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
           .koda-strat-item:nth-child(odd){border-right:1px solid ${C.border};}
           .koda-strat-item:nth-child(even){padding-left:40px;padding-right:0;}
         }
+
+        .koda-features{display:grid;grid-template-columns:1fr;gap:16px;}
+        @media(min-width:680px){.koda-features{grid-template-columns:1fr 1fr;}}
+        @media(min-width:1100px){.koda-features{grid-template-columns:1fr 1fr 1fr 1fr;}}
+        .koda-feat{padding:22px;border-radius:18px;background:${C.panel};border:1px solid ${C.border};display:flex;flex-direction:column;gap:10px;transition:border-color 0.18s, transform 0.18s;}
+        .koda-feat:hover{border-color:${C.border2};transform:translateY(-2px);}
+
+        .koda-pricing{display:grid;grid-template-columns:1fr;gap:20px;}
+        @media(min-width:780px){.koda-pricing{grid-template-columns:1fr 1fr;}}
+
+        .koda-anchor{scroll-margin-top:36px;}
+
+        .koda-section-label{
+          font-family:${MONO};font-size:11px;color:${C.muted};
+          letter-spacing:0.14em;text-transform:uppercase;
+          margin-bottom:18px;display:flex;align-items:center;gap:12px;
+        }
+        .koda-section-label::before{
+          content:"";flex:0 0 32px;height:1px;background:${C.border2};display:block;
+        }
+
+        .koda-section-h2{
+          font-family:${DISPLAY};font-size:clamp(28px,4vw,42px);
+          font-weight:600;letter-spacing:-0.02em;line-height:1.1;
+          color:${C.text};margin-bottom:14px;max-width:22ch;
+        }
+        .koda-section-sub{
+          font-size:clamp(15px,1.3vw,17px);color:${C.text2};
+          line-height:1.6;max-width:58ch;margin-bottom:36px;
+        }
       `}</style>
 
       {/* â”€â”€ Background orbs (multi-color ambient blooms) â”€â”€ */}
+      {/* Single signature ambient orb per DESIGN.md warmth-pass guidance. */}
       <div style={{
         position: "absolute", top: "-8%", left: "50%", transform: "translateX(-50%)",
         width: 900, height: 500, borderRadius: "50%",
@@ -347,23 +416,36 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
         filter: "blur(80px)", opacity: 0.45, pointerEvents: "none",
         animation: "orbDrift 10s ease-in-out infinite",
       }} />
-      <div style={{
-        position: "absolute", top: "40%", right: "8%",
-        width: 400, height: 400, borderRadius: "50%",
-        background: `radial-gradient(circle, ${C.orb3} 0%, transparent 65%)`,
-        filter: "blur(80px)", opacity: 0.4, pointerEvents: "none",
-        animation: "orbDrift 13s ease-in-out infinite reverse",
-      }} />
 
       <div className="koda-shell" style={{ animation: "rise 0.5s ease" }}>
 
         {/* â”€â”€ MASTHEAD â”€â”€ */}
-        <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16 }}>
+          <a href="/" style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <KodaMark size={26} color={C.text} />
             <span style={{ fontFamily: BODY, fontSize: 15, fontWeight: 600, letterSpacing: "0.20em", color: C.text, lineHeight: 1 }}>Kōda</span>
+          </a>
+          <nav className="koda-mast-nav" style={{ alignItems: "center" }}>
+            {[
+              ["Intervention", "/in-session-intervention.html"],
+              ["Circles", "/trading-circles.html"],
+              ["Compare", "/koda-vs-tradezella.html"],
+              ["FAQ", "/faq.html"],
+            ].map(([label, href]) => (
+              <a key={label} href={href} style={{
+                fontFamily: BODY, fontSize: 13, color: C.text2,
+                fontWeight: 500, letterSpacing: "0.01em",
+              }}>{label}</a>
+            ))}
+          </nav>
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <button onClick={handleSignIn} type="button" style={{
+              background: "none", border: "none", padding: 0,
+              fontFamily: BODY, fontSize: 13, color: C.text, fontWeight: 500,
+              letterSpacing: "0.01em", cursor: "pointer",
+            }}>Sign in</button>
+            <span style={{ fontFamily: MONO, fontSize: 10, color: C.muted, letterSpacing: "0.08em" }}>BETA / 2026</span>
           </div>
-          <div style={{ fontFamily: MONO, fontSize: 10, color: C.muted, letterSpacing: "0.08em" }}>BETA / 2026</div>
         </header>
 
         {/* â”€â”€ GRID â”€â”€ */}
@@ -403,17 +485,18 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
             </h1>
 
             <p style={{ fontSize: "clamp(15px, 1.4vw, 17px)", color: C.text2, lineHeight: 1.65, maxWidth: 580, fontWeight: 400, marginBottom: 36 }}>
-              Journal trades, audit your edge, and compete with your circle.
-              Auto-imports from your prop firm. AI insights from your last 1,000 fills.
+              A trading journal that intervenes when you tilt, scores your discipline,
+              and lets a small circle of traders keep you honest. Free forever to log trades.
             </p>
 
-            {/* CTA row */}
+            {/* CTA row — wired buttons */}
             <div style={{ display: "flex", gap: 10, marginBottom: 32, flexWrap: "wrap" }}>
-              <div style={{
+              <button type="button" onClick={handleStarted} style={{
                 display: "flex", alignItems: "center", gap: 10,
                 padding: "8px 8px 8px 22px", borderRadius: 999,
-                background: C.text, color: C.bg,
+                background: C.text, color: C.bg, border: "none",
                 fontFamily: BODY, fontSize: 14, fontWeight: 600, cursor: "pointer",
+                transition: "opacity 0.15s, transform 0.15s",
               }}>
                 Get started free
                 <span style={{
@@ -424,12 +507,13 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
                     <path d="M3 8h10M9 4l4 4-4 4" stroke="#0A0A0A" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 </span>
-              </div>
-              <div style={{
+              </button>
+              <button type="button" onClick={handleSeeAction} style={{
                 padding: "12px 22px", borderRadius: 999, background: "transparent",
                 color: C.text, border: `1px solid ${C.border2}`,
                 fontFamily: BODY, fontSize: 14, fontWeight: 500, cursor: "pointer",
-              }}>See it in action</div>
+                transition: "opacity 0.15s, transform 0.15s",
+              }}>See what&apos;s included</button>
             </div>
 
             {/* Feature chips */}
@@ -456,7 +540,7 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
           </div>
 
           {/* Auth column — glass card with corner glow */}
-          <aside className="koda-auth-card" style={{
+          <aside ref={authRef} id="auth" className="koda-auth-card koda-anchor" style={{
             position: "relative", padding: 32, borderRadius: 28,
             background: "rgba(18,18,22,0.7)",
             backdropFilter: "blur(28px) saturate(180%)",
@@ -466,12 +550,12 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
             overflow: "hidden",
             animation: "kRise 0.42s ease-out",
           }}>
-            {/* Iridescent corner glow */}
+            {/* Toned-down iridescent corner glow (warmth pass: reduce sparkle stack) */}
             <div style={{
               position: "absolute", top: -80, left: -80, width: 280, height: 280,
               borderRadius: "50%",
               background: `conic-gradient(from 200deg at 50% 50%, ${C.orb3}, ${C.accent}, ${C.orb2}, ${C.orb3})`,
-              filter: "blur(50px)", opacity: 0.55, pointerEvents: "none",
+              filter: "blur(50px)", opacity: 0.35, pointerEvents: "none",
             }} />
 
             {/* Logo */}
@@ -497,7 +581,7 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
             </div>
             <div style={{ position: "relative", zIndex: 1, textAlign: "center", marginBottom: 22 }}>
               <span style={{ fontFamily: BODY, fontSize: 13, color: C.text2 }}>
-                {authMode === "signin" ? "Sign in to your journal" : "Your trading edge, tracked."}
+                {authMode === "signin" ? "Sign in to your journal" : "Free forever. No card to start."}
               </span>
             </div>
 
@@ -510,7 +594,12 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
               }}>{oauthError}</div>
             )}
 
-            <AuthForm onSuccess={onSuccess} initialError="" onModeChange={setAuthMode} />
+            <AuthForm
+              onSuccess={onSuccess}
+              initialError=""
+              onModeChange={setAuthMode}
+              modeRequest={modeRequest}
+            />
           </aside>
         </div>
 
@@ -557,11 +646,54 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
         </section>
 
         {/* â”€â”€ BUILT-IN STRATEGIES â”€â”€ */}
-        <section style={{ marginTop: "clamp(80px, 10vw, 128px)" }}>
-          <div style={{ fontFamily: MONO, fontSize: 10, color: C.muted, letterSpacing: "0.14em", marginBottom: 32, display: "flex", alignItems: "center", gap: 12 }}>
-            <span style={{ flex: "0 0 32px", height: 1, background: C.border2 }} />
-            BUILT-IN STRATEGIES
+        {/* WHAT'S INCLUDED — eight-tile feature grid; featuresRef target for the See-it-in-action CTA. */}
+        <section ref={featuresRef} id="features" className="koda-anchor" style={{ marginTop: "clamp(80px, 10vw, 128px)" }}>
+          <div className="koda-section-label">WHAT&apos;S INCLUDED</div>
+          <h2 className="koda-section-h2">Everything a journal should do, plus the part most skip.</h2>
+          <p className="koda-section-sub">
+            Logging trades is table stakes. Kōda&apos;s wedge is what happens
+            between the trades &mdash; the moment you&apos;re about to take one you shouldn&apos;t.
+          </p>
+
+          <div className="koda-features">
+            {[
+              { tag: "WEDGE", accent: true,  title: "Tilt intervention",   body: "Tap Log Trade on a tilt signal and the form doesn't open. A sheet does, with the choice to acknowledge or lock out for 15 minutes.", href: "/in-session-intervention.html" },
+              { tag: "SCORE", accent: false, title: "Discipline score",    body: "A+ to F, rolling seven days. Built from rule adherence and mistake tagging, not from P&L." },
+              { tag: "SOCIAL", accent: true, title: "Trading Circles",     body: "Private groups of 3 to 20. Live leaderboards, group chat, weekly challenges. Accountability your friends can see.", href: "/trading-circles.html" },
+              { tag: "FEED",  accent: false, title: "Ideas feed",          body: "Pre-trade setups and post-trade breakdowns. Public if you want it, private by default." },
+              { tag: "SYNC",  accent: false, title: "Auto-import",         body: "Live Tradovate sync. CSV for Rithmic, TradingView, NinjaTrader, TopstepX, FTMO, MT4 and MT5." },
+              { tag: "STATS", accent: false, title: "Stats dashboard",     body: "Win rate, average R, streaks, MAE / MFE, time-of-day heatmaps. Numbers that actually move your edge." },
+              { tag: "PROP",  accent: false, title: "Prop firm tracker",   body: "Profit target, daily loss, max drawdown. Built for Topstep, FTMO, and the eval grind." },
+              { tag: "TAG",   accent: false, title: "Strategy tagging",    body: "ICT, Supply / Demand, Wyckoff, Opening Range built in. Add your own setups in two taps." },
+            ].map((f) => {
+              const inner = (
+                <>
+                  <div style={{
+                    display: "inline-flex", alignSelf: "flex-start",
+                    fontFamily: MONO, fontSize: 9, fontWeight: 600,
+                    letterSpacing: "0.16em", textTransform: "uppercase",
+                    color: f.accent ? C.live : C.muted,
+                    padding: "3px 8px", borderRadius: 999,
+                    background: f.accent ? `color-mix(in oklch, ${C.live} 12%, transparent)` : "transparent",
+                    border: f.accent ? `1px solid color-mix(in oklch, ${C.live} 28%, transparent)` : `1px solid ${C.border2}`,
+                  }}>{f.tag}</div>
+                  <div style={{ fontFamily: DISPLAY, fontSize: 18, fontWeight: 600, letterSpacing: "-0.01em", color: C.text }}>{f.title}</div>
+                  <div style={{ fontSize: 14, color: C.text2, lineHeight: 1.55 }}>{f.body}</div>
+                  {f.href && (
+                    <span style={{ fontFamily: BODY, fontSize: 12, color: C.live, marginTop: 4, display: "inline-flex", alignItems: "center", gap: 4 }}>Learn more →</span>
+                  )}
+                </>
+              );
+              return f.href
+                ? <a key={f.title} href={f.href} className="koda-feat">{inner}</a>
+                : <div key={f.title} className="koda-feat">{inner}</div>;
+            })}
           </div>
+        </section>
+
+        {/* BUILT-IN STRATEGIES */}
+        <section style={{ marginTop: "clamp(80px, 10vw, 128px)" }}>
+          <div className="koda-section-label">BUILT-IN STRATEGIES</div>
           <div className="koda-strategies">
             {[
               { n: "01", name: "ICT / Smart Money",     desc: "Order blocks, fair value gaps, liquidity sweeps. Mark your bias before the open." },
@@ -583,7 +715,170 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
           </div>
         </section>
 
-        {/* â”€â”€ GIANT GHOST WORDMARK â”€â”€ */}
+        {/* PRICING — Free vs Pro side-by-side. Free-tier-first per the wedge in the comparison page. */}
+        <section id="pricing" className="koda-anchor" style={{ marginTop: "clamp(80px, 10vw, 128px)" }}>
+          <div className="koda-section-label">PRICING</div>
+          <h2 className="koda-section-h2">Free is real. Pro is when you outgrow it.</h2>
+          <p className="koda-section-sub">
+            No trial timer, no card on file. The free tier covers everything most retail
+            futures traders need. Pro unlocks the social and analytics layer.
+          </p>
+
+          <div className="koda-pricing">
+            {/* Free */}
+            <div style={{
+              padding: 28, borderRadius: 22,
+              background: C.panel, border: `1px solid ${C.border}`,
+              display: "flex", flexDirection: "column", gap: 18,
+            }}>
+              <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12 }}>
+                <div style={{ fontFamily: DISPLAY, fontSize: 22, fontWeight: 600, color: C.text }}>Free</div>
+                <div style={{ fontFamily: MONO, fontSize: 11, color: C.muted, letterSpacing: "0.08em", textTransform: "uppercase" }}>Forever</div>
+              </div>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                <span style={{ fontFamily: DISPLAY, fontSize: 44, fontWeight: 600, color: C.text, letterSpacing: "-0.02em" }}>£0</span>
+                <span style={{ fontFamily: BODY, fontSize: 14, color: C.text2 }}>/ month</span>
+              </div>
+              <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 10 }}>
+                {[
+                  "Unlimited trade logging",
+                  "Full stats dashboard",
+                  "1 Trading Circle",
+                  "Ideas feed",
+                  "Discipline score",
+                  "Tilt intervention",
+                  "iOS + Android (PWA)",
+                ].map((item) => (
+                  <li key={item} style={{ fontFamily: BODY, fontSize: 14, color: C.text2, display: "flex", alignItems: "flex-start", gap: 10 }}>
+                    <svg width="14" height="14" viewBox="0 0 14 14" style={{ marginTop: 4, flexShrink: 0 }}>
+                      <path d="M2 7l3.5 3.5L12 3.5" stroke={C.live} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                    </svg>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <button type="button" onClick={handleStarted} style={{
+                background: C.text, color: C.bg, border: "none", borderRadius: 999,
+                padding: "13px 20px", fontSize: 13, fontFamily: BODY, fontWeight: 600,
+                cursor: "pointer", width: "100%", marginTop: 6,
+                transition: "opacity 0.15s, transform 0.15s",
+              }}>Start free →</button>
+            </div>
+
+            {/* Pro */}
+            <div style={{
+              padding: 28, borderRadius: 22,
+              background: C.panel,
+              border: `1px solid color-mix(in oklch, ${C.accent} 36%, transparent)`,
+              display: "flex", flexDirection: "column", gap: 18,
+              position: "relative", overflow: "hidden",
+            }}>
+              {/* Subtle accent wash on the Pro card — not a full sparkle, just a tint. */}
+              <div style={{
+                position: "absolute", top: -100, right: -100, width: 240, height: 240,
+                background: `radial-gradient(circle, ${C.accentSoft} 0%, transparent 60%)`,
+                pointerEvents: "none",
+              }} />
+              <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, position: "relative", zIndex: 1 }}>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
+                  <div style={{ fontFamily: DISPLAY, fontSize: 22, fontWeight: 600, color: C.text }}>Pro</div>
+                  <span style={{
+                    fontFamily: MONO, fontSize: 9, fontWeight: 600,
+                    letterSpacing: "0.16em", textTransform: "uppercase",
+                    color: C.accent, padding: "3px 8px", borderRadius: 999,
+                    background: C.accentSoft,
+                    border: `1px solid color-mix(in oklch, ${C.accent} 36%, transparent)`,
+                  }}>Recommended</span>
+                </div>
+                <div style={{ fontFamily: MONO, fontSize: 11, color: C.muted, letterSpacing: "0.08em", textTransform: "uppercase" }}>Pay monthly</div>
+              </div>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 8, position: "relative", zIndex: 1 }}>
+                <span style={{ fontFamily: DISPLAY, fontSize: 44, fontWeight: 600, color: C.text, letterSpacing: "-0.02em" }}>£24.99</span>
+                <span style={{ fontFamily: BODY, fontSize: 14, color: C.text2 }}>/ month</span>
+              </div>
+              <div style={{ fontFamily: BODY, fontSize: 12, color: C.muted, marginTop: -8, position: "relative", zIndex: 1 }}>
+                Or <span style={{ color: C.text2, fontWeight: 600 }}>£199 / year</span> &mdash; equivalent to £16.58 / month, save £100.
+              </div>
+              <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 10, position: "relative", zIndex: 1 }}>
+                {[
+                  "Everything in Free",
+                  "Unlimited Trading Circles",
+                  "Advanced analytics (MAE / MFE, heatmaps)",
+                  "Prop firm eval tracker",
+                  "Custom strategy slots",
+                  "Priority support",
+                ].map((item) => (
+                  <li key={item} style={{ fontFamily: BODY, fontSize: 14, color: C.text2, display: "flex", alignItems: "flex-start", gap: 10 }}>
+                    <svg width="14" height="14" viewBox="0 0 14 14" style={{ marginTop: 4, flexShrink: 0 }}>
+                      <path d="M2 7l3.5 3.5L12 3.5" stroke={C.accent} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                    </svg>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <button type="button" onClick={handleStarted} style={{
+                background: "transparent", color: C.text,
+                border: `1px solid ${C.border2}`, borderRadius: 999,
+                padding: "13px 20px", fontSize: 13, fontFamily: BODY, fontWeight: 600,
+                cursor: "pointer", width: "100%", marginTop: 6, position: "relative", zIndex: 1,
+                transition: "opacity 0.15s, transform 0.15s",
+              }}>Start free, upgrade anytime →</button>
+            </div>
+          </div>
+        </section>
+
+        {/* COMPARISON TEASER — links to existing /koda-vs-tradezella.html */}
+        <section style={{ marginTop: "clamp(80px, 10vw, 128px)" }}>
+          <a href="/koda-vs-tradezella.html" style={{
+            display: "block", padding: "clamp(28px, 4vw, 48px)",
+            borderRadius: 24, background: C.panel,
+            border: `1px solid ${C.border}`,
+            position: "relative", overflow: "hidden",
+          }}>
+            <div className="koda-section-label" style={{ marginBottom: 14 }}>KŌDA VS THE REST</div>
+            <div style={{
+              fontFamily: DISPLAY, fontSize: "clamp(22px, 2.6vw, 30px)",
+              fontWeight: 500, letterSpacing: "-0.015em", lineHeight: 1.3,
+              color: C.text, maxWidth: "44ch", marginBottom: 18,
+            }}>
+              Tradezella is the better analytics tool. Kōda is the better behavioural tool.
+              The honest question is which one your <span style={{ fontStyle: "italic", color: C.live }}>actual</span> losses come from.
+            </div>
+            <span style={{
+              fontFamily: BODY, fontSize: 14, fontWeight: 600,
+              color: C.live, display: "inline-flex", alignItems: "center", gap: 6,
+            }}>Read the full comparison →</span>
+          </a>
+        </section>
+
+        {/* FOUNDER NOTE — per DESIGN.md voice ("Made by a trader, not a model"). */}
+        <section style={{ marginTop: "clamp(80px, 10vw, 128px)", display: "flex", justifyContent: "center" }}>
+          <div style={{ maxWidth: 620 }}>
+            <div className="koda-section-label" style={{ justifyContent: "center" }}>FROM THE BUILDER</div>
+            <p style={{
+              fontFamily: DISPLAY, fontSize: "clamp(18px, 1.8vw, 22px)",
+              color: C.text, lineHeight: 1.55, fontWeight: 400, letterSpacing: "-0.005em",
+              marginBottom: 18,
+            }}>
+              Hi, I&apos;m Dylon. I built Kōda because I needed it.
+            </p>
+            <p style={{ fontSize: 15, color: C.text2, lineHeight: 1.7, marginBottom: 14 }}>
+              I journal on my phone between sessions and I&apos;ve blown a Topstep eval
+              to a revenge trade. The intervention exists because of that day.
+              Circles exist because I journal better when someone else is watching.
+            </p>
+            <p style={{ fontSize: 15, color: C.text2, lineHeight: 1.7 }}>
+              I want this to be a journal that respects your time and tells you the
+              truth &mdash; not one that gamifies your losses.
+            </p>
+            <div style={{
+              marginTop: 18, fontFamily: MONO, fontSize: 11,
+              color: C.muted, letterSpacing: "0.10em", textTransform: "uppercase",
+            }}>&mdash; DYLON &middot; KŌDA</div>
+          </div>
+        </section>
+
+        {/* GIANT GHOST WORDMARK */}
         <div style={{
           textAlign: "center", marginTop: "clamp(60px, 8vw, 100px)",
           pointerEvents: "none", overflow: "hidden",
@@ -598,19 +893,63 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
           }}>KŌDA</div>
         </div>
 
-        {/* â”€â”€ FOOTER â”€â”€ */}
+        {/* FINAL CTA — last conversion nudge after the editorial sections. */}
+        <section style={{ marginTop: "clamp(40px, 6vw, 80px)", textAlign: "center" }}>
+          <button type="button" onClick={handleStarted} style={{
+            display: "inline-flex", alignItems: "center", gap: 12,
+            padding: "10px 10px 10px 26px", borderRadius: 999,
+            background: C.text, color: C.bg, border: "none",
+            fontFamily: BODY, fontSize: 15, fontWeight: 600, cursor: "pointer",
+            transition: "opacity 0.15s, transform 0.15s",
+          }}>
+            Start your free journal
+            <span style={{
+              width: 36, height: 36, borderRadius: 999, background: C.live,
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                <path d="M3 8h10M9 4l4 4-4 4" stroke="#0A0A0A" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </span>
+          </button>
+        </section>
+
+        {/* FOOTER — expanded marketing nav linking to the static page set. */}
         <footer style={{
-          marginTop: 32, paddingTop: 24,
+          marginTop: "clamp(60px, 8vw, 100px)", paddingTop: 32,
           borderTop: `1px solid ${C.border}`,
-          display: "flex", justifyContent: "space-between", alignItems: "center",
-          flexWrap: "wrap", gap: 12,
-          fontFamily: MONO, fontSize: 10, color: C.dim, letterSpacing: "0.08em",
+          display: "grid", gridTemplateColumns: "1fr", gap: 24,
         }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <KodaMark size={18} color={C.dim} />
-            <span>KŌDA · KEEP THE EDGE YOU EARNED</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <KodaMark size={20} color={C.text2} />
+            <span style={{ fontFamily: BODY, fontWeight: 600, fontSize: 13, letterSpacing: "0.18em", color: C.text2 }}>KŌDA</span>
           </div>
-          <span>©2026 Kōda · v1.0 · <span style={{ color: C.live }}>● LIVE</span></span>
+          <nav style={{
+            display: "flex", flexWrap: "wrap", gap: "12px 22px",
+            fontFamily: BODY, fontSize: 13, color: C.text2,
+          }}>
+            {[
+              ["Intervention", "/in-session-intervention.html"],
+              ["Circles", "/trading-circles.html"],
+              ["Compare", "/koda-vs-tradezella.html"],
+              ["FAQ", "/faq.html"],
+              ["Changelog", "/changelog.html"],
+              ["Privacy", "/privacy.html"],
+              ["Terms", "/terms.html"],
+              ["Cookies", "/cookies.html"],
+            ].map(([label, href]) => (
+              <a key={label} href={href} style={{ color: C.text2 }}>{label}</a>
+            ))}
+          </nav>
+          <div style={{
+            display: "flex", justifyContent: "space-between", alignItems: "center",
+            flexWrap: "wrap", gap: 12, paddingTop: 18,
+            borderTop: `1px solid ${C.border}`,
+            fontFamily: MONO, fontSize: 10, color: C.dim, letterSpacing: "0.08em",
+          }}>
+            <span>©2026 KŌDA · KEEP THE EDGE YOU EARNED</span>
+            <span>v1.0 · <span style={{ color: C.live }}>● LIVE</span></span>
+          </div>
         </footer>
 
       </div>
