@@ -9,9 +9,14 @@ import { isFlagOn } from "./lib/flags";
 import { useFollows } from "./hooks/useFollows";
 import { useFeed } from "./hooks/useFeed";
 import { useTiltState } from "./hooks/useTiltState";
+import { usePreSession } from "./hooks/usePreSession";
+import { useSessionDebrief } from "./hooks/useSessionDebrief";
 import { useCircles } from "./hooks/useCircles";
 import { logInterventionEvent, linkTradeToRecentIntervention } from "./data/interventions";
 import { InterventionSheet } from "./components/InterventionSheet";
+import { PreSessionSheet } from "./components/PreSessionSheet";
+import { PostSessionDebriefSheet } from "./components/PostSessionDebriefSheet";
+import { LiveRuleMonitor } from "./components/LiveRuleMonitor";
 import { InSessionStatsCard } from "./components/InSessionStatsCard";
 import type { TiltSignal } from "./lib/tilt";
 import type { CircleStats } from "./hooks/useCircles";
@@ -162,8 +167,12 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   //   docs/superpowers/specs/2026-06-02-in-session-intervention-design.md
   // The sheet/modal is rendered at the bottom of this component near other modals.
   const tilt = useTiltState({ trades, profile });
+  const preSession = usePreSession({ profile });
+  const debrief = useSessionDebrief({ trades });
   const [interventionOpen, setInterventionOpen] = useState(false);
   const [interventionSignals, setInterventionSignals] = useState<TiltSignal[]>([]);
+  const [preSessionOpen, setPreSessionOpen] = useState(false);
+  const [debriefOpen, setDebriefOpen] = useState(false);
   function todayLocalDate(): string {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -174,6 +183,14 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     const s = total % 60;
     return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
   }
+  function runTiltCheck(): void {
+    if (tilt.settings.enabled && tilt.state.active) {
+      setInterventionSignals(tilt.state.signals);
+      setInterventionOpen(true);
+      return;
+    }
+    navigateTo("log");
+  }
   function attemptLog(): void {
     // Free users skip the gate entirely — in-session is a Pro feature.
     // During beta `isPro` is true for everyone (paywall flag is off), so
@@ -183,12 +200,19 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
       showToast(`Cooling off — ${formatLockCountdown(tilt.lockedUntil - Date.now())} remaining`);
       return;
     }
-    if (tilt.settings.enabled && tilt.state.active) {
-      setInterventionSignals(tilt.state.signals);
-      setInterventionOpen(true);
+    if (preSession.needsCheck) {
+      setPreSessionOpen(true);
       return;
     }
-    navigateTo("log");
+    runTiltCheck();
+  }
+  async function handlePreSessionStart(): Promise<void> {
+    setPreSessionOpen(false);
+    await preSession.markStarted();
+    runTiltCheck();
+  }
+  function handlePreSessionCancel(): void {
+    setPreSessionOpen(false);
   }
   async function handleInterventionContinue(): Promise<void> {
     setInterventionOpen(false);
@@ -1819,6 +1843,52 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                     </div>
                   )}
                   <HomeNewsWidget C={C} onOpenNews={() => primaryNav("news")} />
+                  {(() => {
+                    if (!preSession.startedToday || debrief.doneToday) return null;
+                    const today = todayLocalDate();
+                    const todays = trades.filter(t => t.date === today);
+                    if (todays.length === 0) return null;
+                    const useDollar = pnlMode === "$" && hasDollarData;
+                    const pnlSum = todays.reduce((a, t) => a + (parseFloat((useDollar ? t.pnlDollar : t.pnl) as string) || 0), 0);
+                    const maxLossRaw = parseFloat(profile.maxDailyLoss ?? "");
+                    const maxLoss = Number.isFinite(maxLossRaw) ? maxLossRaw : 0;
+                    const maxTradesRaw = parseFloat(profile.maxTradesPerDay ?? "");
+                    const maxTradesNum = Number.isFinite(maxTradesRaw) ? maxTradesRaw : 0;
+                    const broken = todays.filter(t => t.ruleAdherence === false);
+                    const lastBreakTrade = broken[broken.length - 1];
+                    const lastBreak = lastBreakTrade?.mistake || (lastBreakTrade ? "Rule broken" : null);
+                    return (
+                      <LiveRuleMonitor
+                        C={C}
+                        pnl={pnlSum}
+                        maxLoss={maxLoss}
+                        trades={todays.length}
+                        maxTrades={maxTradesNum}
+                        useDollar={useDollar}
+                        lastBreak={lastBreak}
+                        onWrapUp={() => setDebriefOpen(true)}
+                      />
+                    );
+                  })()}
+                  {debrief.shouldOffer && (
+                    <button
+                      onClick={() => setDebriefOpen(true)}
+                      style={{
+                        display: "flex", alignItems: "center", gap: "12px", width: "100%",
+                        background: C.panel,
+                        border: `1px solid ${C.accent ?? C.live}44`,
+                        borderLeft: `3px solid ${C.accent ?? C.live}`,
+                        borderRadius: "12px", padding: "12px 14px", marginBottom: "20px",
+                        cursor: "pointer", textAlign: "left", color: "inherit",
+                      }}>
+                      <span style={{ fontSize: "20px" }}>📓</span>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontFamily: MONO, fontSize: "9px", color: C.accent ?? C.live, letterSpacing: "0.14em", textTransform: "uppercase" as const, marginBottom: "2px" }}>Wrap up today</div>
+                        <div style={{ fontFamily: BODY, fontSize: "13px", color: C.text }}>Sixty seconds of reflection. Tap to debrief.</div>
+                      </div>
+                      <span style={{ fontFamily: MONO, fontSize: "16px", color: C.muted }}>›</span>
+                    </button>
+                  )}
                   {streakBanner && (
                     <div style={{ display: "flex", alignItems: "center", gap: "12px", background: C.panel, border: `1px solid ${C.green}44`, borderLeft: `3px solid ${C.green}`, borderRadius: "12px", padding: "12px 14px", marginBottom: "20px" }}>
                       <span style={{ fontSize: "20px" }}>🔥</span>
@@ -4581,6 +4651,48 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
           onContinue={() => { void handleInterventionContinue(); }}
           onCancel={() => { void handleInterventionCancel(); }}
         />
+
+        <PreSessionSheet
+          open={preSessionOpen}
+          C={C}
+          isMobile={!isDesktop}
+          maxDailyLoss={profile.maxDailyLoss ? parseFloat(profile.maxDailyLoss) : null}
+          maxTradesPerDay={profile.maxTradesPerDay ? parseFloat(profile.maxTradesPerDay) : null}
+          onStart={() => { void handlePreSessionStart(); }}
+          onCancel={handlePreSessionCancel}
+        />
+
+        {(() => {
+          if (!debriefOpen) return null;
+          const today = todayLocalDate();
+          const todays = trades.filter(t => t.date === today);
+          const wins = todays.filter(t => t.outcome === "Win").length;
+          const losses = todays.filter(t => t.outcome === "Loss").length;
+          const useDollar = pnlMode === "$" && hasDollarData;
+          const pnlVal = todays.reduce((a, t) => a + (parseFloat((useDollar ? t.pnlDollar : t.pnl) as string) || 0), 0);
+          const pnlDisplay = useDollar
+            ? `${pnlVal >= 0 ? "+" : "−"}$${Math.abs(pnlVal).toFixed(2)}`
+            : `${pnlVal >= 0 ? "+" : ""}${pnlVal.toFixed(2)}R`;
+          return (
+            <PostSessionDebriefSheet
+              open={debriefOpen}
+              C={C}
+              isMobile={!isDesktop}
+              summary={{
+                trades: todays.length,
+                wins, losses,
+                pnlDisplay,
+                pnlPositive: pnlVal >= 0,
+              }}
+              onSave={(ans) => {
+                void debrief.markDone(ans);
+                setDebriefOpen(false);
+                showToast("Debrief saved.");
+              }}
+              onDismiss={() => setDebriefOpen(false)}
+            />
+          );
+        })()}
 
 
         {viewProfile && (
