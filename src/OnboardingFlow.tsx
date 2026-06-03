@@ -227,7 +227,7 @@ export function OnboardingFlow({ C, onComplete }: {
               <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
                 {AVATAR_EMOJIS.map(e => (
                   <button key={e} onClick={() => setAvatar(avatar === e ? "" : e)} style={{
-                    width: "42px", height: "42px", borderRadius: "50%",
+                    width: "44px", height: "44px", borderRadius: "50%",
                     border: `1.5px solid ${avatar === e ? C.text : C.border}`,
                     background: avatar === e ? C.panel : "transparent",
                     cursor: "pointer", fontSize: "20px",
