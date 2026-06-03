@@ -1,18 +1,18 @@
 ﻿import { Component, type ReactNode } from "react";
+import { DARK } from "./theme";
+import { BODY, DISPLAY, MONO } from "./shared";
 
-// ─── THEME (matches KodaAuth / Kōda warm editorial palette) ─────────────────
+// Palette and type tokens pull from the canonical DESIGN.md sources
+// (theme.ts + shared.tsx) so the error screen matches the rest of the app.
 const C = {
-  bg: "#0C0C0B",
-  text: "#EDEDE8",
-  text2: "#BCBCB4",
-  muted: "#8A8A82",
-  border2: "#3A3A34",
-  red: "#FF3D00",
-  blue: "#89cff0",
+  bg: DARK.bg,
+  text: DARK.text,
+  text2: DARK.text2,
+  muted: DARK.muted,
+  border2: DARK.border2,
+  red: DARK.red,
+  blue: DARK.accent,
 };
-const DISPLAY = "'Syne', 'Inter', system-ui, sans-serif";
-const BODY = "'Inter', system-ui, sans-serif";
-const MONO = "'IBM Plex Mono', ui-monospace, monospace";
 
 interface Props { children: ReactNode; }
 interface State { error: Error | null; info: string; }
