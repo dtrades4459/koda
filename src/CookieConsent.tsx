@@ -1,16 +1,16 @@
 import { useEffect, useState } from "react";
 import { COOKIE_CONSENT_KEY, initPostHog } from "./lib/posthog";
+import { DARK } from "./theme";
+import { BODY, MONO } from "./shared";
 
 const C = {
-  bg:      "#0C0C0B",
-  text:    "#EDEDE8",
-  text2:   "#BCBCB4",
-  muted:   "#8A8A82",
-  border:  "#3A3A34",
-  accent:  "#89CFF0",
+  bg:      DARK.bg,
+  text:    DARK.text,
+  text2:   DARK.text2,
+  muted:   DARK.muted,
+  border:  DARK.border2,
+  accent:  DARK.accent,
 };
-const BODY = "'Inter', system-ui, sans-serif";
-const MONO = "'IBM Plex Mono', ui-monospace, monospace";
 
 export function CookieConsent() {
   const [open, setOpen] = useState(false);
@@ -47,7 +47,7 @@ export function CookieConsent() {
         right: 0,
         bottom: 0,
         zIndex: 9999,
-        background: "rgba(12, 12, 11, 0.96)",
+        background: "rgba(19, 17, 14, 0.96)",
         borderTop: `1px solid ${C.border}`,
         backdropFilter: "blur(8px)",
         WebkitBackdropFilter: "blur(8px)",
