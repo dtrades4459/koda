@@ -23,7 +23,7 @@ function cors(req: Req, res: Res) {
 }
 
 const STALE_HEADLINES_MS = 15 * 60 * 1000;
-const STALE_CALENDAR_MS  = 60 * 60 * 1000; // 1h — picks up actual values as events release
+const STALE_CALENDAR_MS  = 15 * 60 * 1000; // 15min — picks up actual values shortly after release
 
 export default async function handler(req: Req, res: Res) {
   cors(req, res);
