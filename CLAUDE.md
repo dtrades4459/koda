@@ -377,3 +377,19 @@ Koda.tsx is ~4100 lines. OneDrive can truncate large writes. Use Edit tool for t
 - [ ] Google OAuth (wired, not configured in Supabase — remove button or configure)
 - [ ] Multiple accounts (prop eval 1, prop eval 2, personal)
 - [ ] Rithmic / NinjaTrader 8 / TopstepX live API connections
+
+---
+
+## Design System
+
+Always read `DESIGN.md` before making any visual or UI decisions.
+All font choices, colors, spacing, and aesthetic direction are defined there.
+Do not deviate without explicit user approval.
+
+Key rules:
+- Dark mode is primary. `#13110E` background, not `#000` or `#111`.
+- Accent is blue (`oklch(0.74 0.16 250)`), CTAs use `live` (mint). Green/red are outcomes only — never use green as a brand or action color.
+- All labels, kickers, nav items, and metadata: Geist Mono, uppercase, wide-tracked.
+- All inputs: `font-size: 16px` (iOS zoom prevention), transparent bg, border-bottom only.
+- Minimum touch target: 44px height.
+- In QA mode, flag any code that deviates from DESIGN.md without a documented reason.
