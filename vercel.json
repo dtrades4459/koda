@@ -14,6 +14,10 @@
     {
       "path": "/api/cron?job=news-calendar",
       "schedule": "0 11 * * *"
+    },
+    {
+      "path": "/api/cron?job=weekly-digest",
+      "schedule": "0 18 * * 0"
     }
   ],
   "redirects": [

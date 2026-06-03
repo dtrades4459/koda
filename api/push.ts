@@ -62,6 +62,75 @@ async function handleSend(req: VercelRequest, res: VercelResponse) {
   return res.status(200).json({ ok: true });
 }
 
+// ---------------------------------------------------------------------------
+// Low-level single-subscription sender with dead-endpoint cleanup
+// ---------------------------------------------------------------------------
+async function sendPush(
+  endpoint: string,
+  p256dh: string,
+  authKey: string,
+  payload: string,
+): Promise<void> {
+  try {
+    await webpush.sendNotification(
+      { endpoint, keys: { p256dh, auth: authKey } },
+      payload,
+    );
+  } catch (err: unknown) {
+    const statusCode = (err as { statusCode?: number })?.statusCode;
+    if (statusCode === 410 || statusCode === 404) {
+      // Dead endpoint — remove so we stop sending to it
+      await supabase.from("notification_subscriptions").delete().eq("endpoint", endpoint);
+    } else {
+      throw err;
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Shared notification helper — writes to notification_feed + fans out push
+// ---------------------------------------------------------------------------
+type NotifKind = "follow" | "circle_join" | "reaction" | "idea_like" | "digest";
+
+interface DeliverOpts {
+  targetUid: string;
+  kind: NotifKind;
+  title: string;
+  body: string;
+  data: Record<string, unknown>;
+}
+
+export async function deliverNotification(opts: DeliverOpts): Promise<void> {
+  // 1. Write to in-app feed (notification_feed table from Task 7's migration)
+  await supabase.from("notification_feed").insert({
+    user_id: opts.targetUid,
+    kind: opts.kind,
+    data: { title: opts.title, body: opts.body, ...opts.data },
+  });
+
+  // 2. Fan out push to all subscribed endpoints for this user
+  const { data: subs } = await supabase
+    .from("notification_subscriptions")
+    .select("endpoint, p256dh, auth_key")
+    .eq("user_id", opts.targetUid);
+  if (!subs?.length) return;
+
+  const payload = JSON.stringify({
+    title: opts.title,
+    body: opts.body,
+    data: { kind: opts.kind, ...opts.data },
+  });
+
+  await Promise.all(
+    subs.map((s: { endpoint: string; p256dh: string; auth_key: string }) =>
+      sendPush(s.endpoint, s.p256dh, s.auth_key, payload).catch((err: unknown) => {
+        console.error("[push] deliver failed:", err);
+      }),
+    ),
+  );
+}
+
+// ---------------------------------------------------------------------------
 async function handleNotifyCircle(req: VercelRequest, res: VercelResponse) {
   const auth = req.headers.authorization as string | undefined;
   if (!auth?.startsWith("Bearer ")) return res.status(401).json({ error: "No token" });
@@ -101,14 +170,125 @@ async function handleNotifyCircle(req: VercelRequest, res: VercelResponse) {
     ? (messagePreview.length > 80 ? messagePreview.slice(0, 77) + "…" : messagePreview)
     : "New message in your circle";
 
-  await Promise.allSettled(subs.map((sub: { endpoint: string; p256dh: string; auth_key: string }) =>
-    webpush.sendNotification(
-      { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth_key } },
-      JSON.stringify({ title, body: preview, icon: "/icon-192.png" })
-    )
-  ));
+  const circlePayload = JSON.stringify({ title, body: preview, icon: "/icon-192.png" });
+  await Promise.allSettled(
+    subs.map((sub: { endpoint: string; p256dh: string; auth_key: string }) =>
+      sendPush(sub.endpoint, sub.p256dh, sub.auth_key, circlePayload),
+    ),
+  );
 
   return res.status(200).json({ ok: true, sent: subs.length });
+}
+
+async function handleNotifyFollow(req: VercelRequest, res: VercelResponse) {
+  const auth = req.headers.authorization as string | undefined;
+  if (!auth?.startsWith("Bearer ")) return res.status(401).json({ error: "No token" });
+
+  const { data: { user }, error: authErr } = await supabase.auth.getUser(auth.slice(7));
+  if (authErr || !user) return res.status(401).json({ error: "Invalid token" });
+
+  const { targetUid, followerName, followerHandle } = req.body as {
+    targetUid?: string;
+    followerName?: string;
+    followerHandle?: string;
+  };
+  if (!targetUid || typeof targetUid !== "string") {
+    return res.status(400).json({ error: "targetUid required" });
+  }
+  if (targetUid === user.id) return res.status(200).json({ ok: true }); // no self-notify
+
+  await deliverNotification({
+    targetUid,
+    kind: "follow",
+    title: followerName ?? followerHandle ?? "Someone",
+    body: "started following you",
+    data: { followerUid: user.id, followerHandle: followerHandle ?? null },
+  });
+  return res.status(200).json({ ok: true });
+}
+
+async function handleNotifyCircleJoin(req: VercelRequest, res: VercelResponse) {
+  const auth = req.headers.authorization as string | undefined;
+  if (!auth?.startsWith("Bearer ")) return res.status(401).json({ error: "No token" });
+
+  const { data: { user }, error: authErr } = await supabase.auth.getUser(auth.slice(7));
+  if (authErr || !user) return res.status(401).json({ error: "Invalid token" });
+
+  const { circleCode, circleName, ownerUid, joinerName, joinerHandle } = req.body as {
+    circleCode?: string;
+    circleName?: string;
+    ownerUid?: string;
+    joinerName?: string;
+    joinerHandle?: string;
+  };
+  if (!circleCode || !ownerUid) {
+    return res.status(400).json({ error: "circleCode and ownerUid required" });
+  }
+  if (ownerUid === user.id) return res.status(200).json({ ok: true }); // creator joining their own circle
+
+  await deliverNotification({
+    targetUid: ownerUid,
+    kind: "circle_join",
+    title: joinerName ?? joinerHandle ?? "Someone",
+    body: `joined ${circleName ?? circleCode}`,
+    data: { circleCode, joinerUid: user.id, joinerHandle: joinerHandle ?? null },
+  });
+  return res.status(200).json({ ok: true });
+}
+
+async function handleNotifyReaction(req: VercelRequest, res: VercelResponse) {
+  const auth = req.headers.authorization as string | undefined;
+  if (!auth?.startsWith("Bearer ")) return res.status(401).json({ error: "No token" });
+
+  const { data: { user }, error: authErr } = await supabase.auth.getUser(auth.slice(7));
+  if (authErr || !user) return res.status(401).json({ error: "Unauthorized" });
+
+  const { targetUid, surface, emoji, contextLabel } = req.body as {
+    targetUid?: string;
+    surface?: "feed_trade" | "shared_trade";
+    emoji?: string;
+    contextLabel?: string;
+  };
+  if (!targetUid || !surface || !emoji) {
+    return res.status(400).json({ error: "targetUid, surface, emoji required" });
+  }
+  if (targetUid === user.id) return res.status(200).json({ ok: true });
+
+  await deliverNotification({
+    targetUid,
+    kind: "reaction",
+    title: "New reaction",
+    body: `${emoji} on your ${surface === "feed_trade" ? "trade" : "shared trade"}${contextLabel ? ` (${contextLabel})` : ""}`,
+    data: { surface, emoji, fromUid: user.id },
+  });
+  return res.status(200).json({ ok: true });
+}
+
+async function handleNotifyLike(req: VercelRequest, res: VercelResponse) {
+  const auth = req.headers.authorization as string | undefined;
+  if (!auth?.startsWith("Bearer ")) return res.status(401).json({ error: "No token" });
+
+  const { data: { user }, error: authErr } = await supabase.auth.getUser(auth.slice(7));
+  if (authErr || !user) return res.status(401).json({ error: "Unauthorized" });
+
+  const { targetUid, ideaId, ideaTitle } = req.body as {
+    targetUid?: string;
+    ideaId?: string;
+    ideaTitle?: string;
+  };
+  if (!targetUid || !ideaId) {
+    return res.status(400).json({ error: "targetUid and ideaId required" });
+  }
+  if (targetUid === user.id) return res.status(200).json({ ok: true });
+
+  await deliverNotification({
+    targetUid,
+    kind: "idea_like",
+    title: "Idea liked",
+    body: ideaTitle ? `Someone liked "${ideaTitle}"` : "Someone liked your idea",
+    data: { ideaId, fromUid: user.id },
+  });
+  return res.status(200).json({ ok: true });
 }
 
 async function handleBroadcast(req: VercelRequest, res: VercelResponse) {
@@ -157,6 +337,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (action === "subscribe") return handleSubscribe(req, res);
   if (action === "send") return handleSend(req, res);
   if (action === "notify-circle") return handleNotifyCircle(req, res);
+  if (action === "notify-follow") return handleNotifyFollow(req, res);
+  if (action === "notify-circle-join") return handleNotifyCircleJoin(req, res);
+  if (action === "notify-reaction") return handleNotifyReaction(req, res);
+  if (action === "notify-like") return handleNotifyLike(req, res);
   if (action === "broadcast") return handleBroadcast(req, res);
   return res.status(400).json({ error: "Unknown action" });
 }

@@ -1,8 +1,10 @@
-﻿import { useState, useEffect, useRef } from "react";
+﻿import { useState, useEffect, useRef, Fragment } from "react";
 import { supabase } from "./lib/supabase";
 import { StrategyPill, stratCode, KodaMark, MONO, BODY, DISPLAY, EmptyCirclesState, CornerGlow } from "./shared";
 import { KODA_GLOBAL_CODE } from "./hooks/useCircles";
 import { readCircleMembers } from "./data/circles";
+import { markChatRead } from "./data/chatReads";
+import { useUnreadCircles } from "./hooks/useUnreadCircles";
 import { createChallenge, fetchActiveChallenge, fetchTrophies } from "./data/circlesChallenges";
 import { fetchSharedTrades, reactToSharedTrade, rowToSharedTrade } from "./data/circlesSharedTrades";
 import { SharedTradeCard } from "./components/SharedTradeCard";
@@ -84,6 +86,16 @@ export interface TradingCirclesProps {
   isPro: boolean;
 }
 
+// Raw DB row shape returned by the circle_messages Supabase query.
+interface ChatMsg {
+  id: string;
+  sender_id: string | null;
+  sender_name: string;
+  sender_handle: string;
+  text: string;
+  created_at: string;
+}
+
 export function TradingCircles({
   myCircles, circlesView, setCirclesView, activeCircle, setActiveCircle,
   circleForm, setCircleForm, circleJoinCode, setCircleJoinCode,
@@ -107,6 +119,10 @@ export function TradingCircles({
   const [chatSending, setChatSending] = useState(false);
   const [chatLoading, setChatLoading] = useState(false);
   const chatBottomRef = useRef<HTMLDivElement>(null);
+  const circleTabRef = useRef(circleTab);
+  useEffect(() => { circleTabRef.current = circleTab; }, [circleTab]);
+  const [firstUnreadId, setFirstUnreadId] = useState<string | null>(null);
+  const firstUnreadCapturedFor = useRef<string | null>(null);
   const [expandedMember, setExpandedMember] = useState<string | null>(null);
   const [activeChallenge, setActiveChallenge] = useState<CircleChallenge | null>(null);
   const [trophies, setTrophies] = useState<ChallengeResult[]>([]);
@@ -122,6 +138,9 @@ export function TradingCircles({
   const [feedLoading, setFeedLoading] = useState(false);
   const feedBottomRef = useRef<HTMLDivElement>(null);
   const [showLeaveSheet, setShowLeaveSheet] = useState(false);
+  const { perCircle: unread, refresh: refreshUnread } = useUnreadCircles(
+    myCircles?.map((c) => c.code) ?? []
+  );
 
   const TROPHY_GOLD = "#A88C50";
 
@@ -450,6 +469,10 @@ export function TradingCircles({
         filter: `circle_code=eq.${activeCircle.code}`,
       }, (payload: any) => {
         setChatMessages(prev => prev.some((m: any) => m.id === payload.new.id) ? prev : [...prev, payload.new]);
+        if (document.visibilityState === "visible" && circleTabRef.current === "chat") {
+          void markChatRead(activeCircle.code);
+          void refreshUnread();
+        }
         setTimeout(() => chatBottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
         // Also prepend to feed
         const msg = rowToCircleMessage(payload.new as Record<string, unknown>);
@@ -503,9 +526,39 @@ export function TradingCircles({
   // Poll chat every 8s when the chat tab is active — fallback while realtime warms up
   useEffect(() => {
     if (circleTab !== "chat" || !activeCircle) return;
+    void markChatRead(activeCircle.code);
+    void refreshUnread();
     const id = setInterval(() => loadChatMessages(activeCircle.code), 8_000);
     return () => clearInterval(id);
   }, [circleTab, activeCircle]);
+
+  // Capture the first unread message ID once per chat-session so the NEW divider stays put
+  useEffect(() => {
+    if (circleTab !== "chat" || !activeCircle?.code) {
+      firstUnreadCapturedFor.current = null;
+      setFirstUnreadId(null);
+      return;
+    }
+    if (firstUnreadCapturedFor.current === activeCircle.code) return;
+    if (chatMessages.length === 0) return; // wait until messages load
+    let alive = true;
+    (async () => {
+      const { data } = await supabase
+        .from("chat_reads")
+        .select("last_read_at")
+        .eq("circle_code", activeCircle.code)
+        .maybeSingle();
+      if (!alive) return;
+      const since = data?.last_read_at ?? null;
+      if (!since) { setFirstUnreadId(null); firstUnreadCapturedFor.current = activeCircle.code; return; }
+      const firstUnread = chatMessages.find(
+        (m) => new Date(m.created_at).getTime() > new Date(since).getTime()
+      );
+      setFirstUnreadId(firstUnread?.id ?? null);
+      firstUnreadCapturedFor.current = activeCircle.code;
+    })();
+    return () => { alive = false; };
+  }, [circleTab, activeCircle?.code, chatMessages.length]);
 
   useEffect(() => {
     if (circleTab !== "trophies" || !activeCircle) return;
@@ -572,7 +625,31 @@ export function TradingCircles({
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", position: "relative", zIndex: 1 }}>
                   <div>
                     <div style={{ fontFamily: MONO, fontSize: "10px", fontWeight: 500, letterSpacing: "0.16em", textTransform: "uppercase", color: C.accent }}>● LIVE · YOUR CIRCLE</div>
-                    <div style={{ fontFamily: DISPLAY, fontSize: "22px", fontWeight: 600, color: C.text, marginTop: "8px", letterSpacing: "-0.02em" }}>{circle.name}</div>
+                    <div style={{ fontFamily: DISPLAY, fontSize: "22px", fontWeight: 600, color: C.text, marginTop: "8px", letterSpacing: "-0.02em", display: "flex", alignItems: "center", gap: 8 }}>
+                      {circle.name}
+                      {unread[circle.code] > 0 && (
+                        <span
+                          aria-label={`${unread[circle.code]} unread`}
+                          style={{
+                            minWidth: 16,
+                            height: 16,
+                            borderRadius: 999,
+                            background: C.accent,
+                            color: C.bg,
+                            fontFamily: MONO,
+                            fontSize: 9,
+                            fontWeight: 700,
+                            padding: "0 5px",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            flexShrink: 0,
+                          }}
+                        >
+                          {unread[circle.code] > 99 ? "99+" : unread[circle.code]}
+                        </span>
+                      )}
+                    </div>
                     <div style={{ fontSize: "12px", color: C.text2, marginTop: "4px", fontFamily: MONO }}>{circle.code} · {circle.members?.length || 1} members</div>
                   </div>
                 </div>
@@ -600,7 +677,31 @@ export function TradingCircles({
                       <KodaMark size={16} color={C.accent} strokeWidth={2} />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontFamily: DISPLAY, fontSize: "14px", fontWeight: 600, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{circle.name}</div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <div style={{ fontFamily: DISPLAY, fontSize: "14px", fontWeight: 600, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{circle.name}</div>
+                        {unread[circle.code] > 0 && (
+                          <span
+                            aria-label={`${unread[circle.code]} unread`}
+                            style={{
+                              minWidth: 16,
+                              height: 16,
+                              borderRadius: 999,
+                              background: C.accent,
+                              color: C.bg,
+                              fontFamily: MONO,
+                              fontSize: 9,
+                              fontWeight: 700,
+                              padding: "0 5px",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              flexShrink: 0,
+                            }}
+                          >
+                            {unread[circle.code] > 99 ? "99+" : unread[circle.code]}
+                          </span>
+                        )}
+                      </div>
                       <div style={{ fontSize: "11px", color: C.text2, marginTop: "2px", fontFamily: MONO }}>{circle.code} · {circle.members?.length || 1} members</div>
                     </div>
                     <div style={{ fontFamily: MONO, fontSize: "12px", fontWeight: 600, color: C.text2 }}>
@@ -969,7 +1070,11 @@ export function TradingCircles({
                         myCode={getMyCode()}
                         C={C}
                         onReact={async (id, emoji) => {
-                          await reactToSharedTrade(id, emoji);
+                          await reactToSharedTrade(id, emoji, {
+                            authorCode: item.data.authorCode,
+                            currentUid: profile?.uid ?? undefined,
+                            contextLabel: item.data.strategy ?? item.data.pair ?? undefined,
+                          });
                           setFeedItems(prev => prev.map(fi => {
                             if (fi.type !== "trade" || fi.data.id !== id) return fi;
                             const reactions = { ...(fi.data.reactions ?? {}) };
@@ -1154,24 +1259,37 @@ export function TradingCircles({
                             <div style={{ fontFamily: DISPLAY, fontSize: "16px", fontStyle: "italic", color: C.text2, marginBottom: "6px" }}>No messages yet.</div>
                             <div style={{ fontFamily: BODY, fontSize: "12px", color: C.muted }}>Be the first to say something.</div>
                           </div>
-                        : chatMessages.map((msg: any) => {
+                        : (chatMessages as ChatMsg[]).map((msg, i) => {
                             const isMe = msg.sender_id === myId;
                             return (
-                              <div key={msg.id} style={{ padding: "10px 0", display: "flex", justifyContent: isMe ? "flex-end" : "flex-start", gap: "10px", alignItems: "flex-end" }}>
-                                {!isMe && (
-                                  <div style={{ width: "28px", height: "28px", borderRadius: "50%", background: C.panel, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: MONO, fontSize: "10px", color: C.muted, flexShrink: 0, border: `1px solid ${C.border}` }}>
-                                    {(msg.sender_name || "?")[0].toUpperCase()}
+                              <Fragment key={msg.id}>
+                                {msg.id === firstUnreadId && i > 0 && (
+                                  <div style={{
+                                    display: "flex", alignItems: "center", gap: 8,
+                                    margin: "6px 0", fontFamily: MONO, fontSize: 9,
+                                    letterSpacing: "0.14em", color: C.accent,
+                                  }}>
+                                    <div style={{ flex: 1, height: 1, background: C.accent, opacity: 0.4 }} />
+                                    NEW
+                                    <div style={{ flex: 1, height: 1, background: C.accent, opacity: 0.4 }} />
                                   </div>
                                 )}
-                                <div style={{ maxWidth: "75%" }}>
-                                  {!isMe && <div onClick={() => openProfile && msg.sender_handle && openProfile(msg.sender_handle)} style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.08em", marginBottom: "4px", cursor: openProfile && msg.sender_handle ? "pointer" : "default" }}>{msg.sender_name}{msg.sender_handle ? ` @${msg.sender_handle}` : ""}</div>}
-                                  <div style={{ background: isMe ? C.text : C.panel, color: isMe ? C.bg : C.text, borderRadius: isMe ? "16px 16px 4px 16px" : "16px 16px 16px 4px", padding: "10px 14px", fontFamily: BODY, fontSize: "14px", lineHeight: 1.5, wordBreak: "break-word", border: isMe ? "none" : `1px solid ${C.border}` }}>{msg.text}</div>
-                                  <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, marginTop: "4px", display: "flex", gap: "10px", justifyContent: isMe ? "flex-end" : "flex-start", alignItems: "center" }}>
-                                    <span>{fmtMsgTime(msg.created_at)}</span>
-                                    {isMe && <button onClick={() => deleteChatMessage(msg.id)} style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "10px", padding: 0, textTransform: "uppercase", letterSpacing: "0.06em" }}>Delete</button>}
+                                <div style={{ padding: "10px 0", display: "flex", justifyContent: isMe ? "flex-end" : "flex-start", gap: "10px", alignItems: "flex-end" }}>
+                                  {!isMe && (
+                                    <div style={{ width: "28px", height: "28px", borderRadius: "50%", background: C.panel, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: MONO, fontSize: "10px", color: C.muted, flexShrink: 0, border: `1px solid ${C.border}` }}>
+                                      {(msg.sender_name || "?")[0].toUpperCase()}
+                                    </div>
+                                  )}
+                                  <div style={{ maxWidth: "75%" }}>
+                                    {!isMe && <div onClick={() => openProfile && msg.sender_handle && openProfile(msg.sender_handle)} style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.08em", marginBottom: "4px", cursor: openProfile && msg.sender_handle ? "pointer" : "default" }}>{msg.sender_name}{msg.sender_handle ? ` @${msg.sender_handle}` : ""}</div>}
+                                    <div style={{ background: isMe ? C.text : C.panel, color: isMe ? C.bg : C.text, borderRadius: isMe ? "16px 16px 4px 16px" : "16px 16px 16px 4px", padding: "10px 14px", fontFamily: BODY, fontSize: "14px", lineHeight: 1.5, wordBreak: "break-word", border: isMe ? "none" : `1px solid ${C.border}` }}>{msg.text}</div>
+                                    <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, marginTop: "4px", display: "flex", gap: "10px", justifyContent: isMe ? "flex-end" : "flex-start", alignItems: "center" }}>
+                                      <span>{fmtMsgTime(msg.created_at)}</span>
+                                      {isMe && <button onClick={() => deleteChatMessage(msg.id)} style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "10px", padding: 0, textTransform: "uppercase", letterSpacing: "0.06em" }}>Delete</button>}
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
+                              </Fragment>
                             );
                           })
                     }

@@ -14,6 +14,7 @@ export const config = { runtime: "nodejs" };
 import { tryDecrypt, encrypt } from "./lib/cryptoUtils.js";
 import { getAdminClient, getUserIdFromJwt } from "./lib/supabaseAdmin.js";
 import { checkRateLimit, getClientIp } from "./lib/rateLimit.js";
+import { deliverNotification } from "./push.js";
 
 type Req = { method?: string; headers: Record<string, string | string[] | undefined>; body: Record<string, unknown>; query: Record<string, string | string[] | undefined> };
 type Res = { status(n: number): Res; json(d: unknown): Res; end(): void; setHeader(k: string, v: string): void };
@@ -725,6 +726,73 @@ async function handleNewsHeadlines(req: Req, res: Res) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
+// Job: weekly-digest  (Sunday 18:00 UTC — consolidates the past 7 days)
+// ══════════════════════════════════════════════════════════════════════════════
+
+async function handleWeeklyDigest(req: Req, res: Res) {
+  if (!isCronAuthed(req)) return res.status(401).json({ error: "Unauthorized" });
+  const admin = getAdminClient();
+
+  // 1. Pull notifications from the past 7 days that haven't been aggregated yet
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
+  const { data: rows, error: rowsErr } = await admin
+    .from("notification_feed")
+    .select("user_id, kind, data, id")
+    .gte("created_at", sevenDaysAgo)
+    .is("aggregated_at", null);
+  if (rowsErr) {
+    console.error("[weekly-digest] fetch error:", rowsErr);
+    return res.status(500).json({ error: rowsErr.message });
+  }
+  if (!rows?.length) return res.status(200).json({ ok: true, users: 0 });
+
+  // 2. Group by user_id, count by kind
+  const byUser: Record<string, { ids: string[]; counts: Record<string, number> }> = {};
+  for (const r of rows) {
+    const uid = r.user_id as string;
+    if (!byUser[uid]) byUser[uid] = { ids: [], counts: {} };
+    byUser[uid].ids.push(r.id as string);
+    const kind = r.kind as string;
+    byUser[uid].counts[kind] = (byUser[uid].counts[kind] ?? 0) + 1;
+  }
+
+  // 3. For each user: deliver summary, mark rows aggregated
+  const userCount = Object.keys(byUser).length;
+  for (const [uid, agg] of Object.entries(byUser)) {
+    const parts: string[] = [];
+    if (agg.counts.follow)      parts.push(`${agg.counts.follow} new follower${agg.counts.follow > 1 ? "s" : ""}`);
+    if (agg.counts.circle_join) parts.push(`${agg.counts.circle_join} circle join${agg.counts.circle_join > 1 ? "s" : ""}`);
+    if (agg.counts.reaction)    parts.push(`${agg.counts.reaction} reaction${agg.counts.reaction > 1 ? "s" : ""}`);
+    if (agg.counts.idea_like)   parts.push(`${agg.counts.idea_like} idea like${agg.counts.idea_like > 1 ? "s" : ""}`);
+
+    if (parts.length === 0) continue; // nothing useful to summarise (only digest rows or unknown kinds)
+
+    const body = `This week: ${parts.join(" · ")}`;
+
+    try {
+      await deliverNotification({
+        targetUid: uid,
+        kind: "digest",
+        title: "Your Kōda week",
+        body,
+        data: { counts: agg.counts },
+      });
+    } catch (err) {
+      console.error("[weekly-digest] deliver failed for user", uid, err);
+      // Don't mark aggregated if delivery failed — try again next week
+      continue;
+    }
+
+    await admin
+      .from("notification_feed")
+      .update({ aggregated_at: new Date().toISOString() })
+      .in("id", agg.ids);
+  }
+
+  return res.status(200).json({ ok: true, users: userCount });
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
 // Router
 // ══════════════════════════════════════════════════════════════════════════════
 
@@ -738,6 +806,7 @@ export default async function handler(req: Req, res: Res) {
   if (job === "sync")                return handleSync(req, res);
   if (job === "news-calendar")       return handleNewsCalendar(req, res);
   if (job === "news-headlines")      return handleNewsHeadlines(req, res);
+  if (job === "weekly-digest")       return handleWeeklyDigest(req, res);
 
   if (job === 'daily-digest') {
     if (!isCronAuthed(req)) return res.status(401).json({ error: 'Unauthorized' });
@@ -746,5 +815,5 @@ export default async function handler(req: Req, res: Res) {
     return res.status(200).json({ ok: true });
   }
 
-  return res.status(400).json({ error: "?job= required: complete-challenges | sync | daily-digest | news-calendar | news-headlines" });
+  return res.status(400).json({ error: "?job= required: complete-challenges | sync | daily-digest | news-calendar | news-headlines | weekly-digest" });
 }

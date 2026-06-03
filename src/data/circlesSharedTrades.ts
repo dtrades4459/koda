@@ -2,6 +2,8 @@
 import { supabase } from "../lib/supabase";
 import { log } from "../lib/log";
 import type { SharedTrade, Trade, Profile } from "../types";
+import { uidForCode } from "./follows";
+import { notifyReaction } from "./notifications";
 
 export async function shareTrade(
   circleCode: string,
@@ -60,12 +62,36 @@ export async function fetchSharedTrades(
 export async function reactToSharedTrade(
   tradeId: string,
   emoji: string,
+  notifOpts?: {
+    authorUid?: string | null;
+    authorCode?: string;
+    currentUid?: string;
+    contextLabel?: string;
+  },
 ): Promise<void> {
   const { error } = await supabase.rpc("toggle_trade_reaction", {
     p_trade_id: tradeId,
     p_emoji: emoji,
   });
-  if (error) log.error("circlesSharedTrades.reactToSharedTrade", error, { tradeId, emoji });
+  if (error) {
+    log.error("circlesSharedTrades.reactToSharedTrade", error, { tradeId, emoji });
+    return;
+  }
+  // Notify the author (best-effort, non-blocking)
+  if (notifOpts?.currentUid) {
+    const authorUid =
+      notifOpts.authorUid ??
+      (notifOpts.authorCode ? await uidForCode(notifOpts.authorCode) : null);
+    if (authorUid && authorUid !== notifOpts.currentUid) {
+      void notifyReaction({
+        targetUid: authorUid,
+        surface: "shared_trade",
+        emoji,
+        contextLabel: notifOpts.contextLabel,
+        currentUid: notifOpts.currentUid,
+      });
+    }
+  }
 }
 
 export function rowToSharedTrade(row: Record<string, unknown>): SharedTrade {

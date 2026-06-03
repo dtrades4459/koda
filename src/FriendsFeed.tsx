@@ -1,7 +1,9 @@
-import { type CSSProperties, useState } from "react";
+import { type CSSProperties } from "react";
 import { AvatarCircle, MONO, BODY, DISPLAY } from "./shared";
 import { IdeasScreen } from "./IdeasScreen";
 import type { Trade } from "./types";
+import { uidForCode } from "./data/follows";
+import { notifyReaction } from "./data/notifications";
 
 const REACTIONS = ["FIRE", "GEM", "UP", "TARGET", "PAIN", "MIND"] as const;
 type Reaction = (typeof REACTIONS)[number];
@@ -63,6 +65,8 @@ interface FriendsFeedProps {
   myUid: string;
   recentTrades: Trade[];
   isDesktop: boolean;
+  section: "feed" | "ideas" | "people";
+  onSectionChange: (s: "feed" | "ideas" | "people") => void;
 }
 
 export function FriendsFeed({
@@ -73,8 +77,9 @@ export function FriendsFeed({
   publishFeed, refreshFeed, reactToFeed, myFeedReactions, profile,
   C, inp, pillPrimary, openProfile,
   myUid, recentTrades, isDesktop,
+  section, onSectionChange: _onSectionChange,
 }: FriendsFeedProps) {
-  const [tab, setTab] = useState<"feed" | "ideas" | "people">("feed");
+  const tab = section;
 
   const followingCount = following?.length ?? 0;
   const followerCount = followerProfiles?.length ?? 0;
@@ -82,16 +87,6 @@ export function FriendsFeed({
   const orb1 = C.orb1 ?? "oklch(0.55 0.22 252)";
   const orb2 = C.orb2 ?? "oklch(0.45 0.20 268)";
   const cardBg = `color-mix(in srgb, ${C.text} 3%, transparent)`;
-
-  const tabBtn = (id: "feed" | "ideas" | "people", label: string) => (
-    <button key={id} onClick={() => setTab(id)} style={{
-      background: "none", border: "none", padding: "0 0 6px 0", cursor: "pointer",
-      fontFamily: MONO, fontSize: "11px", letterSpacing: "0.08em",
-      textTransform: "uppercase" as const,
-      color: tab === id ? C.text : C.muted,
-      borderBottom: tab === id ? `1px solid ${C.text}` : "1px solid transparent",
-    }}>{label}</button>
-  );
 
   return (
     <div style={{ position: "relative" }}>
@@ -133,11 +128,6 @@ export function FriendsFeed({
                 {showAddFriend ? "Close" : "+ Follow"}
               </button>
             </div>
-          </div>
-          <div style={{ display: "flex", gap: "16px", marginTop: "14px" }}>
-            {tabBtn("feed", "Feed")}
-            {tabBtn("ideas", "Ideas")}
-            {tabBtn("people", `People${followingCount ? ` · ${followingCount}` : ""}`)}
           </div>
         </div>
 
@@ -411,7 +401,20 @@ export function FriendsFeed({
                             if (!iMine && count === 0) return null;
                             return (
                               <button key={rx}
-                                onClick={() => reactToFeed(item.authorCode, item.tradeId, rx)}
+                                onClick={() => {
+                                  reactToFeed(item.authorCode, item.tradeId, rx);
+                                  void uidForCode(item.authorCode).then(authorUid => {
+                                    if (authorUid) {
+                                      void notifyReaction({
+                                        targetUid: authorUid,
+                                        surface: "feed_trade",
+                                        emoji: REACTION_EMOJI[rx],
+                                        contextLabel: (item.strategy as string | undefined) ?? (item.pair as string | undefined) ?? undefined,
+                                        currentUid: myUid,
+                                      });
+                                    }
+                                  });
+                                }}
                                 style={{
                                   display: "flex", alignItems: "center", gap: "5px",
                                   padding: "4px 9px", borderRadius: "999px",
@@ -429,7 +432,20 @@ export function FriendsFeed({
                             <div style={{ display: "flex", gap: "4px" }}>
                               {REACTIONS.map(rx => (
                                 <button key={rx}
-                                  onClick={() => reactToFeed(item.authorCode, item.tradeId, rx)}
+                                  onClick={() => {
+                                    reactToFeed(item.authorCode, item.tradeId, rx);
+                                    void uidForCode(item.authorCode).then(authorUid => {
+                                      if (authorUid) {
+                                        void notifyReaction({
+                                          targetUid: authorUid,
+                                          surface: "feed_trade",
+                                          emoji: REACTION_EMOJI[rx],
+                                          contextLabel: (item.strategy as string | undefined) ?? (item.pair as string | undefined) ?? undefined,
+                                          currentUid: myUid,
+                                        });
+                                      }
+                                    });
+                                  }}
                                   style={{
                                     width: "28px", height: "28px", borderRadius: "999px",
                                     background: cardBg, border: `1px solid ${C.border}`,
