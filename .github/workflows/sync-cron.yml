@@ -23,8 +23,8 @@ jobs:
       - name: Trigger broker sync
         run: |
           STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-            -X GET "https://kodatrade.co.uk/api/cron/sync" \
-            -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
+            -X GET "https://www.kodatrade.co.uk/api/cron?job=sync" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
             --max-time 180)
           echo "Response status: $STATUS"
           if [ "$STATUS" -lt 200 ] || [ "$STATUS" -ge 300 ]; then
