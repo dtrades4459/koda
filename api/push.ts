@@ -38,8 +38,9 @@ async function handleSubscribe(req: VercelRequest, res: VercelResponse) {
 }
 
 async function handleSend(req: VercelRequest, res: VercelResponse) {
-  const secret = req.headers["x-cron-secret"] as string | undefined;
-  if (!secret || secret !== process.env.CRON_SECRET) return res.status(401).json({ error: "Unauthorized" });
+  const auth = req.headers.authorization as string | undefined;
+  const token = auth?.startsWith("Bearer ") ? auth.slice(7) : "";
+  if (!token || token !== process.env.CRON_SECRET) return res.status(401).json({ error: "Unauthorized" });
 
   const { userId, title, body } = req.body as { userId: string; title: string; body: string };
   if (!userId || !title) return res.status(400).json({ error: "Missing fields" });
@@ -111,8 +112,9 @@ async function handleNotifyCircle(req: VercelRequest, res: VercelResponse) {
 }
 
 async function handleBroadcast(req: VercelRequest, res: VercelResponse) {
-  const secret = req.headers["x-cron-secret"] as string | undefined;
-  if (!secret || secret !== process.env.CRON_SECRET) return res.status(401).json({ error: "Unauthorized" });
+  const auth = req.headers.authorization as string | undefined;
+  const token = auth?.startsWith("Bearer ") ? auth.slice(7) : "";
+  if (!token || token !== process.env.CRON_SECRET) return res.status(401).json({ error: "Unauthorized" });
 
   const { title, body } = req.body as { title: string; body: string };
   if (!title || !body) return res.status(400).json({ error: "Missing title or body" });

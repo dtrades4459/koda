@@ -31,7 +31,7 @@ function cors(req: Req, res: Res) {
   const allowed = ALLOWED_ORIGINS.has(origin) ? origin : APP_URL;
   res.setHeader("Access-Control-Allow-Origin", allowed);
   res.setHeader("Vary", "Origin");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, x-cron-secret");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
 }
 
