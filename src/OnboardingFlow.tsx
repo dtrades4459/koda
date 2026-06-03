@@ -399,32 +399,40 @@ export function OnboardingFlow({ C, onComplete }: {
             <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
               <button
                 disabled={pushBusy}
-                onClick={async () => {
+                onClick={() => {
                   if (pushBusy) return;
                   setPushBusy(true);
                   setPushMsg(null);
-                  const result = await subscribeToPush();
-                  setPushBusy(false);
-                  if (result.ok) {
-                    setPushMsg({ kind: "ok", text: "Notifications enabled. Heading to the app…" });
-                    setTimeout(() => goNext(), 700);
-                  } else {
-                    setPushMsg({ kind: "err", text: result.message });
-                  }
+                  // Hard cap so the UI never gets stuck if the browser hangs the
+                  // permission promise (seen on some iOS PWA installs).
+                  const timeout = new Promise<{ ok: false; reason: "unknown"; message: string }>(resolve =>
+                    setTimeout(() => resolve({ ok: false, reason: "unknown", message: "Took too long — tap Enable to try again or skip for now." }), 12000)
+                  );
+                  Promise.race([subscribeToPush(), timeout]).then(result => {
+                    setPushBusy(false);
+                    if (result.ok) {
+                      setPushMsg({ kind: "ok", text: "Notifications enabled. Heading to the app…" });
+                      setTimeout(() => goNext(), 700);
+                    } else {
+                      setPushMsg({ kind: "err", text: result.message });
+                    }
+                  });
                 }}
                 style={pillPrimary(!pushBusy)}
               >
                 {pushBusy ? "Asking permission…" : pushMsg?.kind === "ok" ? "✓ Enabled" : "Enable notifications"}
               </button>
               <button
-                onClick={() => { setPushMsg(null); goNext(); }}
+                onClick={() => { setPushMsg(null); setPushBusy(false); goNext(); }}
                 style={{
-                  background: "transparent", color: C.muted, border: "none",
-                  fontFamily: MONO, fontSize: "11px", letterSpacing: "0.1em",
-                  textTransform: "uppercase" as const, cursor: "pointer", padding: "10px 0",
+                  background: "transparent", color: C.text2,
+                  border: `1px solid ${C.border2}`, borderRadius: "999px",
+                  padding: "14px 32px", minHeight: "44px",
+                  fontFamily: BODY, fontSize: "14px", fontWeight: 500,
+                  letterSpacing: "0.01em", cursor: "pointer", width: "100%",
                 }}
               >
-                Maybe later
+                Skip for now
               </button>
             </div>
           </div>

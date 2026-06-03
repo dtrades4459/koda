@@ -31,16 +31,22 @@ export async function subscribeToPush(): Promise<PushSubscribeResult> {
     return { ok: false, reason: "unsupported", message: "Push notifications aren't supported on this device" };
   }
 
+  // iOS Safari (and some Android Chrome PWAs) require Notification.requestPermission()
+  // to be invoked synchronously inside the user-gesture callstack. Any awaited call
+  // before it consumes the activation token and the OS prompt silently never appears.
+  // Kick off the request now, before any other await, so the gesture is preserved.
+  const permissionPromise = Notification.requestPermission();
+
   try {
+    const permission = await permissionPromise;
+    if (permission === "denied") return { ok: false, reason: "denied", message: "Notifications blocked — allow them in your browser settings" };
+    if (permission !== "granted") return { ok: false, reason: "dismissed", message: "Notification permission not granted" };
+
     let reg = await navigator.serviceWorker.getRegistration();
     if (!reg) {
       reg = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
-      await navigator.serviceWorker.ready;
     }
-
-    const permission = await Notification.requestPermission();
-    if (permission === "denied") return { ok: false, reason: "denied", message: "Notifications blocked — allow them in your browser settings" };
-    if (permission !== "granted") return { ok: false, reason: "dismissed", message: "Notification permission not granted" };
+    await navigator.serviceWorker.ready;
 
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.access_token) return { ok: false, reason: "no_session", message: "Sign in required" };
