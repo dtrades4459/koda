@@ -90,7 +90,7 @@ async function sendPush(
 // ---------------------------------------------------------------------------
 // Shared notification helper — writes to notification_feed + fans out push
 // ---------------------------------------------------------------------------
-type NotifKind = "follow" | "circle_join" | "reaction" | "idea_like";
+type NotifKind = "follow" | "circle_join" | "reaction" | "idea_like" | "digest";
 
 interface DeliverOpts {
   targetUid: string;
