@@ -28,7 +28,7 @@
 
 A trading journal PWA for retail futures traders. Log trades, track stats (P&L, win rate, avg R), follow friends, and compete in Trading Circles. Mobile-first, installable as a home screen app on iOS/Android.
 
-**Live URLs:** https://kodatrade.co.uk (primary) · https://tradrjournal.xyz (legacy) (GoDaddy → Vercel)
+**Live URL:** https://kodatrade.co.uk
 **Vercel project:** `tradr.dt` (account: `dylnyland4459-1994`)
 **Supabase project ID:** `vifwjwsndchnrpvfgrmg`
 **Git repo:** `https://github.com/dtrades4459/koda.git` (`main`). **Pushes to main auto-deploy via Vercel** — `git push origin main` IS the deploy. `npm run build` locally before pushing to catch missing-import failures.
