@@ -221,7 +221,7 @@ async function handleCheckout(req: Req, res: Res, body: Record<string, unknown>)
   } catch (err: unknown) {
     console.error("[stripe/checkout]", err);
     const status = typeof err === "object" && err !== null && "status" in err ? Number((err as { status: unknown }).status) : 500;
-    res.status(status).json({ error: err instanceof Error ? err.message : "Internal server error" });
+    res.status(status).json({ error: "Checkout failed. Please try again." });
   }
 }
 
@@ -267,7 +267,7 @@ async function handlePortal(req: Req, res: Res, body: Record<string, unknown>) {
     res.json({ url: session.url });
   } catch (err: unknown) {
     console.error("[stripe/portal]", err);
-    res.status(500).json({ error: err instanceof Error ? err.message : "Internal server error" });
+    res.status(500).json({ error: "Could not open billing portal. Please try again." });
   }
 }
 
