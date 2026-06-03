@@ -379,8 +379,9 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
         .koda-features{display:grid;grid-template-columns:1fr;gap:16px;}
         @media(min-width:680px){.koda-features{grid-template-columns:1fr 1fr;}}
         @media(min-width:1100px){.koda-features{grid-template-columns:1fr 1fr 1fr 1fr;}}
-        .koda-feat{padding:22px;border-radius:18px;background:${C.panel};border:1px solid ${C.border};display:flex;flex-direction:column;gap:10px;transition:border-color 0.18s, transform 0.18s;}
-        .koda-feat:hover{border-color:${C.border2};transform:translateY(-2px);}
+        .koda-feat{padding:22px;border-radius:18px;background:${C.panel};border:1px solid ${C.border};display:flex;flex-direction:column;gap:10px;}
+        a.koda-feat{transition:border-color 0.18s, transform 0.18s;}
+        a.koda-feat:hover{border-color:${C.border2};transform:translateY(-2px);}
 
         .koda-pricing{display:grid;grid-template-columns:1fr;gap:20px;}
         @media(min-width:780px){.koda-pricing{grid-template-columns:1fr 1fr;}}
@@ -466,7 +467,7 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
                 fontFamily: MONO, fontSize: 9, fontWeight: 700, color: "#0A0A0A",
               }}>v1</span>
               <span style={{ fontFamily: MONO, fontSize: 11, color: C.text, letterSpacing: "0.04em" }}>
-                Now connecting <span style={{ color: C.live, fontWeight: 600 }}>Tradovate</span> + Rithmic
+                <span style={{ color: C.live, fontWeight: 600 }}>CSV import live</span> · Tradovate auto-sync coming
               </span>
             </div>
 
@@ -480,13 +481,13 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
               marginBottom: 24,
               textShadow: `0 0 60px ${C.orb1}60, 0 0 120px ${C.orb3}40`,
             }}>
-              The operating system<br />
-              for <span style={{ fontStyle: "italic", fontWeight: 500, color: C.live }}>serious traders.</span>
+              The journal that<br />
+              stops you <span style={{ fontStyle: "italic", fontWeight: 500, color: C.live }}>mid-tilt.</span>
             </h1>
 
             <p style={{ fontSize: "clamp(15px, 1.4vw, 17px)", color: C.text2, lineHeight: 1.65, maxWidth: 580, fontWeight: 400, marginBottom: 36 }}>
-              A trading journal that intervenes when you tilt, scores your discipline,
-              and lets a small circle of traders keep you honest. Free forever to log trades.
+              Every other journal asks <em>what went wrong?</em> after the money's gone.
+              Kōda asks <em>are you sure?</em> before you take the trade. Free forever to log and review.
             </p>
 
             {/* CTA row — wired buttons */}
@@ -617,10 +618,10 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
             justifyContent: "center",
           }}>
             {[
-              { n: "01", w: "discipline", accent: false },
-              { n: "02", w: "momentum",   accent: false },
-              { n: "03", w: "progress",   accent: false },
-              { n: "04", w: "success",    accent: true  },
+              { n: "01", w: "log",       accent: false },
+              { n: "02", w: "review",    accent: false },
+              { n: "03", w: "intervene", accent: false },
+              { n: "04", w: "improve",   accent: true  },
             ].map((p, i, arr) => (
               <div key={p.n} style={{ display: "flex", alignItems: "center", gap: "clamp(18px, 3vw, 36px)" }}>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
@@ -661,10 +662,10 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
               { tag: "SCORE", accent: false, title: "Discipline score",    body: "A+ to F, rolling seven days. Built from rule adherence and mistake tagging, not from P&L." },
               { tag: "SOCIAL", accent: true, title: "Trading Circles",     body: "Private groups of 3 to 20. Live leaderboards, group chat, weekly challenges. Accountability your friends can see.", href: "/trading-circles.html" },
               { tag: "FEED",  accent: false, title: "Ideas feed",          body: "Pre-trade setups and post-trade breakdowns. Public if you want it, private by default." },
-              { tag: "SYNC",  accent: false, title: "Auto-import",         body: "Live Tradovate sync. CSV for Rithmic, TradingView, NinjaTrader, TopstepX, FTMO, MT4 and MT5." },
-              { tag: "STATS", accent: false, title: "Stats dashboard",     body: "Win rate, average R, streaks, MAE / MFE, time-of-day heatmaps. Numbers that actually move your edge." },
+              { tag: "SYNC",  accent: false, title: "CSV import",          body: "Tradovate, Rithmic, TradingView, NinjaTrader 8, TopstepX, FTMO, MT4 and MT5. Live Tradovate auto-sync coming." },
+              { tag: "STATS", accent: false, title: "Stats dashboard",     body: "Win rate, average R, streaks, time-on-tilt counters. Numbers that actually move your edge." },
               { tag: "PROP",  accent: false, title: "Prop firm tracker",   body: "Profit target, daily loss, max drawdown. Built for Topstep, FTMO, and the eval grind." },
-              { tag: "TAG",   accent: false, title: "Strategy tagging",    body: "ICT, Supply / Demand, Wyckoff, Opening Range built in. Add your own setups in two taps." },
+              { tag: "TAG",   accent: false, title: "Strategy tagging",    body: "Tag every trade with ICT, Supply & Demand, Wyckoff, or Opening Range. Custom setups on Pro." },
             ].map((f) => {
               const inner = (
                 <>
@@ -694,6 +695,7 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
         {/* BUILT-IN STRATEGIES */}
         <section style={{ marginTop: "clamp(80px, 10vw, 128px)" }}>
           <div className="koda-section-label">BUILT-IN STRATEGIES</div>
+          <h2 className="koda-section-h2">Strategies you can tag from day one.</h2>
           <div className="koda-strategies">
             {[
               { n: "01", name: "ICT / Smart Money",     desc: "Order blocks, fair value gaps, liquidity sweeps. Mark your bias before the open." },
@@ -743,10 +745,11 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
                 {[
                   "Unlimited trade logging",
                   "Full stats dashboard",
-                  "1 Trading Circle",
-                  "Ideas feed",
-                  "Discipline score",
                   "Tilt intervention",
+                  "Discipline score",
+                  "Prop firm eval tracker",
+                  "Ideas feed",
+                  "1 Trading Circle",
                   "iOS + Android (PWA)",
                 ].map((item) => (
                   <li key={item} style={{ fontFamily: BODY, fontSize: 14, color: C.text2, display: "flex", alignItems: "flex-start", gap: 10 }}>
@@ -803,9 +806,9 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
                 {[
                   "Everything in Free",
                   "Unlimited Trading Circles",
-                  "Advanced analytics (MAE / MFE, heatmaps)",
-                  "Prop firm eval tracker",
+                  "Advanced analytics (MAE / MFE, heatmaps, drawdown curves)",
                   "Custom strategy slots",
+                  "Weekly digest emails",
                   "Priority support",
                 ].map((item) => (
                   <li key={item} style={{ fontFamily: BODY, fontSize: 14, color: C.text2, display: "flex", alignItems: "flex-start", gap: 10 }}>
@@ -841,7 +844,7 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
               fontWeight: 500, letterSpacing: "-0.015em", lineHeight: 1.3,
               color: C.text, maxWidth: "44ch", marginBottom: 18,
             }}>
-              Tradezella is the better analytics tool. Kōda is the better behavioural tool.
+              Tradezella is a better analytics tool. Kōda is a better behavioural tool.
               The honest question is which one your <span style={{ fontStyle: "italic", color: C.live }}>actual</span> losses come from.
             </div>
             <span style={{
