@@ -12,17 +12,18 @@ import { MONO, BODY } from "./shared";
 // ── Colour tokens ─────────────────────────────────────────────────────────────
 
 export const DARK = {
-  // Core surfaces
-  bg: "#0A0A0B",
-  panel: "#131317",
-  panel2: "#1A1A20",
-  border: "rgba(255,255,255,0.07)",
-  border2: "rgba(255,255,255,0.12)",
+  // Core surfaces — warm-dark (coffee-toned), softens the "dark-web" feel
+  // beta testers flagged without losing the focused-trader vibe at night.
+  bg: "#13110E",
+  panel: "#1B1814",
+  panel2: "#23201B",
+  border: "rgba(245,234,222,0.07)",
+  border2: "rgba(245,234,222,0.13)",
   // Text
-  text: "#F2F2EE",
-  text2: "#A6A6A2",
-  muted: "#65655F",
-  dim: "#45453F",
+  text: "#F2EFE9",
+  text2: "#A8A39A",
+  muted: "#6A655C",
+  dim: "#4A4640",
   // Accents
   accent: "oklch(0.74 0.16 250)",    // electric blue — links, highlights
   accentSoft: "oklch(0.74 0.16 250 / 0.18)",
@@ -32,7 +33,7 @@ export const DARK = {
   green: "oklch(0.78 0.18 152)",
   red: "oklch(0.70 0.21 25)",
   // Glass/bloom
-  surfaceGlass: "rgba(28,28,34,0.55)",
+  surfaceGlass: "rgba(34,30,26,0.55)",
   orb1: "oklch(0.55 0.22 252)",
   orb2: "oklch(0.45 0.20 268)",
   orb3: "oklch(0.68 0.18 175)",

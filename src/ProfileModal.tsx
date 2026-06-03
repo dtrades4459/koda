@@ -73,7 +73,16 @@ export function ProfileModal({ handle, myCode, following, followUser, unfollowUs
   const isMe = targetCode === myCode;
   const isFollowing = targetCode ? (following || []).includes(targetCode) : false;
 
-  const isDark = C.bg === "#0A0A0B";
+  // Dark theme detection by relative luminance of bg, not literal string match —
+  // resilient to palette tweaks (the warm-dark refresh broke the old equality check).
+  const isDark = (() => {
+    const hex = C.bg.replace("#", "");
+    if (hex.length < 6) return true;
+    const r = parseInt(hex.slice(0, 2), 16);
+    const g = parseInt(hex.slice(2, 4), 16);
+    const b = parseInt(hex.slice(4, 6), 16);
+    return (r + g + b) / 3 < 128;
+  })();
   const initials = (pubProfile?.name || "?").split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
 
   return (

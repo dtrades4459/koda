@@ -17,7 +17,7 @@ const root = join(__dirname, "..");
 const svg = readFileSync(join(root, "public/og-image.svg"), "utf8");
 
 const html = `<!doctype html><html><head><style>
-  html,body{margin:0;padding:0;background:#0A0A0B;overflow:hidden}
+  html,body{margin:0;padding:0;background:#13110E;overflow:hidden}
   svg{display:block;width:1200px;height:630px}
 </style></head><body>${svg}</body></html>`;
 
