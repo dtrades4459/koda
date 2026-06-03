@@ -103,15 +103,17 @@ export function useFeed({
 
   // ── Stable refs (avoid stale closures in effects) ─────────────────────────
   const getMyCodeRef   = useRef(getMyCode);
-  getMyCodeRef.current = getMyCode;
   const profileRef     = useRef(profile);
-  profileRef.current   = profile;
   const followingRef   = useRef(following);
-  followingRef.current = following;
   const friendsRef     = useRef(friends);
-  friendsRef.current   = friends;
   const tradesRef      = useRef(trades);
-  tradesRef.current    = trades;
+  useEffect(() => {
+    getMyCodeRef.current = getMyCode;
+    profileRef.current   = profile;
+    followingRef.current = following;
+    friendsRef.current   = friends;
+    tradesRef.current    = trades;
+  });
 
   // ── Initial load from storage (fires once when loadAll completes) ─────────
   useEffect(() => {
@@ -131,7 +133,7 @@ export function useFeed({
         }
       })
       .catch(e => log.error("useFeed.load.feed", e));
-  }, [loading]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [loading]);
 
   // ── Feed actions ──────────────────────────────────────────────────────────
 
@@ -256,16 +258,16 @@ export function useFeed({
 
   // ── Auto-publish my feed (debounced 1 s) ─────────────────────────────────
   const publishRef = useRef(publishFeed);
-  publishRef.current = publishFeed;
+  useEffect(() => { publishRef.current = publishFeed; });
   useEffect(() => {
     if (loading) return;
     const t = setTimeout(() => { publishRef.current(); }, 1000);
     return () => clearTimeout(t);
-  }, [trades, loading]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [trades, loading]);
 
   // ── Auto-refresh inbound feed (every 2 min) ───────────────────────────────
   const refreshRef = useRef(refreshFeed);
-  refreshRef.current = refreshFeed;
+  useEffect(() => { refreshRef.current = refreshFeed; });
   useEffect(() => {
     // Fire if the user has ANY source of inbound items — legacy friends OR
     // follows. Previously this only checked friends, so follow-only users
@@ -273,7 +275,7 @@ export function useFeed({
     if (loading || (!friends.length && !following.length)) return;
     const id = setInterval(() => { refreshRef.current(); }, 2 * 60 * 1000);
     return () => clearInterval(id);
-  }, [loading, friends, following]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [loading, friends, following]);
 
   // ── Return ────────────────────────────────────────────────────────────────
   return {
