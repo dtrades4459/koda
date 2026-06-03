@@ -10,11 +10,11 @@
 //   SUPABASE_SERVICE_ROLE_KEY — from Supabase dashboard → Settings → API → service_role
 // ═══════════════════════════════════════════════════════════════════════════════
 
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-let _admin: ReturnType<typeof createClient> | null = null;
+let _admin: SupabaseClient | null = null;
 
-export function getAdminClient() {
+export function getAdminClient(): SupabaseClient {
   if (_admin) return _admin;
   const url = process.env.SUPABASE_URL ?? "";
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
@@ -26,10 +26,7 @@ export function getAdminClient() {
   _admin = createClient(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
-  // TS 5.9 infers .from("unregistered_table") as never when Database generic
-  // propagates through conditional types. Cast to any so api/ files can
-  // query tables not yet in the generated schema without TS2769 errors.
-  return _admin as any;
+  return _admin;
 }
 
 /**
