@@ -62,6 +62,75 @@ async function handleSend(req: VercelRequest, res: VercelResponse) {
   return res.status(200).json({ ok: true });
 }
 
+// ---------------------------------------------------------------------------
+// Low-level single-subscription sender with dead-endpoint cleanup
+// ---------------------------------------------------------------------------
+async function sendPush(
+  endpoint: string,
+  p256dh: string,
+  authKey: string,
+  payload: string,
+): Promise<void> {
+  try {
+    await webpush.sendNotification(
+      { endpoint, keys: { p256dh, auth: authKey } },
+      payload,
+    );
+  } catch (err: unknown) {
+    const statusCode = (err as { statusCode?: number })?.statusCode;
+    if (statusCode === 410 || statusCode === 404) {
+      // Dead endpoint — remove so we stop sending to it
+      await supabase.from("notification_subscriptions").delete().eq("endpoint", endpoint);
+    } else {
+      throw err;
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Shared notification helper — writes to notification_feed + fans out push
+// ---------------------------------------------------------------------------
+type NotifKind = "follow" | "circle_join" | "reaction" | "idea_like";
+
+interface DeliverOpts {
+  targetUid: string;
+  kind: NotifKind;
+  title: string;
+  body: string;
+  data: Record<string, unknown>;
+}
+
+export async function deliverNotification(opts: DeliverOpts): Promise<void> {
+  // 1. Write to in-app feed (notification_feed table from Task 7's migration)
+  await supabase.from("notification_feed").insert({
+    user_id: opts.targetUid,
+    kind: opts.kind,
+    data: { title: opts.title, body: opts.body, ...opts.data },
+  });
+
+  // 2. Fan out push to all subscribed endpoints for this user
+  const { data: subs } = await supabase
+    .from("notification_subscriptions")
+    .select("endpoint, p256dh, auth_key")
+    .eq("user_id", opts.targetUid);
+  if (!subs?.length) return;
+
+  const payload = JSON.stringify({
+    title: opts.title,
+    body: opts.body,
+    data: { kind: opts.kind, ...opts.data },
+  });
+
+  await Promise.all(
+    subs.map((s: { endpoint: string; p256dh: string; auth_key: string }) =>
+      sendPush(s.endpoint, s.p256dh, s.auth_key, payload).catch((err: unknown) => {
+        console.error("[push] deliver failed:", err);
+      }),
+    ),
+  );
+}
+
+// ---------------------------------------------------------------------------
 async function handleNotifyCircle(req: VercelRequest, res: VercelResponse) {
   const auth = req.headers.authorization as string | undefined;
   if (!auth?.startsWith("Bearer ")) return res.status(401).json({ error: "No token" });
@@ -101,12 +170,12 @@ async function handleNotifyCircle(req: VercelRequest, res: VercelResponse) {
     ? (messagePreview.length > 80 ? messagePreview.slice(0, 77) + "…" : messagePreview)
     : "New message in your circle";
 
-  await Promise.allSettled(subs.map((sub: { endpoint: string; p256dh: string; auth_key: string }) =>
-    webpush.sendNotification(
-      { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth_key } },
-      JSON.stringify({ title, body: preview, icon: "/icon-192.png" })
-    )
-  ));
+  const circlePayload = JSON.stringify({ title, body: preview, icon: "/icon-192.png" });
+  await Promise.allSettled(
+    subs.map((sub: { endpoint: string; p256dh: string; auth_key: string }) =>
+      sendPush(sub.endpoint, sub.p256dh, sub.auth_key, circlePayload),
+    ),
+  );
 
   return res.status(200).json({ ok: true, sent: subs.length });
 }
