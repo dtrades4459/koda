@@ -13,6 +13,8 @@ import { usePreSession } from "./hooks/usePreSession";
 import { useSessionDebrief } from "./hooks/useSessionDebrief";
 import { useCircles } from "./hooks/useCircles";
 import { useUnreadCircles } from "./hooks/useUnreadCircles";
+import { useUnreadNotifications } from "./hooks/useUnreadNotifications";
+import { NotificationFeed } from "./components/NotificationFeed";
 import { logInterventionEvent, linkTradeToRecentIntervention } from "./data/interventions";
 import { InterventionSheet } from "./components/InterventionSheet";
 import { PreSessionSheet } from "./components/PreSessionSheet";
@@ -345,6 +347,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   const [addingRule, setAddingRule] = useState(false);
   const [calDayTrades, setCalDayTrades] = useState<{ key: string; trades: Trade[] } | null>(null);
   const [statsTab, setStatsTab] = useState("performance");
+  const [socialSection, setSocialSection] = useState<"feed" | "ideas" | "people" | "activity">("feed");
   const [disciplineLog, setDisciplineLog] = useState<DisciplineLogEntry[]>([]);
   const [setupPeriod, setSetupPeriod] = useState<"month" | "all">("month");
   const [setupMetric, setSetupMetric] = useState<"pnl" | "winrate" | "trades">("pnl");
@@ -865,6 +868,9 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   const { total: circlesUnread } = useUnreadCircles(
     myCircles.map((c: Circle) => c.code)
   );
+
+  // Unread notifications — drives the nav badge on the Social tab.
+  const socialUnread = useUnreadNotifications();
 
   // Show first-session survey once after onboarding — captures priorTool and
   // almostStoppedReason for PostHog segmentation.
@@ -1618,6 +1624,12 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     { id: "pretrade", label: "Pre-trade" },
     { id: "rules", label: "Rules" },
   ];
+  const SOCIAL_SECTIONS = [
+    { id: "feed",     label: "Feed" },
+    { id: "ideas",    label: "Ideas" },
+    { id: "people",   label: "People" },
+    { id: "activity", label: "Activity" },
+  ];
   // When on a home sub-view, reflect that in the home subnav's active section
   // so the sidebar stays in the "Home" universe on desktop.
   const effectiveHomeSection = view === "checklist" ? "rules" : view === "history" ? "journal" : homeSection;
@@ -1629,6 +1641,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     } };
     if (v === "stats") return { sections: STATS_SECTIONS, value: statsTab, onChange: setStatsTab };
     if (v === "checklist") return { sections: CHECKLIST_SECTIONS, value: checklistTab, onChange: setChecklistTab };
+    if (v === "social") return { sections: SOCIAL_SECTIONS, value: socialSection, onChange: (s: string) => setSocialSection(s as "feed" | "ideas" | "people" | "activity") };
     return null;
   };
 
@@ -1850,6 +1863,16 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                         {tab.id === "circles" && circlesUnread > 0 && (
                           <span
                             aria-label={`${circlesUnread} unread`}
+                            style={{
+                              position: "absolute", top: 6, right: 6, width: 8, height: 8,
+                              borderRadius: 999, background: C.accent,
+                              boxShadow: `0 0 0 1.5px ${C.bg}`,
+                            }}
+                          />
+                        )}
+                        {tab.id === "social" && socialUnread > 0 && (
+                          <span
+                            aria-label={`${socialUnread} unread`}
                             style={{
                               position: "absolute", top: 6, right: 6, width: 8, height: 8,
                               borderRadius: 999, background: C.accent,
@@ -4411,7 +4434,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
           )}
 
           {/* ══════════════════════════ SOCIAL ══════════════════════════ */}
-          {view === "social" && (
+          {view === "social" && socialSection !== "activity" && (
             <FriendsFeed
               friends={friends} friendFeed={friendFeed as any} showAddFriend={showAddFriend} setShowAddFriend={setShowAddFriend}
               followHandleInput={followHandleInput} setFollowHandleInput={setFollowHandleInput}
@@ -4425,6 +4448,9 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
               recentTrades={trades}
               isDesktop={isDesktop}
             />
+          )}
+          {view === "social" && socialSection === "activity" && (
+            <NotificationFeed C={C} />
           )}
           </div>{/* end main */}
         </div>{/* end grid */}
@@ -4454,6 +4480,16 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                       {tab.id === "circles" && circlesUnread > 0 && (
                         <span
                           aria-label={`${circlesUnread} unread`}
+                          style={{
+                            position: "absolute", top: -3, right: -5, width: 6, height: 6,
+                            borderRadius: 999, background: C.accent,
+                            boxShadow: `0 0 0 1.5px ${C.bg}`,
+                          }}
+                        />
+                      )}
+                      {tab.id === "social" && socialUnread > 0 && (
+                        <span
+                          aria-label={`${socialUnread} unread`}
                           style={{
                             position: "absolute", top: -3, right: -5, width: 6, height: 6,
                             borderRadius: 999, background: C.accent,
