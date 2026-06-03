@@ -26,8 +26,8 @@ const TZ_LS_KEY = "koda_news_tz";
 const USD_ONLY_LS_KEY = "koda_news_usd_only";
 const IMPACTS_LS_KEY = "koda_news_impacts";
 
-const ALL_IMPACTS: ReadonlyArray<Impact> = ["high", "medium", "low", "holiday"];
-const DEFAULT_IMPACTS: ReadonlyArray<Impact> = ["high", "medium", "low"];
+const ALL_IMPACTS: ReadonlyArray<Impact> = ["high", "medium"];
+const DEFAULT_IMPACTS: ReadonlyArray<Impact> = ["high", "medium"];
 
 interface Props {
   C: Theme;
