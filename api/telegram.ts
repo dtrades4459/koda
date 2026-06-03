@@ -10,6 +10,7 @@ type VercelResponse = { status(n: number): VercelResponse; json(d: unknown): Ver
 
 import { createClient } from "@supabase/supabase-js";
 import webpush from "web-push";
+import { timingSafeEqual } from "crypto";
 
 const ADMIN_IDS = new Set(
   (process.env.TELEGRAM_ALLOWED_USER_IDS ?? '7587404723')
@@ -68,8 +69,11 @@ async function broadcast(title: string, body: string): Promise<{ sent: number; t
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") return res.status(405).end();
 
-  const secret = req.headers["x-telegram-bot-api-secret-token"] as string | undefined;
-  if (secret !== process.env.TELEGRAM_WEBHOOK_SECRET) return res.status(401).end();
+  const expected = process.env.TELEGRAM_WEBHOOK_SECRET ?? "";
+  const secret = (req.headers["x-telegram-bot-api-secret-token"] as string | undefined) ?? "";
+  const a = Buffer.from(secret, "utf8");
+  const b = Buffer.from(expected, "utf8");
+  if (!expected || a.length !== b.length || !timingSafeEqual(a, b)) return res.status(401).end();
 
   const update = req.body as {
     message?: { from?: { id: number }; chat: { id: number }; text?: string };
