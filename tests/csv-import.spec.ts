@@ -160,7 +160,7 @@ test.describe("CSV Import (authenticated)", () => {
 
     // TradeTagger overlay.
     await expect(page.locator("text=/quick tag/i")).toBeVisible({ timeout: 10_000 });
-    await expect(page.locator("text=/1\//")).toBeVisible();
+    await expect(page.locator("text=/1\\//")).toBeVisible();
   });
 
   test("TradeTagger Skip advances to trade 2", async ({ page }) => {
@@ -173,7 +173,7 @@ test.describe("CSV Import (authenticated)", () => {
     await page.waitForSelector("text=/quick tag/i", { timeout: 10_000 });
 
     await page.getByRole("button", { name: /Skip/i }).click();
-    await expect(page.locator("text=/2\//")).toBeVisible();
+    await expect(page.locator("text=/2\\//")).toBeVisible();
   });
 
   test("TradeTagger Done exits and shows toast", async ({ page }) => {
