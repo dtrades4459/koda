@@ -511,68 +511,106 @@ async function handleSync(req: Req, res: Res) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// Job: news-calendar  (ForexFactory → shared_kv)
+// Job: news-calendar  (Finnhub → news_cache)
+//
+// Finnhub's free-tier economic calendar provides actuals once events release,
+// unlike ForexFactory's free JSON feed which never populates the actual field.
 // ══════════════════════════════════════════════════════════════════════════════
 
-const FF_URL = "https://nfs.faireconomy.media/ff_calendar_thisweek.json";
+const FINNHUB_CALENDAR_URL = "https://finnhub.io/api/v1/calendar/economic";
 
-type FFEvent = {
-  title?: string;
+type FinnhubEvent = {
+  actual?: number | null;
   country?: string;
-  date?: string;
+  estimate?: number | null;
+  event?: string;
   impact?: string;
-  forecast?: string;
-  previous?: string;
-  actual?: string;
+  prev?: number | null;
+  time?: string;
+  unit?: string;
+};
+
+// Finnhub uses ISO 3166 two-letter country codes; our app filters on currency
+// codes (USD, EUR, etc.) so map the common ones we care about.
+const COUNTRY_TO_CURRENCY: Record<string, string> = {
+  US: "USD", GB: "GBP", JP: "JPY", AU: "AUD", CA: "CAD", CH: "CHF",
+  NZ: "NZD", CN: "CNY",
+  DE: "EUR", FR: "EUR", IT: "EUR", ES: "EUR", NL: "EUR", BE: "EUR",
+  AT: "EUR", IE: "EUR", FI: "EUR", PT: "EUR", GR: "EUR", EU: "EUR",
 };
 
 function kebab(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 }
 
-function normaliseFFEvent(raw: FFEvent): Record<string, unknown> | null {
-  if (!raw.title || !raw.country || !raw.date) return null;
-  const time = raw.date;
+function withUnit(val: number | null | undefined, unit: string | undefined): string | null {
+  if (val === null || val === undefined) return null;
+  return `${val}${unit ?? ""}`;
+}
+
+function normaliseFinnhubEvent(raw: FinnhubEvent): Record<string, unknown> | null {
+  if (!raw.event || !raw.country || !raw.time) return null;
+  // Finnhub time is "YYYY-MM-DD HH:mm:ss" in UTC; convert to ISO with Z.
+  const time = `${raw.time.replace(" ", "T")}Z`;
   const impactRaw = (raw.impact ?? "").toLowerCase();
   const impact = ["high", "medium", "low", "holiday"].includes(impactRaw)
     ? impactRaw
     : "low";
   const day = time.slice(0, 10);
-  const id = `ff-${kebab(raw.title)}-${day}`;
+  const id = `ec-${kebab(raw.event)}-${day}`;
+  const country = COUNTRY_TO_CURRENCY[raw.country] ?? raw.country;
   return {
     id,
-    title: raw.title,
-    country: raw.country,
+    title: raw.event,
+    country,
     time,
     impact,
-    forecast: raw.forecast ?? null,
-    previous: raw.previous ?? null,
-    actual: raw.actual ?? null,
+    forecast: withUnit(raw.estimate ?? null, raw.unit),
+    previous: withUnit(raw.prev ?? null, raw.unit),
+    actual:   withUnit(raw.actual ?? null, raw.unit),
   };
 }
 
 async function handleNewsCalendar(req: Req, res: Res) {
   if (!isCronAuthed(req)) return res.status(401).json({ error: "Unauthorized" });
 
+  const apiKey = process.env.FINNHUB_API_KEY;
+  if (!apiKey) {
+    console.error("[news-calendar] FINNHUB_API_KEY not set");
+    return res.status(200).json({ ok: false, reason: "no api key" });
+  }
+
   try {
+    // Window: 7 days back (capture actuals as they fill in) to 14 days ahead.
+    const now = new Date();
+    const from = new Date(now); from.setUTCDate(from.getUTCDate() - 7);
+    const to   = new Date(now); to.setUTCDate(to.getUTCDate() + 14);
+    const fmt = (d: Date) => d.toISOString().slice(0, 10);
+    const url = `${FINNHUB_CALENDAR_URL}?from=${fmt(from)}&to=${fmt(to)}&token=${apiKey}`;
+
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 10_000);
-    const upstream = await fetch(FF_URL, { signal: ctrl.signal });
+    const upstream = await fetch(url, { signal: ctrl.signal });
     clearTimeout(timer);
 
     if (!upstream.ok) {
       console.error("[news-calendar] upstream non-200:", upstream.status);
       return res.status(200).json({ ok: false, reason: `upstream ${upstream.status}` });
     }
-    const raw = (await upstream.json()) as unknown;
-    if (!Array.isArray(raw) || raw.length === 0) {
-      console.error("[news-calendar] upstream returned empty/invalid array");
-      return res.status(200).json({ ok: false, reason: "empty upstream" });
+    const body = (await upstream.json()) as unknown;
+    if (
+      typeof body !== "object" ||
+      body === null ||
+      !Array.isArray((body as { economicCalendar?: unknown[] }).economicCalendar)
+    ) {
+      console.error("[news-calendar] invalid response shape");
+      return res.status(200).json({ ok: false, reason: "bad shape" });
     }
+    const rawEvents = (body as { economicCalendar: FinnhubEvent[] }).economicCalendar;
 
     const events: Record<string, unknown>[] = [];
-    for (const item of raw) {
-      const ev = normaliseFFEvent(item as FFEvent);
+    for (const item of rawEvents) {
+      const ev = normaliseFinnhubEvent(item);
       if (ev) events.push(ev);
     }
     if (events.length === 0) {
