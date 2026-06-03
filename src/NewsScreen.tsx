@@ -24,6 +24,10 @@ const TZ_OPTIONS: ReadonlyArray<{ id: TzId; label: string; iana: string | undefi
 
 const TZ_LS_KEY = "koda_news_tz";
 const USD_ONLY_LS_KEY = "koda_news_usd_only";
+const IMPACTS_LS_KEY = "koda_news_impacts";
+
+const ALL_IMPACTS: ReadonlyArray<Impact> = ["high", "medium", "low", "holiday"];
+const DEFAULT_IMPACTS: ReadonlyArray<Impact> = ["high", "medium", "low"];
 
 interface Props {
   C: Theme;
@@ -115,12 +119,40 @@ function loadUsdOnly(): boolean {
   return true; // default: USD-only on
 }
 
+function loadImpacts(): Set<Impact> {
+  if (typeof window === "undefined") return new Set(DEFAULT_IMPACTS);
+  const stored = window.localStorage?.getItem(IMPACTS_LS_KEY);
+  if (!stored) return new Set(DEFAULT_IMPACTS);
+  try {
+    const parsed = JSON.parse(stored) as unknown;
+    if (!Array.isArray(parsed)) return new Set(DEFAULT_IMPACTS);
+    const valid = parsed.filter((v): v is Impact => typeof v === "string" && (ALL_IMPACTS as ReadonlyArray<string>).includes(v));
+    return valid.length > 0 ? new Set(valid) : new Set(DEFAULT_IMPACTS);
+  } catch {
+    return new Set(DEFAULT_IMPACTS);
+  }
+}
+
+function impactLabel(i: Impact): string {
+  return i === "medium" ? "MED" : i.toUpperCase();
+}
+
 export function NewsScreen({ C }: Props) {
   const { calendar, headlines } = useNews();
   const [range, setRange] = useState<Range>("today");
   const [tz, setTz] = useState<TzId>(loadTz);
   const [usdOnly, setUsdOnly] = useState<boolean>(loadUsdOnly);
+  const [impacts, setImpacts] = useState<Set<Impact>>(loadImpacts);
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
+
+  function toggleImpact(i: Impact) {
+    setImpacts(prev => {
+      const next = new Set(prev);
+      if (next.has(i)) next.delete(i);
+      else next.add(i);
+      return next;
+    });
+  }
 
   function toggleExpand(id: string) {
     setExpanded(prev => {
@@ -139,6 +171,10 @@ export function NewsScreen({ C }: Props) {
     try { window.localStorage?.setItem(USD_ONLY_LS_KEY, usdOnly ? "1" : "0"); } catch { /* ignore */ }
   }, [usdOnly]);
 
+  useEffect(() => {
+    try { window.localStorage?.setItem(IMPACTS_LS_KEY, JSON.stringify(Array.from(impacts))); } catch { /* ignore */ }
+  }, [impacts]);
+
   const tzIana = useMemo(() => TZ_OPTIONS.find(o => o.id === tz)?.iana, [tz]);
 
   const filteredEvents = useMemo<CalendarEvent[]>(() => {
@@ -146,13 +182,13 @@ export function NewsScreen({ C }: Props) {
     const [from, to] = rangeWindow(range);
     return events
       .filter(e => !usdOnly || e.country === "USD")
-      .filter(e => e.impact === "high" || e.impact === "medium")
+      .filter(e => impacts.has(e.impact))
       .filter(e => {
         const t = new Date(e.time).getTime();
         return t >= from.getTime() && t <= to.getTime();
       })
       .sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
-  }, [calendar, range, usdOnly]);
+  }, [calendar, range, usdOnly, impacts]);
 
   // Group events by day for Week/Month views. Today view stays flat (single day).
   const dayGroups = useMemo<Array<{ key: string; label: string; events: CalendarEvent[] }>>(() => {
@@ -214,7 +250,7 @@ export function NewsScreen({ C }: Props) {
         })}
       </div>
 
-      {/* Country filter */}
+      {/* Country + impact filters */}
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
         <button
           type="button"
@@ -239,6 +275,37 @@ export function NewsScreen({ C }: Props) {
         >
           {usdOnly ? "USD ONLY" : "ALL FX"}
         </button>
+        {ALL_IMPACTS.map(i => {
+          const active = impacts.has(i);
+          const accent = impactColor(C, i);
+          return (
+            <button
+              key={i}
+              type="button"
+              aria-pressed={active}
+              onClick={() => toggleImpact(i)}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "5px 10px",
+                borderRadius: 999,
+                border: `1px solid ${active ? accent : C.border}`,
+                background: C.panel,
+                color: active ? C.text : C.muted,
+                fontFamily: MONO,
+                fontSize: 9,
+                letterSpacing: "0.08em",
+                fontWeight: 600,
+                cursor: "pointer",
+                opacity: active ? 1 : 0.55,
+              }}
+            >
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: accent }} />
+              {impactLabel(i)}
+            </button>
+          );
+        })}
       </div>
 
       {/* Calendar section */}
