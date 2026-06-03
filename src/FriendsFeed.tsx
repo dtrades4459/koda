@@ -151,7 +151,7 @@ export function FriendsFeed({
             backdropFilter: "blur(20px) saturate(140%)",
           }}>
             <div>
-              <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.16em", marginBottom: "3px", textTransform: "uppercase" as const }}>
+              <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.16em", marginBottom: "3px", textTransform: "uppercase" as const }}>
                 YOUR HANDLE
               </div>
               <div style={{ fontFamily: MONO, fontSize: "14px", color: C.text, letterSpacing: "0.04em" }}>
@@ -159,7 +159,7 @@ export function FriendsFeed({
               </div>
             </div>
             <div>
-              <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.16em", marginBottom: "8px", textTransform: "uppercase" as const }}>
+              <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.16em", marginBottom: "8px", textTransform: "uppercase" as const }}>
                 FOLLOW BY USERNAME
               </div>
               <div style={{ display: "flex", gap: "8px" }}>
@@ -240,7 +240,7 @@ export function FriendsFeed({
                           <AvatarCircle name={profile?.name} avatar={profile?.avatar} size={48} C={C} />
                         </div>
                       </div>
-                      <div style={{ fontFamily: MONO, fontSize: "9px", color: live, marginTop: "5px", fontWeight: 600, letterSpacing: "0.06em" }}>
+                      <div style={{ fontFamily: MONO, fontSize: "10px", color: live, marginTop: "5px", fontWeight: 600, letterSpacing: "0.06em" }}>
                         Live
                       </div>
                     </div>
@@ -265,7 +265,7 @@ export function FriendsFeed({
                               <AvatarCircle name={f.name} avatar={f.avatar} size={48} C={C} />
                             </div>
                           </div>
-                          <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, marginTop: "5px", maxWidth: "56px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, marginTop: "5px", maxWidth: "56px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                             {f.handle ? f.handle.replace(/^@/, "") : (f.name || "").split(" ")[0] || code.slice(0, 6)}
                           </div>
                         </div>

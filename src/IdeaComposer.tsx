@@ -137,7 +137,7 @@ export function IdeaComposer({
   });
 
   const labelStyle: CSSProperties = {
-    fontFamily: MONO, fontSize: "9px", color: C.muted,
+    fontFamily: MONO, fontSize: "10px", color: C.muted,
     letterSpacing: "0.16em", textTransform: "uppercase" as const,
     marginBottom: "4px",
   };

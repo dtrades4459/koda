@@ -175,7 +175,7 @@ export function SettingsScreen({
             {profile.handle || "@—"} · {profile.plan === "pro" || profile.plan === "elite" ? "Pro plan" : "Free plan"}
           </div>
           {(profile.plan === "pro" || profile.plan === "elite") && (
-            <div style={{ marginTop: "6px", display: "inline-flex", padding: "2px 8px", borderRadius: "999px", background: (C as any).liveSoft ?? "rgba(100,220,180,0.08)", color: (C as any).live ?? C.green, fontFamily: MONO, fontSize: "9px", fontWeight: 700, letterSpacing: "0.12em", border: `1px solid color-mix(in oklch, ${(C as any).live ?? C.green} 30%, transparent)` }}>{"●"} PRO PLAN</div>
+            <div style={{ marginTop: "6px", display: "inline-flex", padding: "2px 8px", borderRadius: "999px", background: (C as any).liveSoft ?? "rgba(100,220,180,0.08)", color: (C as any).live ?? C.green, fontFamily: MONO, fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", border: `1px solid color-mix(in oklch, ${(C as any).live ?? C.green} 30%, transparent)` }}>{"●"} PRO PLAN</div>
           )}
           {(profile.plan === "pro" || profile.plan === "elite") && (
             <div style={{ marginTop: 4 }}>
@@ -193,7 +193,7 @@ export function SettingsScreen({
                     setRefreshingPlan(false);
                   }
                 }}
-                style={{ background: "none", border: "none", color: C.muted, cursor: refreshingPlan ? "default" : "pointer", fontFamily: MONO, fontSize: "9px", letterSpacing: "0.08em", padding: 0, textDecoration: "underline", opacity: refreshingPlan ? 0.5 : 1 }}
+                style={{ background: "none", border: "none", color: C.muted, cursor: refreshingPlan ? "default" : "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.08em", padding: 0, textDecoration: "underline", opacity: refreshingPlan ? 0.5 : 1 }}
               >
                 {refreshingPlan ? "Refreshing…" : "Refresh plan"}
               </button>

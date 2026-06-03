@@ -65,13 +65,13 @@ export function ConfluenceTracker({ checkItems, checkedCount, totalItems, isChec
           <div style={{ background: statusCol, height: "1px", width: `${pct}%`, transition: "width 0.35s ease" }} />
           <div style={{ position: "absolute", top: "-3px", bottom: "-3px", left: `${Math.round((minCount / totalItems) * 100)}%`, width: "1px", background: C.text }} />
         </div>
-        <div style={{ display: "flex", justifyContent: "space-between", marginTop: "6px", fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.04em" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", marginTop: "6px", fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.04em" }}>
           <span>{pct}% MET</span>
           <span>THRESHOLD {Math.round((minCount / totalItems) * 100)}%</span>
         </div>
         {required.length > 0 && (
           <div style={{ marginTop: "14px", paddingTop: "14px", borderTop: `1px solid ${C.border}` }}>
-            <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.1em", marginBottom: "8px" }}>MUST-HAVES</div>
+            <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", marginBottom: "8px" }}>MUST-HAVES</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: "14px", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.04em" }}>
               {required.map((rid: number) => {
                 const item = checkItems.find((i) => i.id === rid);
@@ -101,7 +101,7 @@ export function ConfluenceTracker({ checkItems, checkedCount, totalItems, isChec
             </div>
             <input type="range" min={1} max={totalItems} value={minCount} onChange={e => setMin(e.target.value)}
               style={{ width: "100%", accentColor: C.text, cursor: "pointer" }} />
-            <div style={{ display: "flex", justifyContent: "space-between", marginTop: "4px", fontFamily: MONO, fontSize: "9px", color: C.dim, letterSpacing: "0.06em" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginTop: "4px", fontFamily: MONO, fontSize: "10px", color: C.dim, letterSpacing: "0.06em" }}>
               <span>1 LENIENT</span>
               <span>{totalItems} STRICT</span>
             </div>

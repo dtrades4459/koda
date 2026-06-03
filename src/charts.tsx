@@ -419,7 +419,7 @@ export function CalendarView({ trades, C, onDayClick }: ChartProps & { onDayClic
           <div style={{ display: "flex", background: C.panel, borderRadius: "999px", border: `1px solid ${C.border2}`, padding: "2px" }}>
             {(["R", "$"] as const).map(mode => (
               <button key={mode} onClick={() => setShowDollar(mode === "$")}
-                style={{ padding: "4px 12px", borderRadius: "999px", background: (mode === "$") === showDollar ? C.text : "transparent", color: (mode === "$") === showDollar ? C.bg : C.muted, border: "none", cursor: "pointer", fontFamily: MONO, fontSize: "9px", fontWeight: 600, letterSpacing: "0.1em", transition: "all 0.15s" }}>
+                style={{ padding: "4px 12px", borderRadius: "999px", background: (mode === "$") === showDollar ? C.text : "transparent", color: (mode === "$") === showDollar ? C.bg : C.muted, border: "none", cursor: "pointer", fontFamily: MONO, fontSize: "10px", fontWeight: 600, letterSpacing: "0.1em", transition: "all 0.15s" }}>
                 {mode}
               </button>
             ))}

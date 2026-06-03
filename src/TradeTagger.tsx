@@ -272,25 +272,25 @@ export function TradeTagger({ trades, strategies, onSave, onDone, C }: TradeTagg
         <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
           {trade.entryPrice && (
             <div>
-              <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "2px" }}>Entry</div>
+              <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "2px" }}>Entry</div>
               <div style={{ fontFamily: MONO, fontSize: "13px", color: C.text2 }}>{trade.entryPrice}</div>
             </div>
           )}
           {trade.slPrice && (
             <div>
-              <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "2px" }}>SL</div>
+              <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "2px" }}>SL</div>
               <div style={{ fontFamily: MONO, fontSize: "13px", color: C.red }}>{trade.slPrice}</div>
             </div>
           )}
           {trade.tpPrice && (
             <div>
-              <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "2px" }}>TP</div>
+              <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "2px" }}>TP</div>
               <div style={{ fontFamily: MONO, fontSize: "13px", color: C.green }}>{trade.tpPrice}</div>
             </div>
           )}
           {trade.rr && (
             <div>
-              <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "2px" }}>R:R</div>
+              <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "2px" }}>R:R</div>
               <div style={{ fontFamily: MONO, fontSize: "13px", color: C.text2 }}>{trade.rr}R</div>
             </div>
           )}

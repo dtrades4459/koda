@@ -71,9 +71,9 @@ function MetricRow({
 function StatCard({ label, value, sub, C }: { label: string; value: string; sub?: string; C: Props["C"] }) {
   return (
     <div style={{ background: C.panel2, borderRadius: "14px", padding: "14px 16px", flex: 1, minWidth: 0 }}>
-      <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "6px" }}>{label}</div>
+      <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "6px" }}>{label}</div>
       <div style={{ fontFamily: DISPLAY, fontSize: "20px", fontWeight: 700, color: C.text, lineHeight: 1 }}>{value}</div>
-      {sub && <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, marginTop: "4px" }}>{sub}</div>}
+      {sub && <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, marginTop: "4px" }}>{sub}</div>}
     </div>
   );
 }
@@ -178,7 +178,7 @@ export default function EvalAccountScreen({ profile, trades, C, onEditTargets }:
           </div>
           {/* Status badge */}
           <div style={{ background: sc.bg, borderRadius: "999px", padding: "5px 12px" }}>
-            <span style={{ fontFamily: MONO, fontSize: "9px", fontWeight: 700, letterSpacing: "0.16em", color: sc.color }}>{sc.label}</span>
+            <span style={{ fontFamily: MONO, fontSize: "10px", fontWeight: 700, letterSpacing: "0.16em", color: sc.color }}>{sc.label}</span>
           </div>
         </div>
 
@@ -220,7 +220,7 @@ export default function EvalAccountScreen({ profile, trades, C, onEditTargets }:
 
         <button
           onClick={onEditTargets}
-          style={{ marginTop: "16px", background: "transparent", border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "6px 14px", cursor: "pointer", fontFamily: MONO, fontSize: "9px", letterSpacing: "0.12em", color: C.muted, textTransform: "uppercase" }}
+          style={{ marginTop: "16px", background: "transparent", border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "6px 14px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.12em", color: C.muted, textTransform: "uppercase" }}
         >
           Edit targets
         </button>
@@ -277,13 +277,13 @@ export default function EvalAccountScreen({ profile, trades, C, onEditTargets }:
               <div key={t.id} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "11px 16px", borderTop: `1px solid ${C.border}` }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontFamily: DISPLAY, fontSize: "13px", fontWeight: 600, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.pair}</div>
-                  <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, marginTop: "2px" }}>{t.date}{t.session ? ` · ${t.session}` : ""}</div>
+                  <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, marginTop: "2px" }}>{t.date}{t.session ? ` · ${t.session}` : ""}</div>
                 </div>
                 <div style={{ textAlign: "right", flexShrink: 0 }}>
                   <div style={{ fontFamily: MONO, fontSize: "12px", fontWeight: 600, color: pnlNum >= 0 ? C.green : C.red }}>
                     {pnlNum >= 0 ? "+" : ""}{pnlNum !== 0 ? `$${Math.abs(pnlNum).toFixed(0)}` : "—"}
                   </div>
-                  <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, marginTop: "2px" }}>
+                  <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, marginTop: "2px" }}>
                     {rNum !== 0 ? `${rNum >= 0 ? "+" : ""}${rNum.toFixed(2)}R` : ""}
                   </div>
                 </div>
