@@ -1,10 +1,11 @@
 import { supabase } from "../lib/supabase";
+import { log } from "../lib/log";
 
 export async function markChatRead(circleCode: string): Promise<void> {
   const { data } = await supabase.auth.getUser();
   const uid = data.user?.id;
   if (!uid) return;
-  await supabase.from("chat_reads").upsert(
+  const { error } = await supabase.from("chat_reads").upsert(
     {
       user_id: uid,
       circle_code: circleCode,
@@ -12,6 +13,7 @@ export async function markChatRead(circleCode: string): Promise<void> {
     },
     { onConflict: "user_id,circle_code" }
   );
+  if (error) log.error("chatReads.markChatRead", error, { circleCode });
 }
 
 /**
