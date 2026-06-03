@@ -62,6 +62,9 @@ export function HomeNewsWidget({ C, onOpenNews }: Props) {
   }, [calendar, now]);
 
   if (!hero) {
+    const message = calendar
+      ? "All US events done for today — check back tomorrow."
+      : "Loading news...";
     return (
       <div
         style={{
@@ -75,7 +78,7 @@ export function HomeNewsWidget({ C, onOpenNews }: Props) {
           textAlign: "center",
         }}
       >
-        News loading — check back in a few minutes.
+        {message}
       </div>
     );
   }
