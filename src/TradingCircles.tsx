@@ -3,7 +3,7 @@ import { supabase } from "./lib/supabase";
 import { StrategyPill, stratCode, KodaMark, MONO, BODY, DISPLAY, EmptyCirclesState, CornerGlow } from "./shared";
 import { KODA_GLOBAL_CODE } from "./hooks/useCircles";
 import { readCircleMembers } from "./data/circles";
-import { markChatRead } from "./data/chatReads";
+import { getUnreadCounts, markChatRead } from "./data/chatReads";
 import { createChallenge, fetchActiveChallenge, fetchTrophies } from "./data/circlesChallenges";
 import { fetchSharedTrades, reactToSharedTrade, rowToSharedTrade } from "./data/circlesSharedTrades";
 import { SharedTradeCard } from "./components/SharedTradeCard";
@@ -125,6 +125,17 @@ export function TradingCircles({
   const [feedLoading, setFeedLoading] = useState(false);
   const feedBottomRef = useRef<HTMLDivElement>(null);
   const [showLeaveSheet, setShowLeaveSheet] = useState(false);
+  const [unread, setUnread] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    if (!myCircles?.length) return;
+    let alive = true;
+    (async () => {
+      const counts = await getUnreadCounts(myCircles.map((c) => c.code));
+      if (alive) setUnread(counts);
+    })();
+    return () => { alive = false; };
+  }, [myCircles]);
 
   const TROPHY_GOLD = "#A88C50";
 
@@ -455,6 +466,7 @@ export function TradingCircles({
         setChatMessages(prev => prev.some((m: any) => m.id === payload.new.id) ? prev : [...prev, payload.new]);
         if (document.visibilityState === "visible" && circleTabRef.current === "chat") {
           void markChatRead(activeCircle.code);
+          setUnread((u) => ({ ...u, [activeCircle.code]: 0 }));
         }
         setTimeout(() => chatBottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
         // Also prepend to feed
@@ -510,6 +522,7 @@ export function TradingCircles({
   useEffect(() => {
     if (circleTab !== "chat" || !activeCircle) return;
     void markChatRead(activeCircle.code);
+    setUnread((u) => ({ ...u, [activeCircle.code]: 0 }));
     const id = setInterval(() => loadChatMessages(activeCircle.code), 8_000);
     return () => clearInterval(id);
   }, [circleTab, activeCircle]);
@@ -579,7 +592,30 @@ export function TradingCircles({
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", position: "relative", zIndex: 1 }}>
                   <div>
                     <div style={{ fontFamily: MONO, fontSize: "10px", fontWeight: 500, letterSpacing: "0.16em", textTransform: "uppercase", color: C.accent }}>● LIVE · YOUR CIRCLE</div>
-                    <div style={{ fontFamily: DISPLAY, fontSize: "22px", fontWeight: 600, color: C.text, marginTop: "8px", letterSpacing: "-0.02em" }}>{circle.name}</div>
+                    <div style={{ fontFamily: DISPLAY, fontSize: "22px", fontWeight: 600, color: C.text, marginTop: "8px", letterSpacing: "-0.02em", display: "flex", alignItems: "center", gap: 8 }}>
+                      {circle.name}
+                      {unread[circle.code] > 0 && (
+                        <span
+                          aria-label={`${unread[circle.code]} unread`}
+                          style={{
+                            minWidth: 16,
+                            height: 16,
+                            borderRadius: 999,
+                            background: C.accent,
+                            color: C.bg,
+                            fontFamily: MONO,
+                            fontSize: 9,
+                            fontWeight: 700,
+                            padding: "0 5px",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          {unread[circle.code] > 99 ? "99+" : unread[circle.code]}
+                        </span>
+                      )}
+                    </div>
                     <div style={{ fontSize: "12px", color: C.text2, marginTop: "4px", fontFamily: MONO }}>{circle.code} · {circle.members?.length || 1} members</div>
                   </div>
                 </div>
@@ -607,7 +643,31 @@ export function TradingCircles({
                       <KodaMark size={16} color={C.accent} strokeWidth={2} />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontFamily: DISPLAY, fontSize: "14px", fontWeight: 600, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{circle.name}</div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <div style={{ fontFamily: DISPLAY, fontSize: "14px", fontWeight: 600, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{circle.name}</div>
+                        {unread[circle.code] > 0 && (
+                          <span
+                            aria-label={`${unread[circle.code]} unread`}
+                            style={{
+                              minWidth: 16,
+                              height: 16,
+                              borderRadius: 999,
+                              background: C.accent,
+                              color: C.bg,
+                              fontFamily: MONO,
+                              fontSize: 9,
+                              fontWeight: 700,
+                              padding: "0 5px",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              flexShrink: 0,
+                            }}
+                          >
+                            {unread[circle.code] > 99 ? "99+" : unread[circle.code]}
+                          </span>
+                        )}
+                      </div>
                       <div style={{ fontSize: "11px", color: C.text2, marginTop: "2px", fontFamily: MONO }}>{circle.code} · {circle.members?.length || 1} members</div>
                     </div>
                     <div style={{ fontFamily: MONO, fontSize: "12px", fontWeight: 600, color: C.text2 }}>
