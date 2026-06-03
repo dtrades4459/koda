@@ -1,18 +1,24 @@
-name: news-headlines-cron
+name: news-cron
 
-# Schedule: every 30 minutes — refreshes the headlines cache.
-# Manual dispatch (Actions tab → Run workflow): also refreshes the calendar
-# cache, so the very first run after a deploy can populate both rows in one go.
+# Schedule: every 15 minutes — refreshes BOTH the headlines and calendar caches.
 #
-# Sub-daily schedules require GitHub Actions because Vercel Hobby cron is daily-only.
-# The daily calendar refresh is wired separately in vercel.json.
+# Why both: FF publishes economic event "actual" results throughout the trading
+# day (CPI at 13:30 UTC, retail sales at 13:30 UTC, etc.). The Vercel daily cron
+# in vercel.json at 11:00 UTC misses every release after that. Refreshing the
+# calendar alongside headlines on every fire picks up the actuals as soon as
+# they're published.
+#
+# Why */15 instead of */30: GitHub Actions scheduled workflows on the free tier
+# are documented as "best effort" and routinely lag 2-5 hours under cluster load.
+# Doubling the attempt frequency absorbs some of that lag so we land closer to
+# the intended cadence.
 #
 # Required GitHub secret:
 #   CRON_SECRET — same value as the CRON_SECRET env var in Vercel
 
 on:
   schedule:
-    - cron: "*/30 * * * *"
+    - cron: "*/15 * * * *"
   workflow_dispatch:
 
 jobs:
@@ -21,8 +27,7 @@ jobs:
     timeout-minutes: 2
 
     steps:
-      - name: Trigger news-calendar (manual dispatch only)
-        if: github.event_name == 'workflow_dispatch'
+      - name: Trigger news-calendar refresh
         run: |
           RESP=$(curl -s -w "\n__STATUS__:%{http_code}" \
             -X GET "https://www.kodatrade.co.uk/api/cron?job=news-calendar" \
