@@ -108,6 +108,8 @@ export function TradingCircles({
   const [chatSending, setChatSending] = useState(false);
   const [chatLoading, setChatLoading] = useState(false);
   const chatBottomRef = useRef<HTMLDivElement>(null);
+  const circleTabRef = useRef(circleTab);
+  useEffect(() => { circleTabRef.current = circleTab; }, [circleTab]);
   const [expandedMember, setExpandedMember] = useState<string | null>(null);
   const [activeChallenge, setActiveChallenge] = useState<CircleChallenge | null>(null);
   const [trophies, setTrophies] = useState<ChallengeResult[]>([]);
@@ -451,7 +453,7 @@ export function TradingCircles({
         filter: `circle_code=eq.${activeCircle.code}`,
       }, (payload: any) => {
         setChatMessages(prev => prev.some((m: any) => m.id === payload.new.id) ? prev : [...prev, payload.new]);
-        if (document.visibilityState === "visible" && circleTab === "chat") {
+        if (document.visibilityState === "visible" && circleTabRef.current === "chat") {
           void markChatRead(activeCircle.code);
         }
         setTimeout(() => chatBottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
