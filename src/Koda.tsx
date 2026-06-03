@@ -4577,6 +4577,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
           signals={interventionSignals}
           C={C}
           isMobile={!isDesktop}
+          cooldownMin={tilt.settings.cooldownMin}
           onContinue={() => { void handleInterventionContinue(); }}
           onCancel={() => { void handleInterventionCancel(); }}
         />

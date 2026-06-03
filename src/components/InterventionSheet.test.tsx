@@ -38,4 +38,32 @@ describe("InterventionSheet", () => {
     render(<InterventionSheet open={false} signals={SIGNALS} C={DARK} isMobile onContinue={() => {}} onCancel={() => {}} />);
     expect(screen.queryByText(/tilt signals/i)).not.toBeInTheDocument();
   });
+
+  it("tags critical signals with a 'critical' badge", () => {
+    const mix = [
+      { id: "consec_losses" as const, label: "2 consecutive losses", critical: false },
+      { id: "daily_loss_90" as const, label: "−92% of daily loss limit", critical: true },
+    ];
+    render(<InterventionSheet open signals={mix} C={DARK} isMobile onContinue={() => {}} onCancel={() => {}} />);
+    expect(screen.getAllByText(/critical/i).length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByText("−92% of daily loss limit")).toBeInTheDocument();
+  });
+
+  it("uses critical-tone headline when only critical signals are active", () => {
+    const crit = [
+      { id: "trade_cap_at" as const, label: "Daily trade cap reached", critical: true },
+    ];
+    render(<InterventionSheet open signals={crit} C={DARK} isMobile onContinue={() => {}} onCancel={() => {}} />);
+    expect(screen.getByText(/1 critical tilt signal is active/i)).toBeInTheDocument();
+  });
+
+  it("shows configured cooldown duration on the Cancel button", () => {
+    render(<InterventionSheet open signals={SIGNALS} C={DARK} isMobile cooldownMin={15} onContinue={() => {}} onCancel={() => {}} />);
+    expect(screen.getByRole("button", { name: /15-min break/i })).toBeInTheDocument();
+  });
+
+  it("falls back to generic cancel label when cooldownMin is 0", () => {
+    render(<InterventionSheet open signals={SIGNALS} C={DARK} isMobile cooldownMin={0} onContinue={() => {}} onCancel={() => {}} />);
+    expect(screen.getByRole("button", { name: /take a break/i })).toBeInTheDocument();
+  });
 });

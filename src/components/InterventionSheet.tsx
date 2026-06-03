@@ -17,23 +17,44 @@ export interface InterventionSheetProps {
   isMobile: boolean;
   onContinue: () => void;
   onCancel: () => void;
+  cooldownMin?: number;
 }
 
-export function InterventionSheet({ open, signals, C, isMobile, onContinue, onCancel }: InterventionSheetProps) {
+export function InterventionSheet({ open, signals, C, isMobile, onContinue, onCancel, cooldownMin }: InterventionSheetProps) {
   if (!open) return null;
+
+  const criticalSignals = signals.filter(s => s.critical);
+  const tiltSignals = signals.filter(s => !s.critical);
+  const ordered = [...criticalSignals, ...tiltSignals];
+  const hasCritical = criticalSignals.length > 0;
+
+  const headline = (() => {
+    if (criticalSignals.length > 0 && tiltSignals.length === 0) {
+      return `${criticalSignals.length} critical tilt signal${criticalSignals.length === 1 ? "" : "s"} ${criticalSignals.length === 1 ? "is" : "are"} active.`;
+    }
+    if (criticalSignals.length > 0 && tiltSignals.length > 0) {
+      return `${criticalSignals.length} critical · ${tiltSignals.length} tilt signal${signals.length === 1 ? "" : "s"} active.`;
+    }
+    return `${signals.length} tilt signal${signals.length === 1 ? "" : "s"} ${signals.length === 1 ? "is" : "are"} active.`;
+  })();
+
+  const cancelLabel = cooldownMin && cooldownMin > 0
+    ? `Cancel · ${cooldownMin}-min break`
+    : "Cancel · take a break";
 
   const content = (
     <>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
         <span style={{
           width: 8, height: 8, borderRadius: "50%",
-          background: C.live, boxShadow: `0 0 10px ${C.live}`,
+          background: hasCritical ? C.red : C.live,
+          boxShadow: `0 0 10px ${hasCritical ? C.red : C.live}`,
         }} />
         <span style={{
           fontFamily: MONO, fontSize: 10, letterSpacing: "0.18em",
-          textTransform: "uppercase", color: C.live,
+          textTransform: "uppercase", color: hasCritical ? C.red : C.live,
         }}>
-          Heads up
+          {hasCritical ? "Heads up — critical" : "Heads up"}
         </span>
       </div>
       <div style={{
@@ -41,19 +62,32 @@ export function InterventionSheet({ open, signals, C, isMobile, onContinue, onCa
         lineHeight: 1.3, letterSpacing: "-0.01em",
         margin: "4px 0 14px", color: C.text,
       }}>
-        {signals.length} tilt signal{signals.length === 1 ? "" : "s"} {signals.length === 1 ? "is" : "are"} active.
+        {headline}
       </div>
       <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 8, marginBottom: 16 }}>
-        {signals.map(sig => (
+        {ordered.map(sig => (
           <div key={sig.id} style={{
             display: "flex", alignItems: "center", gap: 8,
             fontSize: 12, padding: "6px 0", color: C.text,
           }}>
             <span style={{
               width: 6, height: 6, borderRadius: "50%",
-              background: C.red, flexShrink: 0,
+              background: sig.critical ? C.red : C.live,
+              flexShrink: 0,
             }} />
-            <span>{sig.label}</span>
+            <span style={{ flex: 1 }}>{sig.label}</span>
+            {sig.critical && (
+              <span style={{
+                fontFamily: MONO, fontSize: 9, letterSpacing: "0.12em",
+                textTransform: "uppercase", color: C.red,
+                border: `1px solid ${C.red}55`,
+                background: `${C.red}10`,
+                padding: "2px 6px", borderRadius: 999,
+                flexShrink: 0,
+              }}>
+                critical
+              </span>
+            )}
           </div>
         ))}
       </div>
@@ -84,7 +118,7 @@ export function InterventionSheet({ open, signals, C, isMobile, onContinue, onCa
             width: isMobile ? "100%" : undefined,
           }}
         >
-          Cancel · take a break
+          {cancelLabel}
         </button>
       </div>
     </>
