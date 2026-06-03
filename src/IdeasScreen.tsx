@@ -16,7 +16,13 @@ interface IdeasScreenProps {
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Same placeholder-fallback pattern as src/lib/supabase.ts — without it,
+// createClient throws "supabaseUrl is required" at module-eval time when
+// env vars are missing, which crashes React mount before any UI can render.
+const supabase = createClient(
+  SUPABASE_URL || "http://localhost:54321",
+  SUPABASE_ANON_KEY || "placeholder-anon-key",
+);
 
 async function uploadChart(file: Blob, filename: string): Promise<string> {
   const path = `ideas/${filename}`;
