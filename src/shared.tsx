@@ -239,7 +239,7 @@ export function Badge({ color, children, C }: any) {
 // ─── SECTION KICKER ──────────────────────────────────────────────────────────
 export function SectionKicker({ label, C }: any) {
   return (
-    <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.16em", textTransform: "uppercase", fontWeight: 500 }}>
+    <div style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, letterSpacing: "0.14em", textTransform: "uppercase", fontWeight: 500 }}>
       {label}
     </div>
   );
@@ -620,8 +620,8 @@ export function Kicker({ C, children, color }: {
 }) {
   return (
     <div style={{
-      fontFamily: MONO, fontSize: 10, fontWeight: 500,
-      letterSpacing: "0.16em", textTransform: "uppercase",
+      fontFamily: MONO, fontSize: 11, fontWeight: 500,
+      letterSpacing: "0.14em", textTransform: "uppercase",
       color: color || C.muted,
     }}>{children}</div>
   );

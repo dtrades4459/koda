@@ -1833,7 +1833,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                   {announcement && announcement.id !== announcementDismissedId && (
                     <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", background: `color-mix(in oklch, ${C.accent ?? "#60a5fa"} 8%, ${C.panel})`, border: `1px solid color-mix(in oklch, ${C.accent ?? "#60a5fa"} 25%, transparent)`, borderRadius: "12px", padding: "14px 16px", marginBottom: "16px" }}>
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontFamily: MONO, fontSize: "9px", color: C.accent ?? "#60a5fa", letterSpacing: "0.14em", textTransform: "uppercase" as const, fontWeight: 700, marginBottom: "4px" }}>Kōda Team</div>
+                        <div style={{ fontFamily: MONO, fontSize: "10px", color: C.accent ?? "#60a5fa", letterSpacing: "0.14em", textTransform: "uppercase" as const, fontWeight: 700, marginBottom: "4px" }}>Kōda Team</div>
                         <div style={{ fontFamily: BODY, fontSize: "13px", color: C.text, lineHeight: 1.5 }}>{announcement.message}</div>
                       </div>
                       <button onClick={() => {
@@ -1883,7 +1883,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                       }}>
                       <span style={{ fontSize: "20px" }}>📓</span>
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontFamily: MONO, fontSize: "9px", color: C.accent ?? C.live, letterSpacing: "0.14em", textTransform: "uppercase" as const, marginBottom: "2px" }}>Wrap up today</div>
+                        <div style={{ fontFamily: MONO, fontSize: "10px", color: C.accent ?? C.live, letterSpacing: "0.14em", textTransform: "uppercase" as const, marginBottom: "2px" }}>Wrap up today</div>
                         <div style={{ fontFamily: BODY, fontSize: "13px", color: C.text }}>Sixty seconds of reflection. Tap to debrief.</div>
                       </div>
                       <span style={{ fontFamily: MONO, fontSize: "16px", color: C.muted }}>›</span>
@@ -1893,7 +1893,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                     <div style={{ display: "flex", alignItems: "center", gap: "12px", background: C.panel, border: `1px solid ${C.green}44`, borderLeft: `3px solid ${C.green}`, borderRadius: "12px", padding: "12px 14px", marginBottom: "20px" }}>
                       <span style={{ fontSize: "20px" }}>🔥</span>
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontFamily: MONO, fontSize: "9px", color: C.green, letterSpacing: "0.14em", textTransform: "uppercase" as const, marginBottom: "2px" }}>{streakBanner.streakCount}-Day Streak Milestone</div>
+                        <div style={{ fontFamily: MONO, fontSize: "10px", color: C.green, letterSpacing: "0.14em", textTransform: "uppercase" as const, marginBottom: "2px" }}>{streakBanner.streakCount}-Day Streak Milestone</div>
                         <div style={{ fontFamily: BODY, fontSize: "13px", color: C.text }}>{STREAK_FLAVOUR[streakBanner.streakCount] ?? "Keep going."}</div>
                       </div>
                       <button onClick={() => setStreakBanner(null)} style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontSize: "16px", padding: "4px", lineHeight: 1 }}>×</button>
@@ -1990,7 +1990,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                                 { label: "STREAK", value: streak.count > 0 ? `${streak.count}${streak.type === "Win" ? "W" : "L"}` : "—", color: streak.count >= 2 ? (streak.type === "Win" ? C.green : C.red) : null },
                               ].map((s, i) => (
                                 <div key={s.label} style={{ padding: "14px 10px 0", borderLeft: i === 0 ? "none" : `1px solid ${C.border}` }}>
-                                  <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.12em", marginBottom: "5px" }}>{s.label}</div>
+                                  <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.12em", marginBottom: "5px" }}>{s.label}</div>
                                   <div style={{ fontFamily: DISPLAY, fontSize: "22px", fontWeight: 600, color: s.color ?? C.text, letterSpacing: "-0.02em", lineHeight: 1 }}>{s.value}</div>
                                   {s.label === "STREAK" && streak.count >= 3 && (
                                     <div style={{ fontFamily: MONO, fontSize: "8px", letterSpacing: "0.1em", color: streak.type === "Win" ? C.green : C.red, marginTop: "3px", opacity: 0.8 }}>
@@ -2077,7 +2077,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
 
                     if (killSwitchTripped) return (
                       <section style={{ marginTop: "28px", padding: "20px 16px", border: `1px solid ${C.red}`, borderRadius: "10px", background: C.red + "12" }}>
-                        <div style={{ fontFamily: MONO, fontSize: "9px", color: C.red, letterSpacing: "0.18em", marginBottom: "10px" }}>KILL SWITCH ACTIVE</div>
+                        <div style={{ fontFamily: MONO, fontSize: "10px", color: C.red, letterSpacing: "0.18em", marginBottom: "10px" }}>KILL SWITCH ACTIVE</div>
                         <div style={{ fontFamily: DISPLAY, fontSize: "22px", fontWeight: 500, color: C.red, marginBottom: "8px" }}>
                           Daily halt — {todayPnl.toFixed(2)}R
                         </div>
@@ -2099,23 +2099,23 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
 
                     return (
                       <section style={{ marginTop: "28px", padding: "16px", border: `1px solid ${atLimit ? C.red + "66" : C.border}`, borderRadius: "10px", background: atLimit ? C.red + "08" : "transparent" }}>
-                        <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.14em", marginBottom: "14px" }}>TODAY</div>
+                        <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.14em", marginBottom: "14px" }}>TODAY</div>
                         <div style={{ display: "grid", gridTemplateColumns: maxLoss > 0 ? "1fr 1fr 1fr 1fr" : "1fr 1fr 1fr", gap: "8px" }}>
                           <div>
-                            <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.1em", marginBottom: "4px" }}>TRADES</div>
+                            <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", marginBottom: "4px" }}>TRADES</div>
                             <div style={{ fontFamily: DISPLAY, fontSize: "22px", fontWeight: 500, color: atLimit ? C.red : nearLimit ? C.text2 : C.text }}>
                               {todayTrades.length}{maxTrades > 0 ? `/${maxTrades}` : ""}
                             </div>
                           </div>
                           <div>
-                            <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.1em", marginBottom: "4px" }}>P&L TODAY</div>
+                            <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", marginBottom: "4px" }}>P&L TODAY</div>
                             <div style={{ fontFamily: DISPLAY, fontSize: "22px", fontWeight: 500, color: todayPnl >= 0 ? C.green : C.red }}>
                               {todayPnl >= 0 ? "+" : ""}{todayPnl.toFixed(2)}R
                             </div>
                           </div>
                           {targetRR > 0 && (
                             <div>
-                              <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.1em", marginBottom: "4px" }}>TARGET</div>
+                              <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", marginBottom: "4px" }}>TARGET</div>
                               <div style={{ fontFamily: DISPLAY, fontSize: "22px", fontWeight: 500, color: todayPnl >= targetRR ? C.green : C.muted }}>
                                 {targetRR}R
                               </div>
@@ -2123,7 +2123,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                           )}
                           {maxLoss > 0 && (
                             <div>
-                              <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.1em", marginBottom: "4px" }}>MAX LOSS</div>
+                              <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", marginBottom: "4px" }}>MAX LOSS</div>
                               <div style={{ fontFamily: DISPLAY, fontSize: "22px", fontWeight: 500, color: todayPnl <= -(maxLoss * 0.75) ? C.red : C.muted }}>
                                 -{maxLoss}R
                               </div>
@@ -2159,7 +2159,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                       </div>
                       {tradovateSession && (
                         <button onClick={() => setShowLiveModal(true)}
-                          style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "9px", letterSpacing: "0.1em", textTransform: "uppercase", padding: 0 }}>
+                          style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", padding: 0 }}>
                           Manage →
                         </button>
                       )}
@@ -2178,7 +2178,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                             · {tradovateSession.env.toUpperCase()}
                           </span>
                           {tradovateSession.lastSyncTime && (
-                            <span style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.04em", marginLeft: "auto" }}>
+                            <span style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.04em", marginLeft: "auto" }}>
                               synced {new Date(tradovateSession.lastSyncTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                             </span>
                           )}
@@ -2399,7 +2399,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                               if (count === 0) return null;
                               return <span key={rx} style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, background: C.panel, border: `1px solid ${C.border}`, borderRadius: "999px", padding: "4px 10px", letterSpacing: "0.04em" }}>{rx} {count}</span>;
                             })}
-                            <span style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.1em", alignSelf: "center", marginLeft: "auto" }}>{top._rxTotal} REACTIONS</span>
+                            <span style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", alignSelf: "center", marginLeft: "auto" }}>{top._rxTotal} REACTIONS</span>
                           </div>
                         </div>
                       </section>
@@ -2433,23 +2433,23 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                         </div>
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                           <div style={{ padding: "12px", border: `1px solid ${C.border}`, borderRadius: "8px" }}>
-                            <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.1em", marginBottom: "4px" }}>WIN RATE</div>
+                            <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", marginBottom: "4px" }}>WIN RATE</div>
                             <div style={{ fontFamily: DISPLAY, fontSize: "20px", fontWeight: 500, color: mWr >= 50 ? C.green : C.red }}>{mWr}%</div>
                             <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, marginTop: "2px" }}>{mTotal} trades</div>
                           </div>
                           <div style={{ padding: "12px", border: `1px solid ${C.border}`, borderRadius: "8px" }}>
-                            <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.1em", marginBottom: "4px" }}>BEST DAY</div>
+                            <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", marginBottom: "4px" }}>BEST DAY</div>
                             <div style={{ fontFamily: DISPLAY, fontSize: "20px", fontWeight: 500, color: C.green }}>{bestDay[1] !== -Infinity ? `+${(bestDay[1] as number).toFixed(2)}R` : "—"}</div>
                             <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, marginTop: "2px" }}>{String(bestDay[0])}</div>
                           </div>
                           <div style={{ padding: "12px", border: `1px solid ${C.border}`, borderRadius: "8px" }}>
-                            <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.1em", marginBottom: "4px" }}>WORST DAY</div>
+                            <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", marginBottom: "4px" }}>WORST DAY</div>
                             <div style={{ fontFamily: DISPLAY, fontSize: "20px", fontWeight: 500, color: C.red }}>{worstDay[1] !== Infinity ? `${(worstDay[1] as number).toFixed(2)}R` : "—"}</div>
                             <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, marginTop: "2px" }}>{String(worstDay[0])}</div>
                           </div>
                           {bestStrat && (
                             <div style={{ padding: "12px", border: `1px solid ${C.border}`, borderRadius: "8px" }}>
-                              <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.1em", marginBottom: "4px" }}>TOP STRATEGY</div>
+                              <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", marginBottom: "4px" }}>TOP STRATEGY</div>
                               <div style={{ fontFamily: DISPLAY, fontSize: "16px", fontWeight: 500, color: C.text, lineHeight: 1.2 }}>{stratShort(bestStrat[0])}</div>
                               <div style={{ fontFamily: MONO, fontSize: "10px", color: bestStrat[1] >= 0 ? C.green : C.red, marginTop: "2px" }}>{bestStrat[1] >= 0 ? "+" : ""}{bestStrat[1].toFixed(2)}R</div>
                             </div>
@@ -3133,12 +3133,12 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                                 <div style={{ fontFamily: MONO, fontSize: "13px", fontWeight: 600, color: parseFloat(t.pnlDollar) >= 0 ? C.green : C.red, fontVariantNumeric: "tabular-nums" }}>
                                   {parseFloat(t.pnlDollar) >= 0 ? "+" : ""}${Math.abs(parseFloat(t.pnlDollar)).toFixed(0)}
                                 </div>
-                                <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, marginTop: "2px" }}>{t.rr ? `${t.rr}R` : outcomeLetter(t.outcome)}</div>
+                                <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, marginTop: "2px" }}>{t.rr ? `${t.rr}R` : outcomeLetter(t.outcome)}</div>
                               </>
                             ) : (
                               <>
                                 <div style={{ fontFamily: DISPLAY, fontSize: "15px", fontWeight: 500, color: t.outcome === "Win" ? C.green : t.outcome === "Loss" ? C.red : C.muted, letterSpacing: "-0.01em" }}>{t.rr ? `${parseFloat(t.rr) >= 0 ? "+" : ""}${t.rr}R` : "—"}</div>
-                                <div style={{ fontFamily: MONO, fontSize: "9px", color: outcomeColor(t.outcome, C), marginTop: "2px" }}>{outcomeLetter(t.outcome)}</div>
+                                <div style={{ fontFamily: MONO, fontSize: "10px", color: outcomeColor(t.outcome, C), marginTop: "2px" }}>{outcomeLetter(t.outcome)}</div>
                               </>
                             )}
                           </div>
@@ -3458,7 +3458,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                             const pos = d.v >= 0;
                             return (
                               <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
-                                <div style={{ fontFamily: MONO, fontSize: "9px", color: d.v !== 0 ? (pos ? C.green : C.red) : C.dim, fontWeight: 600 }}>
+                                <div style={{ fontFamily: MONO, fontSize: "10px", color: d.v !== 0 ? (pos ? C.green : C.red) : C.dim, fontWeight: 600 }}>
                                   {d.v !== 0 ? `${pos ? "+" : ""}${d.v.toFixed(1)}` : "—"}
                                 </div>
                                 <div style={{ width: "100%", borderRadius: "8px", border: `1px solid ${C.border2}`, height: `${Math.max(h, 4)}px`, minHeight: "4px", background: pos ? `linear-gradient(180deg, ${C.accent}, color-mix(in oklch, ${C.accent} 40%, transparent))` : `linear-gradient(180deg, ${C.red}, color-mix(in oklch, ${C.red} 30%, transparent))` }} />
@@ -3587,7 +3587,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                             <div style={{ display: "flex", gap: "5px", flexWrap: "wrap" }}>
                               {pills.map(p => (
                                 <span key={p.label} style={{
-                                  fontFamily: MONO, fontSize: "9px", letterSpacing: "0.06em", textTransform: "uppercase",
+                                  fontFamily: MONO, fontSize: "10px", letterSpacing: "0.06em", textTransform: "uppercase",
                                   padding: "3px 8px", borderRadius: "999px",
                                   color: pillColor(p.pct),
                                   border: `1px solid ${pillBorder(p.pct)}`,
@@ -3652,7 +3652,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                               </div>
                             )}
                           </div>
-                          <button onClick={() => setHomeSection("settings")} style={{ marginTop: "12px", background: "transparent", border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "5px 12px", cursor: "pointer", fontFamily: MONO, fontSize: "9px", letterSpacing: "0.1em", color: C.muted, textTransform: "uppercase" }}>Edit targets</button>
+                          <button onClick={() => setHomeSection("settings")} style={{ marginTop: "12px", background: "transparent", border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "5px 12px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.1em", color: C.muted, textTransform: "uppercase" }}>Edit targets</button>
                         </div>
                       );
                     })()
@@ -3855,14 +3855,14 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                               { label: "Rules broken", count: broke.length, wr: wrBroke, avgPnl: avgPnlBroke, color: C.red },
                             ].map(row => (
                               <div key={row.label} style={{ padding: "14px", borderRadius: "12px", border: `1px solid ${C.border}`, background: C.panel }}>
-                                <div style={{ fontFamily: MONO, fontSize: "9px", color: row.color, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "8px" }}>{row.label}</div>
+                                <div style={{ fontFamily: MONO, fontSize: "10px", color: row.color, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "8px" }}>{row.label}</div>
                                 <div style={{ display: "flex", gap: "12px" }}>
                                   <div>
-                                    <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.1em", marginBottom: "3px" }}>WIN RATE</div>
+                                    <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", marginBottom: "3px" }}>WIN RATE</div>
                                     <div style={{ fontFamily: DISPLAY, fontSize: "20px", fontWeight: 600, color: (row.wr ?? 0) >= 50 ? C.green : C.red }}>{row.wr !== null ? `${row.wr}%` : "—"}</div>
                                   </div>
                                   <div>
-                                    <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.1em", marginBottom: "3px" }}>AVG R</div>
+                                    <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", marginBottom: "3px" }}>AVG R</div>
                                     <div style={{ fontFamily: DISPLAY, fontSize: "20px", fontWeight: 600, color: (row.avgPnl ?? 0) >= 0 ? C.green : C.red }}>{row.avgPnl !== null ? `${row.avgPnl >= 0 ? "+" : ""}${row.avgPnl.toFixed(2)}R` : "—"}</div>
                                   </div>
                                 </div>
@@ -3932,11 +3932,11 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                               </div>
                               <div style={{ display: "flex", gap: "20px", alignItems: "center" }}>
                                 <div>
-                                  <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.1em", marginBottom: "3px" }}>WIN RATE</div>
+                                  <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", marginBottom: "3px" }}>WIN RATE</div>
                                   <div style={{ fontFamily: DISPLAY, fontSize: "22px", fontWeight: 500, color: (tag.wr ?? 0) >= 50 ? C.green : C.red }}>{tag.wr !== null ? `${tag.wr}%` : "—"}</div>
                                 </div>
                                 <div>
-                                  <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.1em", marginBottom: "3px" }}>AVG P&L</div>
+                                  <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", marginBottom: "3px" }}>AVG P&L</div>
                                   <div style={{ fontFamily: DISPLAY, fontSize: "22px", fontWeight: 500, color: (tag.avgPnl ?? 0) >= 0 ? C.green : C.red }}>{tag.avgPnl !== null ? `${tag.avgPnl >= 0 ? "+" : ""}${tag.avgPnl.toFixed(2)}R` : "—"}</div>
                                 </div>
                                 <div style={{ flex: 1, textAlign: "right" }}>
@@ -4023,11 +4023,11 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                           <div style={{ padding: "18px", borderRadius: "16px", border: `1px solid ${C.border}`, background: `color-mix(in oklch, ${gc} 8%, ${C.panel})`, display: "flex", alignItems: "center", gap: "16px" }}>
                             <div>
                               <div style={{ fontFamily: DISPLAY, fontSize: "52px", fontWeight: 700, letterSpacing: "-0.03em", color: gc, lineHeight: 1 }}>{disciplineScore.score}</div>
-                              <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.10em", marginTop: "4px" }}>/100</div>
+                              <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.10em", marginTop: "4px" }}>/100</div>
                             </div>
                             <div style={{ flex: 1 }}>
                               <div style={{ fontFamily: DISPLAY, fontSize: "34px", fontWeight: 700, letterSpacing: "-0.02em", color: gc, lineHeight: 1 }}>{disciplineScore.grade}</div>
-                              <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.12em", textTransform: "uppercase", marginTop: "4px" }}>7-day rolling · {disciplineScore.taggedCount} trades tagged</div>
+                              <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.12em", textTransform: "uppercase", marginTop: "4px" }}>7-day rolling · {disciplineScore.taggedCount} trades tagged</div>
                               <div style={{ height: "3px", background: C.border2, borderRadius: "2px", overflow: "hidden", marginTop: "10px" }}>
                                 <div style={{ width: `${disciplineScore.score}%`, height: "100%", borderRadius: "2px", background: gc, transition: "width 0.4s ease" }} />
                               </div>
@@ -4038,7 +4038,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                         {/* ── Drag callout ── */}
                         {disciplineScore.dragSignal && (
                           <div style={{ padding: "12px 14px", borderRadius: "12px", background: `color-mix(in oklch, ${C.red} 6%, ${C.panel})`, border: `1px solid color-mix(in oklch, ${C.red} 18%, transparent)` }}>
-                            <div style={{ fontFamily: MONO, fontSize: "9px", letterSpacing: "0.12em", textTransform: "uppercase", color: C.red, marginBottom: "4px" }}>Dragging your score</div>
+                            <div style={{ fontFamily: MONO, fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", color: C.red, marginBottom: "4px" }}>Dragging your score</div>
                             <div style={{ fontFamily: BODY, fontSize: "12px", color: C.text2, lineHeight: 1.5 }}>
                               <strong style={{ color: C.text, fontWeight: 600 }}>{dragNames[disciplineScore.dragSignal]}</strong>{" — "}
                               {dragDescriptions[disciplineScore.dragSignal]?.(disciplineScore)}
@@ -4056,7 +4056,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                                 <div key={row.key} style={{ background: C.panel, padding: "13px 16px", display: "flex", alignItems: "center", gap: "14px" }}>
                                   <div style={{ flex: 1, minWidth: 0 }}>
                                     <div style={{ fontFamily: BODY, fontSize: "12px", fontWeight: 500, color: C.text, marginBottom: "2px" }}>{row.name}</div>
-                                    <div style={{ fontFamily: MONO, fontSize: "9px", letterSpacing: "0.06em", color: C.muted }}>{row.desc}</div>
+                                    <div style={{ fontFamily: MONO, fontSize: "10px", letterSpacing: "0.06em", color: C.muted }}>{row.desc}</div>
                                     <div style={{ height: "2px", background: C.border2, borderRadius: "1px", overflow: "hidden", marginTop: "8px" }}>
                                       <div style={{ width: `${Math.round(pct * 100)}%`, height: "100%", borderRadius: "1px", background: C.accent, transition: "width 0.4s ease" }} />
                                     </div>
@@ -4409,7 +4409,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                         </span>
                       )}
                     </div>
-                    <span style={{ fontSize: "9px", fontFamily: MONO, letterSpacing: "0.06em", fontWeight: active ? 600 : 400 }}>{tab.label}</span>
+                    <span style={{ fontSize: "11px", fontFamily: BODY, letterSpacing: "0.01em", fontWeight: active ? 600 : 500 }}>{tab.label}</span>
                   </button>
                 );
               })}
@@ -4424,7 +4424,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                   <path d="M2 9l4 5 4-5"/><path d="M18 9l-4 5-4-5"/>
                   <line x1="6" y1="9" x2="14" y2="9"/>
                 </svg>
-                <span style={{ fontSize: "9px", fontFamily: MONO, letterSpacing: "0.06em" }}>Size</span>
+                <span style={{ fontSize: "11px", fontFamily: BODY, letterSpacing: "0.01em", fontWeight: 500 }}>Size</span>
               </button>
             </div>
           </div>
@@ -4451,7 +4451,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
               {!tradovateSession ? (
                 /* ── Connect form ── */
                 <>
-                  <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.18em", textTransform: "uppercase", marginBottom: "10px" }}>Tradovate · Connect Account</div>
+                  <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.18em", textTransform: "uppercase", marginBottom: "10px" }}>Tradovate · Connect Account</div>
                   <div style={{ fontFamily: DISPLAY, fontSize: "22px", fontWeight: 500, color: C.text, letterSpacing: "-0.02em", marginBottom: "6px" }}>Live Positions</div>
                   <div style={{ fontFamily: BODY, fontSize: "13px", color: C.muted, lineHeight: 1.55, marginBottom: "24px" }}>
                     Connect your Tradovate account to see open positions in real time and auto-import closed fills into your journal.
@@ -4519,7 +4519,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                 <>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px" }}>
                     <div>
-                      <div style={{ fontFamily: MONO, fontSize: "9px", color: C.green, letterSpacing: "0.18em", textTransform: "uppercase", marginBottom: "6px", display: "flex", alignItems: "center", gap: "6px" }}>
+                      <div style={{ fontFamily: MONO, fontSize: "10px", color: C.green, letterSpacing: "0.18em", textTransform: "uppercase", marginBottom: "6px", display: "flex", alignItems: "center", gap: "6px" }}>
                         <span style={{ display: "inline-block", width: "6px", height: "6px", borderRadius: "50%", background: C.green }} />
                         Connected
                       </div>
@@ -4540,7 +4540,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                   <div style={{ marginBottom: "24px" }}>
                     <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <span>Open Positions {tradovatePositions.length > 0 && `(${tradovatePositions.length})`}</span>
-                      <button onClick={() => refreshTradovatePositions(tradovateSession)} style={{ background: "none", border: "none", color: C.dim, cursor: "pointer", fontFamily: MONO, fontSize: "9px", letterSpacing: "0.1em", textTransform: "uppercase" }}>Refresh</button>
+                      <button onClick={() => refreshTradovatePositions(tradovateSession)} style={{ background: "none", border: "none", color: C.dim, cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase" }}>Refresh</button>
                     </div>
                     {tradovatePositions.length === 0 ? (
                       <div style={{ fontFamily: BODY, fontSize: "13px", color: C.muted, padding: "20px 0", textAlign: "center", borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}` }}>
@@ -4560,7 +4560,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                               <div style={{ fontFamily: DISPLAY, fontSize: "15px", fontWeight: 500, color: pos.openPnl >= 0 ? C.green : C.red, letterSpacing: "-0.01em" }}>
                                 {pos.openPnlStr}
                               </div>
-                              <div style={{ fontFamily: MONO, fontSize: "9px", color: C.dim, letterSpacing: "0.06em", textTransform: "uppercase", marginTop: "2px" }}>Open P&L</div>
+                              <div style={{ fontFamily: MONO, fontSize: "10px", color: C.dim, letterSpacing: "0.06em", textTransform: "uppercase", marginTop: "2px" }}>Open P&L</div>
                             </div>
                           </div>
                         ))}

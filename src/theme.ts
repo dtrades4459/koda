@@ -107,10 +107,10 @@ export function makeStyles(C: Theme) {
   const sel: React.CSSProperties = { ...inp, cursor: "pointer" };
 
   const lbl: React.CSSProperties = {
-    fontSize: "11px",
+    fontSize: "12px",
     color: C.muted,
-    letterSpacing: "0.06em",
-    marginBottom: "4px",
+    letterSpacing: "0.05em",
+    marginBottom: "6px",
     display: "block",
     fontFamily: MONO,
     textTransform: "uppercase",
@@ -137,11 +137,10 @@ export function makeStyles(C: Theme) {
     borderRadius: "999px",
     padding: "12px 18px",
     minHeight: "44px",
-    fontSize: "12px",
-    letterSpacing: "0.04em",
+    fontSize: "13px",
+    letterSpacing: "0.01em",
     cursor: "pointer",
-    fontFamily: MONO,
-    textTransform: "uppercase",
+    fontFamily: BODY,
     transition: "opacity 0.15s",
     display: "inline-flex",
     alignItems: "center",
