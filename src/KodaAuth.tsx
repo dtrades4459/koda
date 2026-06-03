@@ -430,7 +430,7 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
             {[
               ["Intervention", "/in-session-intervention.html"],
               ["Circles", "/trading-circles.html"],
-              ["Compare", "/koda-vs-tradezella.html"],
+              ["Compare", "/comparison.html"],
               ["FAQ", "/faq.html"],
             ].map(([label, href]) => (
               <a key={label} href={href} style={{
@@ -749,7 +749,7 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
                   "Discipline score",
                   "Prop firm eval tracker",
                   "Ideas feed",
-                  "1 Trading Circle",
+                  "Kōda global Circle + 2 Circles (join or create)",
                   "iOS + Android (PWA)",
                 ].map((item) => (
                   <li key={item} style={{ fontFamily: BODY, fontSize: 14, color: C.text2, display: "flex", alignItems: "flex-start", gap: 10 }}>
@@ -809,7 +809,6 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
                   "Advanced analytics (MAE / MFE, heatmaps, drawdown curves)",
                   "Custom strategy slots",
                   "Weekly digest emails",
-                  "Priority support",
                 ].map((item) => (
                   <li key={item} style={{ fontFamily: BODY, fontSize: 14, color: C.text2, display: "flex", alignItems: "flex-start", gap: 10 }}>
                     <svg width="14" height="14" viewBox="0 0 14 14" style={{ marginTop: 4, flexShrink: 0 }}>
@@ -830,9 +829,9 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
           </div>
         </section>
 
-        {/* COMPARISON TEASER — links to existing /koda-vs-tradezella.html */}
+        {/* COMPARISON TEASER — links to existing /comparison.html */}
         <section style={{ marginTop: "clamp(80px, 10vw, 128px)" }}>
-          <a href="/koda-vs-tradezella.html" style={{
+          <a href="/comparison.html" style={{
             display: "block", padding: "clamp(28px, 4vw, 48px)",
             borderRadius: 24, background: C.panel,
             border: `1px solid ${C.border}`,
@@ -844,7 +843,7 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
               fontWeight: 500, letterSpacing: "-0.015em", lineHeight: 1.3,
               color: C.text, maxWidth: "44ch", marginBottom: 18,
             }}>
-              Tradezella is a better analytics tool. Kōda is a better behavioural tool.
+              Most trading journals analyse the trade after the loss. Kōda intervenes before it.
               The honest question is which one your <span style={{ fontStyle: "italic", color: C.live }}>actual</span> losses come from.
             </div>
             <span style={{
@@ -934,7 +933,7 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
             {[
               ["Intervention", "/in-session-intervention.html"],
               ["Circles", "/trading-circles.html"],
-              ["Compare", "/koda-vs-tradezella.html"],
+              ["Compare", "/comparison.html"],
               ["FAQ", "/faq.html"],
               ["Changelog", "/changelog.html"],
               ["Privacy", "/privacy.html"],
