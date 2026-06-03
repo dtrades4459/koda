@@ -20,6 +20,7 @@ interface FeedItem {
   direction?: string;
   outcome?: string;
   pnl?: string;
+  pnlDollar?: string;
   rr?: string;
   strategy?: string;
   notes?: string;
@@ -357,18 +358,33 @@ export function FriendsFeed({
                             )}
                           </div>
                           <div style={{ textAlign: "right", flexShrink: 0 }}>
-                            {item.pnl && (
-                              <>
-                                <div style={{ fontFamily: MONO, fontSize: "14px", fontWeight: 600, color: outcomeClr, fontVariantNumeric: "tabular-nums" }}>
-                                  {pnl >= 0 ? "+" : ""}{item.pnl}R
-                                </div>
-                                {item.rr && (
-                                  <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, marginTop: "2px" }}>
-                                    {item.rr}R setup
+                            {(() => {
+                              const dollarVal = item.pnlDollar ? parseFloat(item.pnlDollar) : null;
+                              const hasDollar = dollarVal !== null && Number.isFinite(dollarVal);
+                              const primary = hasDollar
+                                ? `${dollarVal! >= 0 ? "+" : "−"}$${Math.abs(dollarVal!).toFixed(2)}`
+                                : item.pnl
+                                  ? `${pnl >= 0 ? "+" : ""}${item.pnl}R`
+                                  : null;
+                              if (!primary) return null;
+                              const secondary = hasDollar && item.pnl
+                                ? `${pnl >= 0 ? "+" : ""}${item.pnl}R`
+                                : item.rr
+                                  ? `${item.rr}R setup`
+                                  : null;
+                              return (
+                                <>
+                                  <div style={{ fontFamily: MONO, fontSize: "14px", fontWeight: 600, color: outcomeClr, fontVariantNumeric: "tabular-nums" }}>
+                                    {primary}
                                   </div>
-                                )}
-                              </>
-                            )}
+                                  {secondary && (
+                                    <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, marginTop: "2px" }}>
+                                      {secondary}
+                                    </div>
+                                  )}
+                                </>
+                              );
+                            })()}
                           </div>
                         </div>
 
@@ -428,7 +444,12 @@ export function FriendsFeed({
                           <button
                             onClick={() => {
                               const o = item.outcome === "Win" ? "WIN" : item.outcome === "Loss" ? "LOSS" : "BE";
-                              const p = item.pnl ? ` ${parseFloat(item.pnl) >= 0 ? "+" : ""}${item.pnl}R` : "";
+                              const dv = item.pnlDollar ? parseFloat(item.pnlDollar) : NaN;
+                              const p = Number.isFinite(dv)
+                                ? ` ${dv >= 0 ? "+" : "−"}$${Math.abs(dv).toFixed(2)}`
+                                : item.pnl
+                                  ? ` ${parseFloat(item.pnl) >= 0 ? "+" : ""}${item.pnl}R`
+                                  : "";
                               window.open(
                                 `https://x.com/intent/post?text=${encodeURIComponent(`${o} ${item.pair ?? ""}${p}${item.rr ? " | " + item.rr + "R" : ""} — #Kōda\nhttps://kodatrade.co.uk`)}`,
                                 "_blank", "noopener",

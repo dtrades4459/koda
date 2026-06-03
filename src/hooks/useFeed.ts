@@ -43,6 +43,7 @@ export interface FeedItem {
   date:         string;
   outcome:      string;
   pnl:          string;
+  pnlDollar?:   string;
   rr:           string;
   strategy:     string;
   setup:        string;
@@ -148,6 +149,7 @@ export function useFeed({
       date:         t.date,
       outcome:      t.outcome,
       pnl:          t.pnl,
+      pnlDollar:    t.pnlDollar,
       rr:           t.rr,
       strategy:     t.strategy,
       setup:        t.setup,

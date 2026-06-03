@@ -128,7 +128,31 @@ export function IdeasScreen({ myUid, recentTrades, C, inp, pillPrimary, isDeskto
       </div>
 
       {loading && ideas.length === 0 ? (
-        <div style={{ padding: "48px 20px", textAlign: "center", fontFamily: BODY, fontSize: "13px", color: C.muted }}>Loading…</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "8px" }}>
+          {[180, 160, 140].map((w, i) => (
+            <div key={i} style={{ borderRadius: "14px", padding: "14px", border: `1px solid ${C.border2 ?? C.border}`, background: `color-mix(in srgb, ${C.text} 3%, transparent)` }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
+                <div style={{ width: 32, height: 32, borderRadius: "50%",
+                  background: `linear-gradient(90deg, ${C.panel} 0%, ${C.border2 ?? C.border} 50%, ${C.panel} 100%)`,
+                  backgroundSize: "200% 100%", animation: "kShimmer 1.4s ease-in-out infinite", flexShrink: 0 }} />
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "6px" }}>
+                  <div style={{ height: 11, width: "40%", borderRadius: "6px",
+                    background: `linear-gradient(90deg, ${C.panel} 0%, ${C.border2 ?? C.border} 50%, ${C.panel} 100%)`,
+                    backgroundSize: "200% 100%", animation: "kShimmer 1.4s ease-in-out infinite" }} />
+                  <div style={{ height: 9, width: "22%", borderRadius: "6px",
+                    background: `linear-gradient(90deg, ${C.panel} 0%, ${C.border2 ?? C.border} 50%, ${C.panel} 100%)`,
+                    backgroundSize: "200% 100%", animation: "kShimmer 1.4s ease-in-out infinite" }} />
+                </div>
+              </div>
+              <div style={{ height: 12, width: `${w}px`, maxWidth: "100%", borderRadius: "6px", marginBottom: "8px",
+                background: `linear-gradient(90deg, ${C.panel} 0%, ${C.border2 ?? C.border} 50%, ${C.panel} 100%)`,
+                backgroundSize: "200% 100%", animation: "kShimmer 1.4s ease-in-out infinite" }} />
+              <div style={{ height: 10, width: "70%", borderRadius: "6px",
+                background: `linear-gradient(90deg, ${C.panel} 0%, ${C.border2 ?? C.border} 50%, ${C.panel} 100%)`,
+                backgroundSize: "200% 100%", animation: "kShimmer 1.4s ease-in-out infinite" }} />
+            </div>
+          ))}
+        </div>
       ) : ideas.length === 0 ? (
         <div style={{ padding: "48px 20px", textAlign: "center" }}>
           <div style={{ fontSize: "32px", marginBottom: "14px" }}>💡</div>
