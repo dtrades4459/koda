@@ -1059,7 +1059,11 @@ export function TradingCircles({
                         myCode={getMyCode()}
                         C={C}
                         onReact={async (id, emoji) => {
-                          await reactToSharedTrade(id, emoji);
+                          await reactToSharedTrade(id, emoji, {
+                            authorCode: item.data.authorCode,
+                            currentUid: profile?.uid ?? undefined,
+                            contextLabel: item.data.strategy ?? item.data.pair ?? undefined,
+                          });
                           setFeedItems(prev => prev.map(fi => {
                             if (fi.type !== "trade" || fi.data.id !== id) return fi;
                             const reactions = { ...(fi.data.reactions ?? {}) };

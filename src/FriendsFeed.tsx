@@ -2,6 +2,8 @@ import { type CSSProperties, useState } from "react";
 import { AvatarCircle, MONO, BODY, DISPLAY } from "./shared";
 import { IdeasScreen } from "./IdeasScreen";
 import type { Trade } from "./types";
+import { uidForCode } from "./data/follows";
+import { notifyReaction } from "./data/notifications";
 
 const REACTIONS = ["FIRE", "GEM", "UP", "TARGET", "PAIN", "MIND"] as const;
 type Reaction = (typeof REACTIONS)[number];
@@ -411,7 +413,20 @@ export function FriendsFeed({
                             if (!iMine && count === 0) return null;
                             return (
                               <button key={rx}
-                                onClick={() => reactToFeed(item.authorCode, item.tradeId, rx)}
+                                onClick={() => {
+                                  reactToFeed(item.authorCode, item.tradeId, rx);
+                                  void uidForCode(item.authorCode).then(authorUid => {
+                                    if (authorUid) {
+                                      void notifyReaction({
+                                        targetUid: authorUid,
+                                        surface: "feed_trade",
+                                        emoji: REACTION_EMOJI[rx],
+                                        contextLabel: (item.strategy as string | undefined) ?? (item.pair as string | undefined) ?? undefined,
+                                        currentUid: myUid,
+                                      });
+                                    }
+                                  });
+                                }}
                                 style={{
                                   display: "flex", alignItems: "center", gap: "5px",
                                   padding: "4px 9px", borderRadius: "999px",
@@ -429,7 +444,20 @@ export function FriendsFeed({
                             <div style={{ display: "flex", gap: "4px" }}>
                               {REACTIONS.map(rx => (
                                 <button key={rx}
-                                  onClick={() => reactToFeed(item.authorCode, item.tradeId, rx)}
+                                  onClick={() => {
+                                    reactToFeed(item.authorCode, item.tradeId, rx);
+                                    void uidForCode(item.authorCode).then(authorUid => {
+                                      if (authorUid) {
+                                        void notifyReaction({
+                                          targetUid: authorUid,
+                                          surface: "feed_trade",
+                                          emoji: REACTION_EMOJI[rx],
+                                          contextLabel: (item.strategy as string | undefined) ?? (item.pair as string | undefined) ?? undefined,
+                                          currentUid: myUid,
+                                        });
+                                      }
+                                    });
+                                  }}
                                   style={{
                                     width: "28px", height: "28px", borderRadius: "999px",
                                     background: cardBg, border: `1px solid ${C.border}`,

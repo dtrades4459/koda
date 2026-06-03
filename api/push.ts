@@ -236,6 +236,34 @@ async function handleNotifyCircleJoin(req: VercelRequest, res: VercelResponse) {
   return res.status(200).json({ ok: true });
 }
 
+async function handleNotifyReaction(req: VercelRequest, res: VercelResponse) {
+  const auth = req.headers.authorization as string | undefined;
+  if (!auth?.startsWith("Bearer ")) return res.status(401).json({ error: "No token" });
+
+  const { data: { user }, error: authErr } = await supabase.auth.getUser(auth.slice(7));
+  if (authErr || !user) return res.status(401).json({ error: "Unauthorized" });
+
+  const { targetUid, surface, emoji, contextLabel } = req.body as {
+    targetUid?: string;
+    surface?: "feed_trade" | "shared_trade";
+    emoji?: string;
+    contextLabel?: string;
+  };
+  if (!targetUid || !surface || !emoji) {
+    return res.status(400).json({ error: "targetUid, surface, emoji required" });
+  }
+  if (targetUid === user.id) return res.status(200).json({ ok: true });
+
+  await deliverNotification({
+    targetUid,
+    kind: "reaction",
+    title: "New reaction",
+    body: `${emoji} on your ${surface === "feed_trade" ? "trade" : "shared trade"}${contextLabel ? ` (${contextLabel})` : ""}`,
+    data: { surface, emoji, fromUid: user.id },
+  });
+  return res.status(200).json({ ok: true });
+}
+
 async function handleBroadcast(req: VercelRequest, res: VercelResponse) {
   const auth = req.headers.authorization as string | undefined;
   const token = auth?.startsWith("Bearer ") ? auth.slice(7) : "";
@@ -284,6 +312,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (action === "notify-circle") return handleNotifyCircle(req, res);
   if (action === "notify-follow") return handleNotifyFollow(req, res);
   if (action === "notify-circle-join") return handleNotifyCircleJoin(req, res);
+  if (action === "notify-reaction") return handleNotifyReaction(req, res);
   if (action === "broadcast") return handleBroadcast(req, res);
   return res.status(400).json({ error: "Unknown action" });
 }
