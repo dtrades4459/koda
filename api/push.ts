@@ -180,6 +180,33 @@ async function handleNotifyCircle(req: VercelRequest, res: VercelResponse) {
   return res.status(200).json({ ok: true, sent: subs.length });
 }
 
+async function handleNotifyFollow(req: VercelRequest, res: VercelResponse) {
+  const auth = req.headers.authorization as string | undefined;
+  if (!auth?.startsWith("Bearer ")) return res.status(401).json({ error: "No token" });
+
+  const { data: { user }, error: authErr } = await supabase.auth.getUser(auth.slice(7));
+  if (authErr || !user) return res.status(401).json({ error: "Invalid token" });
+
+  const { targetUid, followerName, followerHandle } = req.body as {
+    targetUid?: string;
+    followerName?: string;
+    followerHandle?: string;
+  };
+  if (!targetUid || typeof targetUid !== "string") {
+    return res.status(400).json({ error: "targetUid required" });
+  }
+  if (targetUid === user.id) return res.status(200).json({ ok: true }); // no self-notify
+
+  await deliverNotification({
+    targetUid,
+    kind: "follow",
+    title: followerName ?? followerHandle ?? "Someone",
+    body: "started following you",
+    data: { followerUid: user.id, followerHandle: followerHandle ?? null },
+  });
+  return res.status(200).json({ ok: true });
+}
+
 async function handleBroadcast(req: VercelRequest, res: VercelResponse) {
   const auth = req.headers.authorization as string | undefined;
   const token = auth?.startsWith("Bearer ") ? auth.slice(7) : "";
@@ -226,6 +253,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (action === "subscribe") return handleSubscribe(req, res);
   if (action === "send") return handleSend(req, res);
   if (action === "notify-circle") return handleNotifyCircle(req, res);
+  if (action === "notify-follow") return handleNotifyFollow(req, res);
   if (action === "broadcast") return handleBroadcast(req, res);
   return res.status(400).json({ error: "Unknown action" });
 }

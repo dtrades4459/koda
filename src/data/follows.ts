@@ -102,6 +102,19 @@ export async function migrateLegacyFollows(myCode: string): Promise<void> {
 
 // ── Writes ──────────────────────────────────────────────────────────────────
 
+async function notifyFollow(targetUid: string, myName?: string, myHandle?: string): Promise<void> {
+  try {
+    const { data: sess } = await supabase.auth.getSession();
+    const token = sess.session?.access_token;
+    if (!token) return;
+    await fetch("/api/push?action=notify-follow", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ targetUid, followerName: myName, followerHandle: myHandle }),
+    });
+  } catch { /* notifications are best-effort */ }
+}
+
 export async function followUser(input: {
   myCode: string;
   target: string;
@@ -131,6 +144,12 @@ export async function followUser(input: {
   catch (e) { log.error("follows.followUser.follow", e, { target }); }
   try { await storage.set(followKeys.follower(target, input.myCode), JSON.stringify(followerEdge), true); }
   catch (e) { log.error("follows.followUser.follower", e, { target }); }
+
+  // Notify the target that someone followed them (best-effort, non-blocking)
+  const targetUid = await uidForCode(target);
+  if (targetUid) {
+    void notifyFollow(targetUid, input.myName, input.myHandle);
+  }
 }
 
 export async function unfollowUser(input: { myCode: string; target: string }): Promise<void> {
@@ -182,7 +201,7 @@ export function subscribeToFollows(myCode: string, onChange: () => void): () => 
 // They shadow the KV functions above — dual-write keeps both in sync.
 
 /** Resolve a member code → auth user UUID via public.profiles. */
-async function uidForCode(code: string): Promise<string | null> {
+export async function uidForCode(code: string): Promise<string | null> {
   try {
     const { data } = await supabase
       .from("profiles")
