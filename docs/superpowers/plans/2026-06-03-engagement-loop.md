@@ -1,5 +1,7 @@
 # Engagement Loop Implementation Plan
 
+> **STATUS: SHIPPED 2026-06-03 as PR #23 (merged `b3cb61c`).** All 17 tasks executed via `superpowers:subagent-driven-development`. Migrations applied to live Supabase. Known caveat: `circle_messages` SELECT policy temporarily reverted to `USING (true)` because the codebase only writes membership to KV — backfill task tracked on whiteboard.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Ship the three-piece retention unlock — read/unread chat state, expanded push notifications on social events, and a weekly digest — so users feel seen by the system and have a reason to return tomorrow.

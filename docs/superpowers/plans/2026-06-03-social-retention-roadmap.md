@@ -1,6 +1,13 @@
 # Social + Circles Retention Roadmap
 
-Companion to `2026-06-03-engagement-loop.md`. The engagement loop plan covers items #1, #2, and #10 from the Garry-Tan-lens audit. This document tracks the other 7 items as future implementation plans — write each one in detail when you're ready to ship it.
+Companion to `2026-06-03-engagement-loop.md`. The engagement loop plan covers items #1, #2, and #10 from the Garry-Tan-lens audit — **all three SHIPPED 2026-06-03 as PR #23 (merged `b3cb61c`).** This document tracks the remaining 7 items as future implementation plans — write each one in detail when you're ready to ship it.
+
+**Status update (2026-06-03):**
+- ✅ Item #1 (read/unread chat) — shipped
+- ✅ Item #2 (follow/circle-join/reaction/like push notifications) — shipped
+- ✅ Item #10 (weekly digest + Activity inbox) — shipped
+- 🔜 Item #5 (KV → Postgres unification) **JUMPED IN PRIORITY** — chat membership lives in KV but the strict `circle_messages` RLS expects Postgres, so the policy is currently reverted to `USING (true)` (open) until backfill lands. Do this BEFORE item #3 (moderation) so we can re-secure the policy.
+- Items #3, #4, #6, #7, #8, #9 — unchanged
 
 **Suggested execution order is top-to-bottom.** Each item depends on prior items being live: e.g., moderation only matters once volume exists, badges only matter once stats are visible enough to brag about. Don't skip ahead.
 

@@ -91,10 +91,16 @@ Do **not** bypass with `--no-verify`. If the hook fails, fix the underlying issu
 | `src/IdeasScreen.tsx` | Ideas tab feed — paginated list, composer trigger, optimistic likes, chart lightbox |
 | `src/IdeaComposer.tsx` | New-idea form (modal on desktop, bottom sheet on mobile) — type toggle, structured fields, optional chart, optional linked trade |
 | `src/components/IdeaCard.tsx` | Idea card — collapsed + expanded modes; renders chart thumbnail (collapsed) or full chart (expanded) |
-| `api/ideas.ts` | `?action=list` (paginated, with like counts + `liked_by_me`), `create`, `like` (toggle), `delete` — all auth-gated |
-| `api/push.ts` | `?action=subscribe` (save sub), `send` (per-user), `notify-circle` (authed, sends to circle members), `broadcast` (cron-secret-gated, sends to all subs) |
+| `src/data/chatReads.ts` | `markChatRead(code)` + `getUnreadCounts(codes)` — reads/writes `chat_reads` table for unread chat badges |
+| `src/data/notificationFeed.ts` | `listNotifications(limit)` + `markNotificationsRead(ids)` — reads/writes `notification_feed` (in-app inbox) |
+| `src/data/notifications.ts` | Client-side `notifyReaction` wrapper for `/api/push?action=notify-reaction` — best-effort fire-and-forget |
+| `src/hooks/useUnreadCircles.ts` | Polls per-circle unread counts every 30s; drives both circle-list badges and the Circles nav-tab dot |
+| `src/hooks/useUnreadNotifications.ts` | Polls notification_feed unread count every 30s; drives Social nav-tab dot. Returns `{ count, refresh }` |
+| `src/components/NotificationFeed.tsx` | Activity inbox UI — kind-specific icons, skeleton loading, error+retry state, optimistic mark-read with 250ms fade |
+| `api/ideas.ts` | `?action=list` (paginated, with like counts + `liked_by_me`), `create`, `like` (toggle, fires `notify-like` via `deliverNotification`), `delete` — all auth-gated |
+| `api/push.ts` | `?action=subscribe`, `send`, `notify-circle` (chat msg), `notify-follow`, `notify-circle-join`, `notify-reaction`, `notify-like`, `broadcast`. Exports shared `deliverNotification(opts)` helper that writes to `notification_feed` + fans out web push. |
 | `api/telegram.ts` | Telegram webhook — admin commands: `/announce <msg>`, `/test`, `/help`; admin ID: `7587404723`; uses `TELEGRAM_BOT_TOKEN2` + `TELEGRAM_WEBHOOK_SECRET` |
-| `api/cron.ts` | Cron router. `?job=complete-challenges` (daily), `sync` (5min via GH Action), `daily-digest` (daily), `news-calendar` (daily via Vercel cron, fetches ForexFactory), `news-headlines` (every 30min via GH Action, fetches Marketaux). All gated by `Bearer CRON_SECRET`. |
+| `api/cron.ts` | Cron router. `?job=complete-challenges` (daily), `sync` (5min via GH Action), `daily-digest` (daily), `news-calendar` (daily via Vercel cron, fetches Finnhub economic calendar), `news-headlines` (every 30min via GH Action, fetches Marketaux), `weekly-digest` (Sun 18:00 UTC, aggregates last 7 days of `notification_feed` per user, sends one consolidated push). All gated by `Bearer CRON_SECRET`. |
 | `api/delete-account.ts` | POST — full user data wipe (broker tokens → trades → profiles → user_kv → shared_kv → auth.users) |
 | `api/feedback.ts` | POST → Telegram bot (@Tradrfeedbackbot) |
 | `api/broker/[action].ts` | Tradovate connect/disconnect |
@@ -161,6 +167,20 @@ Do **not** bypass with `--no-verify`. If the hook fails, fix the underlying issu
 - RLS: all authenticated read; insert/delete only own rows
 - Toggle behaviour lives in `api/ideas.ts?action=like` — inserts or deletes the row, returns `{liked, count}`
 - Created via migration `20260602_ideas.sql`
+
+### `public.chat_reads` (engagement loop, shipped 2026-06-03)
+- `user_id uuid`, `circle_code text`, `last_read_at timestamptz`, composite PK `(user_id, circle_code)`
+- Tracks the boundary between read/unread chat messages per user per circle
+- RLS: user manages only their own rows (select/insert/update/delete all gated on `auth.uid() = user_id`)
+- Powers the unread badge on the circles list, the NEW divider in chat, and the Circles nav-tab dot
+- Created via migration `20260603_chat_reads.sql`
+
+### `public.notification_feed` (engagement loop, shipped 2026-06-03)
+- `id uuid PK`, `user_id uuid`, `kind text` (check: follow / circle_join / reaction / idea_like / digest), `data jsonb`, `created_at timestamptz`, `read_at timestamptz`, `aggregated_at timestamptz`
+- Paper trail for the in-app Activity inbox. Every push notification also writes a row here.
+- Partial indexes: `(user_id, created_at desc) WHERE read_at is null` for nav badge; `(user_id, created_at) WHERE aggregated_at is null` for weekly digest cron
+- RLS: select + update for owner only. NO insert/delete by authenticated users — all writes via service role (`api/push.ts`, `api/cron.ts`)
+- Created via migration `20260603_notification_feed.sql`
 
 ### `public.broker_connections` + `public.sync_events`
 - Broker token storage (AES-256-GCM encrypted) + sync audit log
@@ -231,7 +251,7 @@ Rollback: Vercel Dashboard → Deployments → previous green deploy → Promote
 - **News** — top-level tab; US economic calendar (Today/Week) + headlines feed; impact + USD-only + timezone filters
 - **Log** — add/view/edit trades, Review Inbox for auto-synced drafts
 - **Circles** — Trading Circles (leaderboard, chat, challenges, join/create)
-- **Social** — `Feed` / `Ideas` / `People` sub-tabs (renders `src/FriendsFeed.tsx`). Feed is the follow-graph activity stream; Ideas is the chronological public Ideas board (renders `src/IdeasScreen.tsx` embedded); People is following/followers management.
+- **Social** — `Feed` / `Ideas` / `People` / `Activity` sub-tabs. Feed/Ideas/People render `src/FriendsFeed.tsx` (tab state is lifted into `src/Koda.tsx`'s `socialSection` and passed in as `section` + `onSectionChange` props). Activity renders `src/components/NotificationFeed.tsx` (the in-app inbox). Social nav tab gets an unread dot driven by `useUnreadNotifications`.
 - **Sync** — broker connections (Tradovate) + CSV import + audit log
 - **Settings** — profile, dark mode, export, delete account
 
@@ -257,7 +277,8 @@ Bottom-nav tabs (mobile): Home / News / Stats / Circles / Social. Sub-sections u
 - Beta access wall (BetaGate) — `VITE_BETA_PASSWORD` env var controlled
 - Prop firm eval mode — profit target, daily loss limit, max drawdown tracking
 - Feedback button → Telegram bot (@Tradrfeedbackbot)
-- Push notifications — OS-level; Settings toggle; circle messages trigger push to all other members
+- Push notifications — OS-level; Settings toggle; circle messages trigger push to all other members. **Engagement loop** (shipped 2026-06-03) also fires pushes on: someone follows you, someone joins a circle you own, someone reacts to your feed trade or shared trade, someone likes your idea. Every push also writes a row to `notification_feed` so the in-app Activity inbox shows the same activity. Weekly digest cron (Sunday 18:00 UTC) sends one consolidated summary push per active user.
+- Unread chat state — chat tab open marks `chat_reads.last_read_at`, badge on each circle in the list shows unread count, NEW divider appears in chat above the first unread message, Circles nav-tab gets a small unread dot. Polled every 30s as a backstop for missed realtime events.
 - Telegram admin bot — `/announce <msg>` broadcasts push to all subscribers + shows in-app banner; `/test`, `/help`
 - In-app announcement banner — dismissible; fetches from `announcements` table; triggered by Telegram `/announce`
 - News section — economic calendar (ForexFactory) + headlines feed (Marketaux). Free for all users. Home widget shows next high-impact event + week strip. Full page has Today/Week range pills, impact filter chips, USD-only/all-FX toggle, timezone picker (Local/ET/London/UTC), tap-to-expand cards with FORECAST/PREVIOUS/ACTUAL.
@@ -297,6 +318,7 @@ Bottom-nav tabs (mobile): Home / News / Stats / Circles / Social. Sub-sections u
 | Vercel prod build `UNRESOLVED_IMPORT ./IdeasScreen` after audit commit `a05c9e3` | `git add src/FriendsFeed.tsx` staged the whole working-tree state, including a prior local-only `import { IdeasScreen }` line whose target wasn't in git yet. Fixed by committing the full Ideas feature set (`85b5041`). Always `git diff --staged` after `git add` when the file had prior local edits. |
 | Members tab "Follow" button broke build with `no-unused-expressions` lint error | Used a ternary expression as a statement: `isFollowing ? unfollowUser(c) : followUser(c);` — convert to `if/else` instead. |
 | `circle_messages` SELECT policy was `USING (true)` — any auth'd user could dump every circle's chat | Use a membership-gated `EXISTS (SELECT 1 FROM circle_members cm WHERE cm.circle_code = circle_messages.circle_code AND cm.user_id = auth.uid())` policy. Fixed in `20260603_circle_messages_members_only.sql`. When adding a new policy on a per-circle table, copy the `cm_read_member` pattern from `circle_members`, NOT the `shared_kv_select` pattern (which is intentionally `USING (true)` for the leaderboard use case). |
+| Chat messages stopped loading after applying the members-only RLS | The codebase only writes circle membership to KV (`koda_circle_member_*`), not to `public.circle_members`. The new strict policy required a row in `circle_members`, which was empty → every read blocked. **Temporary unblock:** revert the policy to `USING (true)`. **Proper fix:** backfill `circles` and `circle_members` from the KV rows, then re-apply the strict policy. Tracked on whiteboard 2026-06-03. |
 
 ---
 
@@ -346,7 +368,9 @@ Koda.tsx is ~4100 lines. OneDrive can truncate large writes. Use Edit tool for t
 | `20260601_announcements.sql` | `announcements` table + RLS (see NEXT_SESSION.md §2A — **run if not done**) | ⚠️ pending |
 | `20260601_news_cache.sql` | `news_cache` table (public read, service-role writes) for the News section | ✅ |
 | `20260603_intervention_events.sql` | `intervention_events` table + RLS for in-session intervention v1 | ✅ |
-| `20260603_circle_messages_members_only.sql` | Restrict `circle_messages` SELECT to circle members (was `USING (true)`) — closes the cross-circle read documented in `.gstack/security-reports/2026-06-03-cso-audit.md` Finding 1 | ✅ |
+| `20260603_circle_messages_members_only.sql` | Restrict `circle_messages` SELECT to circle members (was `USING (true)`) — closes the cross-circle read documented in `.gstack/security-reports/2026-06-03-cso-audit.md` Finding 1 | ⚠️ **TEMPORARILY REVERTED** to `USING (true)` because `circle_members` is empty (codebase only writes membership to KV). Re-apply after backfilling `circle_members` from `koda_circle_member_*` KV rows. |
+| `20260603_chat_reads.sql` | `chat_reads` table for engagement loop unread tracking | ✅ |
+| `20260603_notification_feed.sql` | `notification_feed` table for engagement loop in-app inbox + weekly digest | ✅ |
 
 ---
 
@@ -354,6 +378,8 @@ Koda.tsx is ~4100 lines. OneDrive can truncate large writes. Use Edit tool for t
 
 - **Telegram feedback**: @Tradrfeedbackbot needs to be added to group `-5187303282`. Even with correct chat ID, bot must be a group member to send messages. Verify by forwarding a message from the group to `@userinfobot` to confirm the group ID matches.
 - **v2 data migration**: profiles, follows, circles, trades all still reading from KV. Migration plan: dual-write behind feature flag, backfill, flip flag, delete old path. Do profile first (smallest blast radius), trades last.
+- **`circle_members` backfill + strict RLS restore**: KV → Postgres backfill required before re-applying the members-only `circle_messages` SELECT policy. Steps: backfill `circles` from `koda_circle_*` meta rows, backfill `circle_members` from `koda_circle_member_*` rows using `shared_kv.owner_id`, re-apply `20260603_circle_messages_members_only.sql`. ~1h. Until this lands the chat SELECT policy is `USING (true)` (open).
+- **Engagement loop follow-ups** (per `docs/superpowers/plans/2026-06-03-social-retention-roadmap.md`): moderation, leaderboard integrity, KV→Postgres unification, Ideas→Feed integration, badges, comments, viral invites. Sequenced; ship moderation before badges/comments/viral.
 - **Split Koda.tsx**: ~4100 lines — extract remaining inline screens to reduce file size.
 - **Playwright smoke test**: sign in → log trade → join circle — run on every deploy.
 
@@ -374,6 +400,9 @@ Koda.tsx is ~4100 lines. OneDrive can truncate large writes. Use Edit tool for t
 **Other**
 - [x] Push notifications for circle activity ✅ shipped 2026-06-01
 - [x] News section — economic calendar + headlines ✅ shipped 2026-06-01
+- [x] News calendar source: ForexFactory → Finnhub (FF feed never populated actuals) ✅ shipped 2026-06-03
+- [x] Engagement loop — read/unread chat, follow/join/reaction/like push notifications, weekly digest, Activity inbox ✅ shipped 2026-06-03 (PR #23 merged as `b3cb61c`)
+- [x] Deterministic-Stats UI — reusable `<ComputedBadge/>` component, deployed on home stats + discipline card + PDF footer ✅ shipped 2026-06-03
 - [ ] Google OAuth (wired, not configured in Supabase — remove button or configure)
 - [ ] Multiple accounts (prop eval 1, prop eval 2, personal)
 - [ ] Rithmic / NinjaTrader 8 / TopstepX live API connections
