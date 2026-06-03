@@ -207,6 +207,35 @@ async function handleNotifyFollow(req: VercelRequest, res: VercelResponse) {
   return res.status(200).json({ ok: true });
 }
 
+async function handleNotifyCircleJoin(req: VercelRequest, res: VercelResponse) {
+  const auth = req.headers.authorization as string | undefined;
+  if (!auth?.startsWith("Bearer ")) return res.status(401).json({ error: "No token" });
+
+  const { data: { user }, error: authErr } = await supabase.auth.getUser(auth.slice(7));
+  if (authErr || !user) return res.status(401).json({ error: "Invalid token" });
+
+  const { circleCode, circleName, ownerUid, joinerName, joinerHandle } = req.body as {
+    circleCode?: string;
+    circleName?: string;
+    ownerUid?: string;
+    joinerName?: string;
+    joinerHandle?: string;
+  };
+  if (!circleCode || !ownerUid) {
+    return res.status(400).json({ error: "circleCode and ownerUid required" });
+  }
+  if (ownerUid === user.id) return res.status(200).json({ ok: true }); // creator joining their own circle
+
+  await deliverNotification({
+    targetUid: ownerUid,
+    kind: "circle_join",
+    title: joinerName ?? joinerHandle ?? "Someone",
+    body: `joined ${circleName ?? circleCode}`,
+    data: { circleCode, joinerUid: user.id, joinerHandle: joinerHandle ?? null },
+  });
+  return res.status(200).json({ ok: true });
+}
+
 async function handleBroadcast(req: VercelRequest, res: VercelResponse) {
   const auth = req.headers.authorization as string | undefined;
   const token = auth?.startsWith("Bearer ") ? auth.slice(7) : "";
@@ -254,6 +283,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (action === "send") return handleSend(req, res);
   if (action === "notify-circle") return handleNotifyCircle(req, res);
   if (action === "notify-follow") return handleNotifyFollow(req, res);
+  if (action === "notify-circle-join") return handleNotifyCircleJoin(req, res);
   if (action === "broadcast") return handleBroadcast(req, res);
   return res.status(400).json({ error: "Unknown action" });
 }

@@ -387,6 +387,35 @@ export function useCircles({
       const members = await readCircleMembers(code, [me]);
       const updated = [...myCirclesRef.current, { ...circle, members, isOwner: false }];
       await saveMyCircles(updated as Circle[]);
+
+      // Best-effort: notify the circle owner that someone joined
+      try {
+        const { data: sess } = await supabase.auth.getSession();
+        const token = sess.session?.access_token;
+        if (token) {
+          const { data: ownerRow } = await supabase
+            .from("circle_members")
+            .select("user_id")
+            .eq("circle_code", code)
+            .eq("role", "owner")
+            .maybeSingle();
+          const ownerUid = ownerRow?.user_id;
+          if (ownerUid && ownerUid !== uid) {
+            void fetch("/api/push?action=notify-circle-join", {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+              body: JSON.stringify({
+                circleCode: code,
+                circleName: circle.name ?? null,
+                ownerUid,
+                joinerName: profileRef.current.name,
+                joinerHandle: profileRef.current.handle,
+              }),
+            }).catch(() => { /* best-effort */ });
+          }
+        }
+      } catch { /* best-effort */ }
+
       setCircleJoinCode("");
       setCircleMsg("Joined.");
       setTimeout(() => setCircleMsg(""), 2000);
