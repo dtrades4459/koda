@@ -20,7 +20,8 @@ export interface SettingsScreenProps {
   editingProfile: boolean;
   setEditingProfile: (v: boolean) => void;
   darkMode: boolean;
-  toggleDark: () => void;
+  themePref: "light" | "dark" | "system";
+  setThemePref: (next: "light" | "dark" | "system") => Promise<void> | void;
   fontScale: number;
   setFontScale: (s: number) => void;
   deleteConfirm: string;
@@ -49,7 +50,8 @@ export function SettingsScreen({
   editingProfile,
   setEditingProfile,
   darkMode,
-  toggleDark,
+  themePref,
+  setThemePref,
   fontScale,
   setFontScale,
   deleteConfirm,
@@ -261,18 +263,41 @@ export function SettingsScreen({
             </button>
           </div>
         )}
-        {/* Appearance / Dark mode */}
-        <div style={{ display: "flex", alignItems: "center", gap: "14px", padding: "14px 18px" }}>
-          <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: (C as any).accentSoft ?? C.panel, border: `1px solid ${C.border2}`, color: C.accent, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M10 2v3M10 15v3M3 10h3M14 10h3M5.5 5.5l-2-2M14.5 5.5l2-2M5.5 14.5l-2 2M14.5 14.5l2 2M10 7a3 3 0 1 1 0 6 3 3 0 0 1 0-6z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        {/* Appearance — Light / Dark / System */}
+        <div style={{ padding: "14px 18px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "12px" }}>
+            <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: (C as any).accentSoft ?? C.panel, border: `1px solid ${C.border2}`, color: C.accent, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M10 2v3M10 15v3M3 10h3M14 10h3M5.5 5.5l-2-2M14.5 5.5l2-2M5.5 14.5l-2 2M14.5 14.5l2 2M10 7a3 3 0 1 1 0 6 3 3 0 0 1 0-6z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontFamily: DISPLAY, fontSize: "14px", fontWeight: 600, color: C.text }}>Appearance</div>
+              <div style={{ fontFamily: BODY, fontSize: "12px", color: C.muted, marginTop: "2px" }}>
+                {themePref === "system" ? `Following your device (${darkMode ? "dark" : "light"})` : `Always ${themePref}`}
+              </div>
+            </div>
           </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontFamily: DISPLAY, fontSize: "14px", fontWeight: 600, color: C.text }}>Appearance</div>
-            <div style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, marginTop: "2px" }}>Dark mode</div>
+          <div role="radiogroup" aria-label="Theme preference" style={{ display: "flex", gap: "6px", padding: "4px", background: (C as any).panel2 ?? C.border2, border: `1px solid ${C.border}`, borderRadius: "999px" }}>
+            {(["light", "dark", "system"] as const).map(opt => {
+              const active = themePref === opt;
+              return (
+                <button
+                  key={opt}
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => { void setThemePref(opt); }}
+                  style={{
+                    flex: 1, padding: "8px 12px", borderRadius: "999px",
+                    background: active ? C.text : "transparent",
+                    color: active ? C.bg : C.text2,
+                    border: "none", cursor: "pointer",
+                    fontFamily: BODY, fontSize: "13px", fontWeight: active ? 600 : 500,
+                    transition: "background 0.15s, color 0.15s",
+                  }}>
+                  {opt === "light" ? "Light" : opt === "dark" ? "Dark" : "System"}
+                </button>
+              );
+            })}
           </div>
-          <button onClick={toggleDark} style={{ width: "38px", height: "22px", borderRadius: "999px", border: "none", cursor: "pointer", background: darkMode ? (C as any).live ?? C.green : C.border2, position: "relative", transition: "background 0.2s", boxShadow: darkMode ? `0 0 0 3px color-mix(in oklch, ${(C as any).live ?? C.green} 22%, transparent)` : "none", flexShrink: 0 }}>
-            <div style={{ position: "absolute", top: "2px", left: darkMode ? "18px" : "2px", width: "18px", height: "18px", borderRadius: "50%", background: "#fff", boxShadow: "0 1px 2px rgba(0,0,0,0.2)", transition: "left 0.2s" }} />
-          </button>
         </div>
       </div>
 

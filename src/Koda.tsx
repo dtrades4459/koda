@@ -135,7 +135,23 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     if (v === "home") setHomeSection("feed");
   }
   // ── Circles state + actions managed by useCircles (wired below after stats) ─
-  const [darkMode, setDarkMode] = useState(true);
+  // Theme preference is 3-way: user picks light / dark / system. The derived
+  // `darkMode` boolean drives the actual palette. New users default to
+  // "system" so the app respects whatever they've set OS-wide.
+  type ThemePref = "light" | "dark" | "system";
+  const [themePref, setThemePref] = useState<ThemePref>("system");
+  const [systemDark, setSystemDark] = useState<boolean>(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return true;
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  });
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const handler = (e: MediaQueryListEvent) => setSystemDark(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+  const darkMode = themePref === "dark" || (themePref === "system" && systemDark);
   const isDesktop = useIsDesktop(900);
   const viewport = useViewport();
   const C = (darkMode ? DARK : LIGHT) as typeof DARK;
@@ -510,14 +526,14 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
 
   async function loadAll() {
     const store = storage;
-    const LOAD_KEYS = ["koda_trades","koda_profile","koda_checklists","koda_rules","koda_dark","koda_circles","koda_thresholds","koda_custom_strategies"] as const;
+    const LOAD_KEYS = ["koda_trades","koda_profile","koda_checklists","koda_rules","koda_dark","koda_theme_pref","koda_circles","koda_thresholds","koda_custom_strategies"] as const;
     const [kv, v2ProfileRes] = await Promise.all([
       store.getMany([...LOAD_KEYS]).catch(() => new Map()),
       (isFlagOn("newProfile") && user?.id)
         ? getProfile(user.id).catch(() => null)
         : Promise.resolve(null),
     ]);
-    const [t, pr, sc, sr, dm, ci, st, cs] = LOAD_KEYS.map(k => kv.get(k) ?? null);
+    const [t, pr, sc, sr, dm, tp, ci, st, cs] = LOAD_KEYS.map(k => kv.get(k) ?? null);
 
     // Trades
     try {
@@ -618,8 +634,18 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     catch (e) { log.error("loadAll.checklists", e); }
     try { if (sr) setStratRules(JSON.parse(sr.value)); }
     catch (e) { log.error("loadAll.rules", e); }
-    try { if (dm) setDarkMode(JSON.parse(dm.value)); }
-    catch (e) { log.error("loadAll.dark", e); }
+    // Theme preference load + migration. Prefer the new 3-way key; fall back to
+    // the legacy koda_dark boolean for existing users so they keep their
+    // current look until they opt-in to system mode via Settings.
+    try {
+      if (tp) {
+        const parsed = JSON.parse(tp.value);
+        if (parsed === "light" || parsed === "dark" || parsed === "system") setThemePref(parsed);
+      } else if (dm) {
+        const legacy = JSON.parse(dm.value);
+        setThemePref(legacy ? "dark" : "light");
+      }
+    } catch (e) { log.error("loadAll.themePref", e); }
     try { if (ci) setMyCircles(JSON.parse(ci.value)); }
     catch (e) { log.error("loadAll.circles", e); }
     try { if (st) setStratThresholds(JSON.parse(st.value)); }
@@ -974,7 +1000,14 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
 
   async function saveStratThresholds(u: Record<string, { minCount: number; required: string[] }>) { setStratThresholds(u); await storage.set("koda_thresholds", JSON.stringify(u)); }
   async function saveStratRules(u: Record<string, { id: number; text: string }[]>) { setStratRules(u); await storage.set("koda_rules", JSON.stringify(u)); }
-  async function toggleDark() { const nd = !darkMode; setDarkMode(nd); await storage.set("koda_dark", JSON.stringify(nd)); }
+  async function setThemePreference(next: ThemePref) {
+    setThemePref(next);
+    await storage.set("koda_theme_pref", JSON.stringify(next));
+    // Keep the legacy koda_dark mirror in sync so any older client/path that
+    // still reads the boolean falls on the right side.
+    const effectiveDark = next === "dark" || (next === "system" && systemDark);
+    await storage.set("koda_dark", JSON.stringify(effectiveDark));
+  }
 
   // Swipe — wired via useEffect so we can pass { passive: false } and call
   // preventDefault(), which prevents the browser from interpreting a horizontal
@@ -2854,7 +2887,8 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                   editingProfile={editingProfile}
                   setEditingProfile={setEditingProfile}
                   darkMode={darkMode}
-                  toggleDark={toggleDark}
+                  themePref={themePref}
+                  setThemePref={setThemePreference}
                   fontScale={fontScale}
                   setFontScale={setFontScale}
                   deleteConfirm={deleteConfirm}
