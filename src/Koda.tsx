@@ -1947,9 +1947,10 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                     const { live, orb1, orb2, orb3 } = C;
                     return (
                       <section style={{ marginTop: "clamp(16px, 4vw, 28px)", position: "relative" }}>
-                        {/* Page-level ambient orbs — behind everything */}
-                        <GlassOrb C={C} top={-40} left={-80} size={420} color={orb1} opacity={darkMode ? 0.55 : 0.35} />
-                        <GlassOrb C={C} top={120} right={-100} size={300} color={orb2} opacity={darkMode ? 0.35 : 0.25} />
+                        {/* Single signature ambient orb. The hero card has its own
+                            iridescent corner glow; doubling up with a second orb
+                            read as "AI-generated dashboard" (beta feedback 2026-06-03). */}
+                        <GlassOrb C={C} top={-40} left={-80} size={420} color={orb1} opacity={darkMode ? 0.42 : 0.28} />
 
                         {/* Greeting (design spec) */}
                         <div style={{ padding: "0 6px 14px", position: "relative", zIndex: 2 }}>
@@ -3180,9 +3181,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                         {expanded && (
                           <div style={{ padding: "8px 0 24px", display: "flex", flexDirection: "column", gap: "12px" }}>
                             {/* ── Glass hero card ── */}
-                            <div style={{ margin: "0 2px", borderRadius: 24, padding: 22, position: "relative", overflow: "hidden", background: darkMode ? "rgba(20,20,26,0.6)" : "rgba(255,255,255,0.7)", backdropFilter: "blur(20px) saturate(160%)", border: `1px solid ${C.border2}` }}>
-                              {/* corner glow */}
-                              <div style={{ position: "absolute", top: -80, left: -80, width: 240, height: 240, borderRadius: "50%", background: `conic-gradient(from 200deg at 50% 50%, ${C.orb3}, ${C.accent}, ${C.orb2}, ${C.orb3})`, filter: "blur(50px)", opacity: darkMode ? 0.5 : 0.3, pointerEvents: "none" }} />
+                            <div style={{ margin: "0 2px", borderRadius: 24, padding: 22, position: "relative", overflow: "hidden", background: darkMode ? "rgba(34,30,26,0.6)" : "rgba(255,255,255,0.7)", border: `1px solid ${C.border2}` }}>
                               {/* ghost P&L watermark */}
                               {t.pnl && <div style={{ position: "absolute", bottom: -20, right: -10, fontFamily: DISPLAY, fontWeight: 700, fontSize: 130, color: parseFloat(t.pnl) >= 0 ? C.green : C.red, opacity: 0.07, letterSpacing: "-0.04em", lineHeight: 1, pointerEvents: "none" }}>{parseFloat(t.pnl) >= 0 ? "+" : ""}{t.pnl}R</div>}
 
@@ -3437,8 +3436,8 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
               {statsTab === "performance" && total > 0 && (
                 <>
                   {/* ── Win Rate Ring card ── */}
-                  <div style={{ borderRadius: "22px", padding: "22px", background: C.surfaceGlass, backdropFilter: "blur(20px) saturate(140%)", WebkitBackdropFilter: "blur(20px) saturate(140%)", border: `1px solid ${C.border}`, position: "relative", overflow: "hidden" }}>
-                    <div style={{ position: "absolute", top: -60, right: -60, width: 220, height: 220, borderRadius: "50%", pointerEvents: "none", background: `conic-gradient(from 200deg at 50% 50%, ${C.orb3}, ${C.accent}, ${C.orb2}, ${C.orb3})`, filter: "blur(40px)", opacity: 0.45, zIndex: 0 }} />
+                  <div style={{ borderRadius: "22px", padding: "22px", background: C.panel, border: `1px solid ${C.border}`, position: "relative", overflow: "hidden" }}>
+                    <div style={{ position: "absolute", top: -60, right: -60, width: 220, height: 220, borderRadius: "50%", pointerEvents: "none", background: `conic-gradient(from 200deg at 50% 50%, ${C.orb3}, ${C.accent}, ${C.orb2}, ${C.orb3})`, filter: "blur(40px)", opacity: 0.28, zIndex: 0 }} />
                     <div style={{ display: "flex", alignItems: "center", gap: "22px", position: "relative", zIndex: 1 }}>
                       {(() => {
                         const wr = parseFloat(winRate as any) || 0;

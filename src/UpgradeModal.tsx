@@ -43,7 +43,7 @@ export function UpgradeModal({ C, userId, userEmail, stripeCustomerId, onCustome
     }
   }
 
-  const { live, liveSoft, orb1, orb2, orb3 } = C;
+  const { live, liveSoft, orb1, orb3 } = C;
 
   const FEATURES = [
     { icon: "📊", text: "Unlimited trade history" },
@@ -71,20 +71,14 @@ export function UpgradeModal({ C, userId, userEmail, stripeCustomerId, onCustome
         WebkitBackdropFilter: "blur(28px) saturate(180%)",
         animation: "kRise 0.42s ease-out",
       }}>
-        {/* Iridescent corner glow — top-left */}
-        <div style={{
-          position: "absolute", top: -70, left: -70, width: 240, height: 240,
-          borderRadius: "50%", pointerEvents: "none",
-          background: `conic-gradient(from 200deg at 50% 50%, ${orb3}, ${orb1}, ${orb2}, ${orb3})`,
-          filter: "blur(40px)", opacity: 0.5, zIndex: 0,
-        }}/>
-
-        {/* Centered orb bloom behind badge */}
+        {/* Single signature ambient: centered orb bloom behind the badge.
+            The previous design stacked a corner glow + this bloom + the ghost
+            word — three ambient layers on one modal read as templated. */}
         <div style={{
           position: "absolute", top: 40, left: "50%", transform: "translateX(-50%)",
           width: 300, height: 300, borderRadius: "50%",
           background: `conic-gradient(from 180deg, ${orb1}, ${live}, ${orb3}, ${orb1})`,
-          filter: "blur(80px)", opacity: 0.35, pointerEvents: "none",
+          filter: "blur(80px)", opacity: 0.32, pointerEvents: "none",
         }} />
 
         {/* Ghost "PRO" word */}
