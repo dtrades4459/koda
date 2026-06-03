@@ -3,6 +3,7 @@ import { supabase } from "./lib/supabase";
 import { StrategyPill, stratCode, KodaMark, MONO, BODY, DISPLAY, EmptyCirclesState, CornerGlow } from "./shared";
 import { KODA_GLOBAL_CODE } from "./hooks/useCircles";
 import { readCircleMembers } from "./data/circles";
+import { markChatRead } from "./data/chatReads";
 import { createChallenge, fetchActiveChallenge, fetchTrophies } from "./data/circlesChallenges";
 import { fetchSharedTrades, reactToSharedTrade, rowToSharedTrade } from "./data/circlesSharedTrades";
 import { SharedTradeCard } from "./components/SharedTradeCard";
@@ -450,6 +451,9 @@ export function TradingCircles({
         filter: `circle_code=eq.${activeCircle.code}`,
       }, (payload: any) => {
         setChatMessages(prev => prev.some((m: any) => m.id === payload.new.id) ? prev : [...prev, payload.new]);
+        if (document.visibilityState === "visible" && circleTab === "chat") {
+          void markChatRead(activeCircle.code);
+        }
         setTimeout(() => chatBottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
         // Also prepend to feed
         const msg = rowToCircleMessage(payload.new as Record<string, unknown>);
@@ -503,6 +507,7 @@ export function TradingCircles({
   // Poll chat every 8s when the chat tab is active — fallback while realtime warms up
   useEffect(() => {
     if (circleTab !== "chat" || !activeCircle) return;
+    void markChatRead(activeCircle.code);
     const id = setInterval(() => loadChatMessages(activeCircle.code), 8_000);
     return () => clearInterval(id);
   }, [circleTab, activeCircle]);
