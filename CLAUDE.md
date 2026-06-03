@@ -296,6 +296,7 @@ Bottom-nav tabs (mobile): Home / News / Stats / Circles / Social. Sub-sections u
 | GH Actions news cron hit 307 redirect | `kodatrade.co.uk` → `www.kodatrade.co.uk` 307; bare-domain curl fails. Workflow uses `www.kodatrade.co.uk/api/cron?job=...`. |
 | Vercel prod build `UNRESOLVED_IMPORT ./IdeasScreen` after audit commit `a05c9e3` | `git add src/FriendsFeed.tsx` staged the whole working-tree state, including a prior local-only `import { IdeasScreen }` line whose target wasn't in git yet. Fixed by committing the full Ideas feature set (`85b5041`). Always `git diff --staged` after `git add` when the file had prior local edits. |
 | Members tab "Follow" button broke build with `no-unused-expressions` lint error | Used a ternary expression as a statement: `isFollowing ? unfollowUser(c) : followUser(c);` — convert to `if/else` instead. |
+| `circle_messages` SELECT policy was `USING (true)` — any auth'd user could dump every circle's chat | Use a membership-gated `EXISTS (SELECT 1 FROM circle_members cm WHERE cm.circle_code = circle_messages.circle_code AND cm.user_id = auth.uid())` policy. Fixed in `20260603_circle_messages_members_only.sql`. When adding a new policy on a per-circle table, copy the `cm_read_member` pattern from `circle_members`, NOT the `shared_kv_select` pattern (which is intentionally `USING (true)` for the leaderboard use case). |
 
 ---
 
@@ -345,6 +346,7 @@ Koda.tsx is ~4100 lines. OneDrive can truncate large writes. Use Edit tool for t
 | `20260601_announcements.sql` | `announcements` table + RLS (see NEXT_SESSION.md §2A — **run if not done**) | ⚠️ pending |
 | `20260601_news_cache.sql` | `news_cache` table (public read, service-role writes) for the News section | ✅ |
 | `20260603_intervention_events.sql` | `intervention_events` table + RLS for in-session intervention v1 | ✅ |
+| `20260603_circle_messages_members_only.sql` | Restrict `circle_messages` SELECT to circle members (was `USING (true)`) — closes the cross-circle read documented in `.gstack/security-reports/2026-06-03-cso-audit.md` Finding 1 | ✅ |
 
 ---
 
