@@ -86,6 +86,16 @@ export interface TradingCirclesProps {
   isPro: boolean;
 }
 
+// Raw DB row shape returned by the circle_messages Supabase query.
+interface ChatMsg {
+  id: string;
+  sender_id: string | null;
+  sender_name: string;
+  sender_handle: string;
+  text: string;
+  created_at: string;
+}
+
 export function TradingCircles({
   myCircles, circlesView, setCirclesView, activeCircle, setActiveCircle,
   circleForm, setCircleForm, circleJoinCode, setCircleJoinCode,
@@ -633,6 +643,7 @@ export function TradingCircles({
                             display: "inline-flex",
                             alignItems: "center",
                             justifyContent: "center",
+                            flexShrink: 0,
                           }}
                         >
                           {unread[circle.code] > 99 ? "99+" : unread[circle.code]}
@@ -1248,11 +1259,11 @@ export function TradingCircles({
                             <div style={{ fontFamily: DISPLAY, fontSize: "16px", fontStyle: "italic", color: C.text2, marginBottom: "6px" }}>No messages yet.</div>
                             <div style={{ fontFamily: BODY, fontSize: "12px", color: C.muted }}>Be the first to say something.</div>
                           </div>
-                        : chatMessages.map((msg: any) => {
+                        : (chatMessages as ChatMsg[]).map((msg, i) => {
                             const isMe = msg.sender_id === myId;
                             return (
                               <Fragment key={msg.id}>
-                                {msg.id === firstUnreadId && (
+                                {msg.id === firstUnreadId && i > 0 && (
                                   <div style={{
                                     display: "flex", alignItems: "center", gap: 8,
                                     margin: "6px 0", fontFamily: MONO, fontSize: 9,

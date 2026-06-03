@@ -250,14 +250,25 @@ function kindLabel(kind: FeedNotif["kind"]): string {
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
-export function NotificationFeed({ C }: { C: Theme }) {
-  const [notifs, setNotifs] = useState<FeedNotif[] | null>(null); // null = loading
+interface NotificationFeedProps {
+  C: Theme;
+  onMarkRead?: () => void;
+}
 
-  useEffect(() => {
-    let alive = true;
+export function NotificationFeed({ C, onMarkRead }: NotificationFeedProps) {
+  const [notifs, setNotifs] = useState<FeedNotif[] | null>(null); // null = loading
+  const [fetchError, setFetchError] = useState(false);
+
+  const load = (alive: { current: boolean }) => {
     (async () => {
-      const items = await listNotifications(30);
-      if (!alive) return;
+      setFetchError(false);
+      const { items, error: hasError } = await listNotifications(30);
+      if (!alive.current) return;
+      if (hasError) {
+        setFetchError(true);
+        setNotifs([]);
+        return;
+      }
       setNotifs(items);
 
       // Mark unread items read — opening this view IS reading them.
@@ -267,7 +278,7 @@ export function NotificationFeed({ C }: { C: Theme }) {
       if (unreadIds.length > 0) {
         await markNotificationsRead(unreadIds);
         // Optimistically flip read_at in local state so the dot fades
-        if (alive) {
+        if (alive.current) {
           const now = new Date().toISOString();
           setNotifs(prev =>
             prev
@@ -276,10 +287,18 @@ export function NotificationFeed({ C }: { C: Theme }) {
                 )
               : prev
           );
+          // Notify parent so the nav badge clears immediately
+          onMarkRead?.();
         }
       }
     })();
-    return () => { alive = false; };
+  };
+
+  useEffect(() => {
+    const alive = { current: true };
+    load(alive);
+    return () => { alive.current = false; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -303,8 +322,32 @@ export function NotificationFeed({ C }: { C: Theme }) {
         </div>
       )}
 
+      {/* Error state */}
+      {fetchError && (
+        <div style={{ padding: 24, textAlign: "center", color: C.muted, fontFamily: MONO, fontSize: 11 }}>
+          <div style={{ marginBottom: 8 }}>Couldn&apos;t load activity.</div>
+          <button
+            type="button"
+            onClick={() => {
+              setNotifs(null);
+              setFetchError(false);
+              const alive = { current: true };
+              load(alive);
+            }}
+            style={{
+              fontFamily: MONO, fontSize: 10, letterSpacing: "0.08em",
+              color: C.accent, background: "transparent",
+              border: `1px solid ${C.accent}`, padding: "6px 12px",
+              borderRadius: 999, cursor: "pointer",
+            }}
+          >
+            RETRY
+          </button>
+        </div>
+      )}
+
       {/* Empty state */}
-      {notifs !== null && notifs.length === 0 && (
+      {notifs !== null && notifs.length === 0 && !fetchError && (
         <EmptyState C={C} />
       )}
 

@@ -16,14 +16,14 @@ export interface FeedNotif {
   read_at: string | null;
 }
 
-export async function listNotifications(limit = 30): Promise<FeedNotif[]> {
+export async function listNotifications(limit = 30): Promise<{ items: FeedNotif[]; error: boolean }> {
   const { data, error } = await supabase
     .from("notification_feed")
     .select("id, kind, data, created_at, read_at")
     .order("created_at", { ascending: false })
     .limit(limit);
-  if (error) return [];
-  return (data ?? []) as FeedNotif[];
+  if (error) return { items: [], error: true };
+  return { items: (data ?? []) as FeedNotif[], error: false };
 }
 
 export async function markNotificationsRead(ids: string[]): Promise<void> {

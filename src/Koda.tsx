@@ -870,7 +870,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   );
 
   // Unread notifications — drives the nav badge on the Social tab.
-  const socialUnread = useUnreadNotifications();
+  const { count: socialUnread, refresh: refreshSocialUnread } = useUnreadNotifications();
 
   // Show first-session survey once after onboarding — captures priorTool and
   // almostStoppedReason for PostHog segmentation.
@@ -2563,6 +2563,8 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                       myUid={myUid}
                       recentTrades={trades}
                       isDesktop={isDesktop}
+                      section={socialSection as "feed" | "ideas" | "people"}
+                      onSectionChange={(s) => setSocialSection(s)}
                     />
                   </section>
                   )}
@@ -4447,10 +4449,12 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
               myUid={myUid}
               recentTrades={trades}
               isDesktop={isDesktop}
+              section={socialSection as "feed" | "ideas" | "people"}
+              onSectionChange={(s) => setSocialSection(s)}
             />
           )}
           {view === "social" && socialSection === "activity" && (
-            <NotificationFeed C={C} />
+            <NotificationFeed C={C} onMarkRead={refreshSocialUnread} />
           )}
           </div>{/* end main */}
         </div>{/* end grid */}
