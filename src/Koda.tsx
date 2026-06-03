@@ -1612,8 +1612,15 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     { id: "pretrade", label: "Pre-trade" },
     { id: "rules", label: "Rules" },
   ];
+  // When on a home sub-view, reflect that in the home subnav's active section
+  // so the sidebar stays in the "Home" universe on desktop.
+  const effectiveHomeSection = view === "checklist" ? "rules" : view === "history" ? "journal" : homeSection;
   const subNavFor = (v: string) => {
-    if (v === "home") return { sections: HOME_SECTIONS, value: homeSection, onChange: (s: string) => { if (s === "rules") navigateTo("checklist"); else if (s === "journal") navigateTo("history"); else setHomeSection(s); } };
+    if (v === "home") return { sections: HOME_SECTIONS, value: effectiveHomeSection, onChange: (s: string) => {
+      if (s === "rules")        { if (view !== "checklist") navigateTo("checklist"); }
+      else if (s === "journal") { if (view !== "history")   navigateTo("history"); }
+      else                      { if (view !== "home")      setView("home"); setHomeSection(s); }
+    } };
     if (v === "stats") return { sections: STATS_SECTIONS, value: statsTab, onChange: setStatsTab };
     if (v === "checklist") return { sections: CHECKLIST_SECTIONS, value: checklistTab, onChange: setChecklistTab };
     return null;
@@ -1817,7 +1824,11 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
             <aside style={{ borderRight:`1px solid ${C.border}`, padding:"24px 0 32px", position:"sticky", top:"64px", height:"calc(100dvh - 64px)", overflowY:"auto", display:"flex", flexDirection:"column" }}>
               <div style={{ flex:1 }}>
                 {NAV_TABS.map(tab => {
-                  const sn = subNavFor(tab.id); const ia = view === tab.id;
+                  const sn = subNavFor(tab.id);
+                  const ia = view === tab.id;
+                  // Home's subnav stays visible (and Home stays highlighted) when on its sub-views.
+                  const isHomeSubview = (view === "checklist" || view === "history") && tab.id === "home";
+                  const showActive = ia || isHomeSubview;
                   return (
                     <div key={tab.id}>
                       <button data-testid={`nav-${tab.id}`} onClick={() => {
@@ -1825,13 +1836,13 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                         if (tab.id === "stats") { setStatsTab("performance"); return; }
                         if (tab.id === "home") { setHomeSection("feed"); return; }
                         primaryNav("home");
-                      }} style={{ display:"flex", alignItems:"center", gap:"10px", width:"100%", background:ia?C.panel:"transparent", border:"none", borderLeft:ia?`2px solid ${C.text}`:"2px solid transparent", padding:"10px 22px", cursor:"pointer", fontFamily:MONO, fontSize:"11px", letterSpacing:"0.1em", textTransform:"uppercase", color:ia?C.text:C.dim, textAlign:"left", transition:"all 0.12s ease" }}>
-                        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" style={{ opacity: ia ? 1 : 0.55, flexShrink: 0 }}>
+                      }} style={{ display:"flex", alignItems:"center", gap:"10px", width:"100%", background:showActive?C.panel:"transparent", border:"none", borderLeft:showActive?`2px solid ${C.text}`:"2px solid transparent", padding:"10px 22px", cursor:"pointer", fontFamily:MONO, fontSize:"11px", letterSpacing:"0.1em", textTransform:"uppercase", color:showActive?C.text:C.dim, textAlign:"left", transition:"all 0.12s ease" }}>
+                        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" style={{ opacity: showActive ? 1 : 0.55, flexShrink: 0 }}>
                           <path d={(tab as any).path} stroke="currentColor" strokeWidth="1.35" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
                         {tab.label}
                       </button>
-                      {ia && sn && (
+                      {showActive && sn && (
                         <div style={{ paddingLeft:"28px", paddingBottom:"4px" }}>
                           {sn.sections.map((sec: { id: string; label: string })=>(
                             <button key={sec.id} onClick={()=>sn.onChange(sec.id)} style={{ display:"block", width:"100%", background:"none", border:"none", padding:"6px 0", cursor:"pointer", fontFamily:MONO, fontSize:"10px", letterSpacing:"0.07em", color:sn.value===sec.id?C.text:C.muted, textAlign:"left", textTransform:"uppercase", transition:"color 0.12s" }}>
