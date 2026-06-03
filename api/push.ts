@@ -264,6 +264,33 @@ async function handleNotifyReaction(req: VercelRequest, res: VercelResponse) {
   return res.status(200).json({ ok: true });
 }
 
+async function handleNotifyLike(req: VercelRequest, res: VercelResponse) {
+  const auth = req.headers.authorization as string | undefined;
+  if (!auth?.startsWith("Bearer ")) return res.status(401).json({ error: "No token" });
+
+  const { data: { user }, error: authErr } = await supabase.auth.getUser(auth.slice(7));
+  if (authErr || !user) return res.status(401).json({ error: "Unauthorized" });
+
+  const { targetUid, ideaId, ideaTitle } = req.body as {
+    targetUid?: string;
+    ideaId?: string;
+    ideaTitle?: string;
+  };
+  if (!targetUid || !ideaId) {
+    return res.status(400).json({ error: "targetUid and ideaId required" });
+  }
+  if (targetUid === user.id) return res.status(200).json({ ok: true });
+
+  await deliverNotification({
+    targetUid,
+    kind: "idea_like",
+    title: "Idea liked",
+    body: ideaTitle ? `Someone liked "${ideaTitle}"` : "Someone liked your idea",
+    data: { ideaId, fromUid: user.id },
+  });
+  return res.status(200).json({ ok: true });
+}
+
 async function handleBroadcast(req: VercelRequest, res: VercelResponse) {
   const auth = req.headers.authorization as string | undefined;
   const token = auth?.startsWith("Bearer ") ? auth.slice(7) : "";
@@ -313,6 +340,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (action === "notify-follow") return handleNotifyFollow(req, res);
   if (action === "notify-circle-join") return handleNotifyCircleJoin(req, res);
   if (action === "notify-reaction") return handleNotifyReaction(req, res);
+  if (action === "notify-like") return handleNotifyLike(req, res);
   if (action === "broadcast") return handleBroadcast(req, res);
   return res.status(400).json({ error: "Unknown action" });
 }

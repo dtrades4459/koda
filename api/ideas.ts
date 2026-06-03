@@ -8,6 +8,7 @@
 export const config = { runtime: "nodejs" };
 
 import { getAdminClient, getUserIdFromJwt } from "./lib/supabaseAdmin.js";
+import { deliverNotification } from "./push.js";
 
 type Req = {
   method?: string;
@@ -252,6 +253,27 @@ async function handleLike(req: Req, res: Res) {
       return res.status(500).json({ error: "Like failed" });
     }
     liked = true;
+
+    // Fire notification to the idea's author (skip self-likes)
+    try {
+      const [{ data: ideaRow }, { data: likerProfile }] = await Promise.all([
+        admin.from("ideas").select("author_uid, title").eq("id", ideaId).maybeSingle(),
+        admin.from("profiles").select("name").eq("uid", uid).maybeSingle(),
+      ]);
+      const idea = ideaRow as { author_uid: string; title: string } | null;
+      if (idea && idea.author_uid !== uid) {
+        const likerName = (likerProfile as { name?: string } | null)?.name ?? "Someone";
+        await deliverNotification({
+          targetUid: idea.author_uid,
+          kind: "idea_like",
+          title: "Idea liked",
+          body: `${likerName} liked "${idea.title}"`,
+          data: { ideaId, fromUid: uid },
+        });
+      }
+    } catch (err) {
+      console.error("[ideas/like] notification failed:", err);
+    }
   }
 
   const { count, error: countErr } = await admin
