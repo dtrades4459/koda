@@ -3,7 +3,8 @@ import { supabase } from "./lib/supabase";
 import { StrategyPill, stratCode, KodaMark, MONO, BODY, DISPLAY, EmptyCirclesState, CornerGlow } from "./shared";
 import { KODA_GLOBAL_CODE } from "./hooks/useCircles";
 import { readCircleMembers } from "./data/circles";
-import { getUnreadCounts, markChatRead } from "./data/chatReads";
+import { markChatRead } from "./data/chatReads";
+import { useUnreadCircles } from "./hooks/useUnreadCircles";
 import { createChallenge, fetchActiveChallenge, fetchTrophies } from "./data/circlesChallenges";
 import { fetchSharedTrades, reactToSharedTrade, rowToSharedTrade } from "./data/circlesSharedTrades";
 import { SharedTradeCard } from "./components/SharedTradeCard";
@@ -127,17 +128,9 @@ export function TradingCircles({
   const [feedLoading, setFeedLoading] = useState(false);
   const feedBottomRef = useRef<HTMLDivElement>(null);
   const [showLeaveSheet, setShowLeaveSheet] = useState(false);
-  const [unread, setUnread] = useState<Record<string, number>>({});
-
-  useEffect(() => {
-    if (!myCircles?.length) return;
-    let alive = true;
-    (async () => {
-      const counts = await getUnreadCounts(myCircles.map((c) => c.code));
-      if (alive) setUnread(counts);
-    })();
-    return () => { alive = false; };
-  }, [myCircles]);
+  const { perCircle: unread, refresh: refreshUnread } = useUnreadCircles(
+    myCircles?.map((c) => c.code) ?? []
+  );
 
   const TROPHY_GOLD = "#A88C50";
 
@@ -468,7 +461,7 @@ export function TradingCircles({
         setChatMessages(prev => prev.some((m: any) => m.id === payload.new.id) ? prev : [...prev, payload.new]);
         if (document.visibilityState === "visible" && circleTabRef.current === "chat") {
           void markChatRead(activeCircle.code);
-          setUnread((u) => ({ ...u, [activeCircle.code]: 0 }));
+          void refreshUnread();
         }
         setTimeout(() => chatBottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
         // Also prepend to feed
@@ -524,7 +517,7 @@ export function TradingCircles({
   useEffect(() => {
     if (circleTab !== "chat" || !activeCircle) return;
     void markChatRead(activeCircle.code);
-    setUnread((u) => ({ ...u, [activeCircle.code]: 0 }));
+    void refreshUnread();
     const id = setInterval(() => loadChatMessages(activeCircle.code), 8_000);
     return () => clearInterval(id);
   }, [circleTab, activeCircle]);

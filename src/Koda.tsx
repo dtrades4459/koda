@@ -12,6 +12,7 @@ import { useTiltState } from "./hooks/useTiltState";
 import { usePreSession } from "./hooks/usePreSession";
 import { useSessionDebrief } from "./hooks/useSessionDebrief";
 import { useCircles } from "./hooks/useCircles";
+import { useUnreadCircles } from "./hooks/useUnreadCircles";
 import { logInterventionEvent, linkTradeToRecentIntervention } from "./data/interventions";
 import { InterventionSheet } from "./components/InterventionSheet";
 import { PreSessionSheet } from "./components/PreSessionSheet";
@@ -859,6 +860,11 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     statsFingerprint,
     showToast,
   });
+
+  // Unread circle messages — drives the nav badge on the Circles tab.
+  const { total: circlesUnread } = useUnreadCircles(
+    myCircles.map((c: Circle) => c.code)
+  );
 
   // Show first-session survey once after onboarding — captures priorTool and
   // almostStoppedReason for PostHog segmentation.
@@ -1836,11 +1842,21 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                         if (tab.id === "stats") { setStatsTab("performance"); return; }
                         if (tab.id === "home") { setHomeSection("feed"); return; }
                         primaryNav("home");
-                      }} style={{ display:"flex", alignItems:"center", gap:"10px", width:"100%", background:showActive?C.panel:"transparent", border:"none", borderLeft:showActive?`2px solid ${C.text}`:"2px solid transparent", padding:"10px 22px", cursor:"pointer", fontFamily:MONO, fontSize:"11px", letterSpacing:"0.1em", textTransform:"uppercase", color:showActive?C.text:C.dim, textAlign:"left", transition:"all 0.12s ease" }}>
+                      }} style={{ position:"relative", display:"flex", alignItems:"center", gap:"10px", width:"100%", background:showActive?C.panel:"transparent", border:"none", borderLeft:showActive?`2px solid ${C.text}`:"2px solid transparent", padding:"10px 22px", cursor:"pointer", fontFamily:MONO, fontSize:"11px", letterSpacing:"0.1em", textTransform:"uppercase", color:showActive?C.text:C.dim, textAlign:"left", transition:"all 0.12s ease" }}>
                         <svg width="16" height="16" viewBox="0 0 20 20" fill="none" style={{ opacity: showActive ? 1 : 0.55, flexShrink: 0 }}>
                           <path d={(tab as any).path} stroke="currentColor" strokeWidth="1.35" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
                         {tab.label}
+                        {tab.id === "circles" && circlesUnread > 0 && (
+                          <span
+                            aria-label={`${circlesUnread} unread`}
+                            style={{
+                              position: "absolute", top: 6, right: 6, width: 8, height: 8,
+                              borderRadius: 999, background: C.accent,
+                              boxShadow: `0 0 0 1.5px ${C.bg}`,
+                            }}
+                          />
+                        )}
                       </button>
                       {showActive && sn && (
                         <div style={{ paddingLeft:"28px", paddingBottom:"4px" }}>
@@ -4434,6 +4450,16 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                         <span style={{ position: "absolute", top: "-4px", right: "-7px", background: C.green, color: "#0A0A0A", borderRadius: "999px", fontSize: "8px", fontFamily: MONO, fontWeight: 700, minWidth: "14px", height: "14px", display: "flex", alignItems: "center", justifyContent: "center", padding: "0 3px", lineHeight: 1 }}>
                           {draftCount > 9 ? "9+" : draftCount}
                         </span>
+                      )}
+                      {tab.id === "circles" && circlesUnread > 0 && (
+                        <span
+                          aria-label={`${circlesUnread} unread`}
+                          style={{
+                            position: "absolute", top: -3, right: -5, width: 6, height: 6,
+                            borderRadius: 999, background: C.accent,
+                            boxShadow: `0 0 0 1.5px ${C.bg}`,
+                          }}
+                        />
                       )}
                     </div>
                     <span style={{ fontSize: "11px", fontFamily: BODY, letterSpacing: "0.01em", fontWeight: active ? 600 : 500 }}>{tab.label}</span>
