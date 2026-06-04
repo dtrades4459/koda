@@ -78,7 +78,7 @@ export function DataSourcesScreen({
 }: DataSourcesScreenProps) {
 
   // ── State ─────────────────────────────────────────────────────────────────
-  const [_connections, setConnections] = useState<BrokerConn[]>([]);
+  const [connections, setConnections] = useState<BrokerConn[]>([]);
   const [syncEvents,  setSyncEvents]  = useState<SyncEvent[]>([]);
   const [_loadingConns, setLoadingConns] = useState(true);
   const [loadingAudit, setLoadingAudit] = useState(true);
@@ -92,8 +92,11 @@ export function DataSourcesScreen({
   const [connectError, setConnectError] = useState("");
 
   // Disconnect confirmation
-  const [pendingDisconnect, setPendingDisconnect] = useState<string | null>(null);
+  const [pendingDisconnect, setPendingDisconnect] = useState<BrokerConn | null>(null);
   const [disconnecting, setDisconnecting] = useState(false);
+
+  // Manual sync
+  const [syncing, setSyncing] = useState(false);
 
   // CSV panel visibility
   const [showCsv, setShowCsv] = useState(false);
@@ -152,14 +155,14 @@ export function DataSourcesScreen({
       const r = await fetch("/api/broker/connect", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
-        body: JSON.stringify({ name: connectName.trim(), password: connectPass, env: connectEnv }),
+        body: JSON.stringify({ username: connectName.trim(), password: connectPass, env: connectEnv, broker: "tradovate" }),
       });
       const data = await r.json();
       if (!r.ok || !data.ok) {
         setConnectError(data.error ?? "Connection failed.");
         return;
       }
-      showToast(`✓ ${data.message}`);
+      showToast(`✓ Connected${data.accountName ? ` ${data.accountName}` : ""}`);
       setShowConnect(false);
       setConnectName(""); setConnectPass(""); setConnectEnv("live");
       await fetchConnections();
@@ -171,13 +174,13 @@ export function DataSourcesScreen({
     }
   }
 
-  async function handleDisconnect(connectionId: string) {
+  async function handleDisconnect(conn: BrokerConn) {
     setDisconnecting(true);
     try {
       const r = await fetch("/api/broker/disconnect", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
-        body: JSON.stringify({ connectionId }),
+        body: JSON.stringify({ broker: conn.broker, env: conn.env }),
       });
       const data = await r.json();
       if (!r.ok || !data.ok) { showToast("Disconnect failed: " + (data.error ?? "unknown error")); return; }
@@ -188,6 +191,30 @@ export function DataSourcesScreen({
       showToast("Disconnect failed — network error.");
     } finally {
       setDisconnecting(false);
+    }
+  }
+
+  async function handleSyncNow() {
+    if (connections.length === 0) return;
+    setSyncing(true);
+    try {
+      const r = await fetch("/api/cron?job=sync", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const data = await r.json();
+      if (!r.ok || !data.ok) {
+        showToast(data.error ?? "Sync failed");
+        return;
+      }
+      const totalNew = (data.results ?? []).reduce((s: number, x: { tradesNew?: number }) => s + (x.tradesNew ?? 0), 0);
+      showToast(totalNew > 0 ? `✓ Synced — ${totalNew} new trade${totalNew !== 1 ? "s" : ""}` : "✓ Already up to date");
+      await fetchConnections();
+      await fetchAudit();
+    } catch {
+      showToast("Sync failed — network error.");
+    } finally {
+      setSyncing(false);
     }
   }
 
@@ -272,6 +299,105 @@ export function DataSourcesScreen({
             <div style={{ fontSize: 12, color: C.muted ?? "#888", textAlign: "center", maxWidth: 280, lineHeight: 1.5 }}>
               Auto-import trades every 5 minutes from Tradovate and Rithmic. Use CSV import in the meantime.
             </div>
+          </div>
+        </>
+      )}
+
+      {/* ── LIVE CONNECTIONS — visible when liveBrokerSync flag is on. */}
+      {isFlagOn("liveBrokerSync") && (
+        <>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+            <Kicker C={C as any}>Live Connections</Kicker>
+            {connections.length > 0 && (
+              <button
+                style={{ ...btn("ghost"), fontSize: 11, padding: "4px 10px", fontFamily: MONO }}
+                onClick={handleSyncNow}
+                disabled={syncing}
+              >
+                {syncing ? "Syncing…" : "↻ Sync now"}
+              </button>
+            )}
+          </div>
+
+          <div style={{ marginBottom: 24 }}>
+            {connections.length === 0 ? (
+              <div style={{
+                background: C.panel ?? "#131317",
+                border: `1px dashed ${C.border ?? "#333"}`,
+                borderRadius: 14,
+                padding: "28px 20px",
+                textAlign: "center" as const,
+              }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: C.text ?? "#e2e8f0", marginBottom: 4 }}>
+                  No accounts connected
+                </div>
+                <div style={{ fontSize: 12, color: C.muted ?? "#888", marginBottom: 16, lineHeight: 1.5 }}>
+                  Auto-import trades every 5 minutes from your Tradovate account.
+                </div>
+                <button style={btn("primary")} onClick={() => setShowConnect(true)}>
+                  Connect Tradovate
+                </button>
+              </div>
+            ) : (
+              <>
+                {connections.map(conn => {
+                  const statusColor =
+                    conn.sync_status === "connected" ? "#22c55e" :
+                    conn.sync_status === "syncing"   ? "#3b82f6" :
+                    conn.sync_status === "error"     ? "#ef4444" :
+                    "#888";
+                  return (
+                    <div key={conn.id} style={card}>
+                      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
+                        <div style={{ minWidth: 0, flex: 1 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" as const }}>
+                            <span style={{ fontWeight: 600, color: C.text ?? "#e2e8f0", fontSize: 14 }}>
+                              {conn.account_name ?? "Tradovate Account"}
+                            </span>
+                            <span style={{
+                              fontFamily: MONO, fontSize: 9, padding: "2px 6px", borderRadius: 4,
+                              letterSpacing: "0.08em", textTransform: "uppercase" as const,
+                              background: conn.env === "live" ? "rgba(34,197,94,0.15)" : "rgba(234,179,8,0.15)",
+                              color: conn.env === "live" ? "#22c55e" : "#eab308",
+                            }}>
+                              {conn.env}
+                            </span>
+                            <span style={{
+                              fontFamily: MONO, fontSize: 9, padding: "2px 6px", borderRadius: 4,
+                              letterSpacing: "0.08em", textTransform: "uppercase" as const,
+                              background: `${statusColor}26`,
+                              color: statusColor,
+                            }}>
+                              {conn.sync_status}
+                            </span>
+                          </div>
+                          <div style={{ fontSize: 11, color: C.muted ?? "#888", fontFamily: MONO }}>
+                            Last sync: {fmtDate(conn.last_sync_at)}
+                          </div>
+                          {conn.sync_error && (
+                            <div style={{ fontSize: 11, color: "#ef4444", marginTop: 6, lineHeight: 1.4 }}>
+                              {conn.sync_error}
+                            </div>
+                          )}
+                        </div>
+                        <button
+                          style={{ ...btn("ghost"), fontSize: 12, padding: "6px 10px" }}
+                          onClick={() => setPendingDisconnect(conn)}
+                        >
+                          Disconnect
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+                <button
+                  style={{ ...btn("primary"), width: "100%", marginTop: 8, justifyContent: "center" as const }}
+                  onClick={() => setShowConnect(true)}
+                >
+                  + Add another account
+                </button>
+              </>
+            )}
           </div>
         </>
       )}
@@ -533,7 +659,7 @@ export function DataSourcesScreen({
               <button
                 style={{ ...btn("danger"), flex: 1, justifyContent: "center" }}
                 disabled={disconnecting}
-                onClick={() => handleDisconnect(pendingDisconnect)}
+                onClick={() => pendingDisconnect && handleDisconnect(pendingDisconnect)}
               >
                 {disconnecting ? "Removing…" : "Disconnect"}
               </button>
