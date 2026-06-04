@@ -1,6 +1,24 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
+import { execSync } from "node:child_process";
+
+// Tag every build with the deploy SHA so Sentry releases register and we can
+// correlate errors to a specific deploy. Vercel auto-injects
+// VERCEL_GIT_COMMIT_SHA on every build; locally we fall back to git, then to
+// "dev" so the build never fails on a missing git binary.
+function resolveAppVersion(): string {
+  if (process.env.VITE_APP_VERSION) return process.env.VITE_APP_VERSION;
+  if (process.env.VERCEL_GIT_COMMIT_SHA) return process.env.VERCEL_GIT_COMMIT_SHA.slice(0, 7);
+  try {
+    return execSync("git rev-parse --short HEAD", { stdio: ["ignore", "pipe", "ignore"] })
+      .toString()
+      .trim();
+  } catch {
+    return "dev";
+  }
+}
+process.env.VITE_APP_VERSION = resolveAppVersion();
 
 export default defineConfig({
   plugins: [

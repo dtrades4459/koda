@@ -31,6 +31,16 @@ export function initSentry(): void {
       ],
       beforeSend(event: any) {
         if (window.location.hostname === "localhost") return null;
+        // Belt-and-suspenders for the legacy "[object Object]" title bug
+        // (KODA-TT-1). Stale-bundle clients can still emit a message of
+        // exactly "[object Object]"; recover a readable title from the
+        // `original` extra written by log.ts.
+        if (event.message === "[object Object]") {
+          const original = event.extra?.original;
+          if (typeof original === "string" && original.length > 0 && original !== "{}") {
+            event.message = original.length > 200 ? `${original.slice(0, 200)}…` : original;
+          }
+        }
         return event;
       },
     });
