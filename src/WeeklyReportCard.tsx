@@ -11,6 +11,7 @@ import type { Trade } from "./types";
 import type { Theme } from "./theme";
 import { Card, Kicker, MONO, BODY, DISPLAY } from "./shared";
 import { computeWeeklyRecap, isoWeekStart, type WeeklyRecap } from "./lib/stats";
+import { ReportCardIGSquare } from "./power/PowerScreens";
 
 interface Props {
   trades: Trade[];
@@ -260,7 +261,48 @@ export default function WeeklyReportCard({ trades, C, userHandle }: Props) {
         </Card>
       )}
 
-      {/* ── Share ── */}
+      {/* ── Share card preview (IG-square render) ── */}
+      <Card C={C} pad={16}>
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12,
+        }}>
+          <Kicker C={C}>Share card</Kicker>
+          <span style={{
+            fontFamily: MONO, fontSize: 9, color: C.muted, letterSpacing: "0.08em", textTransform: "uppercase",
+          }}>
+            1080 × 1080 · IG
+          </span>
+        </div>
+        <div style={{
+          display: "flex", justifyContent: "center", padding: "8px 0",
+          borderRadius: 14, overflow: "hidden", background: "rgba(0,0,0,0.18)",
+          border: `1px solid ${C.border}`,
+        }}>
+          <div style={{
+            transform: "scale(0.62)", transformOrigin: "center center",
+            margin: "-100px -100px", display: "flex", justifyContent: "center",
+          }}>
+            <ReportCardIGSquare
+              C={C}
+              weekLabel={`WK ${recap.weekStart.replace(/-/g, "·")}`}
+              net={fmtR(recap.netR, 1)}
+              winRate={recap.winRate !== null ? `${recap.winRate}%` : "—"}
+              trades={String(recap.count)}
+              discipline={recap.ruleAdherencePct !== null ? `${recap.ruleAdherencePct}%` : "—"}
+              handle={userHandle ?? "@you"}
+              highlightWord="EDGE"
+            />
+          </div>
+        </div>
+        <div style={{
+          fontFamily: MONO, fontSize: 9, color: C.muted, textAlign: "center",
+          letterSpacing: "0.08em", marginTop: 10, textTransform: "uppercase",
+        }}>
+          Long-press / right-click the card to save as image
+        </div>
+      </Card>
+
+      {/* ── Share text button ── */}
       <button
         onClick={handleShare}
         style={{
@@ -282,7 +324,7 @@ export default function WeeklyReportCard({ trades, C, userHandle }: Props) {
           letterSpacing: "0.1em",
           textTransform: "uppercase",
         }}>
-        {copied ? "Copied ✓" : "Share recap"}
+        {copied ? "Copied ✓" : "Share recap as text"}
       </button>
 
       <div style={{ fontFamily: MONO, fontSize: 9, color: C.muted, textAlign: "center", letterSpacing: "0.1em", marginTop: -6 }}>

@@ -540,10 +540,10 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
             </div>
           </div>
 
-          {/* Auth column — glass card with corner glow */}
+          {/* Auth column — glass card with corner glow + OS badge */}
           <aside ref={authRef} id="auth" className="koda-auth-card koda-anchor" style={{
             position: "relative", padding: 32, borderRadius: 28,
-            background: "rgba(18,18,22,0.7)",
+            background: "rgba(19,19,23,0.7)",
             backdropFilter: "blur(28px) saturate(180%)",
             WebkitBackdropFilter: "blur(28px) saturate(180%)",
             border: `1px solid ${C.border2}`,
@@ -551,38 +551,47 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
             overflow: "hidden",
             animation: "kRise 0.42s ease-out",
           }}>
-            {/* Toned-down iridescent corner glow (warmth pass: reduce sparkle stack) */}
+            {/* Iridescent corner glow */}
             <div style={{
               position: "absolute", top: -80, left: -80, width: 280, height: 280,
               borderRadius: "50%",
               background: `conic-gradient(from 200deg at 50% 50%, ${C.orb3}, ${C.accent}, ${C.orb2}, ${C.orb3})`,
-              filter: "blur(50px)", opacity: 0.35, pointerEvents: "none",
+              filter: "blur(50px)", opacity: 0.4, pointerEvents: "none",
             }} />
 
-            {/* Logo */}
+            {/* Logo + OS badge */}
             <div style={{
-              position: "relative", zIndex: 1, display: "flex", alignItems: "baseline",
-              gap: 10, justifyContent: "center", marginBottom: 26,
+              position: "relative", zIndex: 1, display: "flex", alignItems: "center",
+              gap: 9, justifyContent: "center", marginBottom: 26,
             }}>
               <KodaMark size={24} color={C.text} />
               <span style={{ fontFamily: DISPLAY, fontWeight: 600, fontSize: 14, letterSpacing: "0.22em", color: C.text }}>Kōda</span>
+              <span style={{
+                fontFamily: MONO, fontWeight: 500, fontSize: 9, letterSpacing: "0.16em",
+                color: C.text, padding: "2px 6px", borderRadius: 4,
+                border: `1px solid ${C.border2}`, lineHeight: 1,
+              }}>OS</span>
             </div>
 
             {/* Kicker */}
-            <div style={{ position: "relative", zIndex: 1, textAlign: "center", marginBottom: 6 }}>
-              <Kicker C={C}>{authMode === "signin" ? "Sign in to Kōda" : "Create account"}</Kicker>
+            <div style={{ position: "relative", zIndex: 1, textAlign: "center", marginBottom: 8 }}>
+              <Kicker C={C} color={C.live}>{authMode === "signin" ? "Welcome back" : "Create account"}</Kicker>
             </div>
 
-            {/* Heading */}
-            <div style={{ position: "relative", zIndex: 1, textAlign: "center", marginBottom: 6 }}>
+            {/* Editorial heading with italic accent */}
+            <div style={{ position: "relative", zIndex: 1, textAlign: "center", marginBottom: 8 }}>
               <h2 style={{
                 fontFamily: DISPLAY, fontSize: 32, fontWeight: 600,
-                letterSpacing: "-0.02em", color: C.text, margin: 0,
-              }}>{authMode === "signin" ? "Welcome back" : "Join Kōda"}</h2>
+                letterSpacing: "-0.03em", color: C.text, margin: 0, lineHeight: 1.05,
+              }}>
+                {authMode === "signin"
+                  ? <>Sign back <span style={{ fontStyle: "italic", fontWeight: 500, color: C.live }}>in.</span></>
+                  : <>Start your <span style={{ fontStyle: "italic", fontWeight: 500, color: C.live }}>journal.</span></>}
+              </h2>
             </div>
             <div style={{ position: "relative", zIndex: 1, textAlign: "center", marginBottom: 22 }}>
               <span style={{ fontFamily: BODY, fontSize: 13, color: C.text2 }}>
-                {authMode === "signin" ? "Sign in to your journal" : "Free forever. No card to start."}
+                {authMode === "signin" ? "Pick up where you left off." : "Free forever. No card to start."}
               </span>
             </div>
 

@@ -54,7 +54,9 @@ describe("InterventionSheet", () => {
       { id: "trade_cap_at" as const, label: "Daily trade cap reached", critical: true },
     ];
     render(<InterventionSheet open signals={crit} C={DARK} isMobile onContinue={() => {}} onCancel={() => {}} />);
-    expect(screen.getByText(/1 critical tilt signal is active/i)).toBeInTheDocument();
+    // New editorial copy: kicker reads "Heads up · critical", sub explains the signal count.
+    expect(screen.getByText(/heads up · critical/i)).toBeInTheDocument();
+    expect(screen.getByText(/one critical tilt signal is active/i)).toBeInTheDocument();
   });
 
   it("shows configured cooldown duration on the Cancel button", () => {

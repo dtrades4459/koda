@@ -1,12 +1,18 @@
 // src/components/InterventionSheet.tsx
 // ═══════════════════════════════════════════════════════════════════════════════
-// Kōda · InterventionSheet
+// Kōda · InterventionSheet — WEDGE SCREEN
 //
-// Presentational. Bottom sheet on mobile, centred modal on desktop.
-// All state + DB writes are owned by the caller (InterventionGate).
+// This is the one screen that makes Kōda different from every other trading
+// journal. It fires mid-tilt and asks "are you sure?" before a bad trade.
+// Visual: glass surface, conic corner glow, editorial display kicker + headline,
+// signal pills with critical badges, two ranked CTAs. Mobile = bottom sheet,
+// desktop = centred modal.
+//
+// Presentational only. All state + DB writes are owned by the caller
+// (InterventionGate). Props are unchanged from the previous version.
 // ═══════════════════════════════════════════════════════════════════════════════
 
-import { MONO, BODY } from "../shared";
+import { MONO, BODY, DISPLAY } from "../shared";
 import type { Theme } from "../theme";
 import type { TiltSignal } from "../lib/tilt";
 
@@ -20,7 +26,9 @@ export interface InterventionSheetProps {
   cooldownMin?: number;
 }
 
-export function InterventionSheet({ open, signals, C, isMobile, onContinue, onCancel, cooldownMin }: InterventionSheetProps) {
+export function InterventionSheet({
+  open, signals, C, isMobile, onContinue, onCancel, cooldownMin,
+}: InterventionSheetProps) {
   if (!open) return null;
 
   const criticalSignals = signals.filter(s => s.critical);
@@ -28,137 +36,335 @@ export function InterventionSheet({ open, signals, C, isMobile, onContinue, onCa
   const ordered = [...criticalSignals, ...tiltSignals];
   const hasCritical = criticalSignals.length > 0;
 
-  const headline = (() => {
-    if (criticalSignals.length > 0 && tiltSignals.length === 0) {
-      return `${criticalSignals.length} critical tilt signal${criticalSignals.length === 1 ? "" : "s"} ${criticalSignals.length === 1 ? "is" : "are"} active.`;
+  // ── Headline copy (editorial, situation-driven) ──────────────────────────
+  const { kicker, title, titleAccent, sub } = (() => {
+    if (hasCritical) {
+      return {
+        kicker: "Heads up · critical",
+        title: "Pause.",
+        titleAccent: undefined,
+        sub: criticalSignals.length === 1
+          ? "One critical tilt signal is active. The data says you do worse from here."
+          : `${criticalSignals.length} critical signals are active. The data says you do worse from here.`,
+      };
     }
-    if (criticalSignals.length > 0 && tiltSignals.length > 0) {
-      return `${criticalSignals.length} critical · ${tiltSignals.length} tilt signal${signals.length === 1 ? "" : "s"} active.`;
+    if (tiltSignals.length >= 3) {
+      return {
+        kicker: "Heads up · tilt",
+        title: "Take a",
+        titleAccent: "breath.",
+        sub: `${tiltSignals.length} tilt signals are stacking. Reset before the next entry.`,
+      };
     }
-    return `${signals.length} tilt signal${signals.length === 1 ? "" : "s"} ${signals.length === 1 ? "is" : "are"} active.`;
+    return {
+      kicker: "Heads up · tilt",
+      title: "Are you",
+      titleAccent: "sure?",
+      sub: `${signals.length} tilt signal${signals.length === 1 ? "" : "s"} active. One pause has saved more accounts than any strategy has built.`,
+    };
   })();
 
   const cancelLabel = cooldownMin && cooldownMin > 0
     ? `Cancel · ${cooldownMin}-min break`
     : "Cancel · take a break";
 
+  const accentColor = hasCritical ? C.red : C.live;
+  const accentSoft = hasCritical ? C.redSoft : C.liveSoft;
+
+  // ── Inner content (shared between mobile + desktop wrappers) ─────────────
   const content = (
     <>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-        <span style={{
-          width: 8, height: 8, borderRadius: "50%",
-          background: hasCritical ? C.red : C.live,
-          boxShadow: `0 0 10px ${hasCritical ? C.red : C.live}`,
-        }} />
-        <span style={{
-          fontFamily: MONO, fontSize: 10, letterSpacing: "0.18em",
-          textTransform: "uppercase", color: hasCritical ? C.red : C.live,
-        }}>
-          {hasCritical ? "Heads up — critical" : "Heads up"}
-        </span>
-      </div>
-      <div style={{
-        fontFamily: BODY, fontSize: isMobile ? 14 : 17, fontWeight: 600,
-        lineHeight: 1.3, letterSpacing: "-0.01em",
-        margin: "4px 0 14px", color: C.text,
-      }}>
-        {headline}
-      </div>
-      <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 8, marginBottom: 16 }}>
-        {ordered.map(sig => (
-          <div key={sig.id} style={{
-            display: "flex", alignItems: "center", gap: 8,
-            fontSize: 12, padding: "6px 0", color: C.text,
-          }}>
-            <span style={{
-              width: 6, height: 6, borderRadius: "50%",
-              background: sig.critical ? C.red : C.live,
+      {/* Conic corner glow — keyed to severity */}
+      <div
+        aria-hidden
+        style={{
+          position: "absolute",
+          top: -70, right: -60, width: 240, height: 240,
+          borderRadius: "50%", pointerEvents: "none",
+          background: hasCritical
+            ? `conic-gradient(from 200deg at 50% 50%, ${C.red}, ${C.warn}, ${C.orb2}, ${C.red})`
+            : `conic-gradient(from 200deg at 50% 50%, ${C.orb3}, ${C.accent}, ${C.live}, ${C.orb3})`,
+          filter: "blur(46px)",
+          opacity: hasCritical ? 0.55 : 0.4,
+          animation: hasCritical ? "kPulse 2.4s ease-in-out infinite" : undefined,
+        }}
+      />
+
+      <div style={{ position: "relative", zIndex: 1 }}>
+        {/* Kicker — mono small-caps, accent tint */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+          <span
+            style={{
+              width: 8, height: 8, borderRadius: "50%",
+              background: accentColor,
+              boxShadow: `0 0 10px ${accentColor}, 0 0 0 4px color-mix(in oklch, ${accentColor} 18%, transparent)`,
+              animation: hasCritical ? "kPulse 1.6s ease-in-out infinite" : undefined,
               flexShrink: 0,
-            }} />
-            <span style={{ flex: 1 }}>{sig.label}</span>
-            {sig.critical && (
-              <span style={{
-                fontFamily: MONO, fontSize: 9, letterSpacing: "0.12em",
-                textTransform: "uppercase", color: C.red,
-                border: `1px solid ${C.red}55`,
-                background: `${C.red}10`,
-                padding: "2px 6px", borderRadius: 999,
-                flexShrink: 0,
-              }}>
-                critical
+            }}
+          />
+          <span
+            style={{
+              fontFamily: MONO, fontSize: 10, letterSpacing: "0.18em",
+              textTransform: "uppercase", color: accentColor, fontWeight: 500,
+            }}
+          >
+            {kicker}
+          </span>
+        </div>
+
+        {/* Editorial display headline */}
+        <div
+          style={{
+            fontFamily: DISPLAY,
+            fontSize: isMobile ? 30 : 36,
+            fontWeight: 600,
+            letterSpacing: "-0.03em",
+            lineHeight: 1.05,
+            color: C.text,
+            marginBottom: 12,
+          }}
+        >
+          {title}
+          {titleAccent && (
+            <>
+              {" "}
+              <span style={{ fontStyle: "italic", fontWeight: 500, color: accentColor }}>
+                {titleAccent}
               </span>
-            )}
-          </div>
-        ))}
-      </div>
-      <div style={{ display: "flex", gap: isMobile ? 0 : 10, flexDirection: isMobile ? "column" : "row" }}>
-        <button
-          onClick={onContinue}
+            </>
+          )}
+        </div>
+
+        {/* Sub-line — explains the why */}
+        <div
           style={{
-            background: C.live, color: "#0A0A0E", border: "none",
-            borderRadius: 999, padding: "12px 20px",
-            fontWeight: 600, fontSize: 12, fontFamily: BODY,
-            cursor: "pointer", letterSpacing: "0.02em",
-            flex: isMobile ? undefined : 1.5,
-            width: isMobile ? "100%" : undefined,
-            marginBottom: isMobile ? 8 : 0,
+            fontFamily: BODY,
+            fontSize: 13.5,
+            color: C.text2,
+            lineHeight: 1.55,
+            marginBottom: 22,
+            maxWidth: "44ch",
           }}
         >
-          I'm aware — continue
-        </button>
-        <button
-          onClick={onCancel}
+          {sub}
+        </div>
+
+        {/* Signal list */}
+        <div
           style={{
-            background: "transparent", color: C.text2,
-            border: `1px solid ${C.border2}`, borderRadius: 999,
-            padding: "12px 20px",
-            fontSize: 11, fontFamily: MONO,
-            cursor: "pointer", letterSpacing: "0.06em", textTransform: "uppercase",
-            flex: isMobile ? undefined : 1,
-            width: isMobile ? "100%" : undefined,
+            background: C.surfaceHi,
+            border: `1px solid ${C.line}`,
+            borderRadius: 14,
+            padding: "4px 14px",
+            marginBottom: 20,
           }}
         >
-          {cancelLabel}
-        </button>
+          {ordered.map((sig, i) => (
+            <div
+              key={sig.id}
+              style={{
+                display: "flex", alignItems: "center", gap: 10,
+                padding: "11px 0",
+                borderTop: i ? `1px solid ${C.line}` : "none",
+              }}
+            >
+              <span
+                style={{
+                  width: 6, height: 6, borderRadius: "50%",
+                  background: sig.critical ? C.red : C.live,
+                  flexShrink: 0,
+                  boxShadow: sig.critical ? `0 0 6px ${C.red}` : undefined,
+                }}
+              />
+              <span
+                style={{
+                  flex: 1,
+                  fontFamily: BODY,
+                  fontSize: 13,
+                  color: C.text,
+                  lineHeight: 1.35,
+                }}
+              >
+                {sig.label}
+              </span>
+              {sig.critical && (
+                <span
+                  style={{
+                    fontFamily: MONO,
+                    fontSize: 9,
+                    letterSpacing: "0.14em",
+                    textTransform: "uppercase",
+                    color: C.red,
+                    background: C.redSoft,
+                    border: `1px solid color-mix(in oklch, ${C.red} 35%, transparent)`,
+                    padding: "3px 7px",
+                    borderRadius: 999,
+                    flexShrink: 0,
+                    fontWeight: 600,
+                  }}
+                >
+                  critical
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Actions — ranked: cancel (the better choice) above continue (the override) */}
+        <div
+          style={{
+            display: "flex",
+            gap: isMobile ? 10 : 10,
+            flexDirection: isMobile ? "column-reverse" : "row-reverse",
+          }}
+        >
+          <button
+            onClick={onContinue}
+            style={{
+              background: "transparent",
+              color: C.text2,
+              border: `1px solid ${C.border2}`,
+              borderRadius: 999,
+              padding: "13px 22px",
+              fontFamily: BODY,
+              fontSize: 13,
+              fontWeight: 500,
+              cursor: "pointer",
+              letterSpacing: "0.01em",
+              flex: isMobile ? undefined : 1,
+              width: isMobile ? "100%" : undefined,
+              boxSizing: "border-box",
+            }}
+          >
+            I'm aware — continue
+          </button>
+          <button
+            onClick={onCancel}
+            autoFocus
+            style={{
+              background: accentColor,
+              color: "#0A0A0B",
+              border: "none",
+              borderRadius: 999,
+              padding: "13px 22px",
+              fontFamily: BODY,
+              fontSize: 14,
+              fontWeight: 600,
+              cursor: "pointer",
+              letterSpacing: "0.01em",
+              flex: isMobile ? undefined : 1.4,
+              width: isMobile ? "100%" : undefined,
+              boxShadow: `0 0 0 4px color-mix(in oklch, ${accentColor} 18%, transparent)`,
+              boxSizing: "border-box",
+            }}
+          >
+            {cancelLabel}
+          </button>
+        </div>
+
+        {/* Soft accent strip — small kicker subliminally re-asserts the wedge */}
+        <div
+          style={{
+            marginTop: 16,
+            padding: "10px 14px",
+            borderRadius: 10,
+            background: accentSoft,
+            border: `1px solid color-mix(in oklch, ${accentColor} 22%, transparent)`,
+            fontFamily: MONO,
+            fontSize: 10,
+            letterSpacing: "0.1em",
+            color: accentColor,
+            textTransform: "uppercase",
+            textAlign: "center",
+          }}
+        >
+          Kōda · in-session intervention
+        </div>
       </div>
     </>
   );
 
+  // ─── Mobile: bottom sheet ────────────────────────────────────────────────
   if (isMobile) {
     return (
-      <div onClick={onCancel} style={{
-        position: "fixed", inset: 0, zIndex: 1000,
-        background: "rgba(0,0,0,0.45)",
-        display: "flex", alignItems: "flex-end", justifyContent: "center",
-      }}>
-        <div onClick={e => e.stopPropagation()} style={{
-          background: C.panel, width: "100%", maxWidth: 480,
-          borderTopLeftRadius: 24, borderTopRightRadius: 24,
-          padding: "16px 18px 22px", borderTop: `1px solid ${C.border}`,
-        }}>
-          <div style={{
-            width: 36, height: 4, background: C.border2,
-            borderRadius: 999, margin: "0 auto 14px",
-          }} />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="In-session intervention"
+        onClick={onCancel}
+        style={{
+          position: "fixed", inset: 0, zIndex: 9500,
+          background: "rgba(10,10,11,0.72)",
+          backdropFilter: "blur(8px)",
+          WebkitBackdropFilter: "blur(8px)",
+          display: "flex", alignItems: "flex-end", justifyContent: "center",
+          animation: "kFadeIn 0.22s ease-out",
+        }}
+      >
+        <div
+          onClick={e => e.stopPropagation()}
+          style={{
+            background: C.surfaceGlass,
+            backdropFilter: "blur(28px) saturate(180%)",
+            WebkitBackdropFilter: "blur(28px) saturate(180%)",
+            width: "100%",
+            maxWidth: 480,
+            borderTopLeftRadius: 28,
+            borderTopRightRadius: 28,
+            padding: "12px 22px calc(28px + env(safe-area-inset-bottom))",
+            borderTop: `1px solid ${C.border2}`,
+            position: "relative",
+            overflow: "hidden",
+            animation: "kSlideIn 0.38s cubic-bezier(.2,.8,.2,1)",
+            boxShadow: "0 -30px 60px rgba(0,0,0,0.5)",
+          }}
+        >
+          <div
+            style={{
+              width: 38, height: 4, background: C.line3,
+              borderRadius: 999, margin: "0 auto 18px",
+            }}
+          />
           {content}
         </div>
       </div>
     );
   }
 
+  // ─── Desktop: centred modal ──────────────────────────────────────────────
   return (
-    <div onClick={onCancel} style={{
-      position: "fixed", inset: 0, zIndex: 1000,
-      background: "rgba(0,0,0,0.62)",
-      backdropFilter: "blur(2px)", WebkitBackdropFilter: "blur(2px)",
-      display: "flex", alignItems: "center", justifyContent: "center",
-    }}>
-      <div onClick={e => e.stopPropagation()} style={{
-        width: 380, background: C.panel,
-        border: `1px solid ${C.border2}`, borderRadius: 18,
-        padding: "24px 26px 22px",
-        boxShadow: "0 30px 80px rgba(0,0,0,0.55)",
-      }}>
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="In-session intervention"
+      onClick={onCancel}
+      style={{
+        position: "fixed", inset: 0, zIndex: 9500,
+        background: "rgba(10,10,11,0.72)",
+        backdropFilter: "blur(8px)",
+        WebkitBackdropFilter: "blur(8px)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        padding: 22,
+        animation: "kFadeIn 0.22s ease-out",
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          width: "100%",
+          maxWidth: 460,
+          background: C.surfaceGlass,
+          backdropFilter: "blur(28px) saturate(180%)",
+          WebkitBackdropFilter: "blur(28px) saturate(180%)",
+          border: `1px solid ${C.border2}`,
+          borderRadius: 24,
+          padding: "30px 30px 28px",
+          boxShadow: "0 30px 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.06)",
+          position: "relative",
+          overflow: "hidden",
+          animation: "kRise 0.38s cubic-bezier(.2,.8,.2,1)",
+        }}
+      >
         {content}
       </div>
     </div>

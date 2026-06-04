@@ -4,13 +4,13 @@
 import { useEffect } from "react";
 import { MONO, BODY } from "./shared";
 
-const BG      = "#13110E";
-const PANEL   = "#1B1814";
-const BORDER  = "rgba(245,234,222,0.07)";
-const BORDER2 = "rgba(245,234,222,0.13)";
-const TEXT    = "#F2EFE9";
-const TEXT2   = "#A8A39A";
-const MUTED   = "#6A655C";
+const BG      = "#0A0A0B";
+const PANEL   = "#131317";
+const BORDER  = "rgba(255,255,255,0.07)";
+const BORDER2 = "rgba(255,255,255,0.12)";
+const TEXT    = "#F2F2EE";
+const TEXT2   = "#A6A6A2";
+const MUTED   = "#65655F";
 const MINT    = "oklch(0.84 0.14 175)";
 
 interface BetaWelcomeProps {

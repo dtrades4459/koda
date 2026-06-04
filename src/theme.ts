@@ -12,33 +12,46 @@ import { MONO, BODY } from "./shared";
 // ── Colour tokens ─────────────────────────────────────────────────────────────
 
 export const DARK = {
-  // Core surfaces — warm-dark (coffee-toned), softens the "dark-web" feel
-  // beta testers flagged without losing the focused-trader vibe at night.
-  bg: "#13110E",
-  panel: "#1B1814",
-  panel2: "#23201B",
-  border: "rgba(245,234,222,0.07)",
-  border2: "rgba(245,234,222,0.13)",
+  // Core surfaces — verbatim from koda-kit.jsx THEME.dark (handover bundle).
+  // Cool near-black, neutral panels. Replaces the warm-dark #13110E pass
+  // because Dylon wants the redesign to land exactly as shipped in the kit.
+  bg: "#0A0A0B",
+  panel: "#131317",
+  panel2: "#1A1A20",
+  panel3: "#22222A",
+  border: "rgba(255,255,255,0.07)",
+  border2: "rgba(255,255,255,0.12)",
   // Text
-  text: "#F2EFE9",
-  text2: "#A8A39A",
-  muted: "#6A655C",
-  dim: "#4A4640",
-  // Accents
-  accent: "oklch(0.74 0.16 250)",    // electric blue — links, highlights
-  accentSoft: "oklch(0.74 0.16 250 / 0.18)",
-  live: "oklch(0.84 0.14 175)",      // mint/teal — "go" CTAs
-  liveSoft: "oklch(0.84 0.14 175 / 0.18)",
+  text: "#F2F2EE",
+  text2: "#A6A6A2",
+  muted: "#65655F",
+  dim: "#45453F",
+  // Accents — electric blue + mint
+  accent: "oklch(0.74 0.16 250)",
+  accentSoft: "oklch(0.74 0.16 250 / 0.16)",
+  live: "oklch(0.84 0.14 175)",
+  liveSoft: "oklch(0.84 0.14 175 / 0.16)",
   // Outcome
   green: "oklch(0.78 0.18 152)",
+  greenSoft: "oklch(0.78 0.18 152 / 0.15)",
   red: "oklch(0.70 0.21 25)",
+  redSoft: "oklch(0.70 0.21 25 / 0.15)",
   // Glass/bloom
-  surfaceGlass: "rgba(34,30,26,0.55)",
+  surfaceGlass: "rgba(28,28,34,0.55)",
   orb1: "oklch(0.55 0.22 252)",
   orb2: "oklch(0.45 0.20 268)",
   orb3: "oklch(0.68 0.18 175)",
   // Semantic
   warn: "oklch(0.79 0.16 75)",
+  warnSoft: "oklch(0.79 0.16 75 / 0.15)",
+  // Kit aliases — match koda-kit.jsx token names so design ports are 1:1
+  surface: "#131317",
+  surfaceHi: "#1A1A20",
+  line: "rgba(255,255,255,0.07)",
+  line2: "rgba(255,255,255,0.12)",
+  line3: "rgba(255,255,255,0.20)",
+  ink: "#F2F2EE",
+  ink2: "#A6A6A2",
   // Legacy compat
   blue: "oklch(0.74 0.16 250)",
   yellow: "#65655F",
@@ -47,17 +60,18 @@ export const DARK = {
 } as const;
 
 export const LIGHT = {
-  // Core surfaces
+  // Core surfaces — verbatim from koda-kit.jsx THEME.light (handover bundle).
   bg: "#F4F2ED",
   panel: "#FFFFFF",
   panel2: "#FAFAF6",
+  panel3: "#EFEDE6",
   border: "rgba(10,10,10,0.07)",
   border2: "rgba(10,10,10,0.14)",
   // Text
   text: "#0A0A0A",
   text2: "#55554F",
   muted: "#9A9890",
-  dim: "rgba(10,10,10,0.20)",
+  dim: "rgba(10,10,10,0.30)",
   // Accents
   accent: "oklch(0.55 0.18 252)",
   accentSoft: "oklch(0.55 0.18 252 / 0.10)",
@@ -65,14 +79,25 @@ export const LIGHT = {
   liveSoft: "oklch(0.62 0.14 175 / 0.12)",
   // Outcome
   green: "oklch(0.55 0.18 152)",
+  greenSoft: "oklch(0.55 0.18 152 / 0.12)",
   red: "oklch(0.55 0.22 25)",
+  redSoft: "oklch(0.55 0.22 25 / 0.12)",
   // Glass/bloom
   surfaceGlass: "rgba(255,255,255,0.65)",
   orb1: "oklch(0.78 0.14 252)",
   orb2: "oklch(0.72 0.12 268)",
   orb3: "oklch(0.78 0.10 175)",
   // Semantic
-  warn: "oklch(0.70 0.16 75)",
+  warn: "oklch(0.68 0.16 75)",
+  warnSoft: "oklch(0.68 0.16 75 / 0.14)",
+  // Kit aliases — match koda-kit.jsx token names so design ports are 1:1
+  surface: "#FFFFFF",
+  surfaceHi: "#FAFAF6",
+  line: "rgba(10,10,10,0.07)",
+  line2: "rgba(10,10,10,0.14)",
+  line3: "rgba(10,10,10,0.22)",
+  ink: "#0A0A0A",
+  ink2: "#55554F",
   // Legacy compat
   blue: "oklch(0.55 0.18 252)",
   yellow: "#9A9890",
