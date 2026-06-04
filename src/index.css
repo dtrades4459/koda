@@ -1,7 +1,7 @@
 html, body {
   margin: 0;
   padding: 0;
-  background: #13110E;
+  background: #0A0A0B;
   color: #e5e7eb;
   min-height: 100vh;
   min-height: 100dvh;
@@ -55,3 +55,116 @@ input, textarea, select {
 
 /* Legacy keyframe kept for backward compat */
 @keyframes rise { from { opacity:0; transform:translateY(8px) } to { opacity:1; transform:none } }
+
+/* ─── F16 · Accessibility — focus states ─────────────────────────────────────
+ *
+ * P0 launch-blocker. Visible focus on every interactive element. Mouse users
+ * don't see the ring (:focus-visible); keyboard users do. Honors high-contrast
+ * and reduced-motion. Tone matches the live (mint) accent — high-contrast
+ * against both warm-dark and warm-light backgrounds.
+ *
+ * Per element type:
+ *   • buttons / [role=button] / [role=switch] / inputs / textareas / selects →
+ *       2px solid live mint ring + 2px offset for breathing room
+ *   • links inside body text → underline + slight outline (so colour alone
+ *       isn't the only signal)
+ *   • [tabindex] custom elements → same as button rule
+ *
+ * Skip-link: append <a class="koda-skip-to-content" href="#main">Skip to
+ * content</a> as the first child of <body> for keyboard users.
+ *
+ * Don't disable the ring with outline:none unless you replace it with an
+ * equivalent visible focus indicator. This is a WCAG 2.4.7 must.
+ */
+:focus { outline: none; }
+
+button:focus-visible,
+[role="button"]:focus-visible,
+[role="switch"]:focus-visible,
+[role="link"]:focus-visible,
+[role="tab"]:focus-visible,
+[role="menuitem"]:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[tabindex]:not([tabindex="-1"]):focus-visible {
+  outline: 2px solid oklch(0.84 0.14 175);
+  outline-offset: 2px;
+  border-radius: 8px;
+  /* Subtle ring shadow for surfaces where the offset would be hidden */
+  box-shadow: 0 0 0 4px color-mix(in oklch, oklch(0.84 0.14 175) 22%, transparent);
+  transition: box-shadow 0.12s, outline-offset 0.12s;
+}
+
+/* For underline inputs (editorial style), use a border instead of outline */
+input[type="text"]:focus-visible,
+input[type="email"]:focus-visible,
+input[type="password"]:focus-visible,
+input[type="number"]:focus-visible,
+input[type="search"]:focus-visible,
+input[type="tel"]:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  box-shadow: none;
+  border-bottom-color: oklch(0.84 0.14 175) !important;
+}
+
+/* Links inside flowing text — underline + live colour */
+a:focus-visible {
+  outline: 2px solid oklch(0.84 0.14 175);
+  outline-offset: 3px;
+  border-radius: 4px;
+  text-decoration: underline;
+}
+
+/* Skip link — invisible until focused */
+.koda-skip-to-content {
+  position: absolute;
+  top: -40px;
+  left: 12px;
+  z-index: 9999;
+  padding: 8px 14px;
+  background: #0A0A0B;
+  color: #F2F2EE;
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.12);
+  transition: top 0.18s ease-out;
+}
+.koda-skip-to-content:focus,
+.koda-skip-to-content:focus-visible {
+  top: max(12px, env(safe-area-inset-top));
+  outline: 2px solid oklch(0.84 0.14 175);
+  outline-offset: 2px;
+}
+
+/* Screen-reader-only utility */
+.koda-sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0,0,0,0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* High-contrast media query — bolder focus ring */
+@media (prefers-contrast: more) {
+  button:focus-visible,
+  [role="button"]:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible,
+  [tabindex]:not([tabindex="-1"]):focus-visible {
+    outline-width: 3px;
+    outline-offset: 3px;
+    box-shadow: 0 0 0 6px color-mix(in oklch, oklch(0.84 0.14 175) 40%, transparent);
+  }
+}
