@@ -1757,6 +1757,12 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                 <>
                   <KodaMark size={isDesktop ? 24 : 22} color={C.text} />
                   <span style={{ fontFamily: DISPLAY, fontSize: isDesktop ? "15px" : "14px", fontWeight: 600, letterSpacing: "0.22em", color: C.text, lineHeight: 1 }}>Kōda</span>
+                  <span style={{
+                    fontFamily: MONO, fontWeight: 500, fontSize: 9,
+                    letterSpacing: "0.16em", color: C.text,
+                    padding: "2px 5px", borderRadius: 4,
+                    border: `1px solid ${C.border2}`, lineHeight: 1, marginLeft: 2,
+                  }}>OS</span>
                 </>
               )}
             </div>
@@ -2003,14 +2009,26 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                             read as "AI-generated dashboard" (beta feedback 2026-06-03). */}
                         <GlassOrb C={C} top={-40} left={-80} size={420} color={orb1} opacity={darkMode ? 0.42 : 0.28} />
 
-                        {/* Greeting (design spec) */}
+                        {/* Greeting — editorial display + italic accent on name */}
                         <div style={{ padding: "0 6px 14px", position: "relative", zIndex: 2 }}>
-                          <Kicker C={C}>{new Date().toLocaleDateString("en-US", { weekday: "short" })} &middot; {new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" })}</Kicker>
-                          <div style={{ fontFamily: DISPLAY, fontSize: 26, fontWeight: 500, letterSpacing: "-0.02em", marginTop: 4, color: C.text }}>
-                            Welcome back, <span style={{ fontWeight: 600 }}>{(profile.name || "Trader").split(" ")[0]}</span>
+                          <Kicker C={C} color={C.live}>
+                            {new Date().toLocaleDateString("en-US", { weekday: "long" })} &middot; {new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                          </Kicker>
+                          <div style={{ fontFamily: DISPLAY, fontSize: 28, fontWeight: 600, letterSpacing: "-0.03em", lineHeight: 1.08, marginTop: 6, color: C.text }}>
+                            Welcome back,{" "}
+                            <span style={{ fontStyle: "italic", fontWeight: 500, color: C.live }}>
+                              {(profile.name || "Trader").split(" ")[0]}.
+                            </span>
                           </div>
                           {streak.count >= 2 && streak.type === "Win" && (
-                            <div style={{ fontSize: 13, color: C.text2, marginTop: 2 }}>You&apos;re on a {streak.count}-day green streak.</div>
+                            <div style={{ fontSize: 13, color: C.text2, marginTop: 6, fontFamily: BODY, lineHeight: 1.5 }}>
+                              You&apos;re on a <strong style={{ color: C.live, fontWeight: 600 }}>{streak.count}-day green streak.</strong>
+                            </div>
+                          )}
+                          {streak.count >= 2 && streak.type === "Loss" && (
+                            <div style={{ fontSize: 13, color: C.text2, marginTop: 6, fontFamily: BODY, lineHeight: 1.5 }}>
+                              {streak.count} in a row down. Reset the process before the next one.
+                            </div>
                           )}
                         </div>
 
@@ -3235,7 +3253,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                         {expanded && (
                           <div style={{ padding: "8px 0 24px", display: "flex", flexDirection: "column", gap: "12px" }}>
                             {/* ── Glass hero card ── */}
-                            <div style={{ margin: "0 2px", borderRadius: 24, padding: 22, position: "relative", overflow: "hidden", background: darkMode ? "rgba(34,30,26,0.6)" : "rgba(255,255,255,0.7)", border: `1px solid ${C.border2}` }}>
+                            <div style={{ margin: "0 2px", borderRadius: 24, padding: 22, position: "relative", overflow: "hidden", background: darkMode ? "rgba(28,28,34,0.6)" : "rgba(255,255,255,0.7)", border: `1px solid ${C.border2}` }}>
                               {/* ghost P&L watermark */}
                               {t.pnl && <div style={{ position: "absolute", bottom: -20, right: -10, fontFamily: DISPLAY, fontWeight: 700, fontSize: 130, color: parseFloat(t.pnl) >= 0 ? C.green : C.red, opacity: 0.07, letterSpacing: "-0.04em", lineHeight: 1, pointerEvents: "none" }}>{parseFloat(t.pnl) >= 0 ? "+" : ""}{t.pnl}R</div>}
 
@@ -3630,25 +3648,51 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
 
                     const rulesPct = Math.round((disciplineScore.breakdown.rules.earned / disciplineScore.breakdown.rules.max) * 100);
 
+                    // Avoid unused warning for the dasharray approach we replaced
+                    void circumference; void offset;
                     return (
-                      <div style={{ borderRadius: "22px", padding: "18px 20px", background: C.panel, border: `1px solid ${C.border}` }}>
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
+                      <div style={{
+                        borderRadius: "22px", padding: "20px 22px",
+                        background: C.panel, border: `1px solid ${C.border}`,
+                        position: "relative", overflow: "hidden",
+                      }}>
+                        {/* Corner glow keyed to grade */}
+                        <div aria-hidden style={{
+                          position: "absolute", top: -60, right: -50, width: 200, height: 200,
+                          borderRadius: "50%", pointerEvents: "none",
+                          background: `conic-gradient(from 200deg at 50% 50%, ${C.orb3}, ${C.accent}, ${gc}, ${C.orb3})`,
+                          filter: "blur(46px)", opacity: 0.32,
+                        }} />
+                        <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
                           <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.14em", textTransform: "uppercase" }}>Discipline · 7-day</div>
                           <ComputedBadge C={C} />
                         </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-                          <div style={{ width: "64px", height: "64px", flexShrink: 0, position: "relative" }}>
-                            <svg width="64" height="64" viewBox="0 0 64 64" style={{ transform: "rotate(-90deg)", display: "block" }}>
-                              <circle cx="32" cy="32" r="26" fill="none" stroke={C.border2} strokeWidth="5" />
-                              <circle cx="32" cy="32" r="26" fill="none" stroke={gc} strokeWidth="5"
-                                strokeDasharray={circumference} strokeDashoffset={offset} strokeLinecap="round" />
-                            </svg>
-                            <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-                              <span style={{ fontFamily: DISPLAY, fontSize: "17px", fontWeight: 700, color: gc, lineHeight: 1, letterSpacing: "-0.02em" }}>{disciplineScore.score}</span>
-                              <span style={{ fontFamily: MONO, fontSize: "8px", color: C.muted, letterSpacing: "0.08em" }}>/100</span>
+                        <div style={{ position: "relative", display: "flex", alignItems: "center", gap: "18px" }}>
+                          {/* Conic-gradient discipline ring (kit canonical) */}
+                          <div style={{
+                            width: 84, height: 84, borderRadius: "50%",
+                            background: `conic-gradient(${gc} ${disciplineScore.score * 3.6}deg, ${C.surfaceHi} 0)`,
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            position: "relative", flexShrink: 0,
+                          }}>
+                            <div style={{
+                              position: "absolute", inset: 7, borderRadius: "50%",
+                              background: C.bg, display: "flex", flexDirection: "column",
+                              alignItems: "center", justifyContent: "center",
+                            }}>
+                              <span style={{
+                                fontFamily: DISPLAY, fontSize: "24px", fontWeight: 600,
+                                color: gc, lineHeight: 1, letterSpacing: "-0.03em",
+                              }}>{disciplineScore.score}</span>
+                              <span style={{
+                                fontFamily: MONO, fontSize: "8px", color: C.muted,
+                                letterSpacing: "0.1em", marginTop: 2,
+                              }}>
+                                {disciplineScore.grade} · /100
+                              </span>
                             </div>
                           </div>
-                          <div style={{ flex: 1 }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ fontFamily: BODY, fontSize: "13px", color: C.text, lineHeight: 1.5, marginBottom: "10px" }}>
                               Rules followed on <strong style={{ fontWeight: 700, color: gc }}>{rulesPct}%</strong> of trades — grade <strong style={{ color: gc }}>{disciplineScore.grade}</strong> this week.
                             </div>

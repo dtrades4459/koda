@@ -32,7 +32,7 @@ Ship the full Kōda OS visual + structural redesign to production. The design sy
 | **Live coverage tracker** | `docs/design-coverage.md` | 196 items × 2 checkboxes (designed / shipped). The build queue. |
 | **Phase 1 day-by-day** | `docs/phase-1-runbook.md` | Daily P0 walkthrough — file paths, backend wiring, acceptance criteria. |
 
-**Handoff bundle root path:** `C:\Users\Dylon\Downloads\KodaOS-handoff-extracted\kodaos\project\` (or wherever Dylon last extracted it — confirm before each session).
+**Handoff bundle root path:** `C:\Users\Dylon\Downloads\KodaOS-handoff-v2\kodaos\project\` (confirmed 2026-06-04 — v2 is the canonical bundle with `koda-designs/` and `koda-audit/`).
 
 ---
 
