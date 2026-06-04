@@ -1,14 +1,60 @@
 # Kōda — pickup for next session
 
-**Session closed:** 2026-06-02 (Tuesday — evening).
+**Session closed:** 2026-06-04 (Thursday — afternoon).
 **Beta launched:** live at kodatrade.co.uk
-**Latest prod deploy:** `tradr-9wnuaupa3` (Vercel, ● Ready)
-**Latest commit on main (local, NOT pushed):** in-session intervention v1 series ending with the docs commit.
-**Last pushed commit:** `85b5041`
+**Last pushed commit:** see `git log -1 --format=%h`
+**Prior sessions:** 2026-06-02 (in-session intervention v1), 2026-06-03 (engagement loop — chat read/unread, follow notifications, weekly digest), 2026-06-04 (this — pre-flight audit + cleanup).
 
 This doc is the single source of truth for resuming work. Read this first.
 
 ---
+
+## 0 · What shipped this session (2026-06-04) — PRE-FLIGHT AUDIT + CLEANUP
+
+A full security / architecture / scope-creep audit of the beta codebase, followed by a focused cleanup sweep.
+
+### Confirmed safe
+- **`public.announcements` RLS** — checked live: RLS on, single `announcements_read` SELECT policy (`USING (true)` for authenticated), no INSERT/UPDATE/DELETE policies for authenticated. Writes service-role only. ✅
+
+### Shipped (live on `main`)
+- **Backfill of `public.circles` + `public.circle_members`** from KV `koda_circle_*` rows. 1 circle (KODA-GLOBAL), 14 members. KODA-GLOBAL meta row's sentinel UUID owner was rewritten to Dylon's UID.
+- **Three triggers on `public.shared_kv`** to keep `circles` and `circle_members` in sync on future create / join / leave. Forward-compat for the eventual strict RLS restore — no client code change needed when the policy is re-applied.
+- **`Live Connections` panel in `src/DataSourcesScreen.tsx`** — gated behind `isFlagOn("liveBrokerSync")`. Bundled with three latent client-side bugs fixed (`handleConnect` was sending `name` instead of `username`; `handleDisconnect` was sending `connectionId` instead of `{broker,env}`; success toast was reading non-existent `data.message`). Plus a manual "↻ Sync now" button calling `/api/cron?job=sync`.
+- **Lazy-init for `webpush.setVapidDetails`** in `api/push.ts` and `api/telegram.ts`. A missing VAPID env var no longer crashes the whole module on cold start — only the broadcast handlers throw.
+- **Dead-code deletes:** `src/PaywallScreen.tsx` (orphan), `src/components/ProGate.tsx` + test (replaced by inline `isPro` + `ProLock`), empty `koda/` subdir at repo root.
+- **`.env.example` + `CLAUDE.md` corrected** to drop the vestigial `VITE_BETA_PASSWORD` (the real var is server-only `BETA_PASSWORD`).
+- **`CLAUDE.md` migration table refreshed**: announcements ✅, `circle_messages_members_only` reverted with proper fix-path documented, backfill + triggers tracked.
+
+### Attempted and rolled back (with a reason worth remembering)
+- **`circle_messages_select` strict policy applied → broke chat → reverted.** Root cause: `cm_read_member` on `public.circle_members` (from migration 002) is recursive. When the strict `circle_messages_select` EXISTS subquery runs, RLS applies to the inner SELECT, recursion is detected, and the inner query silently returns zero rows. Net result: every chat read blocked for every user. The backfill + triggers stay in place because they're correct — only the policy was rolled back. Proper fix (Runbook C, queued): rewrite `cm_read_member` non-recursively + add a `SECURITY DEFINER is_circle_member(text)` helper, then re-apply the strict policy.
+
+### Confirmed dead-end (not a code change — a strategy decision)
+- **Tradovate Partner API is not accessible to journaling apps.** Read `partner.tradovate.com/llms-full.txt`. The program is for prop firms and trading platforms that own/manage trader accounts. No self-serve signup, no personal-use tier, gated behind their Eval Support team. Auth flow assumes partners create their own users — random Tradovate-account-owners cannot connect their existing accounts. **Decision:** `liveBrokerSync` flag stays default-off. The Live Connections panel sits ready behind it. CSV import remains the live broker integration. Optional next action: email Tradovate Eval Support to plant the seed.
+
+---
+
+## 0a · Open / Pending — ordered by priority
+
+1. **`circle_messages` strict RLS — Runbook C.** Non-recursive `cm_read_member` + `SECURITY DEFINER is_circle_member(text)` helper + re-apply `20260603_circle_messages_members_only.sql`. ~30-45 min careful work + smoke test.
+2. **`trade-screenshots` private bucket — Runbook B.** Bucket is currently `public:true`; any UID can fetch any trader's screenshots via the permanent CDN URL. Approach A from the audit: create `trade-screenshots-private` bucket, dual-write for ~7 days, migrate existing objects + URL rewrites in `public.trades` + the legacy KV `koda_trades` JSON, switch reads to `createSignedUrl()`, then write-disable the public bucket.
+3. **`useTradovate` + `api/tradovate.ts` + `src/lib/tradovate.ts` teardown + ~150 lines of dead UI in `Koda.tsx`** (home Tradovate widget + connect sheet). Surgical extraction from the 4,921-line god file — deserves its own focused commit + manual test.
+4. **Email Tradovate Eval Support** about Kōda's use case. Free, days-to-weeks reply. Plant the seed even if you don't expect a yes.
+5. **CSV import polish as the broker USP**. If broker auto-sync isn't shipping, lean into CSV: better drop-zone, faster broker detection, post-import "you imported N trades — here's your last 7 days" celebration moment.
+
+---
+
+## 0b · Backlog (sorted)
+
+- **UI redesign rollout** (next 1-2 weeks). Dylon has built a complete new mockup in Claude design that supersedes `DESIGN.md` for the surfaces it covers. Open problem to solve: how to port the Claude-design output cleanly into Claude Code → production. Documents to merge into a fresh `DESIGN.md` (or successor) coming from Dylon.
+- **Split `src/Koda.tsx`** (~4,921 lines). Extract Home, Stats, Settings, Log into their own files following the `TradingCircles.tsx` pattern.
+- **v2 dual-write decision.** `src/data/{trades,profile}.ts` are wired but headers say "NOT WIRED INTO Koda.tsx YET." Some writers (broker sync, stripe webhook) hit only one schema. Drift risk. Either finish (backfill + flip read flag + delete KV writers) or roll back the dual-write.
+- **Telegram feedback** @Tradrfeedbackbot needs to be added to group `-5187303282`.
+- **Engagement loop follow-ups** (per `docs/superpowers/plans/2026-06-03-social-retention-roadmap.md`): moderation, leaderboard integrity, KV→Postgres unification, Ideas→Feed integration, badges, comments, viral invites.
+- **Playwright smoke test**: sign in → log trade → join circle — run on every deploy.
+
+---
+
+## Previous sessions (archived context — read only if needed)
 
 ## 0 · What shipped this session (2026-06-02 evening) — IN-SESSION INTERVENTION v1
 

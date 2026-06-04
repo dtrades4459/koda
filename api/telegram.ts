@@ -21,11 +21,20 @@ const ADMIN_IDS = new Set(
 
 const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 
-webpush.setVapidDetails(
-  `mailto:${process.env.VAPID_EMAIL}`,
-  process.env.VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!
-);
+// Lazy VAPID init so a missing env var doesn't crash the whole module on cold
+// start — only the broadcast handler throws if VAPID is unconfigured.
+let _vapidReady = false;
+function ensureVapid(): void {
+  if (_vapidReady) return;
+  const email = process.env.VAPID_EMAIL;
+  const pub   = process.env.VAPID_PUBLIC_KEY;
+  const priv  = process.env.VAPID_PRIVATE_KEY;
+  if (!email || !pub || !priv) {
+    throw new Error("VAPID_EMAIL / VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY must all be set");
+  }
+  webpush.setVapidDetails(`mailto:${email}`, pub, priv);
+  _vapidReady = true;
+}
 
 async function tgSend(chatId: number, text: string) {
   await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN2}/sendMessage`, {
@@ -42,6 +51,7 @@ async function broadcast(title: string, body: string): Promise<{ sent: number; t
 
   if (!subs?.length) return { sent: 0, total: 0 };
 
+  ensureVapid();
   const results = await Promise.allSettled(
     subs.map((sub: { endpoint: string; p256dh: string; auth_key: string }) =>
       webpush.sendNotification(

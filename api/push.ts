@@ -9,13 +9,22 @@ import webpush from "web-push";
 
 // Service-role client — used for all DB access and JWT verification
 // (auth.getUser(token) works with the service role key)
-webpush.setVapidDetails(
-  `mailto:${process.env.VAPID_EMAIL}`,
-  process.env.VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!
-);
-
 const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+
+// Lazy VAPID init so a missing env var doesn't crash the whole module on cold
+// start — only the push-sending handlers throw if VAPID is unconfigured.
+let _vapidReady = false;
+function ensureVapid(): void {
+  if (_vapidReady) return;
+  const email = process.env.VAPID_EMAIL;
+  const pub   = process.env.VAPID_PUBLIC_KEY;
+  const priv  = process.env.VAPID_PRIVATE_KEY;
+  if (!email || !pub || !priv) {
+    throw new Error("VAPID_EMAIL / VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY must all be set");
+  }
+  webpush.setVapidDetails(`mailto:${email}`, pub, priv);
+  _vapidReady = true;
+}
 
 async function handleSubscribe(req: VercelRequest, res: VercelResponse) {
   const auth = req.headers.authorization as string | undefined;
@@ -51,6 +60,7 @@ async function handleSend(req: VercelRequest, res: VercelResponse) {
     .eq("user_id", userId);
 
   if (subs?.length) {
+    ensureVapid();
     await Promise.allSettled(subs.map(sub =>
       webpush.sendNotification(
         { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth_key } },
@@ -72,6 +82,7 @@ async function sendPush(
   payload: string,
 ): Promise<void> {
   try {
+    ensureVapid();
     await webpush.sendNotification(
       { endpoint, keys: { p256dh, auth: authKey } },
       payload,
@@ -305,6 +316,7 @@ async function handleBroadcast(req: VercelRequest, res: VercelResponse) {
 
   if (!subs?.length) return res.status(200).json({ ok: true, sent: 0 });
 
+  ensureVapid();
   const results = await Promise.allSettled(
     subs.map((sub: { endpoint: string; p256dh: string; auth_key: string }) =>
       webpush.sendNotification(
