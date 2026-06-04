@@ -17,12 +17,12 @@ Every design decision should serve this impression. The product should feel like
 
 - **Direction:** Industrial-Editorial — Bloomberg Terminal clarity meets Apple Notes warmth
 - **Decoration level:** Intentional — glass surfaces and OKLCH orb bloom effects on key screens; no decorative patterns elsewhere
-- **Mood:** Focused and warm. A trading workspace you want to open at 7am. Not the cold blue-black of a terminal, not the gamified pastels of a consumer app. The palette is coffee-dark — serious but never hostile.
+- **Mood:** Focused and editorial. A trading workspace you want to open at 7am. Not the gamified pastels of a consumer app, not a sea of generic widgets. Serious but never hostile.
 - **Reference sites:** Tradervue (table stakes baseline), TradesViz (AI-forward, no craft), Edgewonk (functional, light-mode default). Kōda is the only mobile-first, dark-primary, OKLCH-powered product in the space.
 
 ### Differentiation choices
 
-1. **Coffee-warm dark** (`#13110E`) instead of cold blue-black. Makes the app feel like a focused workspace. The panel2 (`#23201B`) tones add depth without the harsh contrast of pure OLED black.
+1. **Cool near-black dark** (`#0A0A0B`) with neutral panels (`#131317`, `#1A1A20`). Verbatim from the Kōda OS handover bundle. Replaces the prior warm-dark `#13110E` pass — the kit values are now canonical so design ports are 1:1.
 2. **Electric blue + mint instead of green-as-brand.** Every competitor uses green as their primary action/brand color (profit = green). Kōda's accent is blue (information) and live/CTAs are mint-teal. Green and red appear only for win/loss outcomes — they are not the brand.
 3. **Geist for display and body (same family).** Rather than a separate display face, typographic hierarchy comes from weight, size, and tracking variation. Numbers and prose feel unified.
 
@@ -64,32 +64,39 @@ Every design decision should serve this impression. The product should feel like
 ### Dark Mode (primary)
 
 ```
-bg:           #13110E       // Coffee-warm dark, not cold OLED black
-panel:        #1B1814       // Surface panels
-panel2:       #23201B       // Nested/secondary surfaces
-border:       rgba(245,234,222,0.07)
-border2:      rgba(245,234,222,0.13)
+bg:           #0A0A0B       // Cool near-black (handover bundle canonical)
+panel:        #131317       // Surface panels (alias: surface)
+panel2:       #1A1A20       // Nested/secondary surfaces (alias: surfaceHi)
+panel3:       #22222A       // Tertiary surfaces
+border:       rgba(255,255,255,0.07)        // alias: line
+border2:      rgba(255,255,255,0.12)        // alias: line2
+line3:        rgba(255,255,255,0.20)        // strongest divider
 
-text:         #F2EFE9       // Warm off-white, not pure white
-text2:        #A8A39A       // Secondary text
-muted:        #6A655C       // Disabled states, placeholders, metadata
-dim:          #4A4640       // Weakest text
+text:         #F2F2EE       // Near-white ink
+text2:        #A6A6A2       // Secondary text
+muted:        #65655F       // Disabled states, placeholders, metadata
+dim:          #45453F       // Weakest text
 
-accent:       oklch(0.74 0.16 250)         // Electric blue — links, highlights, info
-accentSoft:   oklch(0.74 0.16 250 / 0.18) // Accent backgrounds
-live:         oklch(0.84 0.14 175)         // Mint/teal — "go" CTAs, positive action
-liveSoft:     oklch(0.84 0.14 175 / 0.18) // Live backgrounds
+accent:       oklch(0.74 0.16 250)          // Electric blue — links, highlights, info
+accentSoft:   oklch(0.74 0.16 250 / 0.16)  // Accent backgrounds
+live:         oklch(0.84 0.14 175)          // Mint/teal — "go" CTAs, positive action
+liveSoft:     oklch(0.84 0.14 175 / 0.16)  // Live backgrounds
 
-green:        oklch(0.78 0.18 152)  // Win outcome only
-red:          oklch(0.70 0.21 25)   // Loss outcome only
-warn:         oklch(0.79 0.16 75)   // Warning state
+green:        oklch(0.78 0.18 152)          // Win outcome only
+greenSoft:    oklch(0.78 0.18 152 / 0.15)
+red:          oklch(0.70 0.21 25)           // Loss outcome only
+redSoft:      oklch(0.70 0.21 25 / 0.15)
+warn:         oklch(0.79 0.16 75)           // Warning state
+warnSoft:     oklch(0.79 0.16 75 / 0.15)
 
-surfaceGlass: rgba(34,30,26,0.55)   // Glass surface overlay
-orb1:         oklch(0.55 0.22 252)  // Bloom accent 1
-orb2:         oklch(0.45 0.20 268)  // Bloom accent 2
-orb3:         oklch(0.68 0.18 175)  // Bloom accent 3 (mint)
+surfaceGlass: rgba(28,28,34,0.55)           // Glass surface overlay
+orb1:         oklch(0.55 0.22 252)          // Bloom accent 1
+orb2:         oklch(0.45 0.20 268)          // Bloom accent 2
+orb3:         oklch(0.68 0.18 175)          // Bloom accent 3 (mint)
 shadow:       rgba(0,0,0,0.45)
 ```
+
+> **Aliases.** The codebase exposes both legacy names (`text`, `border`, `panel`) and the kit names (`ink`, `line`, `surface`) for every token — they point at the same value, so new code from `koda-designs/cat0X-*.jsx` ports 1:1 without rename churn.
 
 ### Light Mode (secondary)
 
@@ -210,7 +217,7 @@ Labels use Geist Mono uppercase, 12px, 0.05em tracking, `muted` color, 6px margi
 Used for announcement cards, CTAs, overlay panels on key screens. Always paired with OKLCH orb bloom effects in the background:
 
 ```css
-background: rgba(34,30,26,0.55);  /* dark */
+background: rgba(28,28,34,0.55);  /* dark */
 backdrop-filter: blur(16px);
 border: 1px solid <border2>;
 border-radius: 16–24px;
@@ -229,3 +236,4 @@ Orb bloom: `radial-gradient` with orb1/orb2/orb3 colors at 15–22% opacity, pos
 | 2026-06-03 | Geist Mono for all labels/kickers    | Data-terminal credibility; creates clear prose/metadata hierarchy without a second typeface|
 | 2026-06-03 | 16px input font-size enforced        | Prevents iOS auto-zoom on focus (WCAG / mobile UX requirement)                             |
 | 2026-06-03 | 44px minimum touch target            | WCAG 2.5.5 / Apple HIG guidance for mobile touchscreens                                   |
+| 2026-06-04 | Reverted to cool `#0A0A0B` bg        | Adopted kit values verbatim from `KodaOS-handoff-v2/.../koda-kit.jsx` so designs port 1:1 |
