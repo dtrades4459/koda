@@ -14,6 +14,7 @@ import { useSessionDebrief } from "./hooks/useSessionDebrief";
 import { useCircles } from "./hooks/useCircles";
 import { useUnreadCircles } from "./hooks/useUnreadCircles";
 import { useUnreadNotifications } from "./hooks/useUnreadNotifications";
+import { useBadging } from "./hooks/useBadging";
 import { NotificationFeed } from "./components/NotificationFeed";
 import { SystemProvider } from "./components/SystemProvider";
 import {
@@ -84,6 +85,7 @@ import { ConfluenceTracker } from "./components/ConfluenceTracker";
 import { FirstSessionSurvey } from "./components/FirstSessionSurvey";
 import { LoadingSplash } from "./components/LoadingSplash";
 import { OfflineBanner } from "./components/OfflineBanner";
+import { SharedContentSheet } from "./components/SharedContentSheet";
 import { HomeNewsWidget } from "./components/HomeNewsWidget";
 import { NewsScreen } from "./NewsScreen";
 import {
@@ -136,12 +138,15 @@ const STREAK_FLAVOUR: Record<number, string> = {
 export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" | "pro" | "elite" } = {}) {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [draftCount, setDraftCount] = useState(0);
+  // ── App icon badge — mirrors the bell-icon unread count to the OS shelf ──
+  // Active on installed PWAs on Chromium-based platforms; silently no-ops elsewhere.
   const [announcement, setAnnouncement] = useState<{ id: string; message: string } | null>(null);
   const [announcementDismissedId, setAnnouncementDismissedId] = useState<string | null>(() => {
     try { return localStorage.getItem("koda_announcement_dismissed") ?? null; } catch { return null; }
   });
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [unreadMsgs, setUnreadMsgs] = useState<Record<string, number>>({});
+  useBadging(draftCount + Object.values(unreadMsgs).reduce((a, b) => a + b, 0));
   const [view, setView] = useState("home");
   const [viewHistory, setViewHistory] = useState<string[]>([]);
 
@@ -510,6 +515,32 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
         if (data?.session) { void loadAll(); }
       }).catch(() => {});
     }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── ?screen= deep-link handler ──────────────────────────────────────────────
+  // Routes PWA manifest shortcuts + file_handlers + share_target into the app:
+  //   ?screen=log         → log-trade view
+  //   ?screen=stats       → stats view
+  //   ?screen=circles     → circles view
+  //   ?screen=import      → data sources + auto-open CSV (file_handlers)
+  //   ?screen=share-receive → SharedContentSheet (share_target intent)
+  const _screenHandledRef = useRef(false);
+  useEffect(() => {
+    if (_screenHandledRef.current) return;
+    _screenHandledRef.current = true;
+    try {
+      const screen = new URLSearchParams(window.location.search).get("screen");
+      if (!screen) return;
+      const clean = () => window.history.replaceState({}, "", window.location.pathname);
+      if (screen === "log")     { navigateTo("log"); clean(); }
+      else if (screen === "stats")   { navigateTo("stats"); clean(); }
+      else if (screen === "circles") { navigateTo("circles"); clean(); }
+      else if (screen === "import")  { navigateTo("data-sources"); setAutoOpenCsv(true); clean(); }
+      else if (screen === "share-receive") {
+        navigateTo("share-receive");
+        // Don't clean yet — SharedContentSheet reads any pending share from cache.
+      }
+    } catch {}
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── ?join= deep-link handler ────────────────────────────────────────────────
@@ -1760,6 +1791,22 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
       `}</style>
 
       <SystemProvider C={C} onSignIn={() => navigateTo("auth")} />
+
+      {view === "share-receive" && (
+        <SharedContentSheet
+          C={C}
+          onAttachToTrade={(file, text) => {
+            navigateTo("log");
+            if (text) setForm(f => ({ ...f, notes: text }));
+            if (file) {
+              void compressImage(file, 800).then(dataUri => {
+                setForm(f => ({ ...f, screenshot: dataUri }));
+              });
+            }
+          }}
+          onClose={() => navigateTo("home")}
+        />
+      )}
 
       {/* ── PAGE FRAME (responsive: 4-tier viewport scaling) ── */}
       <div className="koda-app" ref={swipeRef}

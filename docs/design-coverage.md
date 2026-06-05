@@ -346,11 +346,11 @@ _Shortcuts, share target, file handlers, badging, install banners._
 
 **Designs**: `koda-designs/cat19-pwa.jsx` · **Target**: `public/manifest.webmanifest + src/sw.ts`
 
-- [x] [ ] 🟠 **Install-banner variants per browser**
-- [x] [ ] 🟡 **App shortcuts (long-press home icon)**
-- [x] [ ] 🟡 **Badging API states (unread count)**
-- [x] [ ] 🟡 **File handlers (CSV intent)**
-- [x] [ ] 🟡 **Share target (receive shared content)**
+- [x] [x] 🟠 **Install-banner variants per browser** - InstallHint.tsx (iOS) + new AndroidInstallBanner.tsx (Chromium beforeinstallprompt) 2026-06-05
+- [x] [x] 🟡 **App shortcuts (long-press home icon)** - manifest.webmanifest shortcuts (log/stats/circles/import) + ?screen= router in Koda.tsx 2026-06-05
+- [x] [x] 🟡 **Badging API states (unread count)** - useBadging hook wired with draftCount + circle unread totals 2026-06-05
+- [x] [x] 🟡 **File handlers (CSV intent)** - manifest file_handlers (.csv → /?screen=import) + router opens data-sources with autoOpenCsv 2026-06-05
+- [x] [x] 🟡 **Share target (receive shared content)** - manifest share_target POST + sw.ts intercept (stashes file+meta in cache, 303 to share_id) + SharedContentSheet.tsx 2026-06-05
 
 ## 20 · Admin / moderation
 

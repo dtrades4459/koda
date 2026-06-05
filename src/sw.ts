@@ -105,6 +105,48 @@ registerRoute(
   })
 );
 
+// ── Share target intercept (cat19) ───────────────────────────────────────────
+// Android web-share intents POST to /?screen=share-receive with multipart form
+// data. The SPA can't natively read that body, so the SW grabs files + text,
+// stashes them in a "share-staging" cache as JSON + blobs, then 303s the
+// browser to a GET URL the client picks up via cache.match.
+const SHARE_CACHE = "share-staging";
+
+self.addEventListener("fetch", (event: FetchEvent) => {
+  const req = event.request;
+  if (req.method !== "POST") return;
+  const url = new URL(req.url);
+  if (url.pathname !== "/" || url.searchParams.get("screen") !== "share-receive") return;
+
+  event.respondWith((async () => {
+    try {
+      const form = await req.formData();
+      const title = (form.get("title") as string | null) ?? "";
+      const text  = (form.get("text")  as string | null) ?? "";
+      const sharedUrl = (form.get("url") as string | null) ?? "";
+      const file = form.get("screenshot");
+
+      const cache = await caches.open(SHARE_CACHE);
+      const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+      const meta = { id, title, text, url: sharedUrl, hasFile: file instanceof File };
+      await cache.put(`/__share/${id}.json`, new Response(JSON.stringify(meta), {
+        headers: { "Content-Type": "application/json" },
+      }));
+      if (file instanceof File) {
+        await cache.put(`/__share/${id}.blob`, new Response(file, {
+          headers: { "Content-Type": file.type || "application/octet-stream" },
+        }));
+      }
+
+      return Response.redirect(`/?screen=share-receive&share_id=${id}`, 303);
+    } catch (err) {
+      console.error("[sw] share_target error:", err);
+      return Response.redirect("/?screen=share-receive&error=1", 303);
+    }
+  })());
+});
+
 // ── Web push ─────────────────────────────────────────────────────────────────
 self.addEventListener("push", (event: PushEvent) => {
   if (!event.data) return;
