@@ -40,9 +40,9 @@ _Getting a beta user from invite to first logged trade._
 - [x] [x] 🟠 **Handle picker — collision handling**
 - [x] [x] 🟠 **Install-PWA prompt — iOS Safari / Android Chrome / desktop**
 - [x] [x] 🟠 **OAuth handoff returns**
-- [x] [ ] 🟠 **Waitlist join**
+- [x] [x] 🟠 **Waitlist join** - BetaGate.tsx joinWaitlist() wired; uses api/account?action=join-waitlist with confirmation email
 - [x] [x] 🟡 **First-session survey**
-- [x] [ ] 🟡 **Recovery-email setup**
+- [x] [x] 🟡 **Recovery-email setup** - auth/AuthScreens RecoveryEmailScreen wired into onboarding flow
 - [x] [x] ⚪ **Beta gate**
 - [x] [x] ⚪ **Beta welcome**
 - [x] [x] ⚪ **Onboarding multi-step**
@@ -57,7 +57,7 @@ _The hub and every detail flow behind it — billing, brokers, data, security._
 
 - [x] [x] 🔴 **Account deletion confirmation flow** - DeleteWarn→DeleteConfirm→DeleteScheduled wired 2026-06-05
 - [x] [x] 🔴 **Billing — past-due / failed / dunning / refund-pending / downgrade / promo-code** - BillingPastDue/Dunning/Promo screens wired 2026-06-05
-- [x] [ ] 🟠 **Broker connect (Tradovate)**
+- [x] [x] 🟠 **Broker connect (Tradovate)** - DataSourcesScreen Tradovate connect flow + token refresh in api/cron sync
 - [x] [x] 🟠 **CSV import wizard — preset → pick → preview → dedup → confirm → progress → result** - Step 1 (broker select) wired 2026-06-05; steps 2-6 pending backend
 - [x] [x] 🟠 **Data export download** - DataExportScreen with format picker wired 2026-06-05
 - [x] [x] 🟠 **Time zone** - PreferencesScreen includes tz/currency/language 2026-06-05
@@ -81,7 +81,7 @@ _Log, edit, enrich, import, review and share a trade._
 
 **Designs**: `koda-designs/cat03-trade.jsx` · **Target**: `src/LogTradeScreen.tsx / src/Koda.tsx (trade detail)`
 
-- [x] [ ] 🟠 **Bulk CSV import — progress / per-row errors / dedup conflicts**
+- [x] [x] 🟠 **Bulk CSV import — progress / per-row errors / dedup conflicts** - CsvImportPanel processes per-row, surfaces importedCount + skipped + parse errors; dedup via tradeKey + onConflict ignoreDuplicates
 - [x] [x] 🟠 **Delete confirmation**
 - [x] [x] 🟠 **Edit existing trade** - edit-trade view + tradeEditId state wired 2026-06-05
 - [x] [x] 🟠 **Mistake tag field**
@@ -89,7 +89,7 @@ _Log, edit, enrich, import, review and share a trade._
 - [x] [x] 🟠 **Screenshot upload — single / multi / paste-from-clipboard** - screenshots view wired 2026-06-05
 - [x] [x] 🟠 **Share-to-circle modal**
 - [x] [x] 🟠 **Trade detail — expanded (emotion chips, rule pills, reactions, comments)**
-- [x] [ ] 🟡 **Attach to idea**
+- [x] [ ] 🟡 **Attach to idea** - IdeaComposer exists; "attach this trade to an existing idea" picker not yet wired in trade-actions sheet (see dylon-todo.md)
 - [x] [x] 🟡 **Favorite / star** - edit + screenshots rows added to trade-actions 2026-06-05
 - [x] [x] 🟡 **Link to intervention event** - link-intervention row added to trade-actions 2026-06-05
 - [x] [x] ⚪ **Log new trade**
@@ -107,13 +107,13 @@ _The full lifecycle of a Circle and everything inside it._
 - [x] [x] 🟠 **Join by code**
 - [x] [x] 🟠 **Owner controls panel**
 - [x] [x] 🟠 **Report-content flow**
-- [x] [ ] 🟡 **@mention autocomplete**
+- [x] [ ] 🟡 **@mention autocomplete** - chat composer renders `@handle` as plain text; autocomplete dropdown not yet wired (see dylon-todo.md)
 - [x] [x] 🟡 **Blocked-users management**
 - [x] [x] 🟡 **Challenge — creation**
 - [x] [x] 🟡 **Challenge — in-progress**
 - [x] [x] 🟡 **Challenge — result celebration**
 - [x] [x] 🟡 **Chat composer + attachments**
-- [x] [ ] 🟡 **Emoji reactions picker**
+- [x] [ ] 🟡 **Emoji reactions picker** - reactions wired as preset chip row; full emoji-grid picker not yet wired (see dylon-todo.md)
 - [x] [x] 🟡 **Leaderboard expanded (top 5 + blurred upsell)**
 - [x] [x] 🟡 **Leave confirmation**
 - [x] [x] 🟡 **Member list + member detail card**
@@ -130,7 +130,7 @@ _Follows, profiles seen from the outside, suggestions, blocking._
 
 - [x] [x] 🟠 **Follow button — not-following / following / pending / blocked-by**
 - [x] [x] 🟡 **Follow-back prompt**
-- [x] [ ] 🟡 **Mutual-friends visualization**
+- [x] [ ] 🟡 **Mutual-friends visualization** - computation possible (shared circles + intersecting follows) but no UI component wired yet (see dylon-todo.md)
 - [x] [x] 🟡 **Profile QR-code share**
 - [x] [x] 🟡 **Suggested follows**
 - [x] [x] 🟡 **Unfollow confirmation**
@@ -178,7 +178,7 @@ _The wedge feature, expanded past v1 into history and periodic reviews._
 - [x] [x] 🟡 **Discipline-score ring — detail breakdown**
 - [x] [x] 🟡 **Intervention history list + filters**
 - [x] [x] 🟡 **Monthly review**
-- [x] [ ] 🟡 **Yearly review**
+- [x] [x] 🟡 **Yearly review** - YearReviewCard wired in PowerScreens.tsx + Koda.tsx access path
 - [x] [x] ⚪ **Pre-session checklist + rule attachments**
 
 ## 09 · Power features
