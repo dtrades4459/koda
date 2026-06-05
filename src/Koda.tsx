@@ -531,7 +531,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
 
   async function loadAll() {
     const store = storage;
-    const LOAD_KEYS = ["koda_trades","koda_profile","koda_checklists","koda_rules","koda_dark","koda_theme_pref","koda_circles","koda_thresholds","koda_custom_strategies"] as const;
+    const LOAD_KEYS = ["koda_trades","koda_profile","koda_checklists","koda_rules","koda_dark","koda_theme_pref","koda_circles","koda_thresholds","koda_custom_strategies","koda_stripe_customer","koda_session_started","koda_debrief_log","koda_intervention_lockout","koda_tradovate","koda_discipline_log"] as const;
     const [kv, v2ProfileRes] = await Promise.all([
       store.getMany([...LOAD_KEYS]).catch(() => new Map()),
       (isFlagOn("newProfile") && user?.id)
@@ -665,10 +665,9 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     } catch (e) { log.error("loadAll.customStrategies", e); }
     // Tradovate session loaded by useTradovate hook after loading completes.
 
-    // Load Stripe customer ID
+    // Load Stripe customer ID (pre-fetched in the LOAD_KEYS batch above)
     try {
-      const store = storage;
-      const stripeKv = await store.get("koda_stripe_customer").catch(() => null);
+      const stripeKv = kv.get("koda_stripe_customer") ?? null;
       if (stripeKv?.value) {
         const { customerId } = JSON.parse(stripeKv.value);
         if (customerId) setProfile(p => ({ ...p, stripeCustomerId: customerId }));
