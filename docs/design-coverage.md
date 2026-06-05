@@ -275,14 +275,14 @@ _Documented keyframes + the gesture/transition patterns still undrawn._
 
 **Designs**: `koda-designs/cat14-motion.jsx` · **Target**: `src/index.css + per-component keyframes`
 
-- [x] [ ] 🟠 **Keyboard-open layout shift**
-- [x] [ ] 🟠 **Pull-to-refresh**
-- [x] [ ] 🟠 **Reduced-motion variant — per animation**
-- [x] [ ] 🟠 **Swipe-back gesture**
-- [x] [ ] 🟡 **Drawer slide**
-- [x] [ ] 🟡 **Page transitions**
-- [x] [ ] 🟡 **Sheet drag**
-- [x] [ ] 🟡 **Sticky-header collapse**
+- [x] [x] 🟠 **Keyboard-open layout shift**
+- [x] [x] 🟠 **Pull-to-refresh**
+- [x] [x] 🟠 **Reduced-motion variant — per animation**
+- [x] [x] 🟠 **Swipe-back gesture**
+- [x] [x] 🟡 **Drawer slide**
+- [x] [x] 🟡 **Page transitions**
+- [x] [x] 🟡 **Sheet drag**
+- [x] [x] 🟡 **Sticky-header collapse**
 - [x] [x] ⚪ **Core keyframes (kRise, kCount, kStreakGlow, kTick, kShake, kSlideIn, kDrawer, kRipple, kSpin, kShimmer, kConfetti, kSheen)**
 
 ## 15 · Microcopy library
@@ -306,9 +306,9 @@ _Keyboard flows, SR scripts, focus design, reduced-motion, scaling, RTL._
 
 **Designs**: `koda-designs/cat16-a11y.jsx` · **Target**: `docs/a11y.md (new) + global focus styles`
 
-- [x] [ ] 🔴 **Focus-state designs (web + mobile)**
+- [x] [x] 🔴 **Focus-state designs (web + mobile)**
 - [x] [ ] 🟠 **Keyboard-only navigation flows (tab order, focus traps)**
-- [x] [ ] 🟠 **Reduced-motion variants per animation**
+- [x] [x] 🟠 **Reduced-motion variants per animation**
 - [x] [ ] 🟠 **Screen-reader announcement scripts (per surface)**
 - [x] [ ] 🟡 **Font-scaling at 200% browser zoom**
 - [x] [ ] 🟡 **High-contrast mode**
@@ -358,8 +358,8 @@ _Reporting, review queue, announcement composer, audit log, merges._
 
 **Designs**: `koda-designs/cat20-admin.jsx` · **Target**: `api/admin/* (new)`
 
-- [x] [ ] 🟠 **Report-content (in-app)**
-- [x] [ ] 🟡 **User audit-log viewer (support)**
+- [x] [x] 🟠 **Report-content (in-app)**
+- [x] [x] 🟡 **User audit-log viewer (support)**
 - [ ] [ ] ⚪ **Account merge / migration UI** _(out of scope)_
 - [ ] [ ] ⚪ **Admin announcement composer (in-app)** _(out of scope)_
 - [ ] [ ] ⚪ **Review queue** _(out of scope)_

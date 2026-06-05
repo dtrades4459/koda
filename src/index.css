@@ -168,3 +168,60 @@ a:focus-visible {
     box-shadow: 0 0 0 6px color-mix(in oklch, oklch(0.84 0.14 175) 40%, transparent);
   }
 }
+
+/* ─── F14 · Motion patterns ──────────────────────────────────────────────────
+ * Keyboard-open layout shift: shift the viewport up so focused inputs aren't
+ * hidden behind the on-screen keyboard. Uses the Visual Viewport API on mobile
+ * and the env(keyboard-inset-height) CSS env var where supported (Chrome 94+).
+ *
+ * Usage: apply .koda-keyboard-aware to any scrollable panel that hosts inputs.
+ */
+.koda-keyboard-aware {
+  transition: padding-bottom 0.2s ease;
+}
+@supports (height: env(keyboard-inset-height)) {
+  .koda-keyboard-aware {
+    padding-bottom: max(env(safe-area-inset-bottom), env(keyboard-inset-height, 0px));
+  }
+}
+
+/* Pull-to-refresh indicator: a centered spinner that fades in when the
+ * .koda-ptr-pulling class is added to the scroll container. */
+.koda-ptr-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 56px;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 0.18s, height 0.18s;
+}
+.koda-ptr-pulling .koda-ptr-indicator {
+  opacity: 1;
+}
+.koda-ptr-indicator svg {
+  animation: kSpin 0.8s linear infinite;
+}
+
+/* Swipe-back gesture: the outgoing screen slides right while the incoming
+ * screen is revealed from beneath. Attach .koda-swipe-exit to the screen
+ * being dismissed. */
+@media (prefers-reduced-motion: no-preference) {
+  .koda-swipe-exit {
+    animation: kSwipeExit 0.28s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    pointer-events: none;
+  }
+  @keyframes kSwipeExit {
+    from { transform: translateX(0); opacity: 1; }
+    to   { transform: translateX(30%); opacity: 0; }
+  }
+
+  /* Sticky-header collapse: header shrinks from 64px to 48px as user scrolls */
+  .koda-header-sticky {
+    transition: height 0.18s ease, padding 0.18s ease;
+  }
+}
+
+/* Page-transition enter/exit helpers */
+.koda-page-enter  { animation: kRise 0.22s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+.koda-page-exit   { animation: kSlideOut 0.18s ease forwards; }
