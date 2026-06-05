@@ -15,6 +15,10 @@ import {
   MemberDetailCard, MessageContextMenu, LeaderboardUpsellRow,
 } from "./social/SocialScreens";
 import type { MemberStat } from "./social/SocialScreens";
+import {
+  ChatThreadScreen, ChallengeLiveScreen, ChallengeWinScreen, BlockedUsersScreen,
+} from "./social/CircleScreens";
+import type { ChatMessage, ChallengeStanding, BlockedUser } from "./social/CircleScreens";
 
 interface LeaderboardEntry {
   memberCode: string;
@@ -148,6 +152,10 @@ export function TradingCircles({
   const [reportTarget, setReportTarget] = useState<{ type: "message" | "member"; id: string; name: string } | null>(null);
   const [selectedMember, setSelectedMember] = useState<typeof leaderboard[number] | null>(null);
   const [msgContextMenu, setMsgContextMenu] = useState<{ id: string; senderName: string; preview: string; isOwn: boolean } | null>(null);
+  const [showChatThread, setShowChatThread] = useState(false);
+  const [showChallengeLive, setShowChallengeLive] = useState(false);
+  const [showChallengeWin, setShowChallengeWin] = useState<{ rank: string; challengeName: string; body: string } | null>(null);
+  const [showBlockedUsers, setShowBlockedUsers] = useState(false);
   const { perCircle: unread, refresh: refreshUnread } = useUnreadCircles(
     myCircles?.map((c) => c.code) ?? []
   );
@@ -334,8 +342,8 @@ export function TradingCircles({
     setTimeout(() => chatBottomRef.current?.scrollIntoView({ behavior: "smooth" }), 80);
   }
 
-  async function sendChatMessage(circleCode: string, myId: string | undefined) {
-    const text = chatInput.trim();
+  async function sendChatMessage(circleCode: string, myId: string | undefined, overrideText?: string) {
+    const text = (overrideText ?? chatInput).trim();
     if (!text || chatSending || !myId) {
       if (!myId) showToast("Sign in required to send messages");
       return;
@@ -980,8 +988,19 @@ export function TradingCircles({
                   {activeChallenge.metric} · challenge
                 </div>
               </div>
-              <div style={{ fontFamily: MONO, fontSize: 11, fontWeight: 700, color: C.text2, letterSpacing: "0.05em", flexShrink: 0 }}>
-                {formatCountdown(activeChallenge.endsAt)}
+              <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+                <div style={{ fontFamily: MONO, fontSize: 11, fontWeight: 700, color: C.text2, letterSpacing: "0.05em" }}>
+                  {formatCountdown(activeChallenge.endsAt)}
+                </div>
+                <button
+                  onClick={() => setShowChallengeLive(true)}
+                  style={{
+                    fontFamily: MONO, fontSize: 9, letterSpacing: "0.1em", textTransform: "uppercase",
+                    background: "transparent", border: `1px solid ${C.border2}`, borderRadius: 999,
+                    color: C.muted, padding: "5px 10px", cursor: "pointer",
+                  }}>
+                  View →
+                </button>
               </div>
             </div>
           )}
@@ -996,7 +1015,7 @@ export function TradingCircles({
                     key={t}
                     onClick={() => {
                       setCircleTab(t);
-                      if (t === "chat") loadChatMessages(activeCircle.code);
+                      if (t === "chat") { loadChatMessages(activeCircle.code); setShowChatThread(true); }
                       if (t === "members" && activeCircle) {
                         setMembersLoading(true);
                         readCircleMembers(activeCircle.code, activeCircle.members || [])
@@ -1356,6 +1375,18 @@ export function TradingCircles({
                   {membersLoading && members.length > 0 && (
                     <div style={{ padding: "8px 0 0", fontFamily: MONO, fontSize: "10px", color: C.muted }}>Refreshing…</div>
                   )}
+                  {activeCircle?.isOwner && (
+                    <button
+                      onClick={() => setShowBlockedUsers(true)}
+                      style={{
+                        width: "100%", padding: "10px 14px", marginBottom: 10,
+                        borderRadius: 10, border: `1px solid ${C.border}`, background: "transparent",
+                        color: C.muted, fontFamily: MONO, fontSize: 10,
+                        letterSpacing: "0.08em", textTransform: "uppercase", cursor: "pointer", textAlign: "left",
+                      }}>
+                      Blocked users →
+                    </button>
+                  )}
                   {members.length === 0 && !membersLoading ? (
                     <div style={{ padding: "28px 0", fontFamily: BODY, fontSize: "13px", color: C.muted, fontStyle: "italic" }}>
                       No members found. Members appear here after they open the app.
@@ -1706,6 +1737,87 @@ export function TradingCircles({
               {challengeCreating ? "Starting…" : "Start Challenge"}
             </button>
           </div>
+        </div>
+      )}
+      {/* ── Chat thread overlay ── */}
+      {showChatThread && activeCircle && (() => {
+        const myId = profile?.uid;
+        const mapped: ChatMessage[] = (chatMessages as { id: string; sender_name: string; sender_handle?: string; text: string; sender_id?: string }[]).map(m => ({
+          id: m.id,
+          handle: m.sender_handle ?? m.sender_name ?? "?",
+          body: m.text,
+          isMe: m.sender_id === myId,
+        }));
+        return (
+          <div style={{ position: "fixed", inset: 0, zIndex: 9000, overflowY: "auto" }}>
+            <ChatThreadScreen
+              C={C}
+              circleName={activeCircle.name}
+              messages={mapped}
+              onBack={() => { setShowChatThread(false); setCircleTab("feed"); }}
+              onSend={(text) => { void sendChatMessage(activeCircle.code, myId ?? undefined, text); }}
+              onMenuAction={(msgId, action) => {
+                if (action === "report") {
+                  const msg = (chatMessages as { id: string; text: string; sender_name: string }[]).find(m => m.id === msgId);
+                  if (msg) setReportTarget({ type: "message", id: msgId, name: msg.sender_name ?? "?" });
+                } else if (action === "delete") {
+                  const msg = (chatMessages as { id: string; sender_id?: string }[]).find(m => m.id === msgId);
+                  if (msg?.sender_id === myId) setMsgContextMenu({ id: msgId, senderName: "", preview: "", isOwn: true });
+                }
+              }}
+            />
+          </div>
+        );
+      })()}
+
+      {/* ── Challenge live screen ── */}
+      {showChallengeLive && activeChallenge && (() => {
+        const standings: ChallengeStanding[] = (leaderboard as { memberCode: string; name: string; handle?: string; total: number }[]).map((e, _i, arr) => {
+          const maxVal = Math.max(...arr.map(x => Math.abs(x.total)), 1);
+          return {
+            handle: e.handle ?? e.name ?? e.memberCode,
+            value: `${e.total >= 0 ? "+" : ""}${e.total.toFixed(2)}R`,
+            progress: Math.round((Math.abs(e.total) / maxVal) * 100),
+            isMe: e.memberCode === getMyCode?.(),
+          };
+        });
+        return (
+          <div style={{ position: "fixed", inset: 0, zIndex: 9000, overflowY: "auto" }}>
+            <ChallengeLiveScreen
+              C={C}
+              name={activeChallenge.title}
+              winCondition={activeChallenge.metric.toUpperCase()}
+              timeLeft={formatCountdown(activeChallenge.endsAt)}
+              standings={standings}
+              onBack={() => setShowChallengeLive(false)}
+            />
+          </div>
+        );
+      })()}
+
+      {/* ── Challenge win celebration ── */}
+      {showChallengeWin && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 9000 }}>
+          <ChallengeWinScreen
+            C={C}
+            rank={showChallengeWin.rank}
+            challengeName={showChallengeWin.challengeName}
+            body={showChallengeWin.body}
+            onShare={() => { if (typeof navigator.share !== "undefined") { void navigator.share({ text: showChallengeWin.body }); } }}
+            onViewBoard={() => { setShowChallengeWin(null); setShowChallengeLive(true); }}
+          />
+        </div>
+      )}
+
+      {/* ── Blocked users ── */}
+      {showBlockedUsers && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 9000, overflowY: "auto" }}>
+          <BlockedUsersScreen
+            C={C}
+            users={[] as BlockedUser[]}
+            onUnblock={(_handle) => { /* future: call unblock API */ }}
+            onBack={() => setShowBlockedUsers(false)}
+          />
         </div>
       )}
     </div>
