@@ -49,17 +49,11 @@
   .cat-card .name { font-size: 15px; font-weight: 600; margin-top: 4px; line-height: 1.3; }
   .cat-card .pct { font-family: var(--m); font-size: 11px; color: var(--ink2); letter-spacing: 0.06em; margin-top: 12px; font-variant-numeric: tabular-nums; }
   .cat-card.done .pct { color: var(--live); }
-  .open-list { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 26px 28px; }
-  .open-list h2 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; margin: 0 0 18px; }
-  .open-row { display: grid; grid-template-columns: auto auto 1fr; gap: 14px; padding: 14px 0; border-top: 1px solid var(--line); align-items: start; }
-  .open-row:first-of-type { border-top: none; }
-  .pri { width: 10px; height: 10px; border-radius: 999px; margin-top: 6px; }
-  .pri-p0 { background: var(--red); }
-  .pri-p1 { background: var(--warn); }
-  .pri-p2 { background: oklch(0.85 0.12 90); }
-  .open-row .cat-tag { font-family: var(--m); font-size: 10px; letter-spacing: 0.12em; color: var(--ink2); text-transform: uppercase; align-self: start; margin-top: 4px; }
-  .open-row .row-body { font-size: 13.5px; color: var(--ink); line-height: 1.45; }
-  .open-row .row-body .why { display: block; font-size: 12px; color: var(--ink2); margin-top: 4px; font-family: var(--d); line-height: 1.55; }
+  .done-banner { padding: 28px 28px; background: color-mix(in oklch, var(--live) 12%, var(--surface)); border: 1px solid color-mix(in oklch, var(--live) 50%, transparent); border-radius: 20px; text-align: center; margin: 0 0 36px; }
+  .done-banner .kicker { font-family: var(--m); font-size: 11px; letter-spacing: 0.16em; color: var(--live); text-transform: uppercase; }
+  .done-banner h2 { font-size: clamp(26px, 4vw, 34px); font-weight: 600; letter-spacing: -0.03em; line-height: 1.1; color: var(--ink); margin: 10px 0 6px; }
+  .done-banner h2 em { font-style: italic; font-weight: 500; color: var(--live); }
+  .done-banner p { font-size: 14px; color: var(--ink2); margin: 8px auto 0; max-width: 60ch; line-height: 1.6; }
   .open-list { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 26px 28px; }
   .open-list h2 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; margin: 0 0 18px; }
   .open-row { display: grid; grid-template-columns: 28px auto 1fr; gap: 14px; padding: 14px 0; border-top: 1px solid var(--line); align-items: start; }
