@@ -291,14 +291,14 @@ _Voice card, empty/error copy, label vocab, notification + subject templates._
 
 **Designs**: `koda-designs/cat15-copy.jsx` · **Target**: `docs/microcopy.md (new)`
 
-- [x] [ ] 🟠 **Email subject-line templates**
-- [x] [ ] 🟠 **Error-message library (network / validation / server / permission)**
-- [x] [ ] 🟠 **Push-notification copy templates**
-- [x] [ ] 🟠 **Voice / tone reference card**
-- [x] [ ] 🟡 **Achievement / milestone copy templates**
-- [x] [ ] 🟡 **Button-label patterns**
-- [x] [ ] 🟡 **Empty-state copy — per screen**
-- [x] [ ] 🟡 **Kicker / label vocabulary**
+- [x] [x] 🟠 **Email subject-line templates** - docs/microcopy.md §5 2026-06-05
+- [x] [x] 🟠 **Error-message library (network / validation / server / permission)** - docs/microcopy.md §2 with 4 categories + codes 2026-06-05
+- [x] [x] 🟠 **Push-notification copy templates** - docs/microcopy.md §4 with {var} placeholders 2026-06-05
+- [x] [x] 🟠 **Voice / tone reference card** - docs/microcopy.md §1 (we-are/we-avoid + sentence patterns + tone-by-surface table) 2026-06-05
+- [x] [x] 🟡 **Achievement / milestone copy templates** - docs/microcopy.md §8 (streaks 7/30/100/365 · trade-count milestones · prop-firm events) 2026-06-05
+- [x] [x] 🟡 **Button-label patterns** - docs/microcopy.md §6 (primary/ghost/destructive/empty-state) 2026-06-05
+- [x] [x] 🟡 **Empty-state copy — per screen** - docs/microcopy.md §3 (14 screens) 2026-06-05
+- [x] [x] 🟡 **Kicker / label vocabulary** - docs/microcopy.md §7 (status/section/time/outcome/tone-coded) 2026-06-05
 
 ## 16 · Accessibility & inclusion
 
@@ -393,3 +393,4 @@ _Append per-row decisions, scope changes, or anything worth remembering. One lin
 - **2026-06-05** — cat07: wired SlowConnectionBanner, OptimisticRollbackToast, RateLimitedModal, Error401/403/500/503, and maintenance-mode takeover into SystemProvider via window events. cat06 verified — all 6 designed screens already exist as components; in-app surfaces (NotificationInbox, PermissionPrimerSheet, PermissionBlockedScreen) wired through NotificationsDrawer.
 - **2026-06-05** — cat12: 5 email templates wired into live API paths — passwordReset (account.ts handleResetPassword), paymentFailed + subscriptionCancelled (stripe.ts webhook), welcome (new account.ts ?action=welcome endpoint), brokerSyncError (cron.ts syncConnection auth-error transition). Remaining 7 templates designed-only — each blocked on missing infra noted inline (Supabase email override / grace-period delete / streak+monthly+waitlist crons / admin broadcast endpoint).
 - **2026-06-05** — cat12 +2: streak-milestones cron (daily 08:00 UTC, 7/30/100/365-day thresholds) wires milestoneEmailHtml; monthly-summary cron (1st of month 09:00 UTC, ≥5 trades) wires monthlySummaryEmailHtml. Both idempotent. Waitlist-position-update cron deferred — needs a waitlist promotion/removal flow before position can meaningfully change.
+- **2026-06-05** — cat15 Microcopy library: all 8 rows shipped via single-file docs/microcopy.md — voice/tone card, error library (network/validation/server/permission with codes), 14 empty-states, push templates with {var} placeholders, email subjects, button-label patterns, kicker vocab, milestone copy.
