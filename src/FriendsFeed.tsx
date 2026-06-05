@@ -1,5 +1,10 @@
-import { type CSSProperties } from "react";
+import { useState, type CSSProperties } from "react";
 import { AvatarCircle, MONO, BODY, DISPLAY } from "./shared";
+import type { Theme } from "./theme";
+import {
+  UnfollowConfirmModal, FollowersScreen, DiscoverTradersScreen, ProfileQRScreen,
+} from "./social/FollowScreens";
+import type { SuggestedTrader, TopInCircleTrader, FollowerRow } from "./social/FollowScreens";
 import { IdeasScreen } from "./IdeasScreen";
 import type { Trade } from "./types";
 import { uidForCode } from "./data/follows";
@@ -67,6 +72,8 @@ interface FriendsFeedProps {
   isDesktop: boolean;
   section: "feed" | "ideas" | "people";
   onSectionChange: (s: "feed" | "ideas" | "people") => void;
+  suggestedFollows?: SuggestedTrader[];
+  topInCircles?: TopInCircleTrader[];
 }
 
 export function FriendsFeed({
@@ -78,8 +85,13 @@ export function FriendsFeed({
   C, inp, pillPrimary, openProfile,
   myUid, recentTrades, isDesktop,
   section, onSectionChange: _onSectionChange,
+  suggestedFollows = [], topInCircles = [],
 }: FriendsFeedProps) {
   const tab = section;
+  const CT = C as unknown as Theme;
+  const [showQR, setShowQR] = useState(false);
+  const [unfollowTarget, setUnfollowTarget] = useState<{ code: string; handle: string } | null>(null);
+  const [friendsView, setFriendsView] = useState<"followers" | "discover" | null>(null);
 
   const followingCount = following?.length ?? 0;
   const followerCount = followerProfiles?.length ?? 0;
@@ -116,6 +128,25 @@ export function FriendsFeed({
                   &#8635;
                 </button>
               )}
+              <button
+                onClick={() => setShowQR(true)}
+                aria-label="Share QR code"
+                style={{
+                  background: "transparent", border: `1px solid ${C.border2}`,
+                  borderRadius: "999px", width: "32px", height: "32px",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  color: C.muted, cursor: "pointer",
+                }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                  <rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="1.6" />
+                  <rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="1.6" />
+                  <rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="1.6" />
+                  <rect x="5" y="5" width="3" height="3" fill="currentColor" />
+                  <rect x="16" y="5" width="3" height="3" fill="currentColor" />
+                  <rect x="5" y="16" width="3" height="3" fill="currentColor" />
+                  <path d="M14 14h3v3h-3zM17 17h3v3h-3zM14 20h3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                </svg>
+              </button>
               <button onClick={() => setShowAddFriend(!showAddFriend)}
                 style={{
                   background: showAddFriend ? C.text : "transparent",
@@ -505,6 +536,28 @@ export function FriendsFeed({
         {/* PEOPLE tab */}
         {tab === "people" && (
           <div style={{ marginTop: "20px" }}>
+            <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
+              <button
+                onClick={() => setFriendsView("followers")}
+                style={{
+                  padding: "7px 14px", borderRadius: "999px",
+                  border: `1px solid ${C.border2}`, background: "transparent",
+                  color: C.text, fontFamily: MONO, fontSize: "10px",
+                  letterSpacing: "0.08em", textTransform: "uppercase" as const, cursor: "pointer",
+                }}>
+                Followers ›
+              </button>
+              <button
+                onClick={() => setFriendsView("discover")}
+                style={{
+                  padding: "7px 14px", borderRadius: "999px",
+                  border: `1px solid ${C.border2}`, background: "transparent",
+                  color: C.text, fontFamily: MONO, fontSize: "10px",
+                  letterSpacing: "0.08em", textTransform: "uppercase" as const, cursor: "pointer",
+                }}>
+                Discover ›
+              </button>
+            </div>
             {followingCount === 0 && followerCount === 0 ? (
               <div style={{ padding: "48px 20px", textAlign: "center" }}>
                 <div style={{ fontSize: "28px", marginBottom: "12px" }}>&#128269;</div>
@@ -556,7 +609,7 @@ export function FriendsFeed({
                                 </div>
                               </div>
                             </div>
-                            <button onClick={() => unfollowUser(code)}
+                            <button onClick={() => setUnfollowTarget({ code, handle: f.handle ?? f.name ?? code })}
                               style={{ background: "none", border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "5px 12px", color: C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.06em" }}>
                               Unfollow
                             </button>
@@ -610,6 +663,68 @@ export function FriendsFeed({
           </div>
         )}
       </div>
+
+      {/* Overlays */}
+      {showQR && (
+        <ProfileQRScreen
+          C={CT}
+          handle={profile?.handle ?? ""}
+          displayName={profile?.name}
+          onShare={() => {
+            const url = `https://kodatrade.co.uk/@${profile?.handle ?? ""}`;
+            if (navigator.share) void navigator.share({ title: `@${profile?.handle}`, url });
+            else void navigator.clipboard.writeText(url);
+          }}
+          onSaveImage={() => { /* canvas export — future */ }}
+          onBack={() => setShowQR(false)}
+        />
+      )}
+      {unfollowTarget && (
+        <UnfollowConfirmModal
+          C={CT}
+          handle={unfollowTarget.handle}
+          onCancel={() => setUnfollowTarget(null)}
+          onUnfollow={() => { unfollowUser(unfollowTarget.code); setUnfollowTarget(null); }}
+        />
+      )}
+      {friendsView === "followers" && (() => {
+        const rows: FollowerRow[] = followerProfiles.map(f => ({
+          handle: f.handle ?? f.code,
+          displayName: f.name,
+          avatar: f.avatar,
+          followsYou: true,
+          state: following?.includes(f.code) ? "following" as const : "none" as const,
+        }));
+        const latest = rows.find(r => r.state === "none");
+        return (
+          <div style={{ position: "fixed", inset: 0, zIndex: 9000, background: C.bg, overflowY: "auto" }}>
+            <FollowersScreen
+              C={CT}
+              latest={latest}
+              recent={rows}
+              onFollow={handle => {
+                const prof = followerProfiles.find(f => (f.handle ?? f.code) === handle);
+                if (prof) void followUser(prof.code, prof.name, prof.handle);
+              }}
+              onBack={() => setFriendsView(null)}
+            />
+          </div>
+        );
+      })()}
+      {friendsView === "discover" && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 9000, background: C.bg, overflowY: "auto" }}>
+          <DiscoverTradersScreen
+            C={CT}
+            peopleYouMayKnow={suggestedFollows}
+            topInCircles={topInCircles}
+            onFollow={handle => {
+              const s = suggestedFollows.find(x => x.handle === handle);
+              if (s) setFollowHandleInput(s.handle);
+            }}
+            onBack={() => setFriendsView(null)}
+          />
+        </div>
+      )}
     </div>
   );
 }
