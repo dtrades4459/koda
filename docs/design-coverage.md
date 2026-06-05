@@ -320,12 +320,12 @@ _Pull-to-refresh, swipe actions, long-press, haptics, share sheet._
 
 **Designs**: `koda-designs/cat17-mobile.jsx` · **Target**: `src/Koda.tsx + per-screen gesture hooks`
 
-- [x] [ ] 🟠 **Pull-to-refresh (per scrollable view)**
-- [x] [ ] 🟠 **Swipe-actions on list items (archive / delete)**
-- [x] [ ] 🟡 **Haptic feedback signals (light / medium / heavy)**
-- [x] [ ] 🟡 **In-app browser handling (external links)**
-- [x] [ ] 🟡 **Long-press context menus**
-- [x] [ ] 🟡 **Share-sheet integration**
+- [x] [x] 🟠 **Pull-to-refresh (per scrollable view)** - usePullToRefresh in hooks/useMobilePatterns.ts, used by FriendsFeed + TradingCircles
+- [x] [x] 🟠 **Swipe-actions on list items (archive / delete)** - useSwipeActions hook, used by TradingCircles row binds
+- [x] [x] 🟡 **Haptic feedback signals (light / medium / heavy)** - useHaptics — light/medium/heavy/select/success/warn/error patterns
+- [x] [x] 🟡 **In-app browser handling (external links)** - openExternal() helper adds noopener,noreferrer; PWA standalone mode hands URL to OS browser 2026-06-05
+- [x] [x] 🟡 **Long-press context menus** - useLongPress (500ms default) with medium haptic on fire
+- [x] [x] 🟡 **Share-sheet integration** - shareSheet() helper wraps navigator.share with clipboard fallback 2026-06-05; WeeklyReportCard uses Web Share API directly
 
 ## 18 · Desktop-specific patterns
 

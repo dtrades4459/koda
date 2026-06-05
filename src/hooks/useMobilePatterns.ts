@@ -151,6 +151,40 @@ export function useSwipeActions(actionWidth = 128): SwipeBinding {
   return { offset, open, bind: { onTouchStart, onTouchMove, onTouchEnd }, close };
 }
 
+// ─── External link / share-sheet helpers ────────────────────────────────
+/**
+ * Open an external URL in the OS browser (not in-app webview).
+ * Adds `noopener,noreferrer` so the new page can't reach back into our window.
+ *
+ * Standalone PWAs on Android/iOS hand the URL off to the OS browser via
+ * window.open. On desktop, it opens a new tab. Same call site works for both.
+ */
+export function openExternal(url: string) {
+  if (typeof window === "undefined") return;
+  window.open(url, "_blank", "noopener,noreferrer");
+}
+
+/**
+ * Native share sheet via the Web Share API. Falls back to copy-to-clipboard
+ * with a callback if not supported. Returns `true` on successful share.
+ */
+export async function shareSheet(data: ShareData, onFallback?: () => void): Promise<boolean> {
+  try {
+    if (typeof navigator !== "undefined" && navigator.share) {
+      await navigator.share(data);
+      return true;
+    }
+    if (data.url && typeof navigator !== "undefined" && navigator.clipboard) {
+      await navigator.clipboard.writeText(data.url);
+      onFallback?.();
+      return true;
+    }
+  } catch {
+    /* user cancelled or denied */
+  }
+  return false;
+}
+
 // ─── Long-press ───────────────────────────────────────────────────────────
 export function useLongPress<T extends HTMLElement>(
   callback: () => void,
