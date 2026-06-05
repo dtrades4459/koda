@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About · Kōda</title>
+  <meta name="description" content="The journal that holds traders to their rules. Built by one trader, for traders who want to stop self-sabotaging." />
+  <link rel="icon" href="/favicon.svg" />
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:#0A0A0B;color:#F2F2EE;font-family:'Geist',system-ui,sans-serif;min-height:100dvh;padding:48px 24px 80px;max-width:720px;margin:0 auto;line-height:1.6}
+    a{color:oklch(0.84 0.14 175);text-decoration:none}
+    a:hover{text-decoration:underline}
+    .kicker{font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#65655F;margin-bottom:8px}
+    h1{font-size:clamp(34px,5vw,46px);font-weight:600;letter-spacing:-0.03em;line-height:1.05;margin-bottom:12px}
+    h1 em{font-style:italic;font-weight:500;color:oklch(0.84 0.14 175)}
+    h2{font-size:22px;font-weight:600;letter-spacing:-0.02em;margin:40px 0 12px;color:#F2F2EE}
+    .sub{font-size:16px;color:#A6A6A2;margin-bottom:40px}
+    p{font-size:15px;color:#A6A6A2;margin-bottom:14px}
+    p strong{color:#F2F2EE;font-weight:600}
+    .back{display:inline-flex;align-items:center;gap:6px;font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:0.10em;text-transform:uppercase;color:#A6A6A2;margin-bottom:40px}
+    hr{border:none;border-top:1px solid rgba(255,255,255,0.07);margin:48px 0}
+    .pull{padding:24px 22px;border:1px solid rgba(255,255,255,0.08);border-radius:14px;background:#13110E;margin:28px 0}
+    .pull p{margin:0;color:#F2F2EE;font-size:17px;line-height:1.5;letter-spacing:-0.01em}
+    .signoff{font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:0.10em;text-transform:uppercase;color:#65655F;margin-top:32px}
+  </style>
+</head>
+<body>
+  <a class="back" href="/">← Back to Kōda</a>
+  <p class="kicker">About · Founder</p>
+  <h1>The journal that <em>holds you</em> to your rules.</h1>
+  <p class="sub">Built by one trader, for traders who want to stop sabotaging themselves.</p>
+
+  <h2>The problem</h2>
+  <p>Most trading journals are graveyards. You log a trade after the damage is done, scroll your stats once a week, and tell yourself "next time I'll cut earlier" — then do the exact same thing on Monday. The journal isn't the intervention; you are. And you're tilting.</p>
+  <p>I built Kōda because the spreadsheets I'd been using for six years couldn't see me about to break my own rules. By the time the data was logged, it was already a loss. I wanted something that would step in <strong>before</strong> the over-trade, not catalogue it after.</p>
+
+  <h2>The wedge</h2>
+  <p>Kōda watches your live trading session for five behavioural signals: consecutive losses, percent of daily loss-limit hit, daily trade cap reached, log-button taps within 10 minutes of a loss, and tilt-emotion tags on your last trade. When one critical signal fires (or two non-critical ones combine), the Log Trade form doesn't open — an intervention sheet does. You can override it. Or you can take the cooldown. Most days, that's enough.</p>
+  <p>No machine learning. No broker API guess. Just your own logged activity, surfaced one beat ahead of where you usually act.</p>
+
+  <div class="pull"><p>The journal isn't the intervention; you are. And you're tilting.</p></div>
+
+  <h2>Who's behind it</h2>
+  <p>Kōda is built by <strong>Dylon Nyland</strong>, a futures trader (NQ / ES, prop-funded) based in the UK. I write the code, design the interfaces, and use the product daily as my own primary journal. There's no team behind a curtain — when you email support, you're emailing me.</p>
+  <p>Stack: TypeScript, React 19, Supabase, Vercel. Privacy-first: your trades, your rules, your data, your Supabase row.</p>
+
+  <h2>Where it's going</h2>
+  <p>Closed beta now. Public launch summer 2026. The roadmap focuses on three things: making the intervention smarter without making it a black box, growing the Trading Circles social layer for accountability, and building out the prop-firm eval tracker into a proper challenge co-pilot.</p>
+  <p>If you trade futures, log every fill, and want a journal that talks back when you're about to make the same mistake — try it. <a href="/">Get on the waitlist.</a></p>
+
+  <p class="signoff">— Dylon · founder · <a href="mailto:dylon@kodatrade.co.uk">dylon@kodatrade.co.uk</a></p>
+
+  <hr/>
+  <p style="font-family:'Geist Mono',monospace;font-size:11px;color:#45453F;letter-spacing:0.10em;line-height:1.6">Press inquiries: <a href="/press.html">press kit</a> · Investor: <a href="mailto:dylon@kodatrade.co.uk">email</a></p>
+</body>
+</html>

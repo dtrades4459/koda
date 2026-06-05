@@ -203,10 +203,10 @@ _Public surfaces — landing, pricing, deep-dives, legal, press._
 **Designs**: `koda-designs/cat10-mkt.jsx` · **Target**: `public/*.html + src/CookieConsent.tsx`
 
 - [x] [x] 🔴 **Cookie-consent banner + preferences modal**
-- [x] [ ] 🟡 **About / founder page**
-- [x] [ ] 🟡 **Blog post template**
-- [x] [ ] 🟡 **Contact**
-- [x] [ ] 🟡 **Press kit page (logos, screenshots, brand rules)**
+- [x] [x] 🟡 **About / founder page** - public/about.html — founder narrative, problem/wedge framing, pull quote, signoff 2026-06-05
+- [x] [x] 🟡 **Blog post template** - public/blog.html — {{POST_TITLE}}/{{POST_DATE}}/etc placeholders, full OG meta, h2/h3/blockquote/figure/code/CTA card 2026-06-05
+- [x] [x] 🟡 **Contact** - public/contact.html — 4 inbox rows (support/founder/press/privacy) + response-time card 2026-06-05
+- [x] [x] 🟡 **Press kit page (logos, screenshots, brand rules)** - public/press.html — fact-sheet grid, boilerplate, pull quotes, logo/icon asset cards w/ downloads, brand do/don't rules, founder bio 2026-06-05
 - [x] [x] ⚪ **404**
 - [x] [x] ⚪ **Changelog**
 - [x] [x] ⚪ **Comparison vs competitors**
