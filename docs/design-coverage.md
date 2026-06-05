@@ -35,8 +35,8 @@ _Getting a beta user from invite to first logged trade._
 **Designs**: `koda-designs/cat01-auth.jsx` · **Target**: `src/KodaAuth.tsx`
 
 - [x] [ ] 🔴 **Email verification**
-- [x] [ ] 🔴 **Password reset — request → email → new-password**
-- [x] [ ] 🔴 **Sign-up form**
+- [x] [x] 🔴 **Password reset — request → email → new-password**
+- [x] [x] 🔴 **Sign-up form**
 - [x] [ ] 🟠 **Handle picker — collision handling**
 - [x] [ ] 🟠 **Install-PWA prompt — iOS Safari / Android Chrome / desktop**
 - [x] [ ] 🟠 **OAuth handoff returns**
