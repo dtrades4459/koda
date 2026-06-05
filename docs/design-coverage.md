@@ -247,7 +247,7 @@ _Every transactional + lifecycle email._
 - [x] [ ] 🟠 **Account deletion confirmation** - accountDeletionEmailHtml() ready (designed for 14-day grace flow); current handleDelete is immediate — template ships when grace-period delete lands
 - [x] [ ] 🟠 **Beta-unlock confirmation** - betaUnlockEmailHtml() ready; handleBetaUnlock doesn't capture user email yet — ships when beta flow restructures to gather it
 - [x] [x] 🟠 **Subscription cancelled** - subscriptionCancelledEmailHtml() wired into api/stripe.ts customer.subscription.deleted webhook with reactivate URL 2026-06-05
-- [x] [ ] 🟡 **Announcement broadcast** - announcementEmailHtml() ready; needs admin endpoint to trigger broadcast (cat20 surface)
+- [x] [x] 🟡 **Announcement broadcast** - admin endpoint `POST /api/admin/broadcast` sends announcementEmailHtml to all profiles with valid emails; ADMIN_EMAILS allowlist gates access; dryRun mode + 20/sec throttle 2026-06-05
 - [x] [x] 🟡 **Broker sync-error digest** - brokerSyncErrorEmailHtml() wired into cron syncConnection auth-error path, gated to connected→error transition to avoid spam 2026-06-05
 - [x] [x] 🟡 **Milestone celebrations (streak / first / 100th / eval pass)** - streak-milestones cron (daily 08:00 UTC) detects 7/30/100/365-day consecutive trading streaks, idempotent via koda_milestone_<N> kv 2026-06-05
 - [x] [x] 🟡 **Monthly summary** - monthly-summary cron (1st of month 09:00 UTC), MIN 5 trades, idempotent via koda_monthly_email_YYYY-MM kv 2026-06-05
