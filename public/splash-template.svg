@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1170 2532" width="1170" height="2532">
+  <!--
+    PWA splash screen template (iPhone 14 Pro reference: 1170x2532).
+    Used as a base for the device-specific splash screens. The full set:
+      • iOS 13" iPad Pro      2048x2732
+      • iOS 12.9" iPad Pro    2048x2732
+      • iOS 11" iPad Pro      1668x2388
+      • iOS 10.5" iPad Air    1640x2360
+      • iOS iPhone 14 Pro Max 1290x2796
+      • iOS iPhone 14 Pro     1170x2532  ← this one
+      • iOS iPhone SE/8       750x1334
+      • Android  (auto-scaled by Chrome from the 512px maskable icon)
+
+    PNG export (after editing this SVG):
+      npx svgexport public/splash-template.svg public/splash-1170x2532.png 1170:2532
+
+    Wire in index.html via:
+      <link rel="apple-touch-startup-image"
+            href="/splash-1170x2532.png"
+            media="(device-width: 393px) and (device-height: 852px)
+                   and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+  -->
+  <defs>
+    <radialGradient id="orb" cx="50%" cy="50%" r="55%">
+      <stop offset="0%" stop-color="oklch(0.55 0.22 252)" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+  </defs>
+  <rect width="1170" height="2532" fill="#0A0A0B"/>
+  <rect width="1170" height="2532" fill="url(#orb)"/>
+  <!-- Centered mark + wordmark -->
+  <g transform="translate(585, 1180) scale(1)" stroke="#F2F2EE" stroke-width="3" stroke-linejoin="miter" fill="none">
+    <polyline points="-72,-50 -48,0 -72,50"/>
+    <polyline points="-24,-50 0,0 -24,50"/>
+    <polyline points="24,-50 48,0 24,50"/>
+    <polyline points="72,-50 96,0 72,50"/>
+  </g>
+  <text x="585" y="1380" font-family="Geist, Inter, system-ui, sans-serif" font-size="64" font-weight="600" letter-spacing="22" fill="#F2F2EE" text-anchor="middle">KŌDA</text>
+</svg>

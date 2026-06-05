@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1080" width="1080" height="1080">
+  <defs>
+    <radialGradient id="orb1" cx="30%" cy="20%" r="55%"><stop offset="0%" stop-color="oklch(0.55 0.22 252)" stop-opacity="0.5"/><stop offset="100%" stop-color="transparent"/></radialGradient>
+    <radialGradient id="orb2" cx="70%" cy="80%" r="55%"><stop offset="0%" stop-color="oklch(0.68 0.18 175)" stop-opacity="0.4"/><stop offset="100%" stop-color="transparent"/></radialGradient>
+  </defs>
+  <rect width="1080" height="1080" fill="#0A0A0B"/>
+  <rect width="1080" height="1080" fill="url(#orb1)"/>
+  <rect width="1080" height="1080" fill="url(#orb2)"/>
+  <!-- Wordmark top -->
+  <text x="540" y="160" font-family="Geist, Inter, system-ui, sans-serif" font-size="32" font-weight="600" letter-spacing="8" fill="#F2F2EE" text-anchor="middle">KŌDA</text>
+  <!-- Center stat -->
+  <text x="540" y="420" font-family="'Geist Mono', monospace" font-size="20" font-weight="600" letter-spacing="6" fill="#65655F" text-anchor="middle">{{KICKER}}</text>
+  <text x="540" y="600" font-family="Geist, sans-serif" font-size="180" font-weight="700" letter-spacing="-6" fill="oklch(0.84 0.14 175)" text-anchor="middle">{{VALUE}}</text>
+  <text x="540" y="700" font-family="Geist, sans-serif" font-size="36" font-weight="500" font-style="italic" letter-spacing="-1" fill="#F2F2EE" text-anchor="middle">{{SUBTITLE}}</text>
+  <!-- Footer -->
+  <text x="540" y="980" font-family="'Geist Mono', monospace" font-size="20" font-weight="500" letter-spacing="6" fill="#65655F" text-anchor="middle">KODATRADE.CO.UK</text>
+</svg>

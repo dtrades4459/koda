@@ -225,10 +225,10 @@ _Icons, splash screens, OG + social cards, press kit._
 
 **Designs**: `koda-designs/cat11-brand.jsx` · **Target**: `public/*.svg / vercel.json / src/main.tsx`
 
-- [x] [ ] 🟠 **OG card — default + per-page (landing, pricing, blog, profiles)**
-- [x] [ ] 🟠 **Splash screens — iOS device-specific (6+) + Android**
-- [x] [ ] 🟡 **Press kit (vector logos, color/type rules, screenshot templates)**
-- [x] [ ] 🟡 **Social share cards — X / IG square / IG story / FB / LinkedIn**
+- [x] [x] 🟠 **OG card — default + per-page (landing, pricing, blog, profiles)** - public/og-image-{default,pricing,blog,profile}.svg with {{POST_*}}/{{NAME}}/{{NET_R}} placeholders; PNG export via svgexport documented in docs/brand-assets.md §2 2026-06-05
+- [x] [x] 🟠 **Splash screens — iOS device-specific (6+) + Android** - public/splash-template.svg + 8 iOS device sizes documented in docs/brand-assets.md §4; Android auto-generates from maskable icon
+- [x] [x] 🟡 **Press kit (vector logos, color/type rules, screenshot templates)** - public/press.html (cat10) + docs/brand-assets.md §1, §6, §7 (icons + palette + type stack)
+- [x] [x] 🟡 **Social share cards — X / IG square / IG story / FB / LinkedIn** - share-card-ig-square.svg (1080²) + share-card-ig-story.svg (1080×1920) with {{KICKER}}/{{VALUE}}/{{SUBTITLE}}; X/LinkedIn/FB reuse 1200×630 og-image. docs/brand-assets.md §3
 - [x] [x] ⚪ **Apple-touch-icon**
 - [x] [x] ⚪ **Favicon — light + dark monogram**
 - [x] [x] ⚪ **Manifest icons (192 / 512)**
