@@ -21,6 +21,12 @@ import {
   WeeklyDisciplineReportScreen, DisciplineScoreBreakdownScreen, MonthlyReviewScreen,
 } from "./discipline/DisciplineScreens";
 import type { TiltSignal as MonitorSignal, CooldownVariant } from "./discipline/DisciplineScreens";
+import {
+  EvalAccountCreateScreen, EvalResetPromptModal,
+  CustomContractEditorScreen, PreTradeChecklistEditorScreen,
+  ReportCardIGSquare, ReportCardXLandscape, YearInReviewCard,
+} from "./power/PowerScreens";
+import type { ContractDef, ChecklistRule } from "./power/PowerScreens";
 import { logInterventionEvent, linkTradeToRecentIntervention } from "./data/interventions";
 import { InterventionSheet } from "./components/InterventionSheet";
 import { PreSessionSheet } from "./components/PreSessionSheet";
@@ -304,6 +310,18 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   }, []);
   const [homeSection, setHomeSection] = useState("feed");
   const [autoOpenCsv, setAutoOpenCsv] = useState(false);
+  const [showEvalReset, setShowEvalReset] = useState(false);
+  const [customContracts, setCustomContracts] = useState<ContractDef[]>(() => {
+    try { return JSON.parse(localStorage.getItem("koda_custom_contracts") ?? "[]"); } catch { return []; }
+  });
+  const [checklistRules, setChecklistRules] = useState<ChecklistRule[]>(() => {
+    const defaults: ChecklistRule[] = [
+      { id: "plan", label: "I have a plan for today.", enabled: true },
+      { id: "risk", label: "My risk per trade is defined.", enabled: true },
+      { id: "screen", label: "I've done my pre-market screen.", enabled: true },
+    ];
+    try { return JSON.parse(localStorage.getItem("koda_checklist_rules") ?? "null") ?? defaults; } catch { return defaults; }
+  });
   // Supabase JWT access token — used by DataSourcesScreen for broker API calls.
   const [accessToken, setAccessToken] = useState("");
   useEffect(() => {
@@ -3293,6 +3311,194 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
             );
           })()}
 
+          {/* ══════════════════════════ POWER ══════════════════════════════ */}
+          {view === "eval-create" && (
+            <div style={{ position: "fixed", inset: 0, zIndex: 9000, overflowY: "auto" }}>
+              <EvalAccountCreateScreen
+                C={C}
+                onBack={goBack}
+                onStart={(form) => {
+                  const bal = parseFloat(form.balance.replace(/[^0-9.]/g, ""));
+                  const target = parseFloat(form.profitTarget.replace(/[^0-9.]/g, ""));
+                  const daily = parseFloat(form.dailyLoss.replace(/[^0-9.]/g, ""));
+                  const max = parseFloat(form.maxDrawdown.replace(/[^0-9.]/g, ""));
+                  setProfile(p => ({
+                    ...p,
+                    propFirmMode: true,
+                    propFirmBalance: Number.isFinite(bal) ? bal : undefined,
+                    propFirmProfitTarget: Number.isFinite(target) ? target : undefined,
+                    propFirmDailyLossLimit: Number.isFinite(daily) ? daily : undefined,
+                    propFirmMaxDrawdown: Number.isFinite(max) ? max : undefined,
+                  }));
+                  goBack();
+                }}
+              />
+            </div>
+          )}
+
+          {view === "contract-editor" && (
+            <div style={{ position: "fixed", inset: 0, zIndex: 9000, overflowY: "auto" }}>
+              <CustomContractEditorScreen
+                C={C}
+                contracts={customContracts}
+                onEdit={(_id) => { /* inline editing via separate sheet — future */ }}
+                onAdd={() => {
+                  const id = `custom_${Date.now()}`;
+                  const updated = [...customContracts, { id, symbol: "NEW", name: "Custom", tickValue: "0", tickIncrement: "0.01", custom: true }];
+                  setCustomContracts(updated);
+                  try { localStorage.setItem("koda_custom_contracts", JSON.stringify(updated)); } catch {}
+                }}
+                onBack={goBack}
+              />
+            </div>
+          )}
+
+          {view === "checklist-editor" && (
+            <div style={{ position: "fixed", inset: 0, zIndex: 9000, overflowY: "auto" }}>
+              <PreTradeChecklistEditorScreen
+                C={C}
+                rules={checklistRules}
+                onToggle={(id, enabled) => {
+                  const updated = checklistRules.map(r => r.id === id ? { ...r, enabled } : r);
+                  setChecklistRules(updated);
+                  try { localStorage.setItem("koda_checklist_rules", JSON.stringify(updated)); } catch {}
+                }}
+                onReorder={(fromId, toId) => {
+                  const fromIdx = checklistRules.findIndex(r => r.id === fromId);
+                  const toIdx = checklistRules.findIndex(r => r.id === toId);
+                  if (fromIdx === -1 || toIdx === -1) return;
+                  const updated = [...checklistRules];
+                  const [moved] = updated.splice(fromIdx, 1);
+                  updated.splice(toIdx, 0, moved);
+                  setChecklistRules(updated);
+                  try { localStorage.setItem("koda_checklist_rules", JSON.stringify(updated)); } catch {}
+                }}
+                onAdd={() => {
+                  const updated = [...checklistRules, { id: `rule_${Date.now()}`, label: "New rule", enabled: true }];
+                  setChecklistRules(updated);
+                  try { localStorage.setItem("koda_checklist_rules", JSON.stringify(updated)); } catch {}
+                }}
+                onBack={goBack}
+              />
+            </div>
+          )}
+
+          {view === "report-card" && (() => {
+            const now = new Date();
+            const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay() + 1); weekStart.setHours(0, 0, 0, 0);
+            const weekStartStr = weekStart.toISOString().slice(0, 10);
+            const weekNum = Math.ceil((now.getDate() + new Date(now.getFullYear(), now.getMonth(), 1).getDay()) / 7);
+            const weekLabel = `WEEK ${weekNum}`;
+            const wt = trades.filter(t => t.date >= weekStartStr);
+            const netR = wt.reduce((a, t) => a + (parseFloat(t.pnl) || 0), 0);
+            const netStr = (netR >= 0 ? "+" : "") + netR.toFixed(1) + "R";
+            const wins = wt.filter(t => t.outcome === "Win").length;
+            const wrPct = wt.length ? Math.round((wins / wt.length) * 100) : 0;
+            const ds = disciplineScore;
+            const discStr = ds ? `${ds.score}%` : "—";
+            const stratCounts: Record<string, number> = {};
+            wt.forEach(t => { if (t.setup) stratCounts[t.setup] = (stratCounts[t.setup] ?? 0) + 1; });
+            const bestSetup = Object.entries(stratCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "—";
+            const handle = profile.handle ? `@${profile.handle}` : "@you";
+            return (
+              <div style={{ position: "fixed", inset: 0, zIndex: 9000, background: C.bg, overflowY: "auto", padding: "24px 16px 60px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+                  <button
+                    onClick={goBack}
+                    style={{
+                      width: 36, height: 36, borderRadius: 999,
+                      background: C.surface, border: `1px solid ${C.border2}`,
+                      display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
+                    }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <path d="M14 6l-6 6 6 6" stroke={C.text} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+                  <span style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: C.muted }}>
+                    Report Card
+                  </span>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 20 }}>
+                  <div style={{ transform: "scale(0.82)", transformOrigin: "top center" }}>
+                    <ReportCardIGSquare
+                      C={C}
+                      weekLabel={weekLabel}
+                      net={netStr}
+                      winRate={`${wrPct}%`}
+                      trades={String(wt.length)}
+                      discipline={discStr}
+                      handle={handle}
+                    />
+                  </div>
+                  <div style={{ transform: "scale(0.82)", transformOrigin: "top center" }}>
+                    <ReportCardXLandscape
+                      C={C}
+                      weekLabel={weekLabel}
+                      net={netStr}
+                      winRate={`${wrPct}%`}
+                      trades={String(wt.length)}
+                      discipline={discStr}
+                      bestSetup={bestSetup}
+                      handle={handle}
+                    />
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          {view === "year-review" && (() => {
+            const year = String(new Date().getFullYear());
+            const yearStart = `${year}-01-01`;
+            const yearTrades = trades.filter(t => t.date >= yearStart);
+            const netR = yearTrades.reduce((a, t) => a + (parseFloat(t.pnl) || 0), 0);
+            const netStr = (netR >= 0 ? "+" : "") + netR.toFixed(1) + "R";
+            const monthlyPnL: Record<string, number> = {};
+            yearTrades.forEach(t => {
+              const m = t.date.slice(0, 7);
+              monthlyPnL[m] = (monthlyPnL[m] ?? 0) + (parseFloat(t.pnl) || 0);
+            });
+            const bestMonthEntry = Object.entries(monthlyPnL).sort((a, b) => b[1] - a[1])[0];
+            const bestMonth = bestMonthEntry
+              ? new Date(bestMonthEntry[0] + "-01").toLocaleString("default", { month: "short" })
+              : "—";
+            const ds = disciplineScore;
+            const handle = profile.handle ? `@${profile.handle}` : "@you";
+            return (
+              <div style={{ position: "fixed", inset: 0, zIndex: 9000, background: C.bg, overflowY: "auto", padding: "24px 16px 60px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+                  <button
+                    onClick={goBack}
+                    style={{
+                      width: 36, height: 36, borderRadius: 999,
+                      background: C.surface, border: `1px solid ${C.border2}`,
+                      display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
+                    }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <path d="M14 6l-6 6 6 6" stroke={C.text} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+                  <span style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: C.muted }}>
+                    {year} · Year in Review
+                  </span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "center" }}>
+                  <div style={{ transform: "scale(0.82)", transformOrigin: "top center" }}>
+                    <YearInReviewCard
+                      C={C}
+                      year={year}
+                      tradesLogged={String(yearTrades.length)}
+                      net={netStr}
+                      bestMonth={bestMonth}
+                      discipline={ds ? `${ds.score}%` : "—"}
+                      handle={handle}
+                    />
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
           {/* ══════════════════════════ LOG TRADE ══════════════════════════ */}
           {view === "log" && (
             <>
@@ -5057,6 +5263,24 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
             onCustomerId={(cid) => setProfile(p => ({ ...p, stripeCustomerId: cid }))}
             mandatory={mandatoryUpgrade}
             onClose={() => { setShowUpgrade(false); setMandatoryUpgrade(false); }}
+          />
+        )}
+
+        {showEvalReset && (
+          <EvalResetPromptModal
+            C={C}
+            accountLabel={profile.propFirmBalance ? `$${profile.propFirmBalance.toLocaleString()} account` : "your account"}
+            onReset={() => {
+              setProfile(p => ({
+                ...p,
+                propFirmBalance: p.propFirmBalance,
+                propFirmProfitTarget: p.propFirmProfitTarget,
+                propFirmDailyLossLimit: p.propFirmDailyLossLimit,
+                propFirmMaxDrawdown: p.propFirmMaxDrawdown,
+              }));
+              setShowEvalReset(false);
+            }}
+            onKeepFailed={() => setShowEvalReset(false)}
           />
         )}
 
