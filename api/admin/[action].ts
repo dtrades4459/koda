@@ -205,5 +205,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return handleBroadcast(req, res, gate.email);
   }
 
+  if (action === "promote-waitlister") {
+    if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+    return handlePromoteWaitlister(req, res, gate.email);
+  }
+
   return res.status(404).json({ error: "Unknown admin action" });
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Action: promote-waitlister — POST { email }
+//
+// Marks the waitlist row as promoted (sets `promoted_at = now()` via the
+// promote_waitlister RPC). Every active waitlister behind them shifts up
+// by 1 in the active-queue position. The next waitlist-positions cron will
+// email anyone whose visible position moved.
+// ──────────────────────────────────────────────────────────────────────────────
+
+async function handlePromoteWaitlister(req: VercelRequest, res: VercelResponse, sender: string) {
+  const body = req.body as unknown as { email?: string } | undefined;
+  const email = body?.email?.trim().toLowerCase();
+  if (!email) return res.status(400).json({ error: "email required" });
+
+  const admin = getAdminClient();
+  const { error } = await admin.rpc("promote_waitlister", { target_email: email });
+  if (error) {
+    console.error("[admin/promote-waitlister] rpc:", error);
+    return res.status(500).json({ error: error.message });
+  }
+  console.log(`[admin/promote-waitlister] sender=${sender} promoted=${email}`);
+  return res.status(200).json({ ok: true, email });
 }

@@ -245,13 +245,13 @@ _Every transactional + lifecycle email._
 - [x] [x] 🔴 **Payment failed + retry link** - paymentFailedEmailHtml() wired into api/stripe.ts invoice.payment_failed webhook 2026-06-05
 - [x] [x] 🔴 **Welcome** - welcomeEmailHtml() wired via new `POST /api/account?action=welcome` endpoint (client calls once after onboarding); idempotent via koda_welcome_email_sent kv 2026-06-05
 - [x] [x] 🟠 **Account deletion confirmation** - handleDelete now schedules with 14-day grace (sets deletion_scheduled_for in koda_profile, cancels Stripe, sends accountDeletionEmailHtml). cancel-deletion endpoint + delete-expired-accounts daily cron (03:00 UTC) does the actual purge. 2026-06-05
-- [x] [ ] 🟠 **Beta-unlock confirmation** - betaUnlockEmailHtml() ready; handleBetaUnlock doesn't capture user email yet — ships when beta flow restructures to gather it
+- [x] [x] 🟠 **Beta-unlock confirmation** - BetaGate adds an optional email field above the invite code; handleBetaUnlock accepts { code, email } and fires betaUnlockEmailHtml on successful unlock when email was provided 2026-06-05
 - [x] [x] 🟠 **Subscription cancelled** - subscriptionCancelledEmailHtml() wired into api/stripe.ts customer.subscription.deleted webhook with reactivate URL 2026-06-05
 - [x] [x] 🟡 **Announcement broadcast** - admin endpoint `POST /api/admin/broadcast` sends announcementEmailHtml to all profiles with valid emails; ADMIN_EMAILS allowlist gates access; dryRun mode + 20/sec throttle 2026-06-05
 - [x] [x] 🟡 **Broker sync-error digest** - brokerSyncErrorEmailHtml() wired into cron syncConnection auth-error path, gated to connected→error transition to avoid spam 2026-06-05
 - [x] [x] 🟡 **Milestone celebrations (streak / first / 100th / eval pass)** - streak-milestones cron (daily 08:00 UTC) detects 7/30/100/365-day consecutive trading streaks, idempotent via koda_milestone_<N> kv 2026-06-05
 - [x] [x] 🟡 **Monthly summary** - monthly-summary cron (1st of month 09:00 UTC), MIN 5 trades, idempotent via koda_monthly_email_YYYY-MM kv 2026-06-05
-- [x] [ ] 🟡 **Waitlist join + position update** - join wired via existing waitlistConfirmHtml; position-update cron blocked until waitlist has a removal/promotion mechanism (position can't change today)
+- [x] [x] 🟡 **Waitlist join + position update** - join wired via existing waitlistConfirmHtml; SQL migration adds promoted_at + last_emailed_* columns + current_waitlist_position() + promote_waitlister() RPCs; admin endpoint POST /api/admin/promote-waitlister; weekly waitlist-positions cron (Mon 16:00 UTC) sends waitlistPositionEmailHtml when active-queue position improves 2026-06-05
 - [x] [x] ⚪ **Receipt**
 - [x] [x] ⚪ **Weekly recap (Sunday)**
 

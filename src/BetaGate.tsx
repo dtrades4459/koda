@@ -78,6 +78,7 @@ interface BetaGateProps {
 
 export function BetaGate({ onUnlocked }: BetaGateProps) {
   const [input,    setInput]    = useState("");
+  const [betaEmail, setBetaEmail] = useState("");
   const [error,    setError]    = useState(false);
   const [shaking,  setShaking]  = useState(false);
   const [loading,  setLoading]  = useState(false);
@@ -98,7 +99,10 @@ export function BetaGate({ onUnlocked }: BetaGateProps) {
       const res = await fetch("/api/account?action=beta-unlock", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: input.trim() }),
+        body: JSON.stringify({
+          code: input.trim(),
+          ...(betaEmail.trim() && { email: betaEmail.trim() }),
+        }),
       });
       if (res.ok) {
         unlock();
@@ -251,6 +255,44 @@ export function BetaGate({ onUnlocked }: BetaGateProps) {
           borderBottom: `1px solid ${BORDER}`,
           padding: "28px 0",
         }}>
+          <div style={{ marginBottom: 18 }}>
+            <label style={{
+              display: "block",
+              fontFamily: MONO, fontSize: 10, color: MUTED,
+              letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10,
+            }}>
+              Email <span style={{ color: DIM, textTransform: "none", letterSpacing: 0 }}>· optional</span>
+            </label>
+            <input
+              className="beta-input"
+              type="email"
+              autoComplete="email"
+              inputMode="email"
+              placeholder="you@email.com"
+              value={betaEmail}
+              onChange={e => setBetaEmail(e.target.value)}
+              onKeyDown={onKey}
+              style={{
+                background: "transparent",
+                border: "none",
+                borderBottom: `1px solid ${BORDER2}`,
+                borderRadius: 0,
+                color: TEXT,
+                padding: "12px 0",
+                fontSize: 16,
+                width: "100%",
+                outline: "none",
+                fontFamily: BODY,
+                boxSizing: "border-box" as const,
+                letterSpacing: "0.02em",
+                transition: "border-color 0.15s",
+              }}
+            />
+            <div style={{ fontFamily: MONO, fontSize: 10, color: DIM, marginTop: 6, letterSpacing: "0.04em" }}>
+              We'll send a one-tap "you're in" confirmation if you drop your email.
+            </div>
+          </div>
+
           <div style={{ marginBottom: 20 }}>
             <label style={{
               display: "block",

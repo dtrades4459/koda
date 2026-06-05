@@ -30,6 +30,10 @@
     {
       "path": "/api/cron?job=delete-expired-accounts",
       "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron?job=waitlist-positions",
+      "schedule": "0 16 * * 1"
     }
   ],
   "redirects": [

@@ -20,6 +20,7 @@ import {
   brokerSyncErrorEmailHtml,
   milestoneEmailHtml,
   monthlySummaryEmailHtml,
+  waitlistPositionEmailHtml,
 } from "./lib/email.js";
 
 type Req = { method?: string; headers: Record<string, string | string[] | undefined>; body: Record<string, unknown>; query: Record<string, string | string[] | undefined> };
@@ -1061,6 +1062,90 @@ async function handleMonthlySummary(req: Req, res: Res) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
+// Job: waitlist-positions  (Monday 16:00 UTC, weekly)
+//
+// For every unpromoted waitlister whose current active-queue position has
+// improved since the last time we emailed them, send the branded
+// waitlistPositionEmailHtml + update last_emailed_position / last_emailed_at.
+//
+// "Improved" = current_position < last_emailed_position (lower number = closer
+// to the front). Brand-new waitlisters (no last_emailed_position yet) are
+// skipped — they already got the "you're on the list" confirmation when they
+// joined; the first position-update fires only after someone in front of
+// them is promoted.
+// ══════════════════════════════════════════════════════════════════════════════
+
+interface WaitlistRow {
+  id: number;
+  email: string;
+  last_emailed_position: number | null;
+}
+
+async function handleWaitlistPositions(req: Req, res: Res) {
+  if (!isCronAuthed(req)) return res.status(401).json({ error: "Unauthorized" });
+  const admin = getAdminClient();
+
+  const { data: rows, error } = await admin
+    .from("waitlist")
+    .select("id, email, last_emailed_position")
+    .is("promoted_at", null)
+    .order("id", { ascending: true });
+
+  if (error) {
+    console.error("[waitlist-positions] fetch:", error);
+    return res.status(500).json({ error: error.message });
+  }
+  if (!rows?.length) return res.status(200).json({ ok: true, sent: 0 });
+
+  const typed = rows as WaitlistRow[];
+  let sent = 0;
+  let skipped = 0;
+  const referBase = `${APP_URL}/?refer=`;
+
+  for (let i = 0; i < typed.length; i++) {
+    const row = typed[i];
+    const currentPosition = i + 1;
+    const prev = row.last_emailed_position;
+
+    // Skip if we've never emailed them yet (first email arrives the first
+    // time their position actually changes from join time).
+    if (prev === null) {
+      await admin.from("waitlist")
+        .update({ last_emailed_position: currentPosition })
+        .eq("id", row.id);
+      skipped++;
+      continue;
+    }
+
+    // Skip if position hasn't improved.
+    if (currentPosition >= prev) { skipped++; continue; }
+
+    try {
+      await sendEmail({
+        to:      row.email,
+        subject: `You moved up the Kōda waitlist — #${currentPosition}`,
+        html:    waitlistPositionEmailHtml({
+          position: currentPosition,
+          prevPosition: prev,
+          referUrl: `${referBase}${encodeURIComponent(row.email)}`,
+        }),
+      });
+      await admin.from("waitlist")
+        .update({
+          last_emailed_position: currentPosition,
+          last_emailed_at: new Date().toISOString(),
+        })
+        .eq("id", row.id);
+      sent++;
+    } catch (e) {
+      console.error("[waitlist-positions] send failed for", row.email, e);
+    }
+  }
+
+  return res.status(200).json({ ok: true, sent, skipped, active: typed.length });
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
 // Job: delete-expired-accounts  (daily 03:00 UTC)
 //
 // Companion to the 14-day grace deletion flow in api/account.ts. Finds every
@@ -1165,6 +1250,7 @@ export default async function handler(req: Req, res: Res) {
   if (job === "streak-milestones")       return handleStreakMilestones(req, res);
   if (job === "monthly-summary")         return handleMonthlySummary(req, res);
   if (job === "delete-expired-accounts") return handleDeleteExpiredAccounts(req, res);
+  if (job === "waitlist-positions")      return handleWaitlistPositions(req, res);
 
   if (job === 'daily-digest') {
     if (!isCronAuthed(req)) return res.status(401).json({ error: 'Unauthorized' });

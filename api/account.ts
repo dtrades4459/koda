@@ -19,6 +19,7 @@ import {
   welcomeEmailHtml,
   accountDeletionEmailHtml,
   emailVerificationHtml,
+  betaUnlockEmailHtml,
 } from "./lib/email.js";
 
 const DELETION_GRACE_DAYS = 14;
@@ -154,13 +155,34 @@ async function handleBetaUnlock(req: Req, res: Res) {
   const ok = await checkRateLimit("beta_unlock", ip, { limit: 10, windowMs: 15 * 60_000 });
   if (!ok) return res.status(429).json({ error: "Too many attempts — try again later" });
 
-  const { code } = req.body as { code?: string };
+  const { code, email } = req.body as { code?: string; email?: string };
   if (!code || typeof code !== "string") return res.status(400).json({ error: "code required" });
 
   const bufA  = Buffer.from(code.trim().toLowerCase());
   const bufB  = Buffer.from(betaPassword.trim().toLowerCase());
   const match = bufA.length === bufB.length && timingSafeEqual(bufA, bufB);
-  return match ? res.status(200).json({ ok: true }) : res.status(401).json({ error: "Invalid code" });
+  if (!match) return res.status(401).json({ error: "Invalid code" });
+
+  // Optional: if the user provided an email at the gate, fire the branded
+  // beta-unlock confirmation so they have a record + a one-tap open link.
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (email && EMAIL_RE.test(email.trim())) {
+    const target = email.trim().toLowerCase();
+    try {
+      await sendEmail({
+        to:      target,
+        subject: "Your Kōda beta seat is ready",
+        html:    betaUnlockEmailHtml({
+          accessCode: code.trim().toUpperCase(),
+          openUrl:    APP_URL,
+        }),
+      });
+    } catch (e) {
+      console.error("[account/beta-unlock] confirmation email failed:", e);
+    }
+  }
+
+  return res.status(200).json({ ok: true });
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
