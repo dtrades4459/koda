@@ -6,11 +6,17 @@ import Koda from "./Koda";
 import { BetaGate, betaEnabled, isBetaUnlocked } from "./BetaGate";
 import { DARK } from "./theme";
 import { KodaMark, FloatingInput, Kicker, MONO, BODY, DISPLAY } from "./shared";
+import {
+  SignUpFormScreen,
+  ResetRequestScreen,
+  ResetSentScreen,
+  NewPasswordScreen,
+} from "./auth/AuthScreens";
 
-// â”€â”€â”€ THEME (dark-only for auth surfaces) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€â"€ THEME (dark-only for auth surfaces) â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 const C = DARK;
 
-// â”€â”€â”€ OAUTH BUTTON â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€â"€ OAUTH BUTTON â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 function OAuthBtn({ label, provider, onClick }: {
   label: string; provider: "google" | "x" | "apple"; onClick?: () => void;
 }) {
@@ -37,7 +43,7 @@ function OAuthBtn({ label, provider, onClick }: {
   );
 }
 
-// â”€â”€â”€ AUTH FORM â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€â"€ AUTH FORM â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 type AuthMode = "signin" | "signup" | "reset" | "reset-sent" | "new-password";
 
 const USERNAME_DOMAIN = "users.kodatrade.co.uk";
@@ -50,14 +56,12 @@ function AuthForm({ onSuccess, initialError = "", onModeChange, modeRequest }: {
   /** Parent can request a mode switch + focus by bumping `nonce`. */
   modeRequest?: { mode: "signin" | "signup"; nonce: number };
 }) {
-  const [mode,          setMode]          = useState<AuthMode>("signin");
-  const [username,      setUsername]      = useState("");
-  const [password,      setPassword]      = useState("");
-  const [newPassword,   setNewPassword]   = useState("");
-  const [loading,       setLoading]       = useState(false);
-  const [error,         setError]         = useState(initialError);
-  const [msg,           setMsg]           = useState("");
-  const [recoveryEmail, setRecoveryEmail] = useState("");
+  const [mode,       setMode]       = useState<AuthMode>("signin");
+  const [username,   setUsername]   = useState("");
+  const [password,   setPassword]   = useState("");
+  const [loading,    setLoading]    = useState(false);
+  const [error,      setError]      = useState(initialError);
+  const [resetEmail, setResetEmail] = useState("");
   const usernameInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -73,7 +77,7 @@ function AuthForm({ onSuccess, initialError = "", onModeChange, modeRequest }: {
   useEffect(() => {
     if (!modeRequest) return;
     setMode(modeRequest.mode);
-    setError(""); setMsg("");
+    setError("");
     onModeChange?.(modeRequest.mode);
     requestAnimationFrame(() => usernameInputRef.current?.focus());
   }, [modeRequest?.nonce]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -83,72 +87,23 @@ function AuthForm({ onSuccess, initialError = "", onModeChange, modeRequest }: {
     if (!u || !password) return;
     if (!USERNAME_RE.test(u)) { setError("Username must be 3–20 chars, lowercase letters, numbers, or underscores only."); return; }
     if (password.length < 6)  { setError("Password must be at least 6 characters."); return; }
-    setLoading(true); setError(""); setMsg("");
-    try {
-      const email = usernameToEmail(u);
-      if (mode === "signin") {
-        const { error: e } = await supabase.auth.signInWithPassword({ email, password });
-        if (e) throw e;
-        onSuccess();
-      } else {
-        const { error: e } = await supabase.auth.signUp({
-          email, password,
-          options: { data: { username: u, ...(recoveryEmail.trim() ? { recovery_email: recoveryEmail.trim().toLowerCase() } : {}) } },
-        });
-        if (e) throw e;
-        onSuccess();
-      }
-    } catch (e: any) {
-      const raw = e?.message || "Something went wrong.";
-      if (raw.toLowerCase().includes("invalid login")) {
-        setError("Username or password incorrect.");
-      } else if (raw.toLowerCase().includes("already registered")) {
-        setError("That username is taken. Try a different one.");
-      } else {
-        setError(raw);
-      }
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function handleReset() {
-    const u = username.toLowerCase().trim();
-    if (!u) { setError("Enter your username."); return; }
-    if (!USERNAME_RE.test(u)) { setError("Invalid username format."); return; }
     setLoading(true); setError("");
     try {
-      const r = await fetch("/api/account?action=reset-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: u }),
-      });
-      if (!r.ok) throw new Error("Failed to request reset");
-      setMode("reset-sent");
-    } catch (e: any) {
-      setError(e?.message || "Failed to send reset link. Try again.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function handleNewPassword() {
-    if (newPassword.length < 6) { setError("Password must be at least 6 characters."); return; }
-    setLoading(true); setError("");
-    try {
-      const { error: e } = await supabase.auth.updateUser({ password: newPassword });
+      const { error: e } = await supabase.auth.signInWithPassword({ email: usernameToEmail(u), password });
       if (e) throw e;
       onSuccess();
-    } catch (e: any) {
-      setError(e?.message || "Failed to update password. Try again.");
+    } catch (e: unknown) {
+      const raw = e instanceof Error ? e.message : "Something went wrong.";
+      setError(raw.toLowerCase().includes("invalid login") ? "Username or password incorrect." : raw);
     } finally {
       setLoading(false);
     }
   }
 
-  async function signInWithOAuth(provider: "google" | "twitter" | "apple") {
+  async function signInWithOAuth(provider: "google" | "x" | "twitter" | "apple") {
+    const supabaseProvider = provider === "x" ? "twitter" : provider;
     await supabase.auth.signInWithOAuth({
-      provider,
+      provider: supabaseProvider,
       options: {
         redirectTo: window.location.origin,
         ...(provider === "google" ? { queryParams: { prompt: "select_account" } } : {}),
@@ -156,72 +111,100 @@ function AuthForm({ onSuccess, initialError = "", onModeChange, modeRequest }: {
     });
   }
 
-  /* â”€â”€ Reset sent â”€â”€ */
-  if (mode === "reset-sent") {
+  async function handleSignUp(email: string, pw: string) {
+    setLoading(true); setError("");
+    try {
+      const { error: e } = await supabase.auth.signUp({ email, password: pw });
+      if (e) throw e;
+      onSuccess();
+    } catch (e: unknown) {
+      const raw = e instanceof Error ? e.message : "Something went wrong.";
+      setError(raw.includes("already registered") ? "An account with this email already exists. Sign in instead." : raw);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleResetEmail(email: string) {
+    setLoading(true); setError("");
+    try {
+      const { error: e } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin,
+      });
+      if (e) throw e;
+      setResetEmail(email);
+      setMode("reset-sent");
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Failed to send reset link. Try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleNewPasswordV2(pw: string) {
+    setLoading(true); setError("");
+    try {
+      const { error: e } = await supabase.auth.updateUser({ password: pw });
+      if (e) throw e;
+      onSuccess();
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Failed to update password. Try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  /* ── Sign-up (new design — full-page) ── */
+  if (mode === "signup") {
     return (
-      <div style={{ position: "relative", zIndex: 1 }}>
-        <div style={{ fontFamily: MONO, fontSize: 10, color: C.green, letterSpacing: "0.10em", textTransform: "uppercase", marginBottom: 16 }}>
-          Check your recovery email
-        </div>
-        <p style={{ fontSize: 14, color: C.text2, lineHeight: 1.65, marginBottom: 20, fontFamily: BODY }}>
-          If you added a recovery email at signup, your reset link is on its way. Check your inbox and spam folder.
-        </p>
-        <button onClick={() => { setMode("signin"); setUsername(""); setError(""); }} style={{
-          background: "transparent", color: C.text, border: `1px solid ${C.border2}`,
-          borderRadius: 999, padding: "12px 20px", fontSize: 13, fontFamily: BODY,
-          cursor: "pointer", width: "100%",
-        }}>Back to sign in</button>
-      </div>
+      <SignUpFormScreen
+        onSubmit={handleSignUp}
+        onOAuth={(p) => signInWithOAuth(p)}
+        onSignIn={() => { setMode("signin"); setError(""); onModeChange?.("signin"); }}
+        busy={loading}
+        error={error || undefined}
+      />
     );
   }
 
-  /* â”€â”€ New password â”€â”€ */
-  if (mode === "new-password") {
-    return (
-      <div style={{ position: "relative", zIndex: 1 }}>
-        <div style={{ fontFamily: MONO, fontSize: 10, color: C.muted, letterSpacing: "0.10em", textTransform: "uppercase", marginBottom: 20 }}>
-          Set new password
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          <FloatingInput C={C} label="New password" placeholder="min. 6 characters" value={newPassword}
-            onChange={v => setNewPassword(v)} type="password" />
-          {error && <div style={{ fontSize: 13, color: C.red, fontFamily: BODY }}>{error}</div>}
-          <button onClick={handleNewPassword} disabled={loading} style={{
-            background: C.text, color: C.bg, border: "none", borderRadius: 999,
-            padding: "14px 20px", fontSize: 13, fontFamily: BODY, cursor: "pointer", width: "100%",
-            opacity: loading ? 0.6 : 1,
-          }}>{loading ? "…" : "Update password →"}</button>
-        </div>
-      </div>
-    );
-  }
-
-  /* â”€â”€ Reset form â”€â”€ */
+  /* ── Reset request (new design — full-page) ── */
   if (mode === "reset") {
     return (
-      <div style={{ position: "relative", zIndex: 1 }}>
-        <div style={{ fontFamily: MONO, fontSize: 10, color: C.muted, letterSpacing: "0.10em", textTransform: "uppercase", marginBottom: 20 }}>
-          Reset password
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          <FloatingInput C={C} label="Username" placeholder="yourname" value={username}
-            onChange={v => setUsername(v.toLowerCase())} />
-          {error && <div style={{ fontSize: 13, color: C.red, fontFamily: BODY }}>{error}</div>}
-          <button onClick={handleReset} disabled={loading} style={{
-            background: C.text, color: C.bg, border: "none", borderRadius: 999,
-            padding: "14px 20px", fontSize: 13, fontFamily: BODY, cursor: "pointer", width: "100%",
-            opacity: loading ? 0.6 : 1,
-          }}>{loading ? "…" : "Send reset link →"}</button>
-          <button onClick={() => { setMode("signin"); setError(""); }} style={{
-            background: "none", border: "none", color: C.muted, fontSize: 12,
-            cursor: "pointer", fontFamily: BODY, textAlign: "left", padding: 0,
-          }}>← Back to sign in</button>
-        </div>
-      </div>
+      <ResetRequestScreen
+        onSubmit={handleResetEmail}
+        onBack={() => { setMode("signin"); setError(""); }}
+        busy={loading}
+        error={error || undefined}
+      />
     );
   }
 
-  /* â”€â”€ Main sign-in / sign-up â”€â”€ */
+  /* ── Reset sent (new design — full-page) ── */
+  if (mode === "reset-sent") {
+    return (
+      <ResetSentScreen
+        email={resetEmail}
+        onOpenMail={() => {
+          const url = resetEmail.includes("gmail") ? "https://mail.google.com" : `mailto:${resetEmail}`;
+          window.open(url, "_blank");
+        }}
+        onResend={() => { setMode("reset"); setError(""); }}
+      />
+    );
+  }
+
+  /* ── New password (new design — full-page) ── */
+  if (mode === "new-password") {
+    return (
+      <NewPasswordScreen
+        onSubmit={handleNewPasswordV2}
+        busy={loading}
+        error={error || undefined}
+      />
+    );
+  }
+
+  /* ── Main sign-in ── */
   return (
     <div style={{ position: "relative", zIndex: 1 }}>
       {/* OAuth first — frictionless one-tap path for both modes */}
@@ -236,33 +219,16 @@ function AuthForm({ onSuccess, initialError = "", onModeChange, modeRequest }: {
         <div style={{ flex: 1, height: 1, background: C.border2 }} />
       </div>
 
-      {/* Mode tabs */}
-      <div style={{ display: "flex", gap: 20, marginBottom: 22 }}>
-        {(["signin", "signup"] as AuthMode[]).map(m => (
-          <button key={m} onClick={() => { setMode(m); setError(""); setMsg(""); onModeChange?.(m as "signin" | "signup"); }}
-            style={{
-              background: "none", border: "none", padding: 0,
-              color: mode === m ? C.text : C.muted,
-              borderBottom: mode === m ? `1px solid ${C.text}` : "1px solid transparent",
-              paddingBottom: 4, cursor: "pointer",
-              fontFamily: MONO, fontSize: 11, letterSpacing: "0.06em", textTransform: "uppercase",
-            }}>
-            {m === "signin" ? "Sign in" : "Sign up"}
-          </button>
-        ))}
-      </div>
-
       {/* Enter key submits via form onSubmit */}
       <form onSubmit={e => { e.preventDefault(); handleSubmit(); }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          <FloatingInput C={C} label="Username" value={username} placeholder={mode === "signup" ? "pick a handle" : "yourname"}
+          <FloatingInput C={C} label="Username" value={username} placeholder="yourname"
             onChange={v => setUsername(v.toLowerCase())} inputRef={usernameInputRef} />
 
-          <FloatingInput C={C} label="Password" value={password} placeholder={mode === "signup" ? "min. 6 characters" : "••••••••"}
+          <FloatingInput C={C} label="Password" value={password} placeholder="••••••••"
             onChange={v => setPassword(v)} type="password" />
 
           {error && <div style={{ fontSize: 13, color: C.red, marginTop: 4, fontFamily: BODY }}>{error}</div>}
-          {msg   && <div style={{ fontSize: 13, color: C.green, marginTop: 4, fontFamily: BODY }}>{msg}</div>}
 
           <button type="submit" data-testid="auth-submit" disabled={loading} style={{
             background: C.text, color: C.bg, border: "none", borderRadius: 999,
@@ -270,32 +236,26 @@ function AuthForm({ onSuccess, initialError = "", onModeChange, modeRequest }: {
             cursor: "pointer", width: "100%", marginTop: 8,
             opacity: loading ? 0.6 : 1, transition: "opacity 0.15s, transform 0.15s",
           }}>
-            {loading ? "…" : mode === "signin" ? "Sign in →" : "Create account →"}
+            {loading ? "…" : "Sign in →"}
           </button>
 
-          {mode === "signup" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <FloatingInput C={C} label="Recovery email (optional)" value={recoveryEmail}
-                placeholder="you@example.com" onChange={v => setRecoveryEmail(v)} />
-              <div style={{ fontSize: 11, color: C.muted, marginTop: 2, fontFamily: BODY, lineHeight: 1.5 }}>
-                Add this now — it's the only way to recover your account if you forget your password.
-              </div>
-            </div>
-          )}
-
-          {mode === "signin" && (
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 2 }}>
             <button type="button" onClick={() => { setMode("reset"); setError(""); }} style={{
               background: "none", border: "none", color: C.muted, fontSize: 12,
-              cursor: "pointer", fontFamily: BODY, textAlign: "left", padding: 0, marginTop: 2,
+              cursor: "pointer", fontFamily: BODY, textAlign: "left", padding: 0,
             }}>Forgot password?</button>
-          )}
+            <button type="button" onClick={() => { setMode("signup"); setError(""); onModeChange?.("signup"); }} style={{
+              background: "none", border: "none", color: C.text2, fontSize: 12,
+              cursor: "pointer", fontFamily: BODY, textAlign: "right", padding: 0,
+            }}>Create account →</button>
+          </div>
         </div>
       </form>
     </div>
   );
 }
 
-// â”€â”€â”€ PARSE OAUTH ERROR FROM URL HASH â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€â"€ PARSE OAUTH ERROR FROM URL HASH â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 function parseOAuthError(): string {
   const hash = window.location.hash.slice(1);
   if (!hash.includes("error=")) return "";
@@ -310,7 +270,7 @@ function parseOAuthError(): string {
   return "Google sign-in isn’t available. Please use your username and password.";
 }
 
-// â”€â”€â”€ LANDING PAGE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€â"€ LANDING PAGE â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 function LandingPage({ onSuccess }: { onSuccess: () => void }) {
   const [oauthError] = useState(() => parseOAuthError());
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
@@ -408,7 +368,7 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
         }
       `}</style>
 
-      {/* â”€â”€ Background orbs (multi-color ambient blooms) â”€â”€ */}
+      {/* â"€â"€ Background orbs (multi-color ambient blooms) â"€â"€ */}
       {/* Single signature ambient orb per DESIGN.md warmth-pass guidance. */}
       <div style={{
         position: "absolute", top: "-8%", left: "50%", transform: "translateX(-50%)",
@@ -420,7 +380,7 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
 
       <div className="koda-shell" style={{ animation: "rise 0.5s ease" }}>
 
-        {/* â”€â”€ MASTHEAD â”€â”€ */}
+        {/* â"€â"€ MASTHEAD â"€â"€ */}
         <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16 }}>
           <a href="/" style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <KodaMark size={26} color={C.text} />
@@ -449,7 +409,7 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
           </div>
         </header>
 
-        {/* â”€â”€ GRID â”€â”€ */}
+        {/* â"€â"€ GRID â"€â"€ */}
         <div className="koda-grid">
 
           {/* Hero column */}
@@ -655,7 +615,7 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
           </div>
         </section>
 
-        {/* â”€â”€ BUILT-IN STRATEGIES â”€â”€ */}
+        {/* â"€â"€ BUILT-IN STRATEGIES â"€â"€ */}
         {/* WHAT'S INCLUDED — eight-tile feature grid; featuresRef target for the See-it-in-action CTA. */}
         <section ref={featuresRef} id="features" className="koda-anchor" style={{ marginTop: "clamp(80px, 10vw, 128px)" }}>
           <div className="koda-section-label">WHAT&apos;S INCLUDED</div>
@@ -968,7 +928,7 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
   );
 }
 
-// â”€â”€â”€ LOADING SCREEN â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€â"€ LOADING SCREEN â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 const PULSE_CSS = "@keyframes koda-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.7;transform:scale(0.96)}}";
 
 function LoadingScreen() {
@@ -985,7 +945,7 @@ function LoadingScreen() {
   );
 }
 
-// â”€â”€â”€ ROOT AUTH WRAPPER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€â"€ ROOT AUTH WRAPPER â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 export default function KodaAuth() {
   const [session,      setSession]      = useState<Session | null | undefined>(undefined);
   const [betaUnlocked, setBetaUnlocked] = useState<boolean>(() => isBetaUnlocked());

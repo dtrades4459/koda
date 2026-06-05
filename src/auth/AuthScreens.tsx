@@ -861,5 +861,136 @@ export function SignUpFormScreen({
   );
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// 12 · New password (after clicking reset link)
+// ═══════════════════════════════════════════════════════════════════════════
+
+export function NewPasswordScreen({
+  onSubmit,
+  busy,
+  error,
+}: {
+  onSubmit?: (password: string) => void;
+  busy?: boolean;
+  error?: string;
+}) {
+  const [pw, setPw] = useState("");
+  const [show, setShow] = useState(false);
+
+  const pwErr = pw && pw.length < 8 ? "Too short — needs 8+ characters." : undefined;
+  const ready = pw.length >= 8 && !pwErr;
+
+  return (
+    <AuthShell
+      kicker="Password reset"
+      title="Set your new"
+      accent="password."
+      sub="Choose something strong — at least 8 characters with at least one number."
+    >
+      <AuthField
+        label="New password"
+        value={pw}
+        onChange={setPw}
+        placeholder="8+ chars, one number"
+        type={show ? "text" : "password"}
+        error={pwErr}
+        trailing={
+          <span
+            onClick={() => setShow(!show)}
+            style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.12em", color: C.live, cursor: "pointer" }}
+          >
+            {show ? "HIDE" : "SHOW"}
+          </span>
+        }
+      />
+      {error && (
+        <div style={{
+          display: "flex", alignItems: "center", gap: 8,
+          padding: "10px 14px", borderRadius: 10,
+          background: C.redSoft, border: `1px solid color-mix(in oklch, ${C.red} 30%, transparent)`,
+        }}>
+          <svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+            <path d="M12 8v5M12 16h.01" stroke={C.red} strokeWidth="2" strokeLinecap="round" />
+            <circle cx="12" cy="12" r="9" stroke={C.red} strokeWidth="1.5" />
+          </svg>
+          <span style={{ fontSize: 12, color: C.red, fontFamily: BODY }}>{error}</span>
+        </div>
+      )}
+      <AuthBtn
+        kind={ready ? "live" : "ghost"}
+        full
+        disabled={!ready || busy}
+        onClick={() => onSubmit?.(pw)}
+      >
+        {busy ? "Updating…" : "Update password"}
+      </AuthBtn>
+    </AuthShell>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 13 · Reset request (enter email to receive reset link)
+// ═══════════════════════════════════════════════════════════════════════════
+
+export function ResetRequestScreen({
+  onSubmit,
+  onBack,
+  busy,
+  error,
+}: {
+  onSubmit?: (email: string) => void;
+  onBack?: () => void;
+  busy?: boolean;
+  error?: string;
+}) {
+  const [email, setEmail] = useState("");
+  const emailErr = email && !/\S+@\S+\.\S+/.test(email) ? "Enter a valid email address." : undefined;
+  const ready = email.length > 0 && !emailErr;
+
+  return (
+    <AuthShell
+      kicker="Password reset"
+      title="Forgot your"
+      accent="password?"
+      sub="Enter your email address and we'll send a reset link. Check your spam folder too."
+      foot={
+        <span onClick={onBack} style={{ color: C.live, fontWeight: 500, cursor: "pointer" }}>
+          ← Back to sign in
+        </span>
+      }
+    >
+      <AuthField
+        label="Email"
+        value={email}
+        onChange={setEmail}
+        placeholder="you@example.com"
+        type="email"
+        error={emailErr}
+      />
+      {error && (
+        <div style={{
+          display: "flex", alignItems: "center", gap: 8,
+          padding: "10px 14px", borderRadius: 10,
+          background: C.redSoft, border: `1px solid color-mix(in oklch, ${C.red} 30%, transparent)`,
+        }}>
+          <svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+            <path d="M12 8v5M12 16h.01" stroke={C.red} strokeWidth="2" strokeLinecap="round" />
+            <circle cx="12" cy="12" r="9" stroke={C.red} strokeWidth="1.5" />
+          </svg>
+          <span style={{ fontSize: 12, color: C.red, fontFamily: BODY }}>{error}</span>
+        </div>
+      )}
+      <AuthBtn
+        kind={ready ? "live" : "ghost"}
+        full
+        disabled={!ready || busy}
+        onClick={() => onSubmit?.(email)}
+      >
+        {busy ? "Sending…" : "Send reset link"}
+      </AuthBtn>
+    </AuthShell>
+  );
+}
+
 // Silence unused warnings — PillField is exported for future screens but not consumed here.
 export const _internal = { PillField };
