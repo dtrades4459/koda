@@ -15,6 +15,7 @@ import { useCircles } from "./hooks/useCircles";
 import { useUnreadCircles } from "./hooks/useUnreadCircles";
 import { useUnreadNotifications } from "./hooks/useUnreadNotifications";
 import { NotificationFeed } from "./components/NotificationFeed";
+import { SystemProvider } from "./components/SystemProvider";
 import { logInterventionEvent, linkTradeToRecentIntervention } from "./data/interventions";
 import { InterventionSheet } from "./components/InterventionSheet";
 import { PreSessionSheet } from "./components/PreSessionSheet";
@@ -1726,6 +1727,8 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
         .stagger-item:nth-child(n+6){animation:fadeSlideUp 0.32s ease both;animation-delay:0.28s}
         input[type=file]{display:none;}
       `}</style>
+
+      <SystemProvider C={C} onSignIn={() => navigateTo("auth")} />
 
       {/* ── PAGE FRAME (responsive: 4-tier viewport scaling) ── */}
       <div className="koda-app" ref={swipeRef}

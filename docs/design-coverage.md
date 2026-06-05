@@ -155,16 +155,16 @@ _Offline, stale, expired, rate-limited, broken. The unhappy paths._
 
 **Designs**: `koda-designs/cat07-system.jsx` · **Target**: `src/components/OfflineBanner.tsx + new auth-state listener`
 
-- [x] [ ] 🔴 **Session-expired modal + re-auth**
-- [x] [ ] 🟠 **Error pages — 401 / 403 / 500 / 503**
-- [x] [ ] 🟠 **Offline banner**
-- [x] [ ] 🟠 **Retry-failed-request UI**
-- [x] [ ] 🟠 **Service-worker update available**
-- [x] [ ] 🟡 **Maintenance-mode page**
-- [x] [ ] 🟡 **Optimistic-update rollback toast**
-- [x] [ ] 🟡 **Rate-limited error**
-- [x] [ ] 🟡 **Slow-connection indicator**
-- [x] [ ] 🟡 **Version-mismatch banner**
+- [x] [x] 🔴 **Session-expired modal + re-auth**
+- [x] [x] 🟠 **Error pages — 401 / 403 / 500 / 503**
+- [x] [x] 🟠 **Offline banner**
+- [x] [x] 🟠 **Retry-failed-request UI**
+- [x] [x] 🟠 **Service-worker update available**
+- [x] [x] 🟡 **Maintenance-mode page**
+- [x] [x] 🟡 **Optimistic-update rollback toast**
+- [x] [x] 🟡 **Rate-limited error**
+- [x] [x] 🟡 **Slow-connection indicator**
+- [x] [x] 🟡 **Version-mismatch banner**
 
 ## 08 · Discipline / intervention
 
