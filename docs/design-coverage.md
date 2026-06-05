@@ -261,13 +261,13 @@ _Per existing screen: are all four moods (empty / loading / error / success) dra
 
 **Designs**: `koda-designs/cat13-states.jsx` · **Target**: `cross-cutting — per screen states`
 
-- [x] [ ] 🟠 **Home — four moods**
-- [x] [ ] 🟠 **Journal / History — four moods**
-- [x] [ ] 🟠 **Stats — four moods**
-- [x] [ ] 🟡 **Circles — four moods**
-- [x] [ ] 🟡 **Inbox — four moods**
-- [x] [ ] 🟡 **Log / Trade detail — four moods**
-- [x] [ ] 🟡 **Settings sub-screens — four moods**
+- [x] [x] 🟠 **Home — four moods** - docs/states.md §1 — all 4 moods wired via empty bucket + LoadingSplash + SystemProvider + default render 2026-06-05
+- [x] [x] 🟠 **Journal / History — four moods** - docs/states.md §2 — empty/filter-zero/loading/error/success branches
+- [x] [x] 🟠 **Stats — four moods** - docs/states.md §3 — count-gated empty + skeleton + try/catch + default
+- [x] [x] 🟡 **Circles — four moods** - docs/states.md §4 — TradingCircles empty + useCircles loading + catch + chat-empty branch
+- [x] [x] 🟡 **Inbox — four moods** - docs/states.md §5 — NotificationsDrawer / ReviewInboxScreen with all 4
+- [x] [x] 🟡 **Log / Trade detail — four moods** - docs/states.md §6 — form (empty/saving/validation/network/success) + detail (no-comments/loading-image/delete-error/success)
+- [x] [x] 🟡 **Settings sub-screens — four moods** - docs/states.md §7 — SettingsSub wrapper provides shared loading/error/empty/success pattern
 
 ## 14 · Motion catalog
 
