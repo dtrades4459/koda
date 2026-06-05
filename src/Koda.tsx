@@ -65,6 +65,11 @@ import { LoadingSplash } from "./components/LoadingSplash";
 import { OfflineBanner } from "./components/OfflineBanner";
 import { HomeNewsWidget } from "./components/HomeNewsWidget";
 import { NewsScreen } from "./NewsScreen";
+import {
+  DeleteTradeModal, ShareToCircleSheet, MistakeTagSheet,
+  TradeDetailScreen, TradeActionsScreen,
+} from "./trade/TradeScreens";
+import type { ShareableTrade, ShareableCircle, TradeActionRow } from "./trade/TradeScreens";
 
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
 
@@ -173,8 +178,11 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   }, []);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
+  const [mistakeTagTradeId, setMistakeTagTradeId] = useState<number | null>(null);
+  const [tradeDetailId, setTradeDetailId] = useState<number | null>(null);
+  const [tradeActionsId, setTradeActionsId] = useState<number | null>(null);
   const [tradeToShare, setTradeToShare] = useState<Trade | null>(null);
-  const [sharingToCircle, setSharingToCircle] = useState<string | null>(null);
+  // sharingToCircle removed — ShareToCircleSheet manages its own selection state
   // jwtPlan comes from the Supabase JWT app_metadata claim — server-verified,
   // not forgeable from the client. Use it as the authoritative starting plan so
   // the paywall check is correct before loadAll() finishes.
@@ -3007,6 +3015,78 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
             />
           )}
 
+          {/* ══════════════════════════ TRADE DETAIL ══════════════════════ */}
+          {view === "trade-detail" && (() => {
+            const t = trades.find(tr => tr.id === tradeDetailId);
+            if (!t) return null;
+            const myCode = profile.code || "";
+            const reactionArr = REACTIONS.map(rx => {
+              const raw = (t.reactions || {})[rx];
+              const count = Array.isArray(raw) ? raw.length : (typeof raw === "number" ? raw : 0);
+              const mine = Array.isArray(raw) && raw.includes(myCode);
+              return count > 0 ? { emoji: rx, count, mine } : null;
+            }).filter(Boolean) as { emoji: string; count: number; mine: boolean }[];
+            const commentArr = (t.comments || []).map(c => ({
+              id: String(c.id), handle: c.author, body: c.text,
+            }));
+            const rStr = t.pnl ? `${parseFloat(t.pnl) >= 0 ? "+" : ""}${parseFloat(t.pnl).toFixed(2)}R` : "0R";
+            const sideVal = (t.direction?.toLowerCase() === "short" ? "short" : "long") as "long" | "short";
+            return (
+              <TradeDetailScreen
+                C={C}
+                symbol={t.pair}
+                side={sideVal}
+                rMultiple={rStr}
+                date={t.date}
+                setup={t.setup || undefined}
+                tags={[
+                  ...(t.outcome ? [{ tone: (t.outcome === "Win" ? "green" : t.outcome === "Loss" ? "red" : "accent") as "green" | "red" | "accent", label: t.outcome }] : []),
+                  ...(t.session ? [{ tone: "live" as const, label: t.session }] : []),
+                  ...(t.mistake ? [{ tone: "warn" as const, label: t.mistake }] : []),
+                ]}
+                reactions={reactionArr}
+                comments={commentArr}
+                onAddReaction={() => toggleReaction(t.id, "FIRE")}
+                onShare={() => setTradeToShare(t)}
+                onAddComment={async (text) => {
+                  const c = { id: Date.now(), author: profile.name || "You", text, ts: new Date().toLocaleString() };
+                  const u = trades.map(tr => tr.id === t.id ? { ...tr, comments: [...(tr.comments || []), c] } : tr);
+                  await saveTrades(u);
+                }}
+                onBack={goBack}
+              />
+            );
+          })()}
+
+          {/* ══════════════════════════ TRADE ACTIONS ══════════════════════ */}
+          {view === "trade-actions" && (() => {
+            const t = trades.find(tr => tr.id === tradeActionsId);
+            if (!t) return null;
+            const rStr = t.pnl ? `${parseFloat(t.pnl) >= 0 ? "+" : ""}${parseFloat(t.pnl).toFixed(2)}R` : "0R";
+            const sideVal = (t.direction?.toLowerCase() === "short" ? "short" : "long") as "long" | "short";
+            const rows: TradeActionRow[] = [
+              { id: "share", icon: "share", title: "Share to circle", detail: "visible to circle members", toneKey: "live" },
+              { id: "mistake", icon: "grid", title: "Tag a mistake", detail: t.mistake ?? "none tagged", toneKey: "warn", active: !!t.mistake },
+              { id: "detail", icon: "clock", title: "View full detail", detail: "reactions, comments, notes", toneKey: "accent" },
+            ];
+            return (
+              <TradeActionsScreen
+                C={C}
+                symbol={t.pair}
+                side={sideVal}
+                rMultiple={rStr}
+                date={t.date}
+                rows={rows}
+                onRow={(id) => {
+                  if (id === "share") { setTradeToShare(t); goBack(); }
+                  else if (id === "mistake") { setMistakeTagTradeId(t.id); goBack(); }
+                  else if (id === "detail") { setTradeDetailId(t.id); navigateTo("trade-detail"); }
+                }}
+                onBack={goBack}
+              />
+            );
+          })()}
+
           {/* ══════════════════════════ LOG TRADE ══════════════════════════ */}
           {view === "log" && (
             <>
@@ -3422,23 +3502,19 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                             </div>
 
                             {/* ── Actions ── */}
-                            <div style={{ display: "flex", gap: 8, margin: "0 2px" }}>
+                            <div style={{ display: "flex", gap: 8, margin: "0 2px", flexWrap: "wrap" }}>
                               <button onClick={() => editTrade(t)} style={{ ...pillGhost, padding: "8px 14px" }}>EDIT</button>
+                              <button onClick={() => { setTradeDetailId(t.id); navigateTo("trade-detail"); }} style={{ ...pillGhost, padding: "8px 14px" }}>DETAIL</button>
                               <button
                                 title="Share to circle"
-                                onClick={() => { setTradeToShare(t); setSharingToCircle(null); }}
+                                onClick={() => setTradeToShare(t)}
                                 style={{ ...pillGhost, padding: "8px 14px" }}
                               >
                                 SHARE ↗
                               </button>
-                              {confirmDelete === t.id ? (
-                                <>
-                                  <button onClick={() => deleteTrade(t.id)} style={{ ...pillGhost, padding: "8px 14px", color: C.red, borderColor: C.red }}>CONFIRM</button>
-                                  <button onClick={() => setConfirmDelete(null)} style={{ ...pillGhost, padding: "8px 14px" }}>CANCEL</button>
-                                </>
-                              ) : (
-                                <button onClick={() => setConfirmDelete(t.id)} style={{ ...pillGhost, padding: "8px 14px", color: C.red, borderColor: `${C.red}55` }}>DELETE</button>
-                              )}
+                              <button onClick={() => setMistakeTagTradeId(t.id)} style={{ ...pillGhost, padding: "8px 14px" }}>MISTAKE</button>
+                              <button onClick={() => { setTradeActionsId(t.id); navigateTo("trade-actions"); }} style={{ ...pillGhost, padding: "8px 14px" }}>MORE</button>
+                              <button onClick={() => setConfirmDelete(t.id)} style={{ ...pillGhost, padding: "8px 14px", color: C.red, borderColor: `${C.red}55` }}>DELETE</button>
                               {t.screenshot && <a href={t.screenshot} target="_blank" rel="noreferrer" style={{ ...pillGhost, padding: "8px 14px", textDecoration: "none", display: "inline-flex", alignItems: "center" }}>CHART ↗</a>}
                             </div>
                           </div>
@@ -4891,72 +4967,75 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
         <OfflineBanner visible={!isOnline} onRetry={() => setIsOnline(navigator.onLine)} C={C} />
         <ToastStack toasts={toastsV2} onDismiss={dismissToast} C={C} />
 
-        {/* ── Circle Share Picker ── */}
-        {tradeToShare && (
-          <div
-            onClick={() => { setTradeToShare(null); setSharingToCircle(null); }}
-            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 1000, display: "flex", alignItems: "flex-end", justifyContent: "center" }}
-          >
-            <div
-              onClick={e => e.stopPropagation()}
-              style={{ width: "100%", maxWidth: 420, background: C.panel, borderRadius: "16px 16px 0 0", padding: "20px 16px 32px", border: `1px solid ${C.border2}`, borderBottom: "none" }}
-            >
-              <div style={{ fontFamily: DISPLAY, fontSize: 15, fontWeight: 600, color: C.text, marginBottom: 4 }}>Share Trade</div>
-              <div style={{ fontFamily: MONO, fontSize: 10, color: C.muted, marginBottom: 16, letterSpacing: "0.04em" }}>
-                {tradeToShare.pair} · {(tradeToShare.direction || "").toUpperCase()} · {tradeToShare.date}
-              </div>
-              <div style={{ fontFamily: MONO, fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", color: C.muted, marginBottom: 8, textTransform: "uppercase" }}>Select Circle</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 18 }}>
-                {myCircles.filter((c: Circle) => c.code !== KODA_GLOBAL_CODE).map((circle: Circle) => {
-                  const selected = sharingToCircle === circle.code;
-                  return (
-                    <div
-                      key={circle.code}
-                      onClick={() => setSharingToCircle(selected ? null : circle.code)}
-                      style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "11px 13px", background: selected ? `${C.text}08` : C.panel, border: `1px solid ${selected ? C.border2 : C.border}`, borderRadius: 9, cursor: "pointer" }}
-                    >
-                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <span style={{ fontSize: 15 }}>{circle.emoji || "◆"}</span>
-                        <div>
-                          <div style={{ fontFamily: DISPLAY, fontSize: 13, fontWeight: 600, color: C.text }}>{circle.name}</div>
-                          <div style={{ fontFamily: MONO, fontSize: 10, color: C.muted }}>{circle.members?.length ?? 0} members</div>
-                        </div>
-                      </div>
-                      <div style={{ width: 16, height: 16, borderRadius: "50%", background: selected ? C.text : "transparent", border: `1px solid ${selected ? C.text : C.border2}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        {selected && <span style={{ fontSize: 9, color: C.bg }}>✓</span>}
-                      </div>
-                    </div>
-                  );
-                })}
-                {myCircles.filter((c: Circle) => c.code !== KODA_GLOBAL_CODE).length === 0 && (
-                  <div style={{ fontFamily: BODY, fontSize: 13, color: C.muted, textAlign: "center", padding: "16px 0" }}>You haven't joined any circles yet.</div>
-                )}
-              </div>
-              <button
-                disabled={!sharingToCircle}
-                onClick={async () => {
-                  if (!sharingToCircle || !tradeToShare) return;
-                  const circleCode = sharingToCircle;
-                  setTradeToShare(null);
-                  setSharingToCircle(null);
+        {/* ── Circle Share Sheet ── */}
+        {tradeToShare && (() => {
+          const shareableTrade: ShareableTrade = {
+            symbol: tradeToShare.pair,
+            side: tradeToShare.direction?.toLowerCase() === "short" ? "short" : "long",
+            rMultiple: tradeToShare.pnl ? `${parseFloat(tradeToShare.pnl) >= 0 ? "+" : ""}${parseFloat(tradeToShare.pnl).toFixed(2)}R` : "0R",
+            setup: tradeToShare.setup || undefined,
+          };
+          const shareableCircles: ShareableCircle[] = myCircles
+            .filter((c: Circle) => c.code !== KODA_GLOBAL_CODE)
+            .map((c: Circle) => ({
+              id: c.code,
+              name: c.name,
+              memberCount: c.members?.length ?? 0,
+              avatar: c.emoji,
+            }));
+          return (
+            <ShareToCircleSheet
+              C={C}
+              trade={shareableTrade}
+              circles={shareableCircles}
+              onCancel={() => setTradeToShare(null)}
+              onShare={async (circleIds) => {
+                const t = tradeToShare;
+                setTradeToShare(null);
+                for (const code of circleIds) {
                   const result = await shareTrade(
-                    circleCode,
+                    code,
                     { name: profile.name, handle: profile.handle, avatar: profile.avatar, code: getMyCode() },
-                    tradeToShare
+                    t
                   );
                   if (result === "ok") showToast("Shared to circle!");
                   else if (result === "duplicate") showToast("Already shared to this circle");
                   else showToast("Failed to share");
-                }}
-                style={{ width: "100%", padding: "13px", background: C.text, border: "none", borderRadius: 10, color: C.bg, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: MONO, opacity: sharingToCircle ? 1 : 0.4 }}
-              >
-                {sharingToCircle
-                  ? `Share to ${myCircles.find((c: Circle) => c.code === sharingToCircle)?.name ?? "circle"}`
-                  : "Select a circle"}
-              </button>
-            </div>
-          </div>
-        )}
+                }
+              }}
+            />
+          );
+        })()}
+
+        {/* ── Delete trade modal ── */}
+        {confirmDelete !== null && (() => {
+          const t = trades.find(tr => tr.id === confirmDelete);
+          return (
+            <DeleteTradeModal
+              C={C}
+              summary={t ? `${t.pair} on ${t.date}` : "your trade"}
+              onCancel={() => setConfirmDelete(null)}
+              onDelete={() => { void deleteTrade(confirmDelete); setConfirmDelete(null); }}
+            />
+          );
+        })()}
+
+        {/* ── Mistake tag sheet ── */}
+        {mistakeTagTradeId !== null && (() => {
+          const t = trades.find(tr => tr.id === mistakeTagTradeId);
+          return (
+            <MistakeTagSheet
+              C={C}
+              initial={t?.mistake ?? undefined}
+              onCancel={() => setMistakeTagTradeId(null)}
+              onSave={async (tag) => {
+                const u = trades.map(tr => tr.id === mistakeTagTradeId ? { ...tr, mistake: tag } : tr);
+                await saveTrades(u);
+                setMistakeTagTradeId(null);
+              }}
+            />
+          );
+        })()}
       </div>
     </div>
   );

@@ -82,13 +82,13 @@ _Log, edit, enrich, import, review and share a trade._
 **Designs**: `koda-designs/cat03-trade.jsx` · **Target**: `src/LogTradeScreen.tsx / src/Koda.tsx (trade detail)`
 
 - [x] [ ] 🟠 **Bulk CSV import — progress / per-row errors / dedup conflicts**
-- [x] [ ] 🟠 **Delete confirmation**
+- [x] [x] 🟠 **Delete confirmation**
 - [x] [ ] 🟠 **Edit existing trade**
-- [x] [ ] 🟠 **Mistake tag field**
+- [x] [x] 🟠 **Mistake tag field**
 - [x] [ ] 🟠 **Review inbox — draft → published → skipped (+ bulk actions)**
 - [x] [ ] 🟠 **Screenshot upload — single / multi / paste-from-clipboard**
-- [x] [ ] 🟠 **Share-to-circle modal**
-- [x] [ ] 🟠 **Trade detail — expanded (emotion chips, rule pills, reactions, comments)**
+- [x] [x] 🟠 **Share-to-circle modal**
+- [x] [x] 🟠 **Trade detail — expanded (emotion chips, rule pills, reactions, comments)**
 - [x] [ ] 🟡 **Attach to idea**
 - [x] [ ] 🟡 **Favorite / star**
 - [x] [ ] 🟡 **Link to intervention event**
