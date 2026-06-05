@@ -37,6 +37,7 @@ import {
   ReportQueueScreen, ReportDetailScreen, AuditLogScreen,
 } from "./admin/AdminScreens";
 import type { ReportRow, AuditEntry } from "./admin/AdminScreens";
+import { FounderDashboard } from "./admin/FounderDashboard";
 import { logInterventionEvent, linkTradeToRecentIntervention } from "./data/interventions";
 import { InterventionSheet } from "./components/InterventionSheet";
 import { PreSessionSheet } from "./components/PreSessionSheet";
@@ -534,11 +535,18 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   //   ?screen=circles     → circles view
   //   ?screen=import      → data sources + auto-open CSV (file_handlers)
   //   ?screen=share-receive → SharedContentSheet (share_target intent)
+  //   /admin              → founder dashboard (gated server-side by ADMIN_EMAILS)
   const _screenHandledRef = useRef(false);
   useEffect(() => {
     if (_screenHandledRef.current) return;
     _screenHandledRef.current = true;
     try {
+      // Path-based: /admin → founder dashboard. Strip the path so refresh keeps state.
+      if (window.location.pathname === "/admin") {
+        navigateTo("admin-founder");
+        window.history.replaceState({}, "", "/");
+        return;
+      }
       const screen = new URLSearchParams(window.location.search).get("screen");
       if (!screen) return;
       const clean = () => window.history.replaceState({}, "", window.location.pathname);
@@ -3659,6 +3667,12 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
           })()}
 
           {/* ══════════════════════════ ADMIN ═════════════════════════════ */}
+          {view === "admin-founder" && profile.uid === import.meta.env.VITE_KODA_ADMIN_UID && (
+            <div style={{ position: "fixed", inset: 0, zIndex: 9000, overflowY: "auto" }}>
+              <FounderDashboard C={C} onBack={goBack} />
+            </div>
+          )}
+
           {view === "admin-reports" && profile.uid === import.meta.env.VITE_KODA_ADMIN_UID && (() => {
             const emptyReports: ReportRow[] = [];
             return (
