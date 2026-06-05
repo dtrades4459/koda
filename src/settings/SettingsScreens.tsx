@@ -1064,3 +1064,177 @@ export function FeedbackScreen({
     </SettingsSub>
   );
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Broker sync + import history
+// ═══════════════════════════════════════════════════════════════════════════
+
+export interface SyncEntry {
+  label: string;
+  time: string;
+  tone: "green" | "accent" | "red";
+}
+
+export function SyncScreen({
+  C, brokerName = "Tradovate", accountId = "Apex-44219", lastSync = "2M AGO",
+  history = defaultSyncHistory(), onDisconnect, onBack,
+}: {
+  C: Theme; brokerName?: string; accountId?: string; lastSync?: string;
+  history?: SyncEntry[]; onDisconnect?: () => void; onBack?: () => void;
+}) {
+  return (
+    <SettingsSub C={C} title="Sync" onBack={onBack} right={<MonoTag C={C} tone="green">Live</MonoTag>}>
+      <Card C={C} pad={16}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{
+            width: 40, height: 40, borderRadius: 10, background: C.liveSoft,
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <IconRefresh c={C.live} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: C.text, fontFamily: BODY }}>
+              {brokerName} · {accountId}
+            </div>
+            <div style={{ fontFamily: MONO, fontSize: 9.5, color: C.muted, marginTop: 2 }}>
+              CONNECTED · SYNCED {lastSync}
+            </div>
+          </div>
+          <button
+            onClick={onDisconnect}
+            style={{
+              background: "transparent", border: "none",
+              fontFamily: MONO, fontSize: 10, letterSpacing: "0.08em", color: C.red,
+              cursor: "pointer", padding: "4px 0",
+            }}
+          >
+            DISCONNECT
+          </button>
+        </div>
+      </Card>
+      <SectionLabel C={C}>Import history</SectionLabel>
+      <Card C={C} pad={0}>
+        {history.map((e, i) => {
+          const dotColor = e.tone === "green" ? C.green : e.tone === "red" ? C.red : C.accent;
+          return (
+            <div
+              key={i}
+              style={{
+                display: "flex", alignItems: "center", gap: 12,
+                padding: "13px 16px", borderTop: i ? `1px solid ${C.line}` : "none",
+              }}
+            >
+              <span style={{
+                width: 7, height: 7, borderRadius: "50%",
+                background: dotColor, flexShrink: 0,
+              }} />
+              <span style={{ flex: 1, fontSize: 13.5, color: C.text, fontFamily: BODY }}>{e.label}</span>
+              <span style={{ fontFamily: MONO, fontSize: 9.5, color: C.muted }}>{e.time.toUpperCase()}</span>
+            </div>
+          );
+        })}
+      </Card>
+    </SettingsSub>
+  );
+}
+function defaultSyncHistory(): SyncEntry[] {
+  return [
+    { label: "Synced 6 fills", time: "2m ago", tone: "green" },
+    { label: "Auth refresh", time: "1h ago", tone: "accent" },
+    { label: "Sync failed — token", time: "3h ago", tone: "red" },
+    { label: "Synced 12 fills", time: "Yesterday", tone: "green" },
+  ];
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CSV import wizard — step 1 broker selection
+// ═══════════════════════════════════════════════════════════════════════════
+
+const CSV_BROKERS = [
+  { name: "Tradovate", hint: "auto-detected" },
+  { name: "NinjaTrader", hint: "" },
+  { name: "Generic CSV", hint: "map columns yourself" },
+];
+
+export function CsvWizardScreen({
+  C, step = 1, initialBroker = "Tradovate",
+  previewRows = 142, newRows = 41, reviewRows = 1,
+  onNext, onBack,
+}: {
+  C: Theme; step?: number; initialBroker?: string;
+  previewRows?: number; newRows?: number; reviewRows?: number;
+  onNext?: (broker: string) => void; onBack?: () => void;
+}) {
+  const [selected, setSelected] = useState(initialBroker);
+
+  return (
+    <SettingsSub C={C} title="Import CSV" onBack={onBack}>
+      <div style={{
+        fontFamily: MONO, fontSize: 9.5, letterSpacing: "0.14em",
+        color: C.muted, textTransform: "uppercase",
+      }}>
+        Step {step} of 6 · Broker
+      </div>
+      <div style={{
+        fontFamily: DISPLAY, fontSize: 20, fontWeight: 600, color: C.text,
+        margin: "10px 0 16px",
+      }}>
+        Which broker exported this?
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {CSV_BROKERS.map(b => {
+          const on = selected === b.name;
+          return (
+            <button
+              key={b.name}
+              onClick={() => setSelected(b.name)}
+              style={{
+                display: "flex", alignItems: "center", gap: 12, padding: "16px",
+                borderRadius: 14, textAlign: "left" as const, width: "100%",
+                background: on ? C.liveSoft : C.surface,
+                border: on
+                  ? `1px solid color-mix(in oklch, ${C.live} 40%, transparent)`
+                  : `1px solid ${C.line}`,
+                cursor: "pointer",
+              }}
+            >
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: C.text, fontFamily: BODY }}>
+                  {b.name}
+                </div>
+                {b.hint && (
+                  <div style={{ fontSize: 11.5, color: C.text2, marginTop: 3, fontFamily: BODY }}>
+                    {b.hint}
+                  </div>
+                )}
+              </div>
+              {on && (
+                <svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+                  <path d="M5 12l5 5L19 8" stroke={C.live} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
+            </button>
+          );
+        })}
+      </div>
+      <div style={{
+        marginTop: 14, padding: "12px 14px", borderRadius: 10,
+        background: C.greenSoft,
+        border: `1px solid color-mix(in oklch, ${C.green} 28%, transparent)`,
+        display: "flex", gap: 10, alignItems: "center",
+      }}>
+        <svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+          <path d="M5 12l5 5L19 8" stroke={C.green} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        <span style={{ fontSize: 12, color: C.text, fontFamily: BODY }}>
+          Preview: {previewRows} rows · {newRows} new · {reviewRows} needs review
+        </span>
+      </div>
+      <div style={{ marginTop: 18 }}>
+        <SettingsBtn C={C} kind="live" full onClick={() => onNext?.(selected)}>
+          Preview import
+        </SettingsBtn>
+      </div>
+    </SettingsSub>
+  );
+}

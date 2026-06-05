@@ -11,9 +11,16 @@ import type { Profile } from "./types";
 import { AvatarCircle, Kicker, MONO, BODY, DISPLAY } from "./shared";
 import { supabase } from "./lib/supabase";
 import { subscribeToPush } from "./lib/push";
+import type { Theme } from "./theme";
+import {
+  BillingPastDueScreen, BillingDunningScreen, BillingPromoScreen,
+  AccountDeleteWarnScreen, AccountDeleteConfirmScreen, AccountDeleteScheduledScreen,
+  DataExportScreen, TwoFactorScreen, DevicesScreen, BrokerDisconnectSheet,
+  PreferencesScreen, FeedbackScreen, SyncScreen, CsvWizardScreen,
+} from "./settings/SettingsScreens";
 
 export interface SettingsScreenProps {
-  C: Record<string, string>;
+  C: Theme;
   profile: Profile;
   profileDraft: Profile;
   setProfileDraft: (p: Profile) => void;
@@ -54,9 +61,9 @@ export function SettingsScreen({
   setThemePref,
   fontScale,
   setFontScale,
-  deleteConfirm,
-  setDeleteConfirm,
-  deletingAccount,
+  deleteConfirm: _deleteConfirm,
+  setDeleteConfirm: _setDeleteConfirm,
+  deletingAccount: _deletingAccount,
   handleAvatarUpload,
   normaliseHandle,
   isHandleTaken,
@@ -74,6 +81,13 @@ export function SettingsScreen({
   const [refreshingPlan, setRefreshingPlan] = React.useState(false);
   const [pushEnabled, setPushEnabled] = React.useState(false);
   const [pushLoading, setPushLoading] = React.useState(false);
+  type SettingsSubView =
+    | "billing-past-due" | "billing-dunning" | "billing-promo"
+    | "delete-warn" | "delete-confirm" | "delete-scheduled"
+    | "data-export" | "2fa" | "devices"
+    | "preferences" | "feedback" | "sync" | "csv-wizard";
+  const [subView, setSubView] = React.useState<SettingsSubView | null>(null);
+  const [brokerDisconnectOpen, setBrokerDisconnectOpen] = React.useState(false);
   React.useEffect(() => {
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
     navigator.serviceWorker.getRegistration()
@@ -130,7 +144,22 @@ export function SettingsScreen({
   }
 
   return (
-    <div style={{ padding: "12px 16px 0", display: "flex", flexDirection: "column", gap: 0, marginTop: "clamp(4px, 2vw, 12px)" }}>
+    <>
+      {subView === "delete-warn" && <AccountDeleteWarnScreen C={C} onBack={() => setSubView(null)} onDownloadFirst={() => { exportCSV(); }} onContinue={() => setSubView("delete-confirm")} />}
+      {subView === "delete-confirm" && <AccountDeleteConfirmScreen C={C} onBack={() => setSubView("delete-warn")} onDelete={() => { deleteAccount(); setSubView("delete-scheduled"); }} />}
+      {subView === "delete-scheduled" && <AccountDeleteScheduledScreen C={C} onBack={() => setSubView(null)} onCancel={() => setSubView(null)} />}
+      {subView === "data-export" && <DataExportScreen C={C} onBack={() => setSubView(null)} onGenerate={() => { exportCSV(); showToast("Export started!"); }} onDownload={() => showToast("Download started")} />}
+      {subView === "preferences" && <PreferencesScreen C={C} theme={themePref} onThemeChange={(v) => { void setThemePref(v); }} onBack={() => setSubView(null)} />}
+      {subView === "feedback" && <FeedbackScreen C={C} onBack={() => setSubView(null)} onSend={() => { showToast("Thanks for your feedback!"); setSubView(null); }} />}
+      {subView === "sync" && <SyncScreen C={C} onBack={() => setSubView(null)} onDisconnect={() => setBrokerDisconnectOpen(true)} />}
+      {subView === "csv-wizard" && <CsvWizardScreen C={C} onBack={() => setSubView(null)} onNext={() => { showToast("Import started"); setSubView(null); }} />}
+      {subView === "2fa" && <TwoFactorScreen C={C} onBack={() => setSubView(null)} onEnable={() => { showToast("2FA enabled!"); setSubView(null); }} />}
+      {subView === "devices" && <DevicesScreen C={C} onBack={() => setSubView(null)} />}
+      {subView === "billing-past-due" && <BillingPastDueScreen C={C} onBack={() => setSubView(null)} onUpdate={openBillingPortal} />}
+      {subView === "billing-dunning" && <BillingDunningScreen C={C} onBack={() => setSubView(null)} onFix={openBillingPortal} onDowngrade={() => setSubView(null)} />}
+      {subView === "billing-promo" && <BillingPromoScreen C={C} onBack={() => setSubView(null)} onApply={(code) => { showToast("Code " + code + " applied!"); setSubView(null); }} />}
+      {brokerDisconnectOpen && <BrokerDisconnectSheet C={C} onCancel={() => setBrokerDisconnectOpen(false)} onDisconnect={() => { showToast("Broker disconnected"); setBrokerDisconnectOpen(false); setSubView(null); }} />}
+      <div style={{ padding: "12px 16px 0", display: subView ? "none" : "flex", flexDirection: "column", gap: 0, marginTop: "clamp(4px, 2vw, 12px)" }}>
 
       {/* ── User card ── */}
       <div style={{ margin: "0 0 16px", borderRadius: 22, padding: 18, background: C.panel, border: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: 14 }}>
@@ -298,6 +327,33 @@ export function SettingsScreen({
               );
             })}
           </div>
+        </div>
+      </div>
+
+      {/* ── Security section ── */}
+      <div style={{ marginTop: 20, marginBottom: 8 }}>
+        <Kicker C={C as any}>Security</Kicker>
+      </div>
+      <div style={{ borderRadius: "22px", background: C.panel, border: `1px solid ${C.border}`, overflow: "hidden", marginBottom: "4px" }}>
+        <div onClick={() => setSubView("2fa")} style={{ display: "flex", alignItems: "center", gap: "14px", padding: "14px 18px", borderBottom: `1px solid ${C.border}`, cursor: "pointer" }}>
+          <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: (C as any).accentSoft ?? C.panel, border: `1px solid ${C.border2}`, color: C.accent, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2a4 4 0 0 1 4 4v2H8V6a4 4 0 0 1 4-4z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/><rect x="4" y="8" width="16" height="12" rx="2" stroke="currentColor" strokeWidth="1.4"/><circle cx="12" cy="14" r="1" fill="currentColor"/></svg>
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontFamily: DISPLAY, fontSize: "14px", fontWeight: 600, color: C.text }}>Two-factor auth</div>
+            <div style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, marginTop: "2px" }}>Authenticator app · extra login step</div>
+          </div>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke={C.muted} strokeWidth="1.3" strokeLinecap="round"/></svg>
+        </div>
+        <div onClick={() => setSubView("devices")} style={{ display: "flex", alignItems: "center", gap: "14px", padding: "14px 18px", cursor: "pointer" }}>
+          <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: (C as any).accentSoft ?? C.panel, border: `1px solid ${C.border2}`, color: C.accent, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="5" y="2" width="14" height="20" rx="2" stroke="currentColor" strokeWidth="1.4"/><path d="M12 18h.01" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontFamily: DISPLAY, fontSize: "14px", fontWeight: 600, color: C.text }}>Devices & sessions</div>
+            <div style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, marginTop: "2px" }}>Manage active sessions</div>
+          </div>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke={C.muted} strokeWidth="1.3" strokeLinecap="round"/></svg>
         </div>
       </div>
 
@@ -571,8 +627,30 @@ export function SettingsScreen({
             </button>
           </div>
         )}
-        {/* Export CSV */}
-        <div onClick={() => { if (isFlagOn("paywall") && profile.plan !== "pro" && profile.plan !== "elite") { setShowUpgrade(true); return; } exportCSV(); }} style={{ display: "flex", alignItems: "center", gap: "14px", padding: "14px 18px", borderBottom: `1px solid ${C.border}`, cursor: "pointer" }}>
+        {/* Broker sync */}
+        <div onClick={() => setSubView("sync")} style={{ display: "flex", alignItems: "center", gap: "14px", padding: "14px 18px", borderBottom: `1px solid ${C.border}`, cursor: "pointer" }}>
+          <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: C.liveSoft, border: `1px solid ${C.border2}`, color: C.live, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontFamily: DISPLAY, fontSize: "14px", fontWeight: 600, color: C.text }}>Broker sync</div>
+            <div style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, marginTop: "2px" }}>Import history · connection status</div>
+          </div>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke={C.muted} strokeWidth="1.3" strokeLinecap="round"/></svg>
+        </div>
+        {/* Import CSV */}
+        <div onClick={() => setSubView("csv-wizard")} style={{ display: "flex", alignItems: "center", gap: "14px", padding: "14px 18px", borderBottom: `1px solid ${C.border}`, cursor: "pointer" }}>
+          <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: (C as any).accentSoft ?? C.panel, border: `1px solid ${C.border2}`, color: C.accent, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 19V7M8 11l4-4 4 4M3 17v2a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontFamily: DISPLAY, fontSize: "14px", fontWeight: 600, color: C.text }}>Import CSV</div>
+            <div style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, marginTop: "2px" }}>Tradovate, NinjaTrader, Generic</div>
+          </div>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke={C.muted} strokeWidth="1.3" strokeLinecap="round"/></svg>
+        </div>
+        {/* Export CSV — opens DataExport screen */}
+        <div onClick={() => { if (isFlagOn("paywall") && profile.plan !== "pro" && profile.plan !== "elite") { setShowUpgrade(true); return; } setSubView("data-export"); }} style={{ display: "flex", alignItems: "center", gap: "14px", padding: "14px 18px", borderBottom: `1px solid ${C.border}`, cursor: "pointer" }}>
           <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: (C as any).accentSoft ?? C.panel, border: `1px solid ${C.border2}`, color: C.accent, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
             <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M10 3v10M6 9l4 4 4-4M3 16h14" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </div>
@@ -582,23 +660,16 @@ export function SettingsScreen({
           </div>
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke={C.muted} strokeWidth="1.3" strokeLinecap="round"/></svg>
         </div>
-        {/* Delete account */}
-        <div style={{ padding: "14px 18px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-            <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: `color-mix(in oklch, ${C.red} 12%, transparent)`, border: `1px solid ${C.border2}`, color: C.red, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M5 5h10v10H5zM8 8l4 4M12 8l-4 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontFamily: DISPLAY, fontSize: "14px", fontWeight: 600, color: C.red }}>Delete account</div>
-              <div style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, marginTop: "2px" }}>Permanent · cannot be undone</div>
-            </div>
+        {/* Delete account — opens 3-step flow */}
+        <div onClick={() => setSubView("delete-warn")} style={{ display: "flex", alignItems: "center", gap: "14px", padding: "14px 18px", cursor: "pointer" }}>
+          <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: `color-mix(in oklch, ${C.red} 12%, transparent)`, border: `1px solid ${C.border2}`, color: C.red, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </div>
-          <div style={{ marginTop: "12px", display: "flex", flexDirection: "column", gap: "8px" }}>
-            <input value={deleteConfirm} onChange={e => setDeleteConfirm(e.target.value)} placeholder="Type DELETE to confirm" style={{ padding: "11px 14px", background: "transparent", border: `1px solid ${deleteConfirm.toUpperCase() === "DELETE" ? C.red : C.border2}`, borderRadius: "10px", color: C.text, fontFamily: MONO, fontSize: "12px", letterSpacing: "0.04em", outline: "none" }} />
-            <button onClick={deleteAccount} disabled={deletingAccount || deleteConfirm.toUpperCase() !== "DELETE"} style={{ padding: "11px", border: `1px solid ${deleteConfirm.toUpperCase() === "DELETE" ? C.red : C.border2}`, borderRadius: "10px", background: "transparent", color: deleteConfirm.toUpperCase() === "DELETE" ? C.red : C.muted, cursor: deleteConfirm.toUpperCase() === "DELETE" ? "pointer" : "not-allowed", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", opacity: deletingAccount ? 0.6 : 1, transition: "all 0.2s" }}>
-              {deletingAccount ? "Deleting…" : "Delete My Account"}
-            </button>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontFamily: DISPLAY, fontSize: "14px", fontWeight: 600, color: C.red }}>Delete account</div>
+            <div style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, marginTop: "2px" }}>Permanent · 14-day grace period</div>
           </div>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke={C.muted} strokeWidth="1.3" strokeLinecap="round"/></svg>
         </div>
       </div>
 
@@ -651,5 +722,6 @@ export function SettingsScreen({
         <a href="/cookies.html" target="_blank" rel="noopener" style={{ fontFamily: MONO, fontSize: 11, color: C.text2, letterSpacing: "0.08em", textDecoration: "none" }}>Cookies</a>
       </div>
     </div>
+    </>
   );
 }
