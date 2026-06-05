@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { MONO, BODY, DISPLAY, KodaMarkFilled } from "./shared";
 import { subscribeToPush } from "./lib/push";
+import { supabase } from "./lib/supabase";
 
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
 export const ONBOARDING_STEPS = ["welcome", "instruments", "strategy", "notifications", "ready"] as const;
@@ -143,6 +144,20 @@ export function OnboardingFlow({ C, onComplete }: {
     if (saving) return;
     setSaving(true);
     await onComplete({ name, handle, avatar, bio: "", twitter: "", instruments, strategy });
+
+    // Fire the branded welcome email. Idempotent server-side via
+    // koda_welcome_email_sent kv flag — safe to fire-and-forget here.
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (token) {
+        void fetch("/api/account?action=welcome", {
+          method:  "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        }).catch(() => { /* idempotent; silent failure is fine */ });
+      }
+    } catch { /* never block onboarding on email */ }
+
     setSaving(false);
   }
 
