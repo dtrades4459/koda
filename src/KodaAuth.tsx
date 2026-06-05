@@ -1,7 +1,7 @@
 ﻿import { useState, useEffect, useRef } from "react";
 import { supabase } from "./lib/supabase";
 import { installStorage, clearStorageCache } from "./lib/storage";
-import type { Session } from "@supabase/supabase-js";
+import type { Session, User } from "@supabase/supabase-js";
 import Koda from "./Koda";
 import { BetaGate, betaEnabled, isBetaUnlocked } from "./BetaGate";
 import { DARK } from "./theme";
@@ -11,7 +11,36 @@ import {
   ResetRequestScreen,
   ResetSentScreen,
   NewPasswordScreen,
+  VerifyPendingScreen,
+  OAuthReturnErrorScreen,
+  ResetExpiredScreen,
+  HandlePickerScreen,
+  FirstSessionSurveyScreen,
+  InstallIOSScreen,
+  InstallAndroidScreen,
 } from "./auth/AuthScreens";
+import { getProfile, upsertProfile } from "./data/profile";
+
+// â"€â"€â"€ PWA INSTALL PROMPT â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
+let _deferredInstallPrompt: Event | null = null;
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  _deferredInstallPrompt = e;
+});
+
+type InstallStep = "install-ios" | "install-android";
+
+function getInstallStep(): InstallStep | null {
+  try {
+    if (localStorage.getItem("koda_install_shown")) return null;
+    const isStandalone = window.matchMedia("(display-mode: standalone)").matches ||
+                         (window.navigator as { standalone?: boolean }).standalone === true;
+    if (isStandalone) return null;
+    if (/iphone|ipad|ipod/i.test(navigator.userAgent)) return "install-ios";
+    if (_deferredInstallPrompt) return "install-android";
+  } catch { /* noop */ }
+  return null;
+}
 
 // â"€â"€â"€ THEME (dark-only for auth surfaces) â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 const C = DARK;
@@ -44,7 +73,8 @@ function OAuthBtn({ label, provider, onClick }: {
 }
 
 // â"€â"€â"€ AUTH FORM â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
-type AuthMode = "signin" | "signup" | "reset" | "reset-sent" | "new-password";
+type AuthMode = "signin" | "signup" | "reset" | "reset-sent" | "new-password" |
+               "verify" | "oauth-error" | "reset-expired";
 
 const USERNAME_DOMAIN = "users.kodatrade.co.uk";
 const usernameToEmail = (u: string) => `${u.toLowerCase().trim()}@${USERNAME_DOMAIN}`;
@@ -56,19 +86,32 @@ function AuthForm({ onSuccess, initialError = "", onModeChange, modeRequest }: {
   /** Parent can request a mode switch + focus by bumping `nonce`. */
   modeRequest?: { mode: "signin" | "signup"; nonce: number };
 }) {
-  const [mode,       setMode]       = useState<AuthMode>("signin");
-  const [username,   setUsername]   = useState("");
-  const [password,   setPassword]   = useState("");
-  const [loading,    setLoading]    = useState(false);
-  const [error,      setError]      = useState(initialError);
-  const [resetEmail, setResetEmail] = useState("");
+  const [mode,          setMode]          = useState<AuthMode>("signin");
+  const [username,      setUsername]      = useState("");
+  const [password,      setPassword]      = useState("");
+  const [loading,       setLoading]       = useState(false);
+  const [error,         setError]         = useState(initialError);
+  const [resetEmail,    setResetEmail]    = useState("");
+  const [signupEmail,   setSignupEmail]   = useState("");
+  const [oauthProvider, setOauthProvider] = useState("Google");
   const usernameInputRef = useRef<HTMLInputElement>(null);
 
+  // Detect OAuth errors and expired reset links from the URL hash on mount.
+  // parseOAuthError() in LandingPage no longer clears the hash — we do it here.
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY") setMode("new-password");
-    });
-    return () => subscription.unsubscribe();
+    const hash = window.location.hash.slice(1);
+    if (!hash.includes("error=")) return;
+    const params = new URLSearchParams(hash);
+    const code = params.get("error") ?? "";
+    const desc = params.get("error_description") ?? "";
+    history.replaceState(null, "", window.location.pathname + window.location.search);
+    if (code === "otp_expired" || desc.toLowerCase().includes("expired")) {
+      setMode("reset-expired");
+    } else {
+      const prov = params.get("provider") ?? "";
+      setOauthProvider(prov ? prov.charAt(0).toUpperCase() + prov.slice(1) : "Google");
+      setMode("oauth-error");
+    }
   }, []);
 
   // External mode-switch trigger from LandingPage CTA buttons. Nonce changes
@@ -114,12 +157,49 @@ function AuthForm({ onSuccess, initialError = "", onModeChange, modeRequest }: {
   async function handleSignUp(email: string, pw: string) {
     setLoading(true); setError("");
     try {
-      const { error: e } = await supabase.auth.signUp({ email, password: pw });
+      const { data, error: e } = await supabase.auth.signUp({ email, password: pw });
       if (e) throw e;
-      onSuccess();
+      setSignupEmail(email);
+      if (!data.session) {
+        // Email confirmation required — show 6-digit OTP entry screen
+        setMode("verify");
+      } else {
+        // Auto-confirmed (email confirmation disabled in project settings)
+        onSuccess();
+      }
     } catch (e: unknown) {
       const raw = e instanceof Error ? e.message : "Something went wrong.";
       setError(raw.includes("already registered") ? "An account with this email already exists. Sign in instead." : raw);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleVerify(code: string) {
+    setLoading(true); setError("");
+    try {
+      const { error: e } = await supabase.auth.verifyOtp({
+        email: signupEmail,
+        token: code,
+        type: "signup",
+      });
+      if (e) throw e;
+      // Session fires via onAuthStateChange in root; root handles post-auth onboarding
+      onSuccess();
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Invalid or expired code. Try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleResendVerify() {
+    setLoading(true); setError("");
+    try {
+      const { error: e } = await supabase.auth.resend({ email: signupEmail, type: "signup" });
+      if (e) throw e;
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Failed to resend. Try again.");
     } finally {
       setLoading(false);
     }
@@ -152,6 +232,38 @@ function AuthForm({ onSuccess, initialError = "", onModeChange, modeRequest }: {
     } finally {
       setLoading(false);
     }
+  }
+
+  /* ── Email verification — full-page ── */
+  if (mode === "verify") {
+    return (
+      <VerifyPendingScreen
+        email={signupEmail}
+        onVerify={handleVerify}
+        onResend={handleResendVerify}
+      />
+    );
+  }
+
+  /* ── OAuth return error — full-page ── */
+  if (mode === "oauth-error") {
+    return (
+      <OAuthReturnErrorScreen
+        provider={oauthProvider}
+        onRetry={() => signInWithOAuth(oauthProvider.toLowerCase() as "google")}
+        onUseEmail={() => { setMode("signup"); setError(""); onModeChange?.("signup"); }}
+      />
+    );
+  }
+
+  /* ── Reset link expired — full-page ── */
+  if (mode === "reset-expired") {
+    return (
+      <ResetExpiredScreen
+        onSendNew={() => { setMode("reset"); setError(""); }}
+        onBack={() => { setMode("signin"); setError(""); }}
+      />
+    );
   }
 
   /* ── Sign-up (new design — full-page) ── */
@@ -255,24 +367,8 @@ function AuthForm({ onSuccess, initialError = "", onModeChange, modeRequest }: {
   );
 }
 
-// â"€â"€â"€ PARSE OAUTH ERROR FROM URL HASH â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
-function parseOAuthError(): string {
-  const hash = window.location.hash.slice(1);
-  if (!hash.includes("error=")) return "";
-  const params = new URLSearchParams(hash);
-  const code = params.get("error") ?? "";
-  const desc = params.get("error_description") ?? "";
-  history.replaceState(null, "", window.location.pathname + window.location.search);
-  if (code === "access_denied" || desc.toLowerCase().includes("cancel")) {
-    return "Google sign-in was cancelled. Use your username and password instead.";
-  }
-  if (desc) return `Sign-in failed: ${desc.replace(/\+/g, " ")}. Please use username and password.`;
-  return "Google sign-in isn’t available. Please use your username and password.";
-}
-
 // â"€â"€â"€ LANDING PAGE â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 function LandingPage({ onSuccess }: { onSuccess: () => void }) {
-  const [oauthError] = useState(() => parseOAuthError());
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   const [modeRequest, setModeRequest] = useState<{ mode: "signin" | "signup"; nonce: number } | undefined>();
   const authRef     = useRef<HTMLElement>(null);
@@ -554,15 +650,6 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
                 {authMode === "signin" ? "Pick up where you left off." : "Free forever. No card to start."}
               </span>
             </div>
-
-            {oauthError && (
-              <div style={{
-                position: "relative", zIndex: 1, fontFamily: BODY, fontSize: 13, color: C.red,
-                marginBottom: 16, padding: "12px 16px",
-                background: "rgba(255,80,60,0.06)", borderRadius: 8,
-                border: "1px solid rgba(255,80,60,0.15)",
-              }}>{oauthError}</div>
-            )}
 
             <AuthForm
               onSuccess={onSuccess}
@@ -946,22 +1033,104 @@ function LoadingScreen() {
 }
 
 // â"€â"€â"€ ROOT AUTH WRAPPER â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
+type OnboardingStep = "handle" | "survey" | InstallStep;
+
+function buildHandleSuggestions(user: User): string[] {
+  const raw = (user.user_metadata?.name ?? user.user_metadata?.full_name ?? "") as string;
+  const base = raw.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "").slice(0, 15);
+  return base
+    ? [`@${base}`, `@${base}_fx`, `@${base}_trades`, `@${base}123`]
+    : ["@trader_fx", "@trader_j", "@market_edge", "@daytrader"];
+}
+
 export default function KodaAuth() {
   const [session,      setSession]      = useState<Session | null | undefined>(undefined);
   const [betaUnlocked, setBetaUnlocked] = useState<boolean>(() => isBetaUnlocked());
+
+  // Post-auth onboarding state machine
+  const [onboarding, setOnboarding]   = useState<OnboardingStep | null>(null);
+  const onboardingRan = useRef(false);
+
+  // Password-recovery mode (user clicked a valid reset link while having a session)
+  const [pwRecovery, setPwRecovery]   = useState(false);
+  const [pwError,    setPwError]      = useState("");
+  const [pwLoading,  setPwLoading]    = useState(false);
+
+  function advanceOnboarding(userId: string) {
+    if (!localStorage.getItem("koda_survey_done")) { setOnboarding("survey"); return; }
+    const step = getInstallStep();
+    if (step) { setOnboarding(step); return; }
+    setOnboarding(null);
+    localStorage.setItem(`koda_onboarded_${userId}`, "1");
+  }
+
+  async function runOnboardingCheck(user: User) {
+    if (onboardingRan.current) return;
+    onboardingRan.current = true;
+    const isOAuth = !!user.app_metadata.provider && user.app_metadata.provider !== "email";
+    if (isOAuth) {
+      try {
+        const profile = await getProfile(user.id);
+        if (!profile?.handle) { setOnboarding("handle"); return; }
+      } catch { /* fall through */ }
+    }
+    advanceOnboarding(user.id);
+  }
+
+  async function handleHandlePicked(handle: string) {
+    if (!session) return;
+    await upsertProfile({ userId: session.user.id, handle });
+    advanceOnboarding(session.user.id);
+  }
+
+  async function handleSurveyComplete(answers: Record<number, string>) {
+    if (!session) return;
+    try { await (window as any).storage?.set("koda_survey_answers", JSON.stringify(answers)); } catch { /* noop */ }
+    localStorage.setItem("koda_survey_done", "1");
+    const step = getInstallStep();
+    if (step) { setOnboarding(step); return; }
+    setOnboarding(null);
+  }
+
+  async function handleInstallAndroid() {
+    if (_deferredInstallPrompt) await (_deferredInstallPrompt as any).prompt();
+    localStorage.setItem("koda_install_shown", "1");
+    setOnboarding(null);
+  }
+
+  function handleInstallDismiss() {
+    localStorage.setItem("koda_install_shown", "1");
+    setOnboarding(null);
+  }
+
+  async function handleNewPasswordRoot(pw: string) {
+    setPwLoading(true); setPwError("");
+    try {
+      const { error: e } = await supabase.auth.updateUser({ password: pw });
+      if (e) throw e;
+      setPwRecovery(false);
+    } catch (e: unknown) {
+      setPwError(e instanceof Error ? e.message : "Failed to update password.");
+    } finally {
+      setPwLoading(false);
+    }
+  }
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       installStorage(data.session?.user?.id ?? null);
       setSession(data.session);
+      if (data.session) runOnboardingCheck(data.session.user);
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, sess) => {
-      if (event === "SIGNED_OUT") clearStorageCache();
+      if (event === "SIGNED_OUT") { clearStorageCache(); onboardingRan.current = false; }
+      if (event === "PASSWORD_RECOVERY") setPwRecovery(true);
       installStorage(sess?.user?.id ?? null);
       setSession(sess);
+      if (event === "SIGNED_IN" && sess) runOnboardingCheck(sess.user);
     });
     return () => subscription.unsubscribe();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Wait for the session probe to finish first. If the user already has a
   // Supabase session, they've passed the beta gate at some prior sign-up —
@@ -970,6 +1139,30 @@ export default function KodaAuth() {
   if (session === undefined) return <LoadingScreen />;
   if (!session && betaEnabled && !betaUnlocked) return <BetaGate onUnlocked={() => setBetaUnlocked(true)} />;
   if (!session) return <LandingPage onSuccess={() => {}} />;
+
+  // Password recovery — must check before onboarding
+  if (pwRecovery) {
+    return <NewPasswordScreen onSubmit={handleNewPasswordRoot} busy={pwLoading} error={pwError || undefined} />;
+  }
+
+  // Post-auth onboarding gates
+  if (onboarding === "handle" && session) {
+    return (
+      <HandlePickerScreen
+        suggestions={buildHandleSuggestions(session.user)}
+        onContinue={handleHandlePicked}
+      />
+    );
+  }
+  if (onboarding === "survey") {
+    return <FirstSessionSurveyScreen onComplete={handleSurveyComplete} />;
+  }
+  if (onboarding === "install-ios") {
+    return <InstallIOSScreen onClose={handleInstallDismiss} />;
+  }
+  if (onboarding === "install-android") {
+    return <InstallAndroidScreen onInstall={handleInstallAndroid} onSkip={handleInstallDismiss} />;
+  }
 
   const jwtPlan = (session.user.app_metadata?.plan ?? "free") as "free" | "pro" | "elite";
   return <Koda user={session.user} jwtPlan={jwtPlan} />;
