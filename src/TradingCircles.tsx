@@ -10,6 +10,11 @@ import { fetchSharedTrades, reactToSharedTrade, rowToSharedTrade } from "./data/
 import { SharedTradeCard } from "./components/SharedTradeCard";
 import type { Circle, CircleChallenge, ChallengeResult, FeedItem, CircleMessage, CircleMember, Profile } from "./types";
 import type { Theme } from "./theme";
+import {
+  BanKickModal, OwnerControlsScreen, ReportSheet,
+  MemberDetailCard, MessageContextMenu, LeaderboardUpsellRow,
+} from "./social/SocialScreens";
+import type { MemberStat } from "./social/SocialScreens";
 
 interface LeaderboardEntry {
   memberCode: string;
@@ -138,6 +143,11 @@ export function TradingCircles({
   const [feedLoading, setFeedLoading] = useState(false);
   const feedBottomRef = useRef<HTMLDivElement>(null);
   const [showLeaveSheet, setShowLeaveSheet] = useState(false);
+  const [confirmKick, setConfirmKick] = useState<{ memberCode: string; memberName: string } | null>(null);
+  const [showOwnerControls, setShowOwnerControls] = useState(false);
+  const [reportTarget, setReportTarget] = useState<{ type: "message" | "member"; id: string; name: string } | null>(null);
+  const [selectedMember, setSelectedMember] = useState<typeof leaderboard[number] | null>(null);
+  const [msgContextMenu, setMsgContextMenu] = useState<{ id: string; senderName: string; preview: string; isOwn: boolean } | null>(null);
   const { perCircle: unread, refresh: refreshUnread } = useUnreadCircles(
     myCircles?.map((c) => c.code) ?? []
   );
@@ -849,12 +859,20 @@ export function TradingCircles({
           {/* Header bar */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "14px" }}>
             <button onClick={() => { setCirclesView("browse"); setActiveCircle(null); setLeaderboard([]); }} style={{ ...pillGhost, padding: "8px 14px" }}>‹ BACK</button>
-            {!activeCircle.isOwner && (
-              <button onClick={() => setShowLeaveSheet(true)}
-                style={{ background: "transparent", color: C.muted, border: `0.5px solid ${C.border2}`, borderRadius: "999px", padding: "8px 14px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase" }}>
-                Leave
-              </button>
-            )}
+            <div style={{ display: "flex", gap: 6 }}>
+              {activeCircle.isOwner && (
+                <button onClick={() => setShowOwnerControls(true)}
+                  style={{ background: "transparent", color: C.muted, border: `0.5px solid ${C.border2}`, borderRadius: "999px", padding: "8px 14px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase" }}>
+                  Settings
+                </button>
+              )}
+              {!activeCircle.isOwner && (
+                <button onClick={() => setShowLeaveSheet(true)}
+                  style={{ background: "transparent", color: C.muted, border: `0.5px solid ${C.border2}`, borderRadius: "999px", padding: "8px 14px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase" }}>
+                  Leave
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Circle hero */}
@@ -1205,8 +1223,12 @@ export function TradingCircles({
                                       style={{ background: isFollowing ? "transparent" : C.text, color: isFollowing ? C.muted : C.bg, border: `1px solid ${isFollowing ? C.border2 : C.text}`, borderRadius: "999px", padding: "8px 18px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", flex: 1 }}>
                                       {isFollowing ? "✓ Following" : "+ Follow"}
                                     </button>
+                                    <button onClick={(e) => { e.stopPropagation(); setSelectedMember(entry); }}
+                                      style={{ ...pillGhost, padding: "8px 14px" }}>
+                                      CARD
+                                    </button>
                                     {activeCircle?.isOwner && (
-                                      <button onClick={async (e) => { e.stopPropagation(); await kickMember(activeCircle.code, entry.memberCode); setLeaderboard(prev => prev.filter(r => r.memberCode !== entry.memberCode)); setExpandedMember(null); }}
+                                      <button onClick={(e) => { e.stopPropagation(); setConfirmKick({ memberCode: entry.memberCode, memberName: entry.alias || entry.name || entry.memberCode }); }}
                                         style={{ background: "transparent", color: C.red, border: `1px solid ${C.red}44`, borderRadius: "999px", padding: "8px 14px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase" }}>
                                         KICK
                                       </button>
@@ -1230,6 +1252,13 @@ export function TradingCircles({
                       return (
                         <>
                           {leaderboard.map((entry, i) => renderRow(entry, i))}
+                          {!isPro && leaderboard.length >= 3 && (
+                            <LeaderboardUpsellRow
+                              C={C}
+                              rank={leaderboard.length + 1}
+                              onUpgrade={() => showToast("Upgrade to Pro to see the full leaderboard")}
+                            />
+                          )}
                         </>
                       );
                     })()}
@@ -1285,7 +1314,11 @@ export function TradingCircles({
                                     <div style={{ background: isMe ? C.text : C.panel, color: isMe ? C.bg : C.text, borderRadius: isMe ? "16px 16px 4px 16px" : "16px 16px 16px 4px", padding: "10px 14px", fontFamily: BODY, fontSize: "14px", lineHeight: 1.5, wordBreak: "break-word", border: isMe ? "none" : `1px solid ${C.border}` }}>{msg.text}</div>
                                     <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, marginTop: "4px", display: "flex", gap: "10px", justifyContent: isMe ? "flex-end" : "flex-start", alignItems: "center" }}>
                                       <span>{fmtMsgTime(msg.created_at)}</span>
-                                      {isMe && <button onClick={() => deleteChatMessage(msg.id)} style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "10px", padding: 0, textTransform: "uppercase", letterSpacing: "0.06em" }}>Delete</button>}
+                                      <button
+                                        onClick={() => setMsgContextMenu({ id: msg.id, senderName: msg.sender_name, preview: msg.text, isOwn: isMe })}
+                                        style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", padding: "0 2px", fontSize: "14px", opacity: 0.6, lineHeight: 1 }}
+                                        title="Message options"
+                                      >···</button>
                                     </div>
                                   </div>
                                 </div>
@@ -1480,6 +1513,103 @@ export function TradingCircles({
           )}
         </div>
       )}
+      {/* ── Ban / kick confirmation ── */}
+      {confirmKick && activeCircle && (
+        <BanKickModal
+          C={C}
+          memberName={confirmKick.memberName}
+          action="kick"
+          onCancel={() => setConfirmKick(null)}
+          onConfirm={async () => {
+            await kickMember(activeCircle.code, confirmKick.memberCode);
+            setLeaderboard(prev => prev.filter(r => r.memberCode !== confirmKick.memberCode));
+            setExpandedMember(null);
+            setConfirmKick(null);
+          }}
+        />
+      )}
+
+      {/* ── Owner controls screen ── */}
+      {showOwnerControls && activeCircle && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 9000, background: C.bg, overflowY: "auto" }}>
+          <OwnerControlsScreen
+            C={C}
+            circleName={activeCircle.name}
+            circleCode={activeCircle.code}
+            privacy={(activeCircle as any).privacy ?? "public"}
+            onRename={(name) => { showToast(`Renamed to "${name}"`); setShowOwnerControls(false); }}
+            onTogglePrivacy={(p) => { showToast(`Privacy set to ${p}`); }}
+            onRegenerateCode={() => { navigator.clipboard?.writeText(activeCircle.code); showToast("Code regenerated (copy from here)"); }}
+            onDeleteCircle={() => { showToast("Delete not yet wired"); setShowOwnerControls(false); }}
+            onBack={() => setShowOwnerControls(false)}
+          />
+        </div>
+      )}
+
+      {/* ── Report sheet ── */}
+      {reportTarget && (
+        <ReportSheet
+          C={C}
+          targetName={reportTarget.name}
+          targetType={reportTarget.type}
+          onCancel={() => setReportTarget(null)}
+          onSubmit={(reason) => {
+            showToast(`Report submitted: ${reason}`);
+            setReportTarget(null);
+          }}
+        />
+      )}
+
+      {/* ── Member detail card ── */}
+      {selectedMember && activeCircle && (() => {
+        const entry = selectedMember;
+        const isMe = entry.memberCode === getMyCode();
+        const isFollowing = (following || []).includes(entry.memberCode);
+        const md = metricDisplay(entry, activeCircle);
+        const pPos = md.raw >= 0;
+        const stats: MemberStat[] = [
+          { label: md.label, value: md.val, tone: pPos ? "green" : "red" },
+          { label: "WIN RATE", value: `${Number(entry.winRate ?? 0).toFixed(0)}%`, tone: Number(entry.winRate ?? 0) >= 50 ? "green" : "red" },
+          { label: "TRADES", value: String(entry.total || 0) },
+        ];
+        const rankIdx = leaderboard.findIndex(e => e.memberCode === entry.memberCode);
+        return (
+          <MemberDetailCard
+            C={C}
+            name={entry.name || entry.memberCode}
+            handle={entry.handle}
+            rank={rankIdx >= 0 ? rankIdx + 1 : undefined}
+            stats={stats}
+            isFollowing={isFollowing}
+            isMe={isMe}
+            canKick={!isMe && (activeCircle?.isOwner ?? false)}
+            onFollow={() => followUser(entry.memberCode)}
+            onUnfollow={() => unfollowUser(entry.memberCode)}
+            onKick={() => { setSelectedMember(null); setConfirmKick({ memberCode: entry.memberCode, memberName: entry.name || entry.memberCode }); }}
+            onReport={() => { setSelectedMember(null); setReportTarget({ type: "member", id: entry.memberCode, name: entry.name || entry.memberCode }); }}
+            onViewProfile={entry.handle && openProfile ? () => { setSelectedMember(null); openProfile!(entry.handle!); } : undefined}
+            onClose={() => setSelectedMember(null)}
+          />
+        );
+      })()}
+
+      {/* ── Message context menu ── */}
+      {msgContextMenu && (
+        <MessageContextMenu
+          C={C}
+          senderName={msgContextMenu.senderName}
+          preview={msgContextMenu.preview}
+          isOwn={msgContextMenu.isOwn}
+          onAction={(id) => {
+            if (id === "copy") { navigator.clipboard?.writeText(msgContextMenu.preview); showToast("Copied"); }
+            else if (id === "delete" && activeCircle) { void deleteChatMessage(msgContextMenu.id); }
+            else if (id === "report") { setReportTarget({ type: "message", id: msgContextMenu.id, name: `"${msgContextMenu.preview.slice(0, 40)}…"` }); }
+            else if (id === "quote") { showToast("Quote reply coming soon"); }
+          }}
+          onClose={() => setMsgContextMenu(null)}
+        />
+      )}
+
       {/* Leave circle confirmation sheet */}
       {showLeaveSheet && activeCircle && (
         <div

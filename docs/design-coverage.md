@@ -101,24 +101,24 @@ _The full lifecycle of a Circle and everything inside it._
 
 **Designs**: `koda-designs/cat04-social.jsx` · **Target**: `src/TradingCircles.tsx`
 
-- [x] [ ] 🟠 **Ban / kick confirmation**
+- [x] [x] 🟠 **Ban / kick confirmation**
 - [x] [ ] 🟠 **Chat thread**
-- [x] [ ] 🟠 **Circle — create form**
-- [x] [ ] 🟠 **Join by code**
-- [x] [ ] 🟠 **Owner controls panel**
-- [x] [ ] 🟠 **Report-content flow**
+- [x] [x] 🟠 **Circle — create form**
+- [x] [x] 🟠 **Join by code**
+- [x] [x] 🟠 **Owner controls panel**
+- [x] [x] 🟠 **Report-content flow**
 - [x] [ ] 🟡 **@mention autocomplete**
 - [x] [ ] 🟡 **Blocked-users management**
-- [x] [ ] 🟡 **Challenge — creation**
+- [x] [x] 🟡 **Challenge — creation**
 - [x] [ ] 🟡 **Challenge — in-progress**
 - [x] [ ] 🟡 **Challenge — result celebration**
 - [x] [ ] 🟡 **Chat composer + attachments**
 - [x] [ ] 🟡 **Emoji reactions picker**
-- [x] [ ] 🟡 **Leaderboard expanded (top 5 + blurred upsell)**
-- [x] [ ] 🟡 **Leave confirmation**
-- [x] [ ] 🟡 **Member list + member detail card**
-- [x] [ ] 🟡 **Message context menu (copy / quote / report / delete)**
-- [x] [ ] 🟡 **Private invite link**
+- [x] [x] 🟡 **Leaderboard expanded (top 5 + blurred upsell)**
+- [x] [x] 🟡 **Leave confirmation**
+- [x] [x] 🟡 **Member list + member detail card**
+- [x] [x] 🟡 **Message context menu (copy / quote / report / delete)**
+- [x] [x] 🟡 **Private invite link**
 - [ ] [ ] ⚪ **DMs — 1:1 list + thread + composer** _(out of scope)_
 - [x] [x] ⚪ **Public discover + filters**
 
