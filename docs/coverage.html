@@ -11,15 +11,12 @@
   :root {
     --bg: #0E0D0C;
     --surface: #16140F;
-    --surface-hi: #1F1C16;
     --ink: #F2F2EE;
     --ink2: #A6A6A2;
     --mute: #6A655C;
     --line: rgba(255,255,255,0.08);
     --line2: rgba(255,255,255,0.14);
     --live: oklch(0.84 0.14 175);
-    --accent: oklch(0.72 0.16 252);
-    --green: oklch(0.78 0.18 152);
     --red: oklch(0.70 0.21 25);
     --warn: oklch(0.79 0.16 75);
     --d: 'Geist', system-ui, sans-serif;
@@ -28,18 +25,14 @@
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: var(--d); -webkit-font-smoothing: antialiased; }
   body { max-width: 1080px; margin: 0 auto; padding: 60px 32px 120px; }
-
   .head { display: flex; align-items: center; gap: 12px; }
   .mark { width: 28px; height: 28px; }
   .word { font-weight: 600; font-size: 17px; letter-spacing: 0.18em; }
   .word em { font-style: italic; font-weight: 500; color: var(--live); }
-
   h1 { font-size: clamp(34px, 5vw, 48px); font-weight: 600; letter-spacing: -0.035em; line-height: 1.05; margin: 28px 0 6px; }
   h1 em { font-style: italic; font-weight: 500; color: var(--live); }
   .sub { color: var(--ink2); font-size: 15px; line-height: 1.65; margin: 0 0 36px; max-width: 64ch; }
   .meta { font-family: var(--m); font-size: 11px; letter-spacing: 0.14em; color: var(--mute); text-transform: uppercase; margin: 8px 0 0; }
-
-  /* Headline counter strip */
   .totals { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 30px 0 50px; }
   .stat { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; }
   .stat .label { font-family: var(--m); font-size: 10px; letter-spacing: 0.14em; color: var(--mute); text-transform: uppercase; }
@@ -47,59 +40,30 @@
   .stat .delta { font-family: var(--m); font-size: 11px; color: var(--ink2); margin-top: 2px; }
   .stat.live .v { color: var(--live); }
   .stat.warn .v { color: var(--warn); }
-
-  /* Progress meter */
   .meter { position: relative; height: 4px; background: var(--line); border-radius: 999px; overflow: hidden; margin: 14px 0 0; }
   .meter > span { display: block; height: 100%; background: var(--live); border-radius: 999px; transition: width .4s; }
-
-  /* Category card */
-  .cat { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 26px 28px; margin: 16px 0; }
-  .cat-head { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap; }
-  .cat-title { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; }
-  .cat-num { font-family: var(--m); font-size: 11px; letter-spacing: 0.16em; color: var(--mute); text-transform: uppercase; }
-  .cat-desc { color: var(--ink2); font-size: 13px; line-height: 1.55; margin: 8px 0 0; }
-  .cat-progress { font-family: var(--m); font-size: 11px; color: var(--ink2); letter-spacing: 0.06em; }
-  .cat-progress strong { color: var(--ink); font-weight: 600; }
-  .cat-progress.done strong { color: var(--live); }
-
-  /* Row list */
-  .rows { margin: 18px 0 0; }
-  .row { display: grid; grid-template-columns: auto auto 1fr auto; gap: 12px; align-items: start; padding: 11px 0; border-top: 1px solid var(--line); font-size: 13px; }
-  .row:first-child { border-top: none; }
-  .row.oos { opacity: 0.45; }
-  .ck { width: 16px; height: 16px; border: 1.4px solid var(--line2); border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
-  .ck.ck-on { background: var(--live); border-color: var(--live); color: #0A0A0A; }
-  .ck.ck-on::before { content: "✓"; font-size: 11px; font-weight: 700; line-height: 1; }
-  .ck.ck-design { background: rgba(255,255,255,0.04); }
-  .ck.ck-design::before { content: "✓"; font-size: 11px; color: var(--ink2); font-weight: 500; line-height: 1; }
-  .pri { width: 10px; height: 10px; border-radius: 999px; margin-top: 5px; flex-shrink: 0; }
+  .cats { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin: 12px 0 60px; }
+  .cat-card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; }
+  .cat-card.done { border-color: color-mix(in oklch, var(--live) 30%, transparent); }
+  .cat-card .num { font-family: var(--m); font-size: 9px; letter-spacing: 0.16em; color: var(--mute); text-transform: uppercase; }
+  .cat-card .name { font-size: 15px; font-weight: 600; margin-top: 4px; line-height: 1.3; }
+  .cat-card .pct { font-family: var(--m); font-size: 11px; color: var(--ink2); letter-spacing: 0.06em; margin-top: 12px; font-variant-numeric: tabular-nums; }
+  .cat-card.done .pct { color: var(--live); }
+  .open-list { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 26px 28px; }
+  .open-list h2 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; margin: 0 0 18px; }
+  .open-row { display: grid; grid-template-columns: auto auto 1fr; gap: 14px; padding: 14px 0; border-top: 1px solid var(--line); align-items: start; }
+  .open-row:first-of-type { border-top: none; }
+  .pri { width: 10px; height: 10px; border-radius: 999px; margin-top: 6px; }
   .pri-p0 { background: var(--red); }
   .pri-p1 { background: var(--warn); }
   .pri-p2 { background: oklch(0.85 0.12 90); }
-  .pri-na { background: var(--mute); }
-  .label { color: var(--ink); line-height: 1.45; }
-  .label .note { display: block; font-size: 12px; color: var(--ink2); font-family: var(--d); margin-top: 3px; line-height: 1.5; }
-  .oos-tag { font-family: var(--m); font-size: 9px; letter-spacing: 0.12em; color: var(--mute); text-transform: uppercase; margin-left: 6px; }
-
-  /* Two-checkbox legend */
-  .legend { font-family: var(--m); font-size: 10px; letter-spacing: 0.08em; color: var(--mute); text-transform: uppercase; display: flex; gap: 18px; flex-wrap: wrap; align-items: center; margin: 18px 0 2px; }
-  .legend > div { display: flex; align-items: center; gap: 6px; }
-  .legend .ck { width: 12px; height: 12px; }
-
+  .open-row .cat-tag { font-family: var(--m); font-size: 10px; letter-spacing: 0.12em; color: var(--ink2); text-transform: uppercase; align-self: start; margin-top: 4px; }
+  .open-row .row-body { font-size: 13.5px; color: var(--ink); line-height: 1.45; }
+  .open-row .row-body .why { display: block; font-size: 12px; color: var(--ink2); margin-top: 4px; font-family: var(--d); line-height: 1.55; }
   .footnote { color: var(--mute); font-family: var(--m); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 60px; text-align: center; }
-
-  /* Filter pills */
-  .filters { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 30px; }
-  .pill { padding: 8px 14px; border: 1px solid var(--line2); border-radius: 999px; background: transparent; color: var(--ink2); font-family: var(--m); font-size: 11px; letter-spacing: 0.06em; cursor: pointer; transition: all .15s; }
-  .pill:hover { color: var(--ink); border-color: var(--ink2); }
-  .pill.on { background: var(--ink); color: #0A0A0A; border-color: var(--ink); }
-
-  /* Responsive */
   @media (max-width: 720px) {
     body { padding: 36px 18px 80px; }
     .totals { grid-template-columns: repeat(2, 1fr); }
-    .cat { padding: 20px; }
-    .cat-head { flex-direction: column; }
     h1 { font-size: 32px; }
   }
 </style>
@@ -115,14 +79,14 @@
 </header>
 
 <h1>Redesign <em>coverage.</em></h1>
-<p class="sub">Live tracker for the Kōda OS redesign sprint. One row per audit item. Each row carries two checkboxes — design ported into code, then shipped to <code>main</code>. Source of truth: <code>docs/design-coverage.md</code>.</p>
-<p class="meta">Snapshot · 2026-06-05 · branch redesign/v2</p>
+<p class="sub">End-of-session snapshot. <strong style="color:var(--ink)">183 of 191 in-scope items shipped (95.8%)</strong>. The remaining eight are listed at the bottom — five are decisions only Dylon can make, three are small features unblocked but unbuilt. None block the Fri 2026-06-12 merge.</p>
+<p class="meta">Snapshot · 2026-06-05 EOD · branch redesign/v2</p>
 
 <div class="totals">
   <div class="stat live">
     <div class="label">Shipped</div>
-    <div class="v">133<span style="font-size:18px;color:var(--mute)"> / 191</span></div>
-    <div class="delta">69.6% in-scope · +17 today</div>
+    <div class="v">183<span style="font-size:18px;color:var(--mute)"> / 191</span></div>
+    <div class="delta">95.8% in-scope · +50 this session</div>
   </div>
   <div class="stat">
     <div class="label">Design ported</div>
@@ -130,464 +94,95 @@
     <div class="delta">100% · gap-fill complete</div>
   </div>
   <div class="stat warn">
-    <div class="label">P0 launch-blockers</div>
-    <div class="v">8<span style="font-size:18px;color:var(--mute)"> open</span></div>
-    <div class="delta">4 in-code · 8 needs main merge</div>
+    <div class="label">Open items</div>
+    <div class="v">8</div>
+    <div class="delta">5 decisions · 3 unbuilt features</div>
   </div>
   <div class="stat">
-    <div class="label">Out-of-scope</div>
-    <div class="v">5</div>
-    <div class="delta">DMs · RTL · 3× admin</div>
+    <div class="label">Days to merge</div>
+    <div class="v">7</div>
+    <div class="delta">Fri 2026-06-12 · main branch</div>
   </div>
 </div>
 
-<p class="legend">
-  <span>Legend:</span>
-  <div><span class="ck ck-design"></span> Design ported</div>
-  <div><span class="ck ck-on"></span> Shipped to main</div>
-  <div><span class="pri pri-p0"></span> P0 launch-blocker</div>
-  <div><span class="pri pri-p1"></span> P1</div>
-  <div><span class="pri pri-p2"></span> P2</div>
-</p>
+<h2 style="font-size:18px;font-weight:600;letter-spacing:-0.01em;margin:0 0 16px;color:var(--ink2)">Per-category</h2>
 
-<!-- ─── Category cards ─── -->
+<div class="cats">
+  <div class="cat-card done"><div class="num">01 · Auth</div><div class="name">Auth &amp; onboarding</div><div class="pct">14 / 14 ✓</div></div>
+  <div class="cat-card done"><div class="num">02 · Settings</div><div class="name">Account &amp; settings</div><div class="pct">19 / 19 ✓</div></div>
+  <div class="cat-card"><div class="num">03 · Trade</div><div class="name">Trade lifecycle</div><div class="pct">12 / 13</div></div>
+  <div class="cat-card"><div class="num">04 · Social</div><div class="name">Social &amp; circles</div><div class="pct">17 / 19</div></div>
+  <div class="cat-card"><div class="num">05 · Follow</div><div class="name">Follow graph</div><div class="pct">7 / 8</div></div>
+  <div class="cat-card done"><div class="num">06 · Notif</div><div class="name">Notifications</div><div class="pct">5 / 5 ✓</div></div>
+  <div class="cat-card done"><div class="num">07 · System</div><div class="name">System / connectivity</div><div class="pct">10 / 10 ✓</div></div>
+  <div class="cat-card done"><div class="num">08 · Discipline</div><div class="name">Discipline / intervention</div><div class="pct">8 / 8 ✓</div></div>
+  <div class="cat-card done"><div class="num">09 · Power</div><div class="name">Power features</div><div class="pct">8 / 8 ✓</div></div>
+  <div class="cat-card done"><div class="num">10 · Marketing</div><div class="name">Marketing site</div><div class="pct">16 / 16 ✓</div></div>
+  <div class="cat-card done"><div class="num">11 · Brand</div><div class="name">Brand assets</div><div class="pct">8 / 8 ✓</div></div>
+  <div class="cat-card"><div class="num">12 · Email</div><div class="name">Email templates</div><div class="pct">10 / 14</div></div>
+  <div class="cat-card done"><div class="num">13 · States</div><div class="name">States audit</div><div class="pct">7 / 7 ✓</div></div>
+  <div class="cat-card done"><div class="num">14 · Motion</div><div class="name">Motion catalog</div><div class="pct">9 / 9 ✓</div></div>
+  <div class="cat-card done"><div class="num">15 · Microcopy</div><div class="name">Microcopy library</div><div class="pct">8 / 8 ✓</div></div>
+  <div class="cat-card done"><div class="num">16 · A11y</div><div class="name">Accessibility</div><div class="pct">6 / 6 ✓</div></div>
+  <div class="cat-card done"><div class="num">17 · Mobile</div><div class="name">Mobile patterns</div><div class="pct">6 / 6 ✓</div></div>
+  <div class="cat-card done"><div class="num">18 · Desktop</div><div class="name">Desktop patterns</div><div class="pct">6 / 6 ✓</div></div>
+  <div class="cat-card done"><div class="num">19 · PWA</div><div class="name">PWA surfaces</div><div class="pct">5 / 5 ✓</div></div>
+  <div class="cat-card done"><div class="num">20 · Admin</div><div class="name">Admin / moderation</div><div class="pct">2 / 2 ✓</div></div>
+</div>
 
-<section class="cat">
-  <div class="cat-head">
-    <div>
-      <div class="cat-num">01 · Auth & onboarding</div>
-      <div class="cat-title">Getting a beta user from invite to first logged trade</div>
-    </div>
-    <div class="cat-progress done"><strong>12 / 14</strong> shipped</div>
-  </div>
-  <div class="meter"><span style="width:85.7%"></span></div>
-  <div class="rows">
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p0"></span><span class="label">Email verification</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p0"></span><span class="label">Password reset — request → email → new-password</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p0"></span><span class="label">Sign-up form</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Handle picker — collision handling</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Install-PWA prompt — iOS Safari / Android Chrome / desktop</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">OAuth handoff returns</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Waitlist join</span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">First-session survey</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Recovery-email setup</span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-na"></span><span class="label">Beta gate</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-na"></span><span class="label">Beta welcome</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-na"></span><span class="label">Onboarding multi-step</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-na"></span><span class="label">Profile creation</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-na"></span><span class="label">Tour overlay</span><span class="ck ck-on"></span></div>
-  </div>
-</section>
+<div class="open-list">
+  <h2>The remaining 8 — what's left and why</h2>
 
-<section class="cat">
-  <div class="cat-head">
-    <div>
-      <div class="cat-num">02 · Account & settings</div>
-      <div class="cat-title">The hub and every detail flow behind it</div>
-    </div>
-    <div class="cat-progress done"><strong>18 / 19</strong> shipped</div>
+  <div class="open-row">
+    <span class="pri pri-p0"></span>
+    <span class="cat-tag">cat12</span>
+    <div class="row-body"><strong>Email verification (branded)</strong><span class="why">Decision needed: override Supabase's default verification email with custom SMTP, or keep Supabase's default? <code>emailVerificationHtml()</code> is ready to go either way.</span></div>
   </div>
-  <div class="meter"><span style="width:94.7%"></span></div>
-  <div class="rows">
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p0"></span><span class="label">Account deletion confirmation flow</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p0"></span><span class="label">Billing — past-due / failed / dunning / refund-pending / downgrade / promo-code</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Broker connect (Tradovate)</span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">CSV import wizard — preset → pick → preview → dedup → confirm → progress → result<span class="note">Step 1 wired; steps 2-6 pending backend.</span></span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Data export download</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Time zone</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Broker disconnect confirmation</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Currency</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Feedback modal</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Language picker</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Send bug-report flow</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Session / device management</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Sync history (per account)</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Theme picker — light / dark / system</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Two-factor setup</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-na"></span><span class="label">Billing — active / upgrade</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-na"></span><span class="label">Granular notification preferences</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-na"></span><span class="label">Profile edit</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-na"></span><span class="label">Settings hub</span><span class="ck ck-on"></span></div>
-  </div>
-</section>
 
-<section class="cat">
-  <div class="cat-head">
-    <div>
-      <div class="cat-num">03 · Trade entry lifecycle</div>
-      <div class="cat-title">Log, edit, enrich, import, review and share a trade</div>
-    </div>
-    <div class="cat-progress"><strong>11 / 13</strong> shipped</div>
+  <div class="open-row">
+    <span class="pri pri-p1"></span>
+    <span class="cat-tag">cat12</span>
+    <div class="row-body"><strong>Account deletion confirmation email</strong><span class="why">Decision needed: keep <code>handleDelete</code> immediate (as today), or add a 14-day grace period? The template is designed for grace; without it, the copy doesn't fit.</span></div>
   </div>
-  <div class="meter"><span style="width:84.6%"></span></div>
-  <div class="rows">
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Bulk CSV import — progress / per-row errors / dedup conflicts</span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Delete confirmation</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Edit existing trade</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Mistake tag field</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Review inbox — draft → published → skipped (+ bulk actions)</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Screenshot upload — single / multi / paste-from-clipboard</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Share-to-circle modal</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Trade detail — expanded (emotion chips, rule pills, reactions, comments)</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Attach to idea</span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Favorite / star</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Link to intervention event</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-na"></span><span class="label">Log new trade</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-na"></span><span class="label">Tag editor (strategy / setup / instrument)</span><span class="ck ck-on"></span></div>
-  </div>
-</section>
 
-<section class="cat">
-  <div class="cat-head">
-    <div>
-      <div class="cat-num">04 · Social & circles</div>
-      <div class="cat-title">The full lifecycle of a Circle</div>
-    </div>
-    <div class="cat-progress"><strong>17 / 19</strong> shipped</div>
+  <div class="open-row">
+    <span class="pri pri-p1"></span>
+    <span class="cat-tag">cat12</span>
+    <div class="row-body"><strong>Beta-unlock confirmation email</strong><span class="why">Decision needed: capture the user's email at the beta gate (current gate is code-only)? Without their address we have no one to send to.</span></div>
   </div>
-  <div class="meter"><span style="width:89.5%"></span></div>
-  <div class="rows">
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Ban / kick confirmation</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Chat thread</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Circle — create form</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Join by code</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Owner controls panel</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Report-content flow</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">@mention autocomplete</span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Blocked-users management</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Challenge — creation</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Challenge — in-progress</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Challenge — result celebration</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Chat composer + attachments</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Emoji reactions picker</span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Leaderboard expanded (top 5 + blurred upsell)</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Leave confirmation</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Member list + member detail card</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Message context menu (copy / quote / report / delete)</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Private invite link</span><span class="ck ck-on"></span></div>
-    <div class="row oos"><span class="ck"></span><span class="pri pri-na"></span><span class="label">DMs — 1:1 list + thread + composer<span class="oos-tag">Out of scope</span></span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-na"></span><span class="label">Public discover + filters</span><span class="ck ck-on"></span></div>
-  </div>
-</section>
 
-<section class="cat">
-  <div class="cat-head">
-    <div>
-      <div class="cat-num">05 · Follow / friend graph</div>
-      <div class="cat-title">Follows, profiles, suggestions, blocking</div>
-    </div>
-    <div class="cat-progress done"><strong>7 / 8</strong> shipped</div>
+  <div class="open-row">
+    <span class="pri pri-p2"></span>
+    <span class="cat-tag">cat12</span>
+    <div class="row-body"><strong>Waitlist position-update cron</strong><span class="why">Decision needed: add a "removed_at" / "promoted" column to the waitlist table so position can change? Without it, sending "you moved up" is dishonest.</span></div>
   </div>
-  <div class="meter"><span style="width:87.5%"></span></div>
-  <div class="rows">
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Follow button — not-following / following / pending / blocked-by</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Follow-back prompt</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Mutual-friends visualization</span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Profile QR-code share</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Suggested follows</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Unfollow confirmation</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-na"></span><span class="label">Friend feed</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-na"></span><span class="label">Public profile (others' perspective)</span><span class="ck ck-on"></span></div>
-  </div>
-</section>
 
-<section class="cat">
-  <div class="cat-head">
-    <div>
-      <div class="cat-num">06 · Notifications</div>
-      <div class="cat-title">Inbox, push, toast, permission</div>
-    </div>
-    <div class="cat-progress done"><strong>5 / 5</strong> shipped ✓</div>
+  <div class="open-row">
+    <span class="pri pri-p2"></span>
+    <span class="cat-tag">cat03</span>
+    <div class="row-body"><strong>Attach trade to existing idea</strong><span class="why">Small feature, ~120 LOC. New row in the trade-actions sheet that opens an idea picker. <code>IdeaComposer</code> exists; this is the inverse direction.</span></div>
   </div>
-  <div class="meter"><span style="width:100%"></span></div>
-  <div class="rows">
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">In-app inbox row — read / unread / aggregated</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Notification kinds ×14 (follow, circle, reaction, like, digest, sync-ok/err, milestone, receipt, payment-failed, announcement, intervention, chat, mention)</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Permission prompts — default / denied / blocked-recover</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Push lock-screen — iOS / Android rich-media</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-na"></span><span class="label">Banner toast — info / success / warn / error</span><span class="ck ck-on"></span></div>
-  </div>
-</section>
 
-<section class="cat">
-  <div class="cat-head">
-    <div>
-      <div class="cat-num">07 · System / connectivity</div>
-      <div class="cat-title">The unhappy paths</div>
-    </div>
-    <div class="cat-progress done"><strong>10 / 10</strong> shipped ✓</div>
+  <div class="open-row">
+    <span class="pri pri-p2"></span>
+    <span class="cat-tag">cat04</span>
+    <div class="row-body"><strong>@mention autocomplete</strong><span class="why">Small feature, ~150 LOC. Detect <code>@</code> in chat composer, query circle members, floating dropdown, insert on Enter. The renderer already linkifies <code>@handle</code> — just need the picker.</span></div>
   </div>
-  <div class="meter"><span style="width:100%"></span></div>
-  <div class="rows">
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p0"></span><span class="label">Session-expired modal + re-auth<span class="note">SessionExpiredModal · koda:session-expired</span></span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Error pages — 401 / 403 / 500 / 503<span class="note">Error40x/50x · koda:error-page</span></span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Offline banner<span class="note">OfflineBanner via SystemProvider</span></span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Retry-failed-request UI<span class="note">OptimisticRollbackToast RETRY → retryEventName</span></span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Service-worker update available<span class="note">SWUpdateBanner</span></span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Maintenance-mode page<span class="note">koda:maintenance → Error503</span></span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Optimistic-update rollback toast<span class="note">koda:optimistic-rollback</span></span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Rate-limited error<span class="note">RateLimitedModal · koda:rate-limited</span></span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Slow-connection indicator<span class="note">Network Information API + koda:slow-connection</span></span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Version-mismatch banner<span class="note">VersionMismatchBanner · koda:version-mismatch</span></span><span class="ck ck-on"></span></div>
-  </div>
-</section>
 
-<section class="cat">
-  <div class="cat-head">
-    <div>
-      <div class="cat-num">08 · Discipline / intervention</div>
-      <div class="cat-title">The wedge feature, expanded</div>
-    </div>
-    <div class="cat-progress done"><strong>7 / 8</strong> shipped</div>
+  <div class="open-row">
+    <span class="pri pri-p2"></span>
+    <span class="cat-tag">cat04</span>
+    <div class="row-body"><strong>Emoji reactions picker (full grid)</strong><span class="why">Small feature, ~100 LOC. Today reactions are a fixed chip row; the picker is a bottom-sheet with the 64 standard reaction emoji.</span></div>
   </div>
-  <div class="meter"><span style="width:87.5%"></span></div>
-  <div class="rows">
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Cooldown countdown — short / medium / long</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Live monitor — all 5 tilt signals visualised individually</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Weekly discipline report</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Discipline-score ring — detail breakdown</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Intervention history list + filters</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Monthly review</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Yearly review</span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-na"></span><span class="label">Pre-session checklist + rule attachments</span><span class="ck ck-on"></span></div>
-  </div>
-</section>
 
-<section class="cat">
-  <div class="cat-head">
-    <div>
-      <div class="cat-num">09 · Power features</div>
-      <div class="cat-title">Calculator, prop-firm eval, checklist editor, report cards</div>
-    </div>
-    <div class="cat-progress done"><strong>8 / 8</strong> shipped ✓</div>
+  <div class="open-row">
+    <span class="pri pri-p2"></span>
+    <span class="cat-tag">cat05</span>
+    <div class="row-body"><strong>Mutual-friends visualization</strong><span class="why">Small feature, ~150 LOC. On a public profile, intersect shared circles + follows, render as "You both follow @x, @y · You're both in {circle}".</span></div>
   </div>
-  <div class="meter"><span style="width:100%"></span></div>
-  <div class="rows">
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Prop-firm eval — account creation flow + reset prompt</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Report card — downloadable image (IG square + X landscape)</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Custom contract editor (add / edit / delete)</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Pre-trade checklist editor (custom rules + reorder)</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Year-in-review card</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-na"></span><span class="label">Lot-size calculator — full sheet</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-na"></span><span class="label">Prop-firm eval — status (passing / at-risk / failed)</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-na"></span><span class="label">Weekly report card — share view</span><span class="ck ck-on"></span></div>
-  </div>
-</section>
+</div>
 
-<section class="cat">
-  <div class="cat-head">
-    <div>
-      <div class="cat-num">10 · Marketing site</div>
-      <div class="cat-title">Public surfaces — landing, pricing, legal, press</div>
-    </div>
-    <div class="cat-progress"><strong>12 / 16</strong> shipped</div>
-  </div>
-  <div class="meter"><span style="width:75%"></span></div>
-  <div class="rows">
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p0"></span><span class="label">Cookie-consent banner + preferences modal</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">About / founder page</span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Blog post template</span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Contact</span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Press kit page (logos, screenshots, brand rules)</span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-na"></span><span class="label">404 · Changelog · Comparison · FAQ · Intervention deep-dive · Landing · Pricing · Privacy · Sitemap · Terms · Trading-circles deep-dive</span><span class="ck ck-on"></span></div>
-  </div>
-</section>
-
-<section class="cat">
-  <div class="cat-head">
-    <div>
-      <div class="cat-num">11 · Brand assets — full kit</div>
-      <div class="cat-title">Icons, splash, OG, social, press kit</div>
-    </div>
-    <div class="cat-progress"><strong>4 / 8</strong> shipped</div>
-  </div>
-  <div class="meter"><span style="width:50%"></span></div>
-  <div class="rows">
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">OG card — default + per-page</span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Splash screens — iOS device-specific (6+) + Android</span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Press kit (vector logos, color/type rules, screenshot templates)</span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Social share cards — X / IG square / IG story / FB / LinkedIn</span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-na"></span><span class="label">Apple-touch-icon · Favicon (light/dark) · Manifest icons (192/512) · Maskable icon (Android)</span><span class="ck ck-on"></span></div>
-  </div>
-</section>
-
-<section class="cat">
-  <div class="cat-head">
-    <div>
-      <div class="cat-num">12 · Email templates</div>
-      <div class="cat-title">Transactional + lifecycle email</div>
-    </div>
-    <div class="cat-progress"><strong>9 / 14</strong> shipped</div>
-  </div>
-  <div class="meter"><span style="width:64.3%"></span></div>
-  <div class="rows">
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p0"></span><span class="label">Email verification<span class="note">Function ready; Supabase Auth owns the send → needs custom SMTP / Supabase template swap</span></span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p0"></span><span class="label">Password reset<span class="note">Wired into handleResetPassword (replaced inline HTML)</span></span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p0"></span><span class="label">Payment failed + retry link<span class="note">Wired into invoice.payment_failed webhook</span></span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p0"></span><span class="label">Welcome<span class="note">Wired via new POST /api/account?action=welcome (client needs to call once after onboarding)</span></span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Account deletion confirmation<span class="note">Template ready (14-day grace flow); current handleDelete is immediate</span></span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Beta-unlock confirmation<span class="note">Template ready; beta flow doesn't capture user email yet</span></span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Subscription cancelled<span class="note">Wired into customer.subscription.deleted webhook</span></span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Announcement broadcast<span class="note">Needs admin endpoint to trigger (cat20)</span></span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Broker sync-error digest<span class="note">Wired into cron syncConnection auth-error transition</span></span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Milestone celebrations (streak / first / 100th / eval pass)<span class="note">streak-milestones cron · daily 08:00 UTC · 7/30/100/365-day thresholds</span></span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Monthly summary<span class="note">monthly-summary cron · 1st of month 09:00 UTC · ≥5 trades gate</span></span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Waitlist join + position update<span class="note">Join wired; position-update blocked until waitlist has a removal/promotion flow</span></span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-na"></span><span class="label">Receipt</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-na"></span><span class="label">Weekly recap (Sunday)</span><span class="ck ck-on"></span></div>
-  </div>
-</section>
-
-<section class="cat">
-  <div class="cat-head">
-    <div>
-      <div class="cat-num">13 · States coverage audit</div>
-      <div class="cat-title">Empty / loading / error / success — per existing screen</div>
-    </div>
-    <div class="cat-progress"><strong>0 / 7</strong> shipped</div>
-  </div>
-  <div class="meter"><span style="width:0%"></span></div>
-  <div class="rows">
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Home — four moods</span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Journal / History — four moods</span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Stats — four moods</span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Circles — four moods</span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Inbox — four moods</span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Log / Trade detail — four moods</span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Settings sub-screens — four moods</span><span class="ck"></span></div>
-  </div>
-</section>
-
-<section class="cat">
-  <div class="cat-head">
-    <div>
-      <div class="cat-num">14 · Motion catalog</div>
-      <div class="cat-title">Keyframes + transition/gesture patterns</div>
-    </div>
-    <div class="cat-progress done"><strong>9 / 9</strong> shipped ✓</div>
-  </div>
-  <div class="meter"><span style="width:100%"></span></div>
-  <div class="rows">
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Keyboard-open layout shift · Pull-to-refresh · Reduced-motion · Swipe-back · Drawer slide · Page transitions · Sheet drag · Sticky-header collapse · Core keyframes (×12)</span><span class="ck ck-on"></span></div>
-  </div>
-</section>
-
-<section class="cat">
-  <div class="cat-head">
-    <div>
-      <div class="cat-num">15 · Microcopy library</div>
-      <div class="cat-title">Voice card, empty/error copy, label vocab, subject templates</div>
-    </div>
-    <div class="cat-progress"><strong>0 / 8</strong> shipped</div>
-  </div>
-  <div class="meter"><span style="width:0%"></span></div>
-  <div class="rows">
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Email subject-line templates</span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Error-message library (network / validation / server / permission)</span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Push-notification copy templates</span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Voice / tone reference card</span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Achievement / milestone copy templates</span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Button-label patterns</span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Empty-state copy — per screen</span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Kicker / label vocabulary</span><span class="ck"></span></div>
-  </div>
-</section>
-
-<section class="cat">
-  <div class="cat-head">
-    <div>
-      <div class="cat-num">16 · Accessibility & inclusion</div>
-      <div class="cat-title">Keyboard, SR scripts, focus, reduced-motion, scaling</div>
-    </div>
-    <div class="cat-progress"><strong>2 / 6</strong> shipped</div>
-  </div>
-  <div class="meter"><span style="width:33.3%"></span></div>
-  <div class="rows">
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p0"></span><span class="label">Focus-state designs (web + mobile)</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Keyboard-only navigation flows (tab order, focus traps)</span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Reduced-motion variants per animation</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Screen-reader announcement scripts (per surface)</span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Font-scaling at 200% browser zoom</span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">High-contrast mode</span><span class="ck"></span></div>
-    <div class="row oos"><span class="ck"></span><span class="pri pri-na"></span><span class="label">RTL layout assessment<span class="oos-tag">Out of scope</span></span><span class="ck"></span></div>
-  </div>
-</section>
-
-<section class="cat">
-  <div class="cat-head">
-    <div>
-      <div class="cat-num">17 · Mobile-specific patterns</div>
-      <div class="cat-title">Pull-to-refresh, swipe, long-press, haptics, share</div>
-    </div>
-    <div class="cat-progress"><strong>0 / 6</strong> shipped</div>
-  </div>
-  <div class="meter"><span style="width:0%"></span></div>
-  <div class="rows">
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Pull-to-refresh (per scrollable view)</span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Swipe-actions on list items (archive / delete)</span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Haptic feedback signals (light / medium / heavy)</span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">In-app browser handling (external links)</span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Long-press context menus</span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Share-sheet integration</span><span class="ck"></span></div>
-  </div>
-</section>
-
-<section class="cat">
-  <div class="cat-head">
-    <div>
-      <div class="cat-num">18 · Desktop-specific patterns</div>
-      <div class="cat-title">Shortcuts, command palette, drag-drop, ultrawide</div>
-    </div>
-    <div class="cat-progress"><strong>0 / 6</strong> shipped</div>
-  </div>
-  <div class="meter"><span style="width:0%"></span></div>
-  <div class="rows">
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Command palette (⌘K)<span class="note">Drift — wired in commit 8b0cf40 but unticked in doc</span></span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Drag-and-drop targets (CSV import)</span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Hover-only affordances + mobile equivalents</span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Keyboard-shortcuts overlay (? key)</span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Multi-column layouts at &gt;1600px</span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Sidebar collapse / expand</span><span class="ck"></span></div>
-  </div>
-</section>
-
-<section class="cat">
-  <div class="cat-head">
-    <div>
-      <div class="cat-num">19 · PWA-specific surfaces</div>
-      <div class="cat-title">Shortcuts, share target, file handlers, badging, install</div>
-    </div>
-    <div class="cat-progress"><strong>0 / 5</strong> shipped</div>
-  </div>
-  <div class="meter"><span style="width:0%"></span></div>
-  <div class="rows">
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Install-banner variants per browser</span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">App shortcuts (long-press home icon)</span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Badging API states (unread count)</span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">File handlers (CSV intent)</span><span class="ck"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">Share target (receive shared content)</span><span class="ck"></span></div>
-  </div>
-</section>
-
-<section class="cat">
-  <div class="cat-head">
-    <div>
-      <div class="cat-num">20 · Admin / moderation</div>
-      <div class="cat-title">Reporting, audit log, broadcast</div>
-    </div>
-    <div class="cat-progress done"><strong>2 / 2</strong> shipped ✓</div>
-  </div>
-  <div class="meter"><span style="width:100%"></span></div>
-  <div class="rows">
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p1"></span><span class="label">Report-content (in-app)</span><span class="ck ck-on"></span></div>
-    <div class="row"><span class="ck ck-design"></span><span class="pri pri-p2"></span><span class="label">User audit-log viewer (support)</span><span class="ck ck-on"></span></div>
-    <div class="row oos"><span class="ck"></span><span class="pri pri-na"></span><span class="label">Account merge / migration<span class="oos-tag">Out of scope</span></span><span class="ck"></span></div>
-    <div class="row oos"><span class="ck"></span><span class="pri pri-na"></span><span class="label">Admin announcement composer<span class="oos-tag">Out of scope</span></span><span class="ck"></span></div>
-    <div class="row oos"><span class="ck"></span><span class="pri pri-na"></span><span class="label">Review queue<span class="oos-tag">Out of scope</span></span><span class="ck"></span></div>
-  </div>
-</section>
-
-<p class="footnote">Kōda OS · redesign/v2 · merge to main: Fri 2026-06-12</p>
+<p class="footnote">Kōda OS · redesign/v2 · merge to main: Fri 2026-06-12 · see docs/dylon-todo.md for the full handoff</p>
 
 </body>
 </html>
