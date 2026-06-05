@@ -307,11 +307,11 @@ _Keyboard flows, SR scripts, focus design, reduced-motion, scaling, RTL._
 **Designs**: `koda-designs/cat16-a11y.jsx` · **Target**: `docs/a11y.md (new) + global focus styles`
 
 - [x] [x] 🔴 **Focus-state designs (web + mobile)**
-- [x] [ ] 🟠 **Keyboard-only navigation flows (tab order, focus traps)**
+- [x] [x] 🟠 **Keyboard-only navigation flows (tab order, focus traps)** - docs/a11y.md §2 (per-surface tab order + focus-trap pattern) 2026-06-05
 - [x] [x] 🟠 **Reduced-motion variants per animation**
-- [x] [ ] 🟠 **Screen-reader announcement scripts (per surface)**
-- [x] [ ] 🟡 **Font-scaling at 200% browser zoom**
-- [x] [ ] 🟡 **High-contrast mode**
+- [x] [x] 🟠 **Screen-reader announcement scripts (per surface)** - docs/a11y.md §3 (toasts/banners/modals/live regions/forms/charts) 2026-06-05
+- [x] [x] 🟡 **Font-scaling at 200% browser zoom** - docs/a11y.md §4; clamp() typography + unitless line-height + min 44px tap targets at 1× 2026-06-05
+- [x] [x] 🟡 **High-contrast mode** - @media (prefers-contrast: more) widens focus ring 2→3px + halo 4→6px; docs/a11y.md §5 notes Pro polish remaining for text contrast pass
 - [ ] [ ] ⚪ **RTL layout assessment** _(out of scope)_
 
 ## 17 · Mobile-specific patterns
