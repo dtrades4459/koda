@@ -10,9 +10,10 @@ interface Props {
   myCode: string;
   C: Theme;
   onReact: (tradeId: string, emoji: string) => void;
+  onPickMore?: (tradeId: string) => void;
 }
 
-export function SharedTradeCard({ trade, myCode, C, onReact }: Props) {
+export function SharedTradeCard({ trade, myCode, C, onReact, onPickMore }: Props) {
   const isWin = trade.outcome === "win";
   const isLoss = trade.outcome === "loss";
   const borderLeft = isWin ? "2px solid #4ade80" : isLoss ? "2px solid #f87171" : `1px solid ${C.border}`;
@@ -104,6 +105,19 @@ export function SharedTradeCard({ trade, myCode, C, onReact }: Props) {
             </button>
           );
         })}
+        {onPickMore && (
+          <button
+            onClick={() => onPickMore(trade.id)}
+            aria-label="More reactions"
+            style={{
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 14, cursor: "pointer",
+              background: "none", border: `1px solid ${C.border2}`,
+              borderRadius: 999, padding: "0 8px",
+              color: C.text2, marginLeft: 4,
+            }}
+          >+</button>
+        )}
       </div>
     </div>
   );

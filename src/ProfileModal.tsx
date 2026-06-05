@@ -2,6 +2,8 @@ import { storage } from "./lib/storage";
 import type React from "react";
 import { useState, useEffect, useMemo } from "react";
 import { MONO, BODY, DISPLAY, GlassOrb } from "./shared";
+import { readFollowGraph } from "./data/follows";
+import { MutualFriends } from "./components/MutualFriends";
 
 export function ProfileModal({ handle, myCode, following, followUser, unfollowUser, onClose, C }: any) {
   const [pubProfile, setPubProfile] = useState<any>(null);
@@ -73,6 +75,21 @@ export function ProfileModal({ handle, myCode, following, followUser, unfollowUs
   const isMe = targetCode === myCode;
   const isFollowing = targetCode ? (following || []).includes(targetCode) : false;
 
+  // Mutual follows — fetch the viewed user's following list, intersect with ours.
+  const [sharedFollows, setSharedFollows] = useState<string[]>([]);
+  useEffect(() => {
+    if (!targetCode || isMe) { setSharedFollows([]); return; }
+    let alive = true;
+    readFollowGraph(targetCode)
+      .then(g => {
+        if (!alive) return;
+        const myFollowing = new Set(following || []);
+        setSharedFollows(g.following.filter(c => myFollowing.has(c)));
+      })
+      .catch(() => { if (alive) setSharedFollows([]); });
+    return () => { alive = false; };
+  }, [targetCode, isMe, following]);
+
   // Dark theme detection by relative luminance of bg, not literal string match —
   // resilient to palette tweaks (the warm-dark refresh broke the old equality check).
   const isDark = (() => {
@@ -130,6 +147,12 @@ export function ProfileModal({ handle, myCode, following, followUser, unfollowUs
               )}
               {isMe && <span style={{ fontFamily: MONO, fontSize: 10, color: C.muted, letterSpacing: "0.1em", padding: "10px 0" }}>YOU</span>}
             </div>
+
+            {!isMe && (sharedFollows.length > 0) && (
+              <div style={{ marginTop: 18, textAlign: "left" }}>
+                <MutualFriends C={C as any} sharedFollows={sharedFollows} sharedCircles={[]} />
+              </div>
+            )}
           </div>
 
           {/* ── Stats triplet ── */}

@@ -89,7 +89,7 @@ _Log, edit, enrich, import, review and share a trade._
 - [x] [x] 🟠 **Screenshot upload — single / multi / paste-from-clipboard** - screenshots view wired 2026-06-05
 - [x] [x] 🟠 **Share-to-circle modal**
 - [x] [x] 🟠 **Trade detail — expanded (emotion chips, rule pills, reactions, comments)**
-- [x] [ ] 🟡 **Attach to idea** - IdeaComposer exists; "attach this trade to an existing idea" picker not yet wired in trade-actions sheet (see dylon-todo.md)
+- [x] [x] 🟡 **Attach to idea** - new "Attach to idea" row in trade-actions sheet opens AttachToIdeaSheet; POST /api/ideas?action=attach-trade sets linked_trade_id 2026-06-05
 - [x] [x] 🟡 **Favorite / star** - edit + screenshots rows added to trade-actions 2026-06-05
 - [x] [x] 🟡 **Link to intervention event** - link-intervention row added to trade-actions 2026-06-05
 - [x] [x] ⚪ **Log new trade**
@@ -107,13 +107,13 @@ _The full lifecycle of a Circle and everything inside it._
 - [x] [x] 🟠 **Join by code**
 - [x] [x] 🟠 **Owner controls panel**
 - [x] [x] 🟠 **Report-content flow**
-- [x] [ ] 🟡 **@mention autocomplete** - chat composer renders `@handle` as plain text; autocomplete dropdown not yet wired (see dylon-todo.md)
+- [x] [x] 🟡 **@mention autocomplete** - MentionAutocomplete component wired into TradingCircles chat composer; detects @token suffix, dropdown of matching members with ↑/↓/Enter keyboard nav 2026-06-05
 - [x] [x] 🟡 **Blocked-users management**
 - [x] [x] 🟡 **Challenge — creation**
 - [x] [x] 🟡 **Challenge — in-progress**
 - [x] [x] 🟡 **Challenge — result celebration**
 - [x] [x] 🟡 **Chat composer + attachments**
-- [x] [ ] 🟡 **Emoji reactions picker** - reactions wired as preset chip row; full emoji-grid picker not yet wired (see dylon-todo.md)
+- [x] [x] 🟡 **Emoji reactions picker** - EmojiPickerSheet (64-emoji grid, 8 cols) wired to a new "+" button in SharedTradeCard's reaction row; existing fixed 6-emoji row preserved as quick-react 2026-06-05
 - [x] [x] 🟡 **Leaderboard expanded (top 5 + blurred upsell)**
 - [x] [x] 🟡 **Leave confirmation**
 - [x] [x] 🟡 **Member list + member detail card**
@@ -130,7 +130,7 @@ _Follows, profiles seen from the outside, suggestions, blocking._
 
 - [x] [x] 🟠 **Follow button — not-following / following / pending / blocked-by**
 - [x] [x] 🟡 **Follow-back prompt**
-- [x] [ ] 🟡 **Mutual-friends visualization** - computation possible (shared circles + intersecting follows) but no UI component wired yet (see dylon-todo.md)
+- [x] [x] 🟡 **Mutual-friends visualization** - MutualFriends component wired into ProfileModal; on mount reads viewed user's followGraph, intersects with current user's, renders "you both follow @x, @y · +N more" pill row 2026-06-05
 - [x] [x] 🟡 **Profile QR-code share**
 - [x] [x] 🟡 **Suggested follows**
 - [x] [x] 🟡 **Unfollow confirmation**

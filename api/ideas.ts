@@ -326,10 +326,39 @@ export default async function handler(req: Req, res: Res) {
   const action = req.query.action;
   const actionStr = typeof action === "string" ? action : "";
 
-  if (req.method === "GET"    && actionStr === "list")   return handleList(req, res);
-  if (req.method === "POST"   && actionStr === "create") return handleCreate(req, res);
-  if (req.method === "POST"   && actionStr === "like")   return handleLike(req, res);
-  if (req.method === "DELETE" && actionStr === "delete") return handleDelete(req, res);
+  if (req.method === "GET"    && actionStr === "list")         return handleList(req, res);
+  if (req.method === "POST"   && actionStr === "create")       return handleCreate(req, res);
+  if (req.method === "POST"   && actionStr === "like")         return handleLike(req, res);
+  if (req.method === "DELETE" && actionStr === "delete")       return handleDelete(req, res);
+  if (req.method === "POST"   && actionStr === "attach-trade") return handleAttachTrade(req, res);
 
   return res.status(404).json({ error: "Unknown action" });
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Action: attach-trade — POST { ideaId, tradeId | null }
+//
+// Sets `linked_trade_id` on a post-trade Idea owned by the caller. Pass null
+// to detach. Used by the trade-actions sheet "Attach to idea" picker (cat03).
+// ══════════════════════════════════════════════════════════════════════════════
+
+async function handleAttachTrade(req: Req, res: Res) {
+  const uid = await getUserIdFromJwt(req.headers["authorization"] as string | undefined);
+  if (!uid) return res.status(401).json({ error: "Not authenticated" });
+
+  const body = req.body as { ideaId?: string; tradeId?: number | null };
+  if (!body?.ideaId) return res.status(400).json({ error: "ideaId required" });
+
+  const admin = getAdminClient();
+  const { error } = await admin
+    .from("ideas")
+    .update({ linked_trade_id: body.tradeId ?? null })
+    .eq("id", body.ideaId)
+    .eq("author_uid", uid);
+
+  if (error) {
+    console.error("[ideas/attach-trade]", error);
+    return res.status(500).json({ error: "Update failed" });
+  }
+  return res.status(200).json({ ok: true });
 }

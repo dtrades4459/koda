@@ -87,6 +87,7 @@ import { FirstSessionSurvey } from "./components/FirstSessionSurvey";
 import { LoadingSplash } from "./components/LoadingSplash";
 import { OfflineBanner } from "./components/OfflineBanner";
 import { SharedContentSheet } from "./components/SharedContentSheet";
+import { AttachToIdeaSheet } from "./components/AttachToIdeaSheet";
 import { HomeNewsWidget } from "./components/HomeNewsWidget";
 import { NewsScreen } from "./NewsScreen";
 import {
@@ -209,6 +210,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   const [mistakeTagTradeId, setMistakeTagTradeId] = useState<number | null>(null);
   const [tradeDetailId, setTradeDetailId] = useState<number | null>(null);
   const [tradeActionsId, setTradeActionsId] = useState<number | null>(null);
+  const [attachIdeaTradeId, setAttachIdeaTradeId] = useState<number | null>(null);
   const [tradeToShare, setTradeToShare] = useState<Trade | null>(null);
   const [tradeEditId, setTradeEditId] = useState<number | null>(null);
   // sharingToCircle removed — ShareToCircleSheet manages its own selection state
@@ -1810,6 +1812,16 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
 
       <SystemProvider C={C} onSignIn={() => navigateTo("auth")} />
 
+      {attachIdeaTradeId !== null && (
+        <AttachToIdeaSheet
+          C={C}
+          tradeId={attachIdeaTradeId}
+          myUid={myUid}
+          onClose={() => setAttachIdeaTradeId(null)}
+          onAttached={() => showToast("Attached to idea")}
+        />
+      )}
+
       {view === "share-receive" && (
         <SharedContentSheet
           C={C}
@@ -3223,6 +3235,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
               { id: "edit", icon: "grid", title: "Edit trade", detail: "entry, exit, direction", toneKey: "accent" },
               { id: "screenshots", icon: "grid", title: "Add screenshots", detail: "charts and setups", toneKey: "live" },
               { id: "link-intervention", icon: "clock", title: "Link intervention", detail: "connect to a tilt moment", toneKey: "warn" },
+              { id: "attach-idea", icon: "grid", title: "Attach to idea", detail: "link this trade to a post-trade idea", toneKey: "accent" },
             ];
             return (
               <TradeActionsScreen
@@ -3238,6 +3251,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                   else if (id === "detail") { setTradeDetailId(t.id); navigateTo("trade-detail"); }
                   else if (id === "edit") { setTradeEditId(t.id); navigateTo("edit-trade"); }
                   else if (id === "screenshots") { setTradeEditId(t.id); navigateTo("screenshots"); }
+                  else if (id === "attach-idea") { setAttachIdeaTradeId(t.id); }
                 }}
                 onBack={goBack}
               />

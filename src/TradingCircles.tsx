@@ -8,6 +8,9 @@ import { useUnreadCircles } from "./hooks/useUnreadCircles";
 import { createChallenge, fetchActiveChallenge, fetchTrophies } from "./data/circlesChallenges";
 import { fetchSharedTrades, reactToSharedTrade, rowToSharedTrade } from "./data/circlesSharedTrades";
 import { SharedTradeCard } from "./components/SharedTradeCard";
+import { EmojiPickerSheet } from "./components/EmojiPickerSheet";
+import { MentionAutocomplete } from "./components/MentionAutocomplete";
+import type { MentionCandidate } from "./components/MentionAutocomplete";
 import type { Circle, CircleChallenge, ChallengeResult, FeedItem, CircleMessage, CircleMember, Profile } from "./types";
 import type { Theme } from "./theme";
 import {
@@ -125,6 +128,7 @@ export function TradingCircles({
   const [circleTab, setCircleTab] = useState<"feed" | "leaderboard" | "chat" | "members" | "trophies">("feed");
   const [chatMessages, setChatMessages] = useState<any[]>([]);
   const [chatInput, setChatInput] = useState("");
+  const [emojiPickerForTradeId, setEmojiPickerForTradeId] = useState<string | null>(null);
   const [chatSending, setChatSending] = useState(false);
   const [chatLoading, setChatLoading] = useState(false);
   const chatBottomRef = useRef<HTMLDivElement>(null);
@@ -612,6 +616,33 @@ export function TradingCircles({
 
   return (
     <div style={{ position: "relative" }}>
+      {emojiPickerForTradeId !== null && (
+        <EmojiPickerSheet
+          C={C}
+          onSelect={async (emoji) => {
+            const tradeId = emojiPickerForTradeId;
+            const item = feedItems.find(fi => fi.type === "trade" && fi.data.id === tradeId);
+            if (item && item.type === "trade") {
+              await reactToSharedTrade(tradeId, emoji, {
+                authorCode: item.data.authorCode,
+                currentUid: profile?.uid ?? undefined,
+                contextLabel: item.data.strategy ?? item.data.pair ?? undefined,
+              });
+              setFeedItems(prev => prev.map(fi => {
+                if (fi.type !== "trade" || fi.data.id !== tradeId) return fi;
+                const reactions = { ...(fi.data.reactions ?? {}) };
+                const existing = reactions[emoji] ?? [];
+                const myCode = getMyCode();
+                reactions[emoji] = existing.includes(myCode)
+                  ? existing.filter(c => c !== myCode)
+                  : [...existing, myCode];
+                return { ...fi, data: { ...fi.data, reactions } };
+              }));
+            }
+          }}
+          onClose={() => setEmojiPickerForTradeId(null)}
+        />
+      )}
       {/* ambient orb */}
       <div style={{ position: "absolute", top: 120, left: -100, width: 360, height: 360, borderRadius: "50%", background: `radial-gradient(circle, ${(C as any).orb2 ?? C.accent} 0%, transparent 65%)`, filter: "blur(60px)", opacity: 0.4, pointerEvents: "none", zIndex: 0 }} />
 
@@ -1106,6 +1137,7 @@ export function TradingCircles({
                         trade={item.data}
                         myCode={getMyCode()}
                         C={C}
+                        onPickMore={(id) => setEmojiPickerForTradeId(id)}
                         onReact={async (id, emoji) => {
                           await reactToSharedTrade(id, emoji, {
                             authorCode: item.data.authorCode,
@@ -1348,10 +1380,20 @@ export function TradingCircles({
                     <div ref={chatBottomRef} />
                   </div>
                   <div style={{ display: "flex", gap: "10px", alignItems: "flex-end", paddingTop: "14px", borderTop: `1px solid ${C.border}`, marginTop: "4px" }}>
-                    <textarea value={chatInput} onChange={e => setChatInput(e.target.value)}
-                      onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendChatMessage(activeCircle.code, myId); } }}
-                      placeholder="Message the circle…" rows={2}
-                      style={{ ...inp, flex: 1, resize: "none", lineHeight: 1.5, fontFamily: BODY, fontSize: "14px" }} />
+                    <div style={{ flex: 1, position: "relative" }}>
+                      <textarea value={chatInput} onChange={e => setChatInput(e.target.value)}
+                        onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendChatMessage(activeCircle.code, myId); } }}
+                        placeholder="Message the circle… (@ to mention)" rows={2}
+                        style={{ ...inp, width: "100%", resize: "none", lineHeight: 1.5, fontFamily: BODY, fontSize: "14px" }} />
+                      <MentionAutocomplete
+                        C={C}
+                        text={chatInput}
+                        candidates={((activeCircle?.members ?? []) as { handle?: string; name?: string }[])
+                          .filter((m): m is { handle: string; name?: string } => typeof m.handle === "string" && m.handle.length > 0)
+                          .map<MentionCandidate>(m => ({ handle: m.handle, name: m.name }))}
+                        onPick={setChatInput}
+                      />
+                    </div>
                     <button onClick={() => sendChatMessage(activeCircle.code, myId)}
                       disabled={!chatInput.trim() || chatSending || !myId}
                       style={{ ...pillPrimary(!!chatInput.trim() && !chatSending), width: "auto", padding: "10px 18px", opacity: chatSending ? 0.6 : 1, flexShrink: 0 }}>
