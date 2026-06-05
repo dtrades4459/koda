@@ -89,8 +89,9 @@ import { NewsScreen } from "./NewsScreen";
 import {
   DeleteTradeModal, ShareToCircleSheet, MistakeTagSheet,
   TradeDetailScreen, TradeActionsScreen,
+  EditTradeScreen, ScreenshotsScreen, ReviewInboxBulkScreen,
 } from "./trade/TradeScreens";
-import type { ShareableTrade, ShareableCircle, TradeActionRow } from "./trade/TradeScreens";
+import type { ShareableTrade, ShareableCircle, TradeActionRow, ReviewItem } from "./trade/TradeScreens";
 
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
 
@@ -203,6 +204,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   const [tradeDetailId, setTradeDetailId] = useState<number | null>(null);
   const [tradeActionsId, setTradeActionsId] = useState<number | null>(null);
   const [tradeToShare, setTradeToShare] = useState<Trade | null>(null);
+  const [tradeEditId, setTradeEditId] = useState<number | null>(null);
   // sharingToCircle removed — ShareToCircleSheet manages its own selection state
   // jwtPlan comes from the Supabase JWT app_metadata claim — server-verified,
   // not forgeable from the client. Use it as the authoritative starting plan so
@@ -3060,6 +3062,29 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
             />
           )}
 
+          {/* ════════════════════════ REVIEW INBOX BULK ══════════════════ */}
+          {view === "inbox-bulk" && (() => {
+            const reviewItems: ReviewItem[] = trades.slice(0, 20).map(t => ({
+              id: String(t.id),
+              symbol: t.pair,
+              r: t.pnl ? `${parseFloat(t.pnl) >= 0 ? "+" : ""}${parseFloat(t.pnl).toFixed(2)}R` : "0R",
+              tone: (parseFloat(t.pnl ?? "0") >= 0 ? "green" : "red") as "green" | "red",
+              date: t.date,
+              state: "draft" as const,
+            }));
+            return (
+              <div style={{ position: "fixed", inset: 0, zIndex: 9000, overflowY: "auto" }}>
+                <ReviewInboxBulkScreen
+                  C={C}
+                  items={reviewItems}
+                  onBack={goBack}
+                  onPublish={(_ids) => { goBack(); }}
+                  onSkip={goBack}
+                />
+              </div>
+            );
+          })()}
+
           {/* ══════════════════════════ TRADE DETAIL ══════════════════════ */}
           {view === "trade-detail" && (() => {
             const t = trades.find(tr => tr.id === tradeDetailId);
@@ -3113,6 +3138,9 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
               { id: "share", icon: "share", title: "Share to circle", detail: "visible to circle members", toneKey: "live" },
               { id: "mistake", icon: "grid", title: "Tag a mistake", detail: t.mistake ?? "none tagged", toneKey: "warn", active: !!t.mistake },
               { id: "detail", icon: "clock", title: "View full detail", detail: "reactions, comments, notes", toneKey: "accent" },
+              { id: "edit", icon: "grid", title: "Edit trade", detail: "entry, exit, direction", toneKey: "accent" },
+              { id: "screenshots", icon: "grid", title: "Add screenshots", detail: "charts and setups", toneKey: "live" },
+              { id: "link-intervention", icon: "clock", title: "Link intervention", detail: "connect to a tilt moment", toneKey: "warn" },
             ];
             return (
               <TradeActionsScreen
@@ -3126,9 +3154,54 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                   if (id === "share") { setTradeToShare(t); goBack(); }
                   else if (id === "mistake") { setMistakeTagTradeId(t.id); goBack(); }
                   else if (id === "detail") { setTradeDetailId(t.id); navigateTo("trade-detail"); }
+                  else if (id === "edit") { setTradeEditId(t.id); navigateTo("edit-trade"); }
+                  else if (id === "screenshots") { setTradeEditId(t.id); navigateTo("screenshots"); }
                 }}
                 onBack={goBack}
               />
+            );
+          })()}
+
+          {/* ══════════════════════════ EDIT TRADE ══════════════════════ */}
+          {view === "edit-trade" && (() => {
+            const t = trades.find(tr => tr.id === tradeEditId);
+            if (!t) return null;
+            const rStr = t.pnl ? `${parseFloat(t.pnl) >= 0 ? "+" : ""}${parseFloat(t.pnl).toFixed(2)}R` : "0R";
+            const sideVal = (t.direction?.toLowerCase() === "short" ? "short" : "long") as "long" | "short";
+            return (
+              <div style={{ position: "fixed", inset: 0, zIndex: 9000, overflowY: "auto" }}>
+                <EditTradeScreen
+                  C={C}
+                  symbol={t.pair}
+                  date={t.date}
+                  side={sideVal}
+                  entry={t.entryPrice ?? ""}
+                  exit={t.tpPrice ?? ""}
+                  net={t.pnlDollar ? `${t.pnlDollar}` : `${t.pnl}R`}
+                  rMultiple={rStr}
+                  onBack={goBack}
+                  onDiscard={goBack}
+                  onSave={(patch) => {
+                    saveTrades(trades.map(tr => tr.id === tradeEditId
+                      ? { ...tr, direction: patch.side, entryPrice: patch.entry, tpPrice: patch.exit }
+                      : tr
+                    ));
+                    goBack();
+                  }}
+                />
+              </div>
+            );
+          })()}
+
+          {/* ══════════════════════════ SCREENSHOTS ══════════════════════ */}
+          {view === "screenshots" && (() => {
+            return (
+              <div style={{ position: "fixed", inset: 0, zIndex: 9000, overflowY: "auto" }}>
+                <ScreenshotsScreen
+                  C={C}
+                  onBack={goBack}
+                />
+              </div>
             );
           })()}
 

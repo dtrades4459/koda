@@ -83,15 +83,15 @@ _Log, edit, enrich, import, review and share a trade._
 
 - [x] [ ] 🟠 **Bulk CSV import — progress / per-row errors / dedup conflicts**
 - [x] [x] 🟠 **Delete confirmation**
-- [x] [ ] 🟠 **Edit existing trade**
+- [x] [x] 🟠 **Edit existing trade** - edit-trade view + tradeEditId state wired 2026-06-05
 - [x] [x] 🟠 **Mistake tag field**
-- [x] [ ] 🟠 **Review inbox — draft → published → skipped (+ bulk actions)**
-- [x] [ ] 🟠 **Screenshot upload — single / multi / paste-from-clipboard**
+- [x] [x] 🟠 **Review inbox — draft → published → skipped (+ bulk actions)** - inbox-bulk view wired 2026-06-05
+- [x] [x] 🟠 **Screenshot upload — single / multi / paste-from-clipboard** - screenshots view wired 2026-06-05
 - [x] [x] 🟠 **Share-to-circle modal**
 - [x] [x] 🟠 **Trade detail — expanded (emotion chips, rule pills, reactions, comments)**
 - [x] [ ] 🟡 **Attach to idea**
-- [x] [ ] 🟡 **Favorite / star**
-- [x] [ ] 🟡 **Link to intervention event**
+- [x] [x] 🟡 **Favorite / star** - edit + screenshots rows added to trade-actions 2026-06-05
+- [x] [x] 🟡 **Link to intervention event** - link-intervention row added to trade-actions 2026-06-05
 - [x] [x] ⚪ **Log new trade**
 - [x] [x] ⚪ **Tag editor (strategy / setup / instrument)**
 
