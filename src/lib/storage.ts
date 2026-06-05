@@ -21,6 +21,7 @@ type StorageErrorCallback = (key: string, error: unknown) => void;
 
 let currentUserId: string | null = null;
 let storageErrorCallback: StorageErrorCallback | null = null;
+const _inflightGet = new Map<string, Promise<StorageRow>>();
 
 /**
  * Register a callback that fires whenever a Supabase write fails.
@@ -62,22 +63,43 @@ function writeCache(key: string, value: string, shared: boolean): void {
 async function remoteBatchGet(keys: string[]): Promise<Map<string, StorageRow>> {
   const result = new Map<string, StorageRow>();
   if (!currentUserId || keys.length === 0) return result;
-  try {
-    const { data, error } = await supabase
-      .from("user_kv")
-      .select("key, value")
-      .eq("user_id", currentUserId)
-      .in("key", keys);
-    if (!error && data) {
-      for (const row of data as Array<{ key: string; value: unknown }>) {
-        result.set(row.key, { value: JSON.stringify(row.value) });
+
+  const batchPromise = (async () => {
+    try {
+      const { data, error } = await supabase
+        .from("user_kv")
+        .select("key, value")
+        .eq("user_id", currentUserId)
+        .in("key", keys);
+      if (!error && data) {
+        for (const row of data as Array<{ key: string; value: unknown }>) {
+          result.set(row.key, { value: JSON.stringify(row.value) });
+        }
       }
+    } catch { /* ignore */ }
+  })();
+
+  // Register per-key promises so concurrent storage.get() calls for these keys
+  // share the batch result instead of firing individual queries.
+  for (const key of keys) {
+    const dedupKey = `u:${key}`;
+    if (!_inflightGet.has(dedupKey)) {
+      const keyPromise: Promise<StorageRow> = batchPromise
+        .then(() => result.get(key) ?? null)
+        .finally(() => _inflightGet.delete(dedupKey));
+      _inflightGet.set(dedupKey, keyPromise);
     }
-  } catch { /* ignore */ }
+  }
+
+  await batchPromise;
   return result;
 }
 
 async function remoteGet(key: string, shared: boolean): Promise<StorageRow> {
+  if (!shared) {
+    const inFlight = _inflightGet.get(`u:${key}`);
+    if (inFlight) return inFlight;
+  }
   try {
     if (shared) {
       const { data, error } = await supabase
