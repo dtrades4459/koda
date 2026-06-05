@@ -102,17 +102,17 @@ _The full lifecycle of a Circle and everything inside it._
 **Designs**: `koda-designs/cat04-social.jsx` · **Target**: `src/TradingCircles.tsx`
 
 - [x] [x] 🟠 **Ban / kick confirmation**
-- [x] [ ] 🟠 **Chat thread**
+- [x] [x] 🟠 **Chat thread**
 - [x] [x] 🟠 **Circle — create form**
 - [x] [x] 🟠 **Join by code**
 - [x] [x] 🟠 **Owner controls panel**
 - [x] [x] 🟠 **Report-content flow**
 - [x] [ ] 🟡 **@mention autocomplete**
-- [x] [ ] 🟡 **Blocked-users management**
+- [x] [x] 🟡 **Blocked-users management**
 - [x] [x] 🟡 **Challenge — creation**
-- [x] [ ] 🟡 **Challenge — in-progress**
-- [x] [ ] 🟡 **Challenge — result celebration**
-- [x] [ ] 🟡 **Chat composer + attachments**
+- [x] [x] 🟡 **Challenge — in-progress**
+- [x] [x] 🟡 **Challenge — result celebration**
+- [x] [x] 🟡 **Chat composer + attachments**
 - [x] [ ] 🟡 **Emoji reactions picker**
 - [x] [x] 🟡 **Leaderboard expanded (top 5 + blurred upsell)**
 - [x] [x] 🟡 **Leave confirmation**

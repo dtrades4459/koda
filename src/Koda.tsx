@@ -32,6 +32,10 @@ import {
   useCommandPalette, useGlobalShortcut,
 } from "./components/CommandPalette";
 import type { PaletteCommand, ShortcutGroup } from "./components/CommandPalette";
+import {
+  ReportQueueScreen, ReportDetailScreen, AuditLogScreen,
+} from "./admin/AdminScreens";
+import type { ReportRow, AuditEntry } from "./admin/AdminScreens";
 import { logInterventionEvent, linkTradeToRecentIntervention } from "./data/interventions";
 import { InterventionSheet } from "./components/InterventionSheet";
 import { PreSessionSheet } from "./components/PreSessionSheet";
@@ -3506,6 +3510,44 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
               </div>
             );
           })()}
+
+          {/* ══════════════════════════ ADMIN ═════════════════════════════ */}
+          {view === "admin-reports" && profile.uid === import.meta.env.VITE_KODA_ADMIN_UID && (() => {
+            const emptyReports: ReportRow[] = [];
+            return (
+              <div style={{ position: "fixed", inset: 0, zIndex: 9000, overflowY: "auto" }}>
+                <ReportQueueScreen
+                  C={C}
+                  reports={emptyReports}
+                  onBack={goBack}
+                />
+              </div>
+            );
+          })()}
+
+          {view === "admin-audit" && profile.uid === import.meta.env.VITE_KODA_ADMIN_UID && (() => {
+            const emptyAudit: AuditEntry[] = [];
+            return (
+              <div style={{ position: "fixed", inset: 0, zIndex: 9000, overflowY: "auto" }}>
+                <AuditLogScreen
+                  C={C}
+                  entries={emptyAudit}
+                  onBack={goBack}
+                />
+              </div>
+            );
+          })()}
+
+          {/* Also expose ReportDetailScreen as a sub-route — future drill-down */}
+          {view === "admin-report-detail" && profile.uid === import.meta.env.VITE_KODA_ADMIN_UID && (
+            <div style={{ position: "fixed", inset: 0, zIndex: 9000, overflowY: "auto" }}>
+              <ReportDetailScreen
+                C={C}
+                report={null as unknown as ReportRow}
+                onBack={goBack}
+              />
+            </div>
+          )}
 
           {/* ══════════════════════════ LOG TRADE ══════════════════════════ */}
           {view === "log" && (
