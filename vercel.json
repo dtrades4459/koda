@@ -18,6 +18,14 @@
     {
       "path": "/api/cron?job=weekly-digest",
       "schedule": "0 18 * * 0"
+    },
+    {
+      "path": "/api/cron?job=streak-milestones",
+      "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron?job=monthly-summary",
+      "schedule": "0 9 1 * *"
     }
   ],
   "redirects": [

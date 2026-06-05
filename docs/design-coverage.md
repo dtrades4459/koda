@@ -249,9 +249,9 @@ _Every transactional + lifecycle email._
 - [x] [x] 🟠 **Subscription cancelled** - subscriptionCancelledEmailHtml() wired into api/stripe.ts customer.subscription.deleted webhook with reactivate URL 2026-06-05
 - [x] [ ] 🟡 **Announcement broadcast** - announcementEmailHtml() ready; needs admin endpoint to trigger broadcast (cat20 surface)
 - [x] [x] 🟡 **Broker sync-error digest** - brokerSyncErrorEmailHtml() wired into cron syncConnection auth-error path, gated to connected→error transition to avoid spam 2026-06-05
-- [x] [ ] 🟡 **Milestone celebrations (streak / first / 100th / eval pass)** - milestoneEmailHtml() ready; needs streak-detection cron
-- [x] [ ] 🟡 **Monthly summary** - monthlySummaryEmailHtml() ready; needs monthly cron job
-- [x] [ ] 🟡 **Waitlist join + position update** - join half wired via existing waitlistConfirmHtml; waitlistPositionEmailHtml() ready, needs weekly waitlist-movement cron
+- [x] [x] 🟡 **Milestone celebrations (streak / first / 100th / eval pass)** - streak-milestones cron (daily 08:00 UTC) detects 7/30/100/365-day consecutive trading streaks, idempotent via koda_milestone_<N> kv 2026-06-05
+- [x] [x] 🟡 **Monthly summary** - monthly-summary cron (1st of month 09:00 UTC), MIN 5 trades, idempotent via koda_monthly_email_YYYY-MM kv 2026-06-05
+- [x] [ ] 🟡 **Waitlist join + position update** - join wired via existing waitlistConfirmHtml; position-update cron blocked until waitlist has a removal/promotion mechanism (position can't change today)
 - [x] [x] ⚪ **Receipt**
 - [x] [x] ⚪ **Weekly recap (Sunday)**
 
@@ -392,3 +392,4 @@ _Append per-row decisions, scope changes, or anything worth remembering. One lin
 - **2026-06-04** — Doc scaffolded. Branch `redesign/v2` created. Phase 1 starts Monday.
 - **2026-06-05** — cat07: wired SlowConnectionBanner, OptimisticRollbackToast, RateLimitedModal, Error401/403/500/503, and maintenance-mode takeover into SystemProvider via window events. cat06 verified — all 6 designed screens already exist as components; in-app surfaces (NotificationInbox, PermissionPrimerSheet, PermissionBlockedScreen) wired through NotificationsDrawer.
 - **2026-06-05** — cat12: 5 email templates wired into live API paths — passwordReset (account.ts handleResetPassword), paymentFailed + subscriptionCancelled (stripe.ts webhook), welcome (new account.ts ?action=welcome endpoint), brokerSyncError (cron.ts syncConnection auth-error transition). Remaining 7 templates designed-only — each blocked on missing infra noted inline (Supabase email override / grace-period delete / streak+monthly+waitlist crons / admin broadcast endpoint).
+- **2026-06-05** — cat12 +2: streak-milestones cron (daily 08:00 UTC, 7/30/100/365-day thresholds) wires milestoneEmailHtml; monthly-summary cron (1st of month 09:00 UTC, ≥5 trades) wires monthlySummaryEmailHtml. Both idempotent. Waitlist-position-update cron deferred — needs a waitlist promotion/removal flow before position can meaningfully change.

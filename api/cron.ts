@@ -15,7 +15,12 @@ import { tryDecrypt, encrypt } from "./lib/cryptoUtils.js";
 import { getAdminClient, getUserIdFromJwt } from "./lib/supabaseAdmin.js";
 import { checkRateLimit, getClientIp } from "./lib/rateLimit.js";
 import { deliverNotification } from "./push.js";
-import { sendEmail, brokerSyncErrorEmailHtml } from "./lib/email.js";
+import {
+  sendEmail,
+  brokerSyncErrorEmailHtml,
+  milestoneEmailHtml,
+  monthlySummaryEmailHtml,
+} from "./lib/email.js";
 
 type Req = { method?: string; headers: Record<string, string | string[] | undefined>; body: Record<string, unknown>; query: Record<string, string | string[] | undefined> };
 type Res = { status(n: number): Res; json(d: unknown): Res; end(): void; setHeader(k: string, v: string): void };
@@ -825,6 +830,237 @@ async function handleWeeklyDigest(req: Req, res: Res) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
+// Job: streak-milestones  (daily 08:00 UTC)
+//
+// For each user, counts consecutive trading days ending today. If the streak
+// equals one of {7, 30, 100, 365} and we haven't emailed for that milestone
+// yet, send milestoneEmailHtml. Idempotent via koda_milestone_<N> user_kv key.
+//
+// "Trading day" = any calendar date with at least one trade row for that user.
+// Streak resets when there's a gap before today.
+// ══════════════════════════════════════════════════════════════════════════════
+
+const STREAK_MILESTONES = [7, 30, 100, 365];
+
+function computeConsecutiveStreak(datesDesc: string[], today: string): number {
+  // datesDesc: distinct YYYY-MM-DD strings sorted newest → oldest.
+  // The streak runs if it includes today (or yesterday — accept either so a
+  // user trading midnight-edge still counts).
+  if (datesDesc.length === 0) return 0;
+  const todayDate = new Date(today + "T00:00:00Z").getTime();
+  let cursor = todayDate;
+  let streak = 0;
+  for (const d of datesDesc) {
+    const dTime = new Date(d + "T00:00:00Z").getTime();
+    const diffDays = Math.round((cursor - dTime) / 86_400_000);
+    if (streak === 0 && diffDays > 1) return 0;  // gap before streak begins
+    if (diffDays === 0 || (streak === 0 && diffDays === 1)) {
+      streak++;
+      cursor = dTime - 86_400_000;
+    } else if (diffDays === 1 && streak > 0) {
+      // already moved cursor; this shouldn't normally fire
+      streak++;
+      cursor = dTime - 86_400_000;
+    } else {
+      break;
+    }
+  }
+  return streak;
+}
+
+async function handleStreakMilestones(req: Req, res: Res) {
+  if (!isCronAuthed(req)) return res.status(401).json({ error: "Unauthorized" });
+  const admin = getAdminClient();
+
+  const today = new Date().toISOString().slice(0, 10);
+  const since = new Date(Date.now() - 400 * 86_400_000).toISOString().slice(0, 10);
+
+  // Pull distinct user_id + date pairs over the past ~13 months so we can detect
+  // streaks up to the 365 milestone without pulling the full trades table.
+  const { data: rows, error } = await admin
+    .from("trades")
+    .select("user_id, date")
+    .gte("date", since);
+
+  if (error) {
+    console.error("[streak-milestones] fetch error:", error);
+    return res.status(500).json({ error: error.message });
+  }
+  if (!rows?.length) return res.status(200).json({ ok: true, sent: 0 });
+
+  const byUser: Record<string, Set<string>> = {};
+  for (const r of rows) {
+    const uid = r.user_id as string;
+    const d   = r.date as string;
+    if (!uid || !d) continue;
+    (byUser[uid] ??= new Set()).add(d);
+  }
+
+  let sent = 0;
+  let skipped = 0;
+
+  for (const [uid, dateSet] of Object.entries(byUser)) {
+    const datesDesc = [...dateSet].sort().reverse();
+    const streak    = computeConsecutiveStreak(datesDesc, today);
+    if (!STREAK_MILESTONES.includes(streak)) continue;
+
+    const kvKey = `koda_milestone_${streak}`;
+    const { data: existing } = await admin
+      .from("user_kv").select("value")
+      .eq("user_id", uid).eq("key", kvKey).maybeSingle();
+    if (existing?.value) { skipped++; continue; }
+
+    const { data: profileRow } = await admin
+      .from("user_kv").select("value")
+      .eq("user_id", uid).eq("key", "koda_profile").maybeSingle();
+    const profile = profileRow?.value as { email?: string } | undefined;
+    if (!profile?.email) continue;
+
+    try {
+      await sendEmail({
+        to:      profile.email,
+        subject: `🔥 ${streak}-day discipline streak`,
+        html:    milestoneEmailHtml({
+          streakDays: streak,
+          shareUrl:   `${APP_URL}?screen=stats`,
+        }),
+      });
+      await admin.from("user_kv").upsert(
+        { user_id: uid, key: kvKey, value: new Date().toISOString() },
+        { onConflict: "user_id,key" }
+      );
+      sent++;
+    } catch (e) {
+      console.error("[streak-milestones] send failed for", uid, e);
+    }
+  }
+
+  return res.status(200).json({ ok: true, sent, skipped, users: Object.keys(byUser).length });
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Job: monthly-summary  (1st of month, 09:00 UTC)
+//
+// For each user with ≥ 5 trades in the prior calendar month, computes basic
+// aggregates and sends monthlySummaryEmailHtml. Idempotent via
+// koda_monthly_email_<YYYY-MM> user_kv key so a re-run can't double-send.
+// ══════════════════════════════════════════════════════════════════════════════
+
+interface TradeRow {
+  user_id:  string;
+  date:     string;
+  outcome:  "win" | "loss" | "be" | null;
+  pnl:      number | null;
+  strategy: string | null;
+}
+
+function priorMonthRange(now: Date): { startISO: string; endISO: string; label: string; key: string } {
+  const y = now.getUTCFullYear();
+  const m = now.getUTCMonth(); // 0..11; prior month = m-1
+  const start = new Date(Date.UTC(y, m - 1, 1));
+  const end   = new Date(Date.UTC(y, m, 1));
+  const label = start.toLocaleDateString("en-US", { month: "long", timeZone: "UTC" });
+  const key   = `${start.getUTCFullYear()}-${String(start.getUTCMonth() + 1).padStart(2, "0")}`;
+  return {
+    startISO: start.toISOString().slice(0, 10),
+    endISO:   end.toISOString().slice(0, 10),
+    label,
+    key,
+  };
+}
+
+async function handleMonthlySummary(req: Req, res: Res) {
+  if (!isCronAuthed(req)) return res.status(401).json({ error: "Unauthorized" });
+  const admin = getAdminClient();
+
+  const { startISO, endISO, label, key } = priorMonthRange(new Date());
+
+  const { data: rows, error } = await admin
+    .from("trades")
+    .select("user_id, date, outcome, pnl, strategy")
+    .gte("date", startISO)
+    .lt("date", endISO);
+
+  if (error) {
+    console.error("[monthly-summary] fetch error:", error);
+    return res.status(500).json({ error: error.message });
+  }
+  if (!rows?.length) return res.status(200).json({ ok: true, users: 0 });
+
+  const byUser: Record<string, TradeRow[]> = {};
+  for (const r of rows as TradeRow[]) {
+    if (!r.user_id) continue;
+    (byUser[r.user_id] ??= []).push(r);
+  }
+
+  const MIN_TRADES = 5;
+  let sent = 0;
+  let skipped = 0;
+
+  for (const [uid, trades] of Object.entries(byUser)) {
+    if (trades.length < MIN_TRADES) { skipped++; continue; }
+
+    const kvKey = `koda_monthly_email_${key}`;
+    const { data: existing } = await admin
+      .from("user_kv").select("value")
+      .eq("user_id", uid).eq("key", kvKey).maybeSingle();
+    if (existing?.value) { skipped++; continue; }
+
+    const { data: profileRow } = await admin
+      .from("user_kv").select("value")
+      .eq("user_id", uid).eq("key", "koda_profile").maybeSingle();
+    const profile = profileRow?.value as { email?: string; baseCurrency?: string } | undefined;
+    if (!profile?.email) continue;
+
+    const wins  = trades.filter(t => t.outcome === "win").length;
+    const losses = trades.filter(t => t.outcome === "loss").length;
+    const decided = wins + losses;
+    const winRatePct = decided > 0 ? Math.round((wins / decided) * 100) : 0;
+
+    const netPnl = trades.reduce((s, t) => s + (typeof t.pnl === "number" ? t.pnl : 0), 0);
+    const cur = (profile.baseCurrency ?? "USD").toUpperCase();
+    const sym = ({ USD: "$", GBP: "£", EUR: "€", AUD: "A$", CAD: "C$" } as Record<string, string>)[cur] ?? `${cur} `;
+    const netStr = `${netPnl >= 0 ? "+" : "-"}${sym}${Math.abs(netPnl).toFixed(2)}`;
+
+    // Best strategy by net pnl
+    const byStrat: Record<string, number> = {};
+    for (const t of trades) {
+      const s = (t.strategy ?? "").trim();
+      if (!s) continue;
+      byStrat[s] = (byStrat[s] ?? 0) + (typeof t.pnl === "number" ? t.pnl : 0);
+    }
+    const stratEntries = Object.entries(byStrat).sort((a, b) => b[1] - a[1]);
+    const bestSetup = stratEntries[0]?.[0] ?? "—";
+    const bestNet   = stratEntries[0] ? `${stratEntries[0][1] >= 0 ? "+" : "-"}${sym}${Math.abs(stratEntries[0][1]).toFixed(2)}` : "—";
+
+    try {
+      await sendEmail({
+        to:      profile.email,
+        subject: `Your ${label} in review: ${netStr}`,
+        html:    monthlySummaryEmailHtml({
+          monthLabel:   label,
+          netR:         netStr,
+          winRate:      `${winRatePct}%`,
+          discipline:   "—",
+          bestSetup,
+          bestSetupNet: bestNet,
+          reportUrl:    `${APP_URL}?screen=stats`,
+        }),
+      });
+      await admin.from("user_kv").upsert(
+        { user_id: uid, key: kvKey, value: new Date().toISOString() },
+        { onConflict: "user_id,key" }
+      );
+      sent++;
+    } catch (e) {
+      console.error("[monthly-summary] send failed for", uid, e);
+    }
+  }
+
+  return res.status(200).json({ ok: true, sent, skipped, users: Object.keys(byUser).length });
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
 // Router
 // ══════════════════════════════════════════════════════════════════════════════
 
@@ -839,6 +1075,8 @@ export default async function handler(req: Req, res: Res) {
   if (job === "news-calendar")       return handleNewsCalendar(req, res);
   if (job === "news-headlines")      return handleNewsHeadlines(req, res);
   if (job === "weekly-digest")       return handleWeeklyDigest(req, res);
+  if (job === "streak-milestones")   return handleStreakMilestones(req, res);
+  if (job === "monthly-summary")     return handleMonthlySummary(req, res);
 
   if (job === 'daily-digest') {
     if (!isCronAuthed(req)) return res.status(401).json({ error: 'Unauthorized' });
@@ -847,5 +1085,5 @@ export default async function handler(req: Req, res: Res) {
     return res.status(200).json({ ok: true });
   }
 
-  return res.status(400).json({ error: "?job= required: complete-challenges | sync | daily-digest | news-calendar | news-headlines | weekly-digest" });
+  return res.status(400).json({ error: "?job= required: complete-challenges | sync | daily-digest | news-calendar | news-headlines | weekly-digest | streak-milestones | monthly-summary" });
 }
