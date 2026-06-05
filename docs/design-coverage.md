@@ -333,12 +333,12 @@ _Shortcuts overlay, command palette, drag-drop, collapse, ultrawide._
 
 **Designs**: `koda-designs/cat18-desktop.jsx` · **Target**: `src/Koda.tsx isDesktop branches + new components`
 
-- [x] [ ] 🟠 **Command palette (⌘K)**
-- [x] [ ] 🟠 **Drag-and-drop targets (CSV import)**
-- [x] [ ] 🟡 **Hover-only affordances + mobile equivalents**
-- [x] [ ] 🟡 **Keyboard-shortcuts overlay (? key)**
-- [x] [ ] 🟡 **Multi-column layouts at >1600px**
-- [x] [ ] 🟡 **Sidebar collapse / expand**
+- [x] [x] 🟠 **Command palette (⌘K)** - CommandPalette + useCommandPalette wired (commit 8b0cf40)
+- [x] [x] 🟠 **Drag-and-drop targets (CSV import)** - CsvImportPanel drop zone with dragOver state + processFile extraction 2026-06-05
+- [x] [x] 🟡 **Hover-only affordances + mobile equivalents** - .row-hvr + .check-row:hover + @media(hover:none) coalesces affordances on touch
+- [x] [x] 🟡 **Keyboard-shortcuts overlay (? key)** - useGlobalShortcut("?") + KeyboardShortcutsOverlay wired
+- [x] [x] 🟡 **Multi-column layouts at >1600px** - viewport==="wide" → 260px sidebar + content; useViewport
+- [x] [x] 🟡 **Sidebar collapse / expand** - sidebarCollapsed state + 64px collapsed grid + icon-only nav + persisted to localStorage 2026-06-05
 
 ## 19 · PWA-specific surfaces
 

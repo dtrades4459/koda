@@ -348,6 +348,7 @@ interface CsvImportPanelProps {
 }
 export function CsvImportPanel({ existingTrades, onImport, onClose, allStrategyNames, C, inp, sel, lbl, defaultAccountType }: CsvImportPanelProps) {
   const [fileName, setFileName] = useState("");
+  const [dragOver, setDragOver] = useState(false);
   const [originalFile, setOriginalFile] = useState<File | null>(null);
   const [headers, setHeaders] = useState<string[]>([]);
   const [rows, setRows] = useState<Record<string, string>[]>([]);
@@ -470,6 +471,10 @@ export function CsvImportPanel({ existingTrades, onImport, onClose, allStrategyN
   function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    void processFile(file);
+  }
+
+  async function processFile(file: File) {
 
     // Reject obviously-wrong file types up front so users don't see the
     // confusing "no column headers found" error from feeding a PDF/PNG to
@@ -815,18 +820,35 @@ export function CsvImportPanel({ existingTrades, onImport, onClose, allStrategyN
         <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "10px" }}>
           Step 2 — Upload the file
         </div>
-        <label htmlFor="csv-file" style={{
-          display: "block", border: `1px dashed ${parsing ? C.warn : headers.length ? C.green : C.border2}`,
-          padding: "20px 16px", borderRadius: "10px", cursor: parsing ? "wait" : "pointer",
-          textAlign: "center", color: parsing ? C.warn : headers.length ? C.green : C.muted,
-          fontFamily: MONO, fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase",
-          opacity: parsing ? 0.8 : 1,
-        }}>
+        <label
+          htmlFor="csv-file"
+          onDragEnter={e => { e.preventDefault(); if (!parsing) setDragOver(true); }}
+          onDragOver={e => { e.preventDefault(); if (!parsing) setDragOver(true); }}
+          onDragLeave={e => { e.preventDefault(); setDragOver(false); }}
+          onDrop={e => {
+            e.preventDefault();
+            setDragOver(false);
+            if (parsing) return;
+            const file = e.dataTransfer.files?.[0];
+            if (file) void processFile(file);
+          }}
+          style={{
+            display: "block",
+            border: `${dragOver ? "2px" : "1px"} dashed ${parsing ? C.warn : dragOver ? C.live : headers.length ? C.green : C.border2}`,
+            padding: "20px 16px", borderRadius: "10px", cursor: parsing ? "wait" : "pointer",
+            textAlign: "center", color: parsing ? C.warn : dragOver ? C.live : headers.length ? C.green : C.muted,
+            fontFamily: MONO, fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase",
+            opacity: parsing ? 0.8 : 1,
+            background: dragOver ? "color-mix(in oklch, " + C.live + " 8%, transparent)" : "transparent",
+            transition: "background 0.12s, border-color 0.12s",
+          }}>
           {parsing
             ? `Parsing ${fileName}…`
-            : fileName
-              ? `✓ ${fileName} — ${rows.length} rows`
-              : "Click to select a CSV or Excel file"}
+            : dragOver
+              ? "Drop CSV here"
+              : fileName
+                ? `✓ ${fileName} — ${rows.length} rows`
+                : "Click or drop a CSV / Excel file here"}
           <input id="csv-file" type="file" accept=".csv,.tsv,.txt,.xlsx,.xls,text/csv,text/plain,text/tab-separated-values,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" onChange={handleFile} disabled={parsing} style={{ display: "none" }} />
         </label>
         {!activePreset && !headers.length && (

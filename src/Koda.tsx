@@ -329,6 +329,16 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   const [showEvalReset, setShowEvalReset] = useState(false);
   const cmdPalette = useCommandPalette();
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    try { return localStorage.getItem("koda_sidebar_collapsed") === "1"; } catch { return false; }
+  });
+  function toggleSidebar() {
+    setSidebarCollapsed(c => {
+      const next = !c;
+      try { localStorage.setItem("koda_sidebar_collapsed", next ? "1" : "0"); } catch { /* ignore */ }
+      return next;
+    });
+  }
   useGlobalShortcut("?", () => setShowShortcuts(s => !s));
   const [customContracts, setCustomContracts] = useState<ContractDef[]>(() => {
     try { return JSON.parse(localStorage.getItem("koda_custom_contracts") ?? "[]"); } catch { return []; }
@@ -1932,7 +1942,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
         </header>
 
         {/* ── CONTENT — desktop: sidebar+main grid; mobile: single column ── */}
-        <div style={{ display:isDesktop?"grid":"block", gridTemplateColumns: viewport === "wide" ? "260px 1fr" : isDesktop ? "220px 1fr" : undefined }} className="fade-in" key={view}>
+        <div style={{ display:isDesktop?"grid":"block", gridTemplateColumns: !isDesktop ? undefined : sidebarCollapsed ? "64px 1fr" : viewport === "wide" ? "260px 1fr" : "220px 1fr" }} className="fade-in" key={view}>
           {isDesktop && (
             <aside style={{ borderRight:`1px solid ${C.border}`, padding:"24px 0 32px", position:"sticky", top:"64px", height:"calc(100dvh - 64px)", overflowY:"auto", display:"flex", flexDirection:"column" }}>
               <div style={{ flex:1 }}>
@@ -1949,11 +1959,13 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                         if (tab.id === "stats") { setStatsTab("performance"); return; }
                         if (tab.id === "home") { setHomeSection("feed"); return; }
                         primaryNav("home");
-                      }} style={{ position:"relative", display:"flex", alignItems:"center", gap:"10px", width:"100%", background:showActive?C.panel:"transparent", border:"none", borderLeft:showActive?`2px solid ${C.text}`:"2px solid transparent", padding:"10px 22px", cursor:"pointer", fontFamily:MONO, fontSize:"11px", letterSpacing:"0.1em", textTransform:"uppercase", color:showActive?C.text:C.dim, textAlign:"left", transition:"all 0.12s ease" }}>
+                      }}
+                      title={sidebarCollapsed ? tab.label : undefined}
+                      style={{ position:"relative", display:"flex", alignItems:"center", justifyContent: sidebarCollapsed ? "center" : "flex-start", gap:"10px", width:"100%", background:showActive?C.panel:"transparent", border:"none", borderLeft:showActive?`2px solid ${C.text}`:"2px solid transparent", padding: sidebarCollapsed ? "10px 0" : "10px 22px", cursor:"pointer", fontFamily:MONO, fontSize:"11px", letterSpacing:"0.1em", textTransform:"uppercase", color:showActive?C.text:C.dim, textAlign:"left", transition:"all 0.12s ease" }}>
                         <svg width="16" height="16" viewBox="0 0 20 20" fill="none" style={{ opacity: showActive ? 1 : 0.55, flexShrink: 0 }}>
                           <path d={(tab as any).path} stroke="currentColor" strokeWidth="1.35" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
-                        {tab.label}
+                        {!sidebarCollapsed && tab.label}
                         {tab.id === "circles" && circlesUnread > 0 && (
                           <span
                             aria-label={`${circlesUnread} unread`}
@@ -1975,7 +1987,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                           />
                         )}
                       </button>
-                      {showActive && sn && (
+                      {showActive && sn && !sidebarCollapsed && (
                         <div style={{ paddingLeft:"28px", paddingBottom:"4px" }}>
                           {sn.sections.map((sec: { id: string; label: string })=>(
                             <button key={sec.id} onClick={()=>sn.onChange(sec.id)} style={{ display:"block", width:"100%", background:"none", border:"none", padding:"6px 0", cursor:"pointer", fontFamily:MONO, fontSize:"10px", letterSpacing:"0.07em", color:sn.value===sec.id?C.text:C.muted, textAlign:"left", textTransform:"uppercase", transition:"color 0.12s" }}>
@@ -1989,6 +2001,21 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                 })}
               </div>
               <div style={{ padding:"20px 22px 0", borderTop:`1px solid ${C.border}`, display:"flex", flexDirection:"column", gap:"10px" }}>
+                <button
+                  onClick={toggleSidebar}
+                  aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                  title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                  style={{
+                    background: "transparent", border: "none", color: C.muted,
+                    cursor: "pointer", padding: "6px", display: "flex",
+                    alignItems: "center", justifyContent: sidebarCollapsed ? "center" : "flex-start",
+                    gap: 8, fontFamily: MONO, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase",
+                  }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <path d={sidebarCollapsed ? "M9 6l6 6-6 6" : "M15 6l-6 6 6 6"} stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  {!sidebarCollapsed && "Collapse"}
+                </button>
               </div>
             </aside>
           )}
