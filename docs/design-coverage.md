@@ -155,16 +155,16 @@ _Offline, stale, expired, rate-limited, broken. The unhappy paths._
 
 **Designs**: `koda-designs/cat07-system.jsx` · **Target**: `src/components/OfflineBanner.tsx + new auth-state listener`
 
-- [x] [x] 🔴 **Session-expired modal + re-auth**
-- [x] [x] 🟠 **Error pages — 401 / 403 / 500 / 503**
-- [x] [x] 🟠 **Offline banner**
-- [x] [x] 🟠 **Retry-failed-request UI**
-- [x] [x] 🟠 **Service-worker update available**
-- [x] [x] 🟡 **Maintenance-mode page**
-- [x] [x] 🟡 **Optimistic-update rollback toast**
-- [x] [x] 🟡 **Rate-limited error**
-- [x] [x] 🟡 **Slow-connection indicator**
-- [x] [x] 🟡 **Version-mismatch banner**
+- [x] [x] 🔴 **Session-expired modal + re-auth** - SessionExpiredModal wired via SystemProvider + `koda:session-expired` event
+- [x] [x] 🟠 **Error pages — 401 / 403 / 500 / 503** - Error401/403/500/503 wired via `koda:error-page` event 2026-06-05
+- [x] [x] 🟠 **Offline banner** - OfflineBanner wired via SystemProvider
+- [x] [x] 🟠 **Retry-failed-request UI** - OptimisticRollbackToast RETRY action dispatches `retryEventName` 2026-06-05
+- [x] [x] 🟠 **Service-worker update available** - SWUpdateBanner wired via SystemProvider
+- [x] [x] 🟡 **Maintenance-mode page** - `koda:maintenance` event → Error503 takeover 2026-06-05
+- [x] [x] 🟡 **Optimistic-update rollback toast** - OptimisticRollbackToast wired via `koda:optimistic-rollback` event 2026-06-05
+- [x] [x] 🟡 **Rate-limited error** - RateLimitedModal wired via `koda:rate-limited` event 2026-06-05
+- [x] [x] 🟡 **Slow-connection indicator** - SlowConnectionBanner wired (Network Information API + `koda:slow-connection` event) 2026-06-05
+- [x] [x] 🟡 **Version-mismatch banner** - VersionMismatchBanner wired via SystemProvider
 
 ## 08 · Discipline / intervention
 
@@ -390,3 +390,4 @@ Lock these first. Sequence Mon→Thu of each week. Target: all 12 shipped within
 _Append per-row decisions, scope changes, or anything worth remembering. One line per entry. Date stamp at the front._
 
 - **2026-06-04** — Doc scaffolded. Branch `redesign/v2` created. Phase 1 starts Monday.
+- **2026-06-05** — cat07: wired SlowConnectionBanner, OptimisticRollbackToast, RateLimitedModal, Error401/403/500/503, and maintenance-mode takeover into SystemProvider via window events. cat06 verified — all 6 designed screens already exist as components; in-app surfaces (NotificationInbox, PermissionPrimerSheet, PermissionBlockedScreen) wired through NotificationsDrawer.
