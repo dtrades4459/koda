@@ -15,7 +15,12 @@ export const config = { runtime: "nodejs", api: { bodyParser: false } };
 
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
-import { sendEmail, receiptHtml } from "./lib/email.js";
+import {
+  sendEmail,
+  receiptHtml,
+  paymentFailedEmailHtml,
+  subscriptionCancelledEmailHtml,
+} from "./lib/email.js";
 
 type Req = { method?: string; headers: Record<string, string | string[] | undefined>; body: Record<string, unknown>; query: Record<string, string | string[] | undefined>; on(event: string, cb: (chunk: Buffer) => void): Req };
 type Res = { status(n: number): Res; json(d: unknown): Res; end(): void; setHeader(k: string, v: string): void };
@@ -330,6 +335,32 @@ async function handleWebhook(req: Req, res: Res) {
         console.error("[stripe/webhook] customer.subscription.deleted: missing userId — sub:", sub.id);
       } else {
         await setUserPlan(uid, "free", { subscriptionId: sub.id });
+
+        try {
+          const db = supabaseAdmin();
+          const { data: profileRow } = await db
+            .from("user_kv").select("value")
+            .eq("user_id", uid).eq("key", "koda_profile").maybeSingle();
+          const profile = profileRow?.value as { email?: string } | undefined;
+          if (profile?.email) {
+            const cpe      = (sub as unknown as { current_period_end?: number }).current_period_end
+              ?? sub.items?.data?.[0]?.current_period_end;
+            const endsAt   = cpe ? new Date(cpe * 1000) : null;
+            const endsDate = endsAt
+              ? endsAt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+              : "your renewal date";
+            await sendEmail({
+              to:      profile.email,
+              subject: "Your Kōda Pro plan has been cancelled",
+              html:    subscriptionCancelledEmailHtml({
+                endsDate,
+                reactivateUrl: `${APP_URL}?paywall=1`,
+              }),
+            });
+          }
+        } catch (e) {
+          console.error("[stripe/webhook] subscription.deleted email failed:", e);
+        }
       }
 
     } else if (event.type === "invoice.paid") {
@@ -363,8 +394,51 @@ async function handleWebhook(req: Req, res: Res) {
       }
 
     } else if (event.type === "invoice.payment_failed") {
-      const inv = event.data.object as Stripe.Invoice;
-      console.warn("[stripe/webhook] Payment failed, customer:", (inv as any).customer);
+      const inv        = event.data.object as Stripe.Invoice;
+      const customerId = inv.customer as string;
+      console.warn("[stripe/webhook] Payment failed, customer:", customerId);
+      const db         = supabaseAdmin();
+
+      const { data: kvRow } = await db
+        .from("user_kv").select("user_id, value")
+        .eq("key", "koda_stripe_customer")
+        .eq("value->>customerId", customerId)
+        .maybeSingle();
+
+      if (kvRow) {
+        const { data: profileRow } = await db
+          .from("user_kv").select("value")
+          .eq("user_id", kvRow.user_id).eq("key", "koda_profile").maybeSingle();
+
+        const profile = profileRow?.value as { email?: string; name?: string } | undefined;
+        if (profile?.email) {
+          const currencySymbol = ({ gbp: "£", usd: "$", eur: "€", aud: "A$", cad: "C$" } as Record<string, string>)[(inv.currency ?? "gbp").toLowerCase()] ?? (inv.currency ?? "").toUpperCase() + " ";
+          const amount = `${currencySymbol}${(inv.amount_due / 100).toFixed(2)}`;
+          const nextAttempt = inv.next_payment_attempt
+            ? new Date(inv.next_payment_attempt * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+            : "soon";
+          let cardLast4 = "•••";
+          const invPi = (inv as unknown as { payment_intent?: string | Stripe.PaymentIntent }).payment_intent;
+          if (invPi && typeof invPi !== "string") {
+            const pm = invPi.payment_method;
+            if (pm && typeof pm !== "string" && pm.card?.last4) cardLast4 = pm.card.last4;
+          }
+          try {
+            await sendEmail({
+              to:      profile.email,
+              subject: "Action needed: your payment was declined",
+              html:    paymentFailedEmailHtml({
+                cardLast4,
+                amount,
+                retryDate: nextAttempt,
+                updateUrl: `${APP_URL}?paywall=1`,
+              }),
+            });
+          } catch (e) {
+            console.error("[stripe/webhook] payment_failed email failed:", e);
+          }
+        }
+      }
     }
   } catch (err: unknown) {
     console.error("[stripe/webhook] Handler error:", err);

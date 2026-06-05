@@ -15,6 +15,7 @@ import { tryDecrypt, encrypt } from "./lib/cryptoUtils.js";
 import { getAdminClient, getUserIdFromJwt } from "./lib/supabaseAdmin.js";
 import { checkRateLimit, getClientIp } from "./lib/rateLimit.js";
 import { deliverNotification } from "./push.js";
+import { sendEmail, brokerSyncErrorEmailHtml } from "./lib/email.js";
 
 type Req = { method?: string; headers: Record<string, string | string[] | undefined>; body: Record<string, unknown>; query: Record<string, string | string[] | undefined> };
 type Res = { status(n: number): Res; json(d: unknown): Res; end(): void; setHeader(k: string, v: string): void };
@@ -416,6 +417,7 @@ async function syncConnection(conn: any): Promise<{
 
   } catch (err: any) {
     const message = err?.message ?? "Unknown error";
+    const wasPreviouslyConnected = conn.sync_status === "connected";
 
     await admin
       .from("broker_connections")
@@ -432,6 +434,36 @@ async function syncConnection(conn: any): Promise<{
       trades_new:    0,
       error:         message,
     });
+
+    // Email the user once per error transition (connected → error), only for
+    // auth-related failures. Skipping repeated cron ticks while still errored.
+    const isAuthError = /token|reconnect|auth/i.test(message);
+    if (wasPreviouslyConnected && isAuthError) {
+      try {
+        const { data: profileRow } = await admin
+          .from("user_kv").select("value")
+          .eq("user_id", userId).eq("key", "koda_profile").maybeSingle();
+        const profile = profileRow?.value as { email?: string } | undefined;
+        if (profile?.email) {
+          const accountLabel = (conn.account_label as string | undefined) ?? (conn.account_id as string | undefined) ?? `Account ${connectionId.slice(0, 6)}`;
+          const since = conn.last_sync_at
+            ? new Date(conn.last_sync_at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })
+            : "recently";
+          await sendEmail({
+            to:      profile.email,
+            subject: "Your Tradovate sync needs attention",
+            html:    brokerSyncErrorEmailHtml({
+              broker: "Tradovate",
+              accountLabel,
+              since,
+              reconnectUrl: `${APP_URL}?screen=data-sources`,
+            }),
+          });
+        }
+      } catch (emailErr) {
+        console.error("[cron/sync] broker-sync-error email failed:", emailErr);
+      }
+    }
 
     return { connectionId, tradesFound: 0, tradesNew: 0, error: message };
   }

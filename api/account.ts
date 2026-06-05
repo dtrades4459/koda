@@ -12,7 +12,12 @@ import { createClient } from "@supabase/supabase-js";
 import { timingSafeEqual } from "crypto";
 import { checkRateLimit, getClientIp } from "./lib/rateLimit.js";
 import { getAdminClient, getUserIdFromJwt } from "./lib/supabaseAdmin.js";
-import { sendEmail, waitlistConfirmHtml } from "./lib/email.js";
+import {
+  sendEmail,
+  waitlistConfirmHtml,
+  passwordResetEmailHtml,
+  welcomeEmailHtml,
+} from "./lib/email.js";
 
 type Req = { method?: string; headers: Record<string, string | string[] | undefined>; body: Record<string, unknown>; query: Record<string, string | string[] | undefined> };
 type Res = { status(n: number): Res; json(d: unknown): Res; end(): void; setHeader(k: string, v: string): void };
@@ -96,38 +101,15 @@ async function handleResetPassword(req: Req, res: Res) {
 
   if (!resetLink) return res.status(500).json({ error: "No reset link generated" });
 
-  const resendKey = process.env.RESEND_API_KEY;
-  if (recoveryEmail && resendKey && resendKey.length > 0) {
-    const controller = new AbortController();
-    const timeoutId  = setTimeout(() => controller.abort(), 8000);
+  if (recoveryEmail) {
     try {
-      await fetch("https://api.resend.com/emails", {
-        method:  "POST",
-        headers: { "Authorization": `Bearer ${resendKey}`, "Content-Type": "application/json" },
-        signal:  controller.signal,
-        body: JSON.stringify({
-          from:    "Kōda <noreply@kodatrade.co.uk>",
-          to:      [recoveryEmail],
-          subject: "Reset your Kōda password",
-          html: [
-            `<div style="font-family:ui-monospace,monospace;max-width:480px;margin:0 auto;padding:32px 24px;background:#0C0C0B;color:#EDEDE8;">`,
-            `<p style="font-size:11px;color:#8A8A82;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:24px;">Kōda · Password Reset</p>`,
-            `<p style="font-size:15px;line-height:1.6;margin-bottom:24px;">`,
-            `Hi <strong>@${u}</strong>,<br><br>`,
-            `Someone (probably you) requested a password reset. Click the link below to set a new password. The link expires in 1 hour.`,
-            `</p>`,
-            `<a href="${resetLink}" style="display:inline-block;background:#EDEDE8;color:#0C0C0B;padding:12px 24px;border-radius:999px;text-decoration:none;font-size:13px;font-weight:600;">Reset password →</a>`,
-            `<p style="font-size:12px;color:#55554F;margin-top:32px;line-height:1.6;">`,
-            `If you didn't request this, you can safely ignore this email. Your password won't change unless you click the link above.`,
-            `</p>`,
-            `</div>`,
-          ].join(""),
-        }),
+      await sendEmail({
+        to:      recoveryEmail,
+        subject: "Reset your Kōda password",
+        html:    passwordResetEmailHtml({ email: `@${u}`, resetUrl: resetLink }),
       });
     } catch (e) {
       console.error("[account/reset-password] Resend:", e);
-    } finally {
-      clearTimeout(timeoutId);
     }
   }
 
@@ -241,6 +223,56 @@ async function handleJoinWaitlist(req: Req, res: Res) {
   }
 
   return res.status(existing ? 409 : 200).json({ ok: true, position, ...(existing && { existing: true }) });
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Action: welcome
+//
+// Sends the cat12 welcome email. Client-triggered, called once after onboarding
+// completes. Idempotent via the `koda_welcome_email_sent` user_kv key so a user
+// who clears localStorage and re-opens won't get a second welcome.
+// ══════════════════════════════════════════════════════════════════════════════
+
+async function handleWelcome(req: Req, res: Res) {
+  const userId = await getUserIdFromJwt(req.headers["authorization"] as string | undefined);
+  if (!userId) return res.status(401).json({ error: "Not authenticated" });
+
+  const ip = getClientIp(req);
+  const ok = await checkRateLimit("welcome_email", ip, { limit: 3, windowMs: 60 * 60_000 });
+  if (!ok) return res.status(429).json({ error: "Too many requests" });
+
+  const admin = getAdminClient();
+
+  const { data: sentRow } = await admin
+    .from("user_kv").select("value")
+    .eq("user_id", userId).eq("key", "koda_welcome_email_sent").maybeSingle();
+  if (sentRow?.value) return res.status(200).json({ ok: true, alreadySent: true });
+
+  const { data: profileRow } = await admin
+    .from("user_kv").select("value")
+    .eq("user_id", userId).eq("key", "koda_profile").maybeSingle();
+  const profile = profileRow?.value as { email?: string; name?: string } | undefined;
+  if (!profile?.email) return res.status(400).json({ error: "No email on profile" });
+
+  const firstName = (profile.name ?? "").split(" ")[0] || "Trader";
+
+  try {
+    await sendEmail({
+      to:      profile.email,
+      subject: "Welcome to Kōda — your edge starts now",
+      html:    welcomeEmailHtml({ firstName, appUrl: APP_URL }),
+    });
+  } catch (e) {
+    console.error("[account/welcome] Resend:", e);
+    return res.status(500).json({ error: "Send failed" });
+  }
+
+  await admin.from("user_kv").upsert(
+    { user_id: userId, key: "koda_welcome_email_sent", value: new Date().toISOString() },
+    { onConflict: "user_id,key" }
+  );
+
+  return res.status(200).json({ ok: true });
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -402,8 +434,9 @@ export default async function handler(req: Req, res: Res) {
   if (action === "reset-password") return handleResetPassword(req, res);
   if (action === "beta-unlock")    return handleBetaUnlock(req, res);
   if (action === "join-waitlist")  return handleJoinWaitlist(req, res);
+  if (action === "welcome")        return handleWelcome(req, res);
   if (action === "feedback")       return handleFeedback(req, res);
   if (action === "delete")         return handleDelete(req, res);
 
-  return res.status(400).json({ error: "?action= required: reset-password | beta-unlock | join-waitlist | feedback | delete" });
+  return res.status(400).json({ error: "?action= required: reset-password | beta-unlock | join-waitlist | welcome | feedback | delete" });
 }

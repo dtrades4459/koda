@@ -240,18 +240,18 @@ _Every transactional + lifecycle email._
 
 **Designs**: `koda-designs/cat12-email.jsx` · **Target**: `api/lib/email.ts + Resend templates`
 
-- [x] [ ] 🔴 **Email verification**
-- [x] [ ] 🔴 **Password reset**
-- [x] [ ] 🔴 **Payment failed + retry link**
-- [x] [ ] 🔴 **Welcome**
-- [x] [ ] 🟠 **Account deletion confirmation**
-- [x] [ ] 🟠 **Beta-unlock confirmation**
-- [x] [ ] 🟠 **Subscription cancelled**
-- [x] [ ] 🟡 **Announcement broadcast**
-- [x] [ ] 🟡 **Broker sync-error digest**
-- [x] [ ] 🟡 **Milestone celebrations (streak / first / 100th / eval pass)**
-- [x] [ ] 🟡 **Monthly summary**
-- [x] [ ] 🟡 **Waitlist join + position update**
+- [x] [ ] 🔴 **Email verification** - emailVerificationHtml() ready; Supabase Auth owns the actual send → requires custom SMTP / Supabase template swap to ship
+- [x] [x] 🔴 **Password reset** - passwordResetEmailHtml() wired into api/account.ts handleResetPassword (replaced inline HTML) 2026-06-05
+- [x] [x] 🔴 **Payment failed + retry link** - paymentFailedEmailHtml() wired into api/stripe.ts invoice.payment_failed webhook 2026-06-05
+- [x] [x] 🔴 **Welcome** - welcomeEmailHtml() wired via new `POST /api/account?action=welcome` endpoint (client calls once after onboarding); idempotent via koda_welcome_email_sent kv 2026-06-05
+- [x] [ ] 🟠 **Account deletion confirmation** - accountDeletionEmailHtml() ready (designed for 14-day grace flow); current handleDelete is immediate — template ships when grace-period delete lands
+- [x] [ ] 🟠 **Beta-unlock confirmation** - betaUnlockEmailHtml() ready; handleBetaUnlock doesn't capture user email yet — ships when beta flow restructures to gather it
+- [x] [x] 🟠 **Subscription cancelled** - subscriptionCancelledEmailHtml() wired into api/stripe.ts customer.subscription.deleted webhook with reactivate URL 2026-06-05
+- [x] [ ] 🟡 **Announcement broadcast** - announcementEmailHtml() ready; needs admin endpoint to trigger broadcast (cat20 surface)
+- [x] [x] 🟡 **Broker sync-error digest** - brokerSyncErrorEmailHtml() wired into cron syncConnection auth-error path, gated to connected→error transition to avoid spam 2026-06-05
+- [x] [ ] 🟡 **Milestone celebrations (streak / first / 100th / eval pass)** - milestoneEmailHtml() ready; needs streak-detection cron
+- [x] [ ] 🟡 **Monthly summary** - monthlySummaryEmailHtml() ready; needs monthly cron job
+- [x] [ ] 🟡 **Waitlist join + position update** - join half wired via existing waitlistConfirmHtml; waitlistPositionEmailHtml() ready, needs weekly waitlist-movement cron
 - [x] [x] ⚪ **Receipt**
 - [x] [x] ⚪ **Weekly recap (Sunday)**
 
@@ -391,3 +391,4 @@ _Append per-row decisions, scope changes, or anything worth remembering. One lin
 
 - **2026-06-04** — Doc scaffolded. Branch `redesign/v2` created. Phase 1 starts Monday.
 - **2026-06-05** — cat07: wired SlowConnectionBanner, OptimisticRollbackToast, RateLimitedModal, Error401/403/500/503, and maintenance-mode takeover into SystemProvider via window events. cat06 verified — all 6 designed screens already exist as components; in-app surfaces (NotificationInbox, PermissionPrimerSheet, PermissionBlockedScreen) wired through NotificationsDrawer.
+- **2026-06-05** — cat12: 5 email templates wired into live API paths — passwordReset (account.ts handleResetPassword), paymentFailed + subscriptionCancelled (stripe.ts webhook), welcome (new account.ts ?action=welcome endpoint), brokerSyncError (cron.ts syncConnection auth-error transition). Remaining 7 templates designed-only — each blocked on missing infra noted inline (Supabase email override / grace-period delete / streak+monthly+waitlist crons / admin broadcast endpoint).
