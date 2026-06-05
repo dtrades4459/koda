@@ -160,6 +160,16 @@ function AuthForm({ onSuccess, initialError = "", onModeChange, modeRequest }: {
       const { data, error: e } = await supabase.auth.signUp({ email, password: pw });
       if (e) throw e;
       setSignupEmail(email);
+
+      // Override Supabase's default verification email with our branded
+      // template. Fire-and-forget; if it fails the user can still hit
+      // "Resend" on the verify screen (which we also route through ours).
+      fetch("/api/account?action=send-verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      }).catch(err => console.warn("[koda-auth] send-verify failed:", err));
+
       if (!data.session) {
         // Email confirmation required — show 6-digit OTP entry screen
         setMode("verify");
@@ -196,8 +206,17 @@ function AuthForm({ onSuccess, initialError = "", onModeChange, modeRequest }: {
   async function handleResendVerify() {
     setLoading(true); setError("");
     try {
-      const { error: e } = await supabase.auth.resend({ email: signupEmail, type: "signup" });
-      if (e) throw e;
+      // Use our branded resend endpoint instead of supabase.auth.resend so the
+      // resent email matches the cat12 design kit.
+      const r = await fetch("/api/account?action=send-verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: signupEmail }),
+      });
+      if (!r.ok) {
+        const body = await r.json().catch(() => ({}));
+        throw new Error(body.error ?? `HTTP ${r.status}`);
+      }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to resend. Try again.");
     } finally {

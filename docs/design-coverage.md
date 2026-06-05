@@ -240,11 +240,11 @@ _Every transactional + lifecycle email._
 
 **Designs**: `koda-designs/cat12-email.jsx` · **Target**: `api/lib/email.ts + Resend templates`
 
-- [x] [ ] 🔴 **Email verification** - emailVerificationHtml() ready; Supabase Auth owns the actual send → requires custom SMTP / Supabase template swap to ship
+- [x] [x] 🔴 **Email verification** - branded emailVerificationHtml sent via POST /api/account?action=send-verify; KodaAuth fires it post-signup; uses admin.generateLink(type:magiclink) for the action URL + OTP. Suppress Supabase default by clearing the signup email template in Supabase Dashboard. 2026-06-05
 - [x] [x] 🔴 **Password reset** - passwordResetEmailHtml() wired into api/account.ts handleResetPassword (replaced inline HTML) 2026-06-05
 - [x] [x] 🔴 **Payment failed + retry link** - paymentFailedEmailHtml() wired into api/stripe.ts invoice.payment_failed webhook 2026-06-05
 - [x] [x] 🔴 **Welcome** - welcomeEmailHtml() wired via new `POST /api/account?action=welcome` endpoint (client calls once after onboarding); idempotent via koda_welcome_email_sent kv 2026-06-05
-- [x] [ ] 🟠 **Account deletion confirmation** - accountDeletionEmailHtml() ready (designed for 14-day grace flow); current handleDelete is immediate — template ships when grace-period delete lands
+- [x] [x] 🟠 **Account deletion confirmation** - handleDelete now schedules with 14-day grace (sets deletion_scheduled_for in koda_profile, cancels Stripe, sends accountDeletionEmailHtml). cancel-deletion endpoint + delete-expired-accounts daily cron (03:00 UTC) does the actual purge. 2026-06-05
 - [x] [ ] 🟠 **Beta-unlock confirmation** - betaUnlockEmailHtml() ready; handleBetaUnlock doesn't capture user email yet — ships when beta flow restructures to gather it
 - [x] [x] 🟠 **Subscription cancelled** - subscriptionCancelledEmailHtml() wired into api/stripe.ts customer.subscription.deleted webhook with reactivate URL 2026-06-05
 - [x] [x] 🟡 **Announcement broadcast** - admin endpoint `POST /api/admin/broadcast` sends announcementEmailHtml to all profiles with valid emails; ADMIN_EMAILS allowlist gates access; dryRun mode + 20/sec throttle 2026-06-05

@@ -17,7 +17,11 @@ import {
   waitlistConfirmHtml,
   passwordResetEmailHtml,
   welcomeEmailHtml,
+  accountDeletionEmailHtml,
+  emailVerificationHtml,
 } from "./lib/email.js";
+
+const DELETION_GRACE_DAYS = 14;
 
 type Req = { method?: string; headers: Record<string, string | string[] | undefined>; body: Record<string, unknown>; query: Record<string, string | string[] | undefined> };
 type Res = { status(n: number): Res; json(d: unknown): Res; end(): void; setHeader(k: string, v: string): void };
@@ -226,6 +230,80 @@ async function handleJoinWaitlist(req: Req, res: Res) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
+// Action: send-verify
+//
+// Branded replacement for Supabase's default signup verification email. The
+// client calls this immediately after `supabase.auth.signUp()` (which fires
+// Supabase's own email — disable that in Supabase Dashboard → Auth → Email
+// Templates by clearing the template, or configure a no-op SMTP).
+//
+// We call admin.generateLink({ type: 'signup' }) to mint a fresh verify URL
+// + 6-digit OTP, then dispatch our `emailVerificationHtml` via Resend so the
+// inbox impression matches the rest of the cat12 email kit.
+// ══════════════════════════════════════════════════════════════════════════════
+
+async function handleSendVerify(req: Req, res: Res) {
+  const ip = getClientIp(req);
+  const ok = await checkRateLimit("send_verify", ip, { limit: 10, windowMs: 60 * 60_000 });
+  if (!ok) return res.status(429).json({ error: "Too many requests" });
+
+  const { email } = req.body as { email?: string };
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!email || !EMAIL_RE.test(email.trim())) {
+    return res.status(400).json({ error: "Valid email required" });
+  }
+
+  const target = email.trim().toLowerCase();
+  const admin  = createClient(
+    process.env.SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  );
+
+  // After auth.signUp the user exists in auth.users but email_confirmed_at is
+  // null. magiclink mints a link that confirms the email on click + logs them
+  // in — works for the post-signup case where we don't want to demand a
+  // password again.
+  let verifyUrl = "";
+  let code      = "";
+  try {
+    const { data, error } = await admin.auth.admin.generateLink({
+      type:    "magiclink",
+      email:   target,
+      options: { redirectTo: APP_URL },
+    });
+    if (error) throw error;
+    verifyUrl = data?.properties?.action_link ?? "";
+    code      = (data?.properties as { email_otp?: string } | undefined)?.email_otp ?? "";
+  } catch (e) {
+    console.error("[account/send-verify] generateLink:", e);
+    return res.status(500).json({ error: "Failed to mint verification link" });
+  }
+
+  if (!verifyUrl) {
+    return res.status(500).json({ error: "No verification link returned" });
+  }
+
+  const codeForTemplate = code || "—  —  —";
+  const subject = code
+    ? `Verify your email — code ${code.replace(/(\d{3})(\d{3})/, "$1 $2")}`
+    : "Verify your Kōda email";
+
+  try {
+    await sendEmail({
+      to:      target,
+      subject,
+      html:    emailVerificationHtml({ code: codeForTemplate, verifyUrl }),
+    });
+  } catch (e) {
+    console.error("[account/send-verify] Resend:", e);
+    return res.status(500).json({ error: "Failed to send verification email" });
+  }
+
+  return res.status(200).json({ ok: true });
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
 // Action: welcome
 //
 // Sends the cat12 welcome email. Client-triggered, called once after onboarding
@@ -352,72 +430,112 @@ async function cancelStripeSubscriptionIfAny(db: ReturnType<typeof getAdminClien
   }
 }
 
+// ──────────────────────────────────────────────────────────────────────────────
+// Action: delete — schedule, with 14-day grace
+//
+// Marks the account for deletion in {scheduled_for, requested_at} on the
+// koda_profile kv. Sends accountDeletionEmailHtml with the scheduled date
+// and a "Keep my account" CTA hitting POST /api/account?action=cancel-deletion.
+//
+// The actual purge runs in the cron job `delete-expired-accounts` once the
+// schedule date passes. Stripe subscription is cancelled now (so they're not
+// billed during grace) — but they keep app access until the grace ends, so
+// they can change their mind without losing data.
+// ──────────────────────────────────────────────────────────────────────────────
+
 async function handleDelete(req: Req, res: Res) {
   const userId = await getUserIdFromJwt(req.headers["authorization"] as string | undefined);
   if (!userId) return res.status(401).json({ error: "Unauthorised" });
 
   const db = getAdminClient();
 
+  // Cancel Stripe now so they're not billed during grace.
   await cancelStripeSubscriptionIfAny(db, userId);
 
-  let handle = "";
-  try {
-    const { data } = await db
-      .from("user_kv").select("value")
-      .eq("user_id", userId).eq("key", "koda_profile").maybeSingle();
-    if (data?.value) {
-      const profile = typeof data.value === "string" ? JSON.parse(data.value) : data.value;
-      handle = (profile.handle ?? "").replace(/^@/, "").toLowerCase();
-    }
-  } catch { /* best-effort */ }
+  const { data: profileRow } = await db
+    .from("user_kv").select("value")
+    .eq("user_id", userId).eq("key", "koda_profile").maybeSingle();
+  if (!profileRow?.value) {
+    return res.status(404).json({ error: "Profile not found" });
+  }
+  const profile = typeof profileRow.value === "string" ? JSON.parse(profileRow.value) : profileRow.value;
+  const email   = (profile.email as string | undefined)?.trim() ?? "";
 
-  const results: Record<string, string> = {};
-  const tableDeletes = [
-    { name: "broker_connections", table: "broker_connections", col: "user_id" },
-    { name: "sync_events",        table: "sync_events",        col: "user_id" },
-    { name: "trades",             table: "trades",              col: "user_id" },
-    { name: "profiles",           table: "profiles",            col: "user_id" },
-    { name: "user_kv",            table: "user_kv",             col: "user_id" },
-  ];
+  // Already-scheduled? Re-render the email with the existing schedule (idempotent).
+  const now = new Date();
+  const scheduledFor = profile.deletion_scheduled_for
+    ? new Date(profile.deletion_scheduled_for as string)
+    : new Date(now.getTime() + DELETION_GRACE_DAYS * 86_400_000);
 
-  for (const { name, table, col } of tableDeletes) {
+  profile.deletion_scheduled_for = scheduledFor.toISOString();
+  profile.deletion_requested_at  = profile.deletion_requested_at ?? now.toISOString();
+
+  await db.from("user_kv").upsert(
+    { user_id: userId, key: "koda_profile", value: JSON.stringify(profile) },
+    { onConflict: "user_id,key" }
+  );
+
+  if (email) {
+    const deletionDate = scheduledFor.toLocaleDateString("en-GB", {
+      day: "numeric", month: "short", year: "numeric",
+    });
     try {
-      const { error } = await db.from(table).delete().eq(col, userId);
-      results[name] = error ? `err: ${error.message}` : "ok";
+      await sendEmail({
+        to:      email,
+        subject: "Your Kōda account is scheduled for deletion",
+        html:    accountDeletionEmailHtml({
+          deletionDate,
+          recoverUrl: `${APP_URL}/?cancel-deletion=1`,
+          exportUrl:  `${APP_URL}/?screen=data-export`,
+        }),
+      });
     } catch (e) {
-      results[name] = `err: ${(e as Error).message}`;
+      console.error("[account/delete] confirmation email failed:", e);
     }
   }
 
-  if (handle) {
-    try {
-      await db.from("shared_kv").delete().eq("key", `koda_profile_pub_${handle}`);
-      await db.from("shared_kv").delete().eq("key", `koda_handle_${handle}`);
-      results["shared_kv_handle"] = "ok";
-    } catch (e) {
-      results["shared_kv_handle"] = `err: ${(e as Error).message}`;
-    }
-  }
-  try {
-    await db.from("shared_kv").delete().eq("owner_id", userId);
-    results["shared_kv_owned"] = "ok";
-  } catch (e) {
-    results["shared_kv_owned"] = `err: ${(e as Error).message}`;
+  console.log(`[account/delete] uid=${userId} scheduled for ${scheduledFor.toISOString()}`);
+  res.status(200).json({
+    ok: true,
+    scheduled_for: scheduledFor.toISOString(),
+    grace_days:    DELETION_GRACE_DAYS,
+  });
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Action: cancel-deletion — pull the account out of the grace queue
+//
+// Called from the "Keep my account" link in the deletion email, and from the
+// in-app banner shown to users whose account is scheduled.
+// ──────────────────────────────────────────────────────────────────────────────
+
+async function handleCancelDeletion(req: Req, res: Res) {
+  const userId = await getUserIdFromJwt(req.headers["authorization"] as string | undefined);
+  if (!userId) return res.status(401).json({ error: "Unauthorised" });
+
+  const db = getAdminClient();
+  const { data: profileRow } = await db
+    .from("user_kv").select("value")
+    .eq("user_id", userId).eq("key", "koda_profile").maybeSingle();
+  if (!profileRow?.value) {
+    return res.status(404).json({ error: "Profile not found" });
   }
 
-  try {
-    const { error } = await db.auth.admin.deleteUser(userId);
-    if (error) {
-      console.error("[account/delete] auth.users delete failed:", error.message, "results:", results);
-      return res.status(500).json({ error: "Auth user deletion failed", details: results });
-    }
-  } catch (e) {
-    console.error("[account/delete] auth.users delete threw:", (e as Error).message, "results:", results);
-    return res.status(500).json({ error: "Auth user deletion failed" });
+  const profile = typeof profileRow.value === "string" ? JSON.parse(profileRow.value) : profileRow.value;
+  if (!profile.deletion_scheduled_for) {
+    return res.status(200).json({ ok: true, alreadyClear: true });
   }
 
-  console.log("[account/delete] uid=" + userId + " purged:", results);
-  res.json({ ok: true });
+  delete profile.deletion_scheduled_for;
+  delete profile.deletion_requested_at;
+
+  await db.from("user_kv").upsert(
+    { user_id: userId, key: "koda_profile", value: JSON.stringify(profile) },
+    { onConflict: "user_id,key" }
+  );
+
+  console.log(`[account/cancel-deletion] uid=${userId} restored`);
+  return res.status(200).json({ ok: true });
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -434,9 +552,11 @@ export default async function handler(req: Req, res: Res) {
   if (action === "reset-password") return handleResetPassword(req, res);
   if (action === "beta-unlock")    return handleBetaUnlock(req, res);
   if (action === "join-waitlist")  return handleJoinWaitlist(req, res);
+  if (action === "send-verify")    return handleSendVerify(req, res);
   if (action === "welcome")        return handleWelcome(req, res);
-  if (action === "feedback")       return handleFeedback(req, res);
-  if (action === "delete")         return handleDelete(req, res);
+  if (action === "feedback")        return handleFeedback(req, res);
+  if (action === "delete")          return handleDelete(req, res);
+  if (action === "cancel-deletion") return handleCancelDeletion(req, res);
 
-  return res.status(400).json({ error: "?action= required: reset-password | beta-unlock | join-waitlist | welcome | feedback | delete" });
+  return res.status(400).json({ error: "?action= required: reset-password | beta-unlock | join-waitlist | send-verify | welcome | feedback | delete | cancel-deletion" });
 }

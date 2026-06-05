@@ -1061,6 +1061,93 @@ async function handleMonthlySummary(req: Req, res: Res) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
+// Job: delete-expired-accounts  (daily 03:00 UTC)
+//
+// Companion to the 14-day grace deletion flow in api/account.ts. Finds every
+// koda_profile whose `deletion_scheduled_for` has passed, then runs the full
+// purge: cancel Stripe, wipe data tables, delete the auth.users row.
+//
+// Once a profile is queried + actioned here, the next sign-in attempt fails
+// (auth.users gone). The Stripe sub was already cancelled at request time, so
+// they're not billed during grace either way.
+// ══════════════════════════════════════════════════════════════════════════════
+
+interface ProfileForPurge {
+  user_id: string;
+  email?: string;
+  handle?: string;
+  deletion_scheduled_for?: string;
+}
+
+async function handleDeleteExpiredAccounts(req: Req, res: Res) {
+  if (!isCronAuthed(req)) return res.status(401).json({ error: "Unauthorized" });
+  const admin = getAdminClient();
+
+  const { data: rows, error } = await admin
+    .from("user_kv").select("user_id, value")
+    .eq("key", "koda_profile");
+  if (error) {
+    console.error("[delete-expired-accounts] fetch:", error);
+    return res.status(500).json({ error: error.message });
+  }
+
+  const nowIso = new Date().toISOString();
+  const candidates: ProfileForPurge[] = [];
+  for (const r of rows ?? []) {
+    try {
+      const profile = typeof r.value === "string" ? JSON.parse(r.value) : r.value;
+      const sched = profile?.deletion_scheduled_for as string | undefined;
+      if (sched && sched <= nowIso) {
+        candidates.push({
+          user_id: r.user_id as string,
+          email:   profile.email,
+          handle:  (profile.handle ?? "").replace(/^@/, "").toLowerCase(),
+          deletion_scheduled_for: sched,
+        });
+      }
+    } catch { /* skip malformed */ }
+  }
+
+  if (candidates.length === 0) return res.status(200).json({ ok: true, purged: 0 });
+
+  let purged = 0;
+  const failures: { uid: string; error: string }[] = [];
+
+  for (const c of candidates) {
+    const uid = c.user_id;
+    try {
+      const tableDeletes = [
+        { table: "broker_connections", col: "user_id" },
+        { table: "sync_events",        col: "user_id" },
+        { table: "trades",             col: "user_id" },
+        { table: "profiles",           col: "user_id" },
+        { table: "user_kv",            col: "user_id" },
+      ];
+      for (const { table, col } of tableDeletes) {
+        await admin.from(table).delete().eq(col, uid);
+      }
+      if (c.handle) {
+        await admin.from("shared_kv").delete().eq("key", `koda_profile_pub_${c.handle}`);
+        await admin.from("shared_kv").delete().eq("key", `koda_handle_${c.handle}`);
+      }
+      await admin.from("shared_kv").delete().eq("owner_id", uid);
+
+      const { error: delErr } = await admin.auth.admin.deleteUser(uid);
+      if (delErr) throw new Error(`auth.users delete: ${delErr.message}`);
+
+      console.log(`[delete-expired-accounts] purged uid=${uid} scheduled=${c.deletion_scheduled_for}`);
+      purged++;
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      failures.push({ uid, error: msg });
+      console.error(`[delete-expired-accounts] FAILED uid=${uid}:`, msg);
+    }
+  }
+
+  return res.status(200).json({ ok: true, purged, failures });
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
 // Router
 // ══════════════════════════════════════════════════════════════════════════════
 
@@ -1070,13 +1157,14 @@ export default async function handler(req: Req, res: Res) {
 
   const job = req.query?.job as string | undefined;
 
-  if (job === "complete-challenges") return handleCompleteChallenges(req, res);
-  if (job === "sync")                return handleSync(req, res);
-  if (job === "news-calendar")       return handleNewsCalendar(req, res);
-  if (job === "news-headlines")      return handleNewsHeadlines(req, res);
-  if (job === "weekly-digest")       return handleWeeklyDigest(req, res);
-  if (job === "streak-milestones")   return handleStreakMilestones(req, res);
-  if (job === "monthly-summary")     return handleMonthlySummary(req, res);
+  if (job === "complete-challenges")     return handleCompleteChallenges(req, res);
+  if (job === "sync")                    return handleSync(req, res);
+  if (job === "news-calendar")           return handleNewsCalendar(req, res);
+  if (job === "news-headlines")          return handleNewsHeadlines(req, res);
+  if (job === "weekly-digest")           return handleWeeklyDigest(req, res);
+  if (job === "streak-milestones")       return handleStreakMilestones(req, res);
+  if (job === "monthly-summary")         return handleMonthlySummary(req, res);
+  if (job === "delete-expired-accounts") return handleDeleteExpiredAccounts(req, res);
 
   if (job === 'daily-digest') {
     if (!isCronAuthed(req)) return res.status(401).json({ error: 'Unauthorized' });
