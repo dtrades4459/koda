@@ -128,12 +128,12 @@ _Follows, profiles seen from the outside, suggestions, blocking._
 
 **Designs**: `koda-designs/cat05-graph.jsx` · **Target**: `src/FriendsFeed.tsx`
 
-- [x] [ ] 🟠 **Follow button — not-following / following / pending / blocked-by**
-- [x] [ ] 🟡 **Follow-back prompt**
+- [x] [x] 🟠 **Follow button — not-following / following / pending / blocked-by**
+- [x] [x] 🟡 **Follow-back prompt**
 - [x] [ ] 🟡 **Mutual-friends visualization**
-- [x] [ ] 🟡 **Profile QR-code share**
-- [x] [ ] 🟡 **Suggested follows**
-- [x] [ ] 🟡 **Unfollow confirmation**
+- [x] [x] 🟡 **Profile QR-code share**
+- [x] [x] 🟡 **Suggested follows**
+- [x] [x] 🟡 **Unfollow confirmation**
 - [x] [x] ⚪ **Friend feed**
 - [x] [x] ⚪ **Public profile (others’ perspective)**
 
