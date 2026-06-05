@@ -55,7 +55,8 @@
   .done-banner h2 em { font-style: italic; font-weight: 500; color: var(--live); }
   .done-banner p { font-size: 14px; color: var(--ink2); margin: 8px auto 0; max-width: 60ch; line-height: 1.6; }
   .open-list { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 26px 28px; }
-  .open-list h2 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; margin: 0 0 18px; }
+  .open-list h2 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; margin: 0 0 4px; }
+  .open-list p code { font-family: var(--m); font-size: 11.5px; background: var(--bg); padding: 1px 5px; border-radius: 4px; color: var(--ink); }
   .open-row { display: grid; grid-template-columns: 28px auto 1fr; gap: 14px; padding: 14px 0; border-top: 1px solid var(--line); align-items: start; }
   .open-row:first-of-type { border-top: none; }
   .open-row .check { width: 24px; height: 24px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; font-family: var(--m); margin-top: 1px; flex-shrink: 0; }
@@ -69,6 +70,15 @@
   .open-row.todo .row-body { color: var(--ink2); }
   .open-row .row-body .why { display: block; font-size: 12px; color: var(--ink2); margin-top: 4px; font-family: var(--d); line-height: 1.55; }
   .open-row.todo .row-body .why { color: var(--mute); }
+
+  .run-block { padding: 16px 0; border-top: 1px solid var(--line); }
+  .run-block:first-of-type { border-top: none; padding-top: 4px; }
+  .run-title { font-size: 14.5px; font-weight: 600; color: var(--ink); margin-bottom: 8px; letter-spacing: -0.01em; }
+  .run-list { margin: 0; padding-left: 18px; color: var(--ink2); font-size: 13px; line-height: 1.6; }
+  .run-list li { margin-bottom: 4px; }
+  .run-list strong { color: var(--ink); font-weight: 600; }
+  .run-note { font-size: 12px; color: var(--mute); margin: 0 0 8px; line-height: 1.55; }
+  .run-pre { background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font-family: var(--m); font-size: 11.5px; color: var(--ink); overflow-x: auto; line-height: 1.55; margin: 6px 0 6px; }
 
   .footnote { color: var(--mute); font-family: var(--m); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 60px; text-align: center; }
   @media (max-width: 720px) {
@@ -198,16 +208,80 @@
     <div class="row-body"><strong>End-to-end smoke tests on the preview URL</strong><span class="why">~60–90 min focused block. Sign-up + verify · /admin loads · 7 emails round-trip · PWA install + share intent + badging · 4 marketing pages render. Full checklist in dylon-todo.md.</span></div>
   </div>
 
-  <div class="open-row todo">
-    <span class="check">·</span>
+  <div class="open-row done">
+    <span class="check">✓</span>
     <span class="cat-tag">code</span>
-    <div class="row-body"><strong>Wire welcome-email call in onboarding completion</strong><span class="why">One <code>fetch("/api/account?action=welcome", …)</code> in OnboardingFlow.tsx / BetaWelcome.tsx. Idempotent; harmless if duplicated.</span></div>
+    <div class="row-body"><strong>Welcome-email call wired into onboarding</strong><span class="why">finish() in OnboardingFlow.tsx now fires <code>POST /api/account?action=welcome</code> with the user's JWT immediately after onComplete(). Idempotent server-side; fire-and-forget client-side.</span></div>
   </div>
 
   <div class="open-row todo">
     <span class="check">·</span>
     <span class="cat-tag">merge</span>
-    <div class="row-body"><strong>Friday 2026-06-12 — merge redesign/v2 → main</strong><span class="why">PR or direct merge. Vercel auto-deploys main on push. Re-run smoke tests on production URL after deploy lands.</span></div>
+    <div class="row-body"><strong>Friday 2026-06-12 — merge redesign/v2 → main</strong><span class="why">After smoke tests pass: <code>gh pr create --base main --head redesign/v2</code> or merge directly. Vercel auto-deploys main on push. Re-run a few key smoke tests on the production URL before walking away.</span></div>
+  </div>
+</div>
+
+<div class="open-list" style="margin-top: 22px">
+  <h2>Smoke-test runbook — copy/paste-able</h2>
+  <p style="font-size:13px;color:var(--ink2);margin:0 0 18px;line-height:1.55">Two-hour focused block. Sequence below assumes the Vercel preview is live; replace <code>PREVIEW</code> with the actual URL. Order matters: do A → B → C → D in sequence so one failure tells you exactly what's broken.</p>
+
+  <div class="run-block">
+    <div class="run-title">A · Smoke the preview URL itself (2 min)</div>
+    <ul class="run-list">
+      <li>Open <code>PREVIEW</code> in your phone's browser. Page loads, fonts render, no white screen.</li>
+      <li>If the deploy failed: check <strong>Vercel Dashboard → Deployments → latest → Build Logs</strong>. Tell me the error.</li>
+    </ul>
+  </div>
+
+  <div class="run-block">
+    <div class="run-title">B · Founder dashboard (3 min)</div>
+    <ul class="run-list">
+      <li>Sign in on the preview with <code>dnyland420@gmail.com</code>.</li>
+      <li>Navigate to <code>PREVIEW/admin</code>. The dashboard should load with WAJ / signups / activation / runway.</li>
+      <li><strong>If 403 "Forbidden"</strong>: your <code>ADMIN_EMAILS</code> env var doesn't match your sign-in email (or env var isn't on the preview scope).</li>
+      <li><strong>If 503 "Admin allowlist not configured"</strong>: <code>ADMIN_EMAILS</code> wasn't set or the deploy is older than the env-var add. Trigger a fresh deploy.</li>
+    </ul>
+  </div>
+
+  <div class="run-block">
+    <div class="run-title">C · Email round-trips (15 min)</div>
+    <p class="run-note">Use a real inbox you own. Some emails take 10–60 s to arrive (Resend free tier).</p>
+    <ul class="run-list">
+      <li><strong>Welcome</strong> — Sign up a fresh test account on the preview, finish onboarding. Email should land within ~30 s, from <code>noreply@kodatrade.co.uk</code>, with the cat12 design (mint accent, italic verb).</li>
+      <li><strong>Email verification</strong> — Same signup flow. Branded verification email arrives <strong>instead of</strong> Supabase's default (because you suppressed it).</li>
+      <li><strong>Password reset</strong> — Sign-in screen → "Forgot password?" on the test account. Needs a <code>recovery_email</code> in user metadata.</li>
+      <li><strong>Beta-unlock</strong> — On the beta gate, enter your beta code <em>with an email</em>. Confirmation email arrives.</li>
+      <li><strong>Account deletion</strong> — Settings → Delete account. Confirmation email lands with the 14-day grace date. Sign back in → click "Keep my account" → verify <code>deletion_scheduled_for</code> is cleared in user_kv.</li>
+      <li><strong>Payment failed</strong> — <code>stripe trigger invoice.payment_failed</code></li>
+      <li><strong>Subscription cancelled</strong> — <code>stripe trigger customer.subscription.deleted</code></li>
+    </ul>
+  </div>
+
+  <div class="run-block">
+    <div class="run-title">D · Crons (5 min)</div>
+    <p class="run-note">Manually fire each so you don't have to wait for the schedule. <code>CRON_SECRET</code> is in Vercel env.</p>
+    <pre class="run-pre">curl -H "Authorization: Bearer $CRON_SECRET" PREVIEW/api/cron?job=streak-milestones
+curl -H "Authorization: Bearer $CRON_SECRET" PREVIEW/api/cron?job=monthly-summary
+curl -H "Authorization: Bearer $CRON_SECRET" PREVIEW/api/cron?job=waitlist-positions
+curl -H "Authorization: Bearer $CRON_SECRET" PREVIEW/api/cron?job=delete-expired-accounts</pre>
+    <p class="run-note">Each returns <code>{"ok":true,…}</code>. Most will report <code>sent: 0</code> on a fresh DB — that's expected. Check Vercel function logs if any return errors.</p>
+  </div>
+
+  <div class="run-block">
+    <div class="run-title">E · PWA on Android (5 min, skip if iOS-only)</div>
+    <ul class="run-list">
+      <li>Install the PWA from preview URL (Chrome menu → Install).</li>
+      <li>Long-press the home icon → 4 shortcuts appear (Log / Stats / Circles / Import).</li>
+      <li>From any app, share a screenshot → "Kōda" → lands on share-receive view with the image previewed.</li>
+      <li>OS shelf badge mirrors the bell-icon count when there are unread drafts.</li>
+    </ul>
+  </div>
+
+  <div class="run-block">
+    <div class="run-title">F · Marketing pages (1 min)</div>
+    <ul class="run-list">
+      <li>Open each in sequence: <code>PREVIEW/about.html</code>, <code>/blog.html</code>, <code>/contact.html</code>, <code>/press.html</code>. Visual scan only — fonts, layout, no broken links.</li>
+    </ul>
   </div>
 </div>
 
