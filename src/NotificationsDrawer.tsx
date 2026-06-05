@@ -14,6 +14,11 @@ import { useEffect, useRef, useState } from "react";
 import type { Theme } from "./theme";
 import type { Circle } from "./types";
 import { MONO, BODY, DISPLAY, Kicker } from "./shared";
+import {
+  PermissionPrimerSheet, PermissionBlockedScreen, NotificationInbox,
+} from "./notifications/NotificationScreens";
+import type { InboxRow } from "./notifications/NotificationScreens";
+import { listNotifications, markNotificationsRead } from "./data/notificationFeed";
 
 interface Props {
   open: boolean;
@@ -28,15 +33,57 @@ interface Props {
 
 const PROFILE_FIX_KEY = "koda_notif_profile_fix_v1";
 
+function relativeTime(iso: string): string {
+  const delta = Date.now() - new Date(iso).getTime();
+  const s = Math.floor(delta / 1000);
+  if (s < 60) return "just now";
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h`;
+  return `${Math.floor(h / 24)}d`;
+}
+
 export default function NotificationsDrawer({ open, onClose, draftCount, onOpenInbox, unreadMsgs, circles, onOpenCircles, C }: Props) {
   const ref = useRef<HTMLDivElement | null>(null);
   const [profileFixDismissed, setProfileFixDismissed] = useState(() => {
     try { return localStorage.getItem(PROFILE_FIX_KEY) === "1"; } catch { return false; }
   });
+  const [pushState, setPushState] = useState<"default" | "granted" | "denied">("default");
+  const [showPrimer, setShowPrimer] = useState(false);
+  const [showInbox, setShowInbox] = useState(false);
+  const [inboxRows, setInboxRows] = useState<InboxRow[]>([]);
+
+  useEffect(() => {
+    if (typeof Notification !== "undefined") {
+      setPushState(Notification.permission);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    listNotifications(40).then(({ items }) => {
+      setInboxRows(items.map(n => ({
+        id: n.id,
+        kind: n.kind,
+        body: (n.data.body as string | undefined) ?? (n.data.title as string | undefined) ?? n.kind,
+        timestamp: relativeTime(n.created_at),
+        unread: n.read_at === null,
+      })));
+    });
+  }, [open]);
 
   function dismissProfileFix() {
     try { localStorage.setItem(PROFILE_FIX_KEY, "1"); } catch {}
     setProfileFixDismissed(true);
+  }
+
+  function requestPush() {
+    setShowPrimer(false);
+    if (typeof Notification === "undefined") return;
+    void Notification.requestPermission().then(perm => {
+      setPushState(perm);
+    });
   }
 
   useEffect(() => {
@@ -115,6 +162,18 @@ export default function NotificationsDrawer({ open, onClose, draftCount, onOpenI
           <div style={{ fontFamily: MONO, fontSize: 10, color: C.muted, letterSpacing: "0.06em", lineHeight: 1.5 }}>
             New broker syncs, follows, and circle activity will appear here.
           </div>
+          {pushState === "default" && (
+            <button
+              onClick={() => setShowPrimer(true)}
+              style={{
+                marginTop: 14, padding: "8px 16px", borderRadius: 999,
+                border: `1px solid ${C.border2}`, background: "transparent",
+                color: C.live, fontFamily: MONO, fontSize: 10,
+                letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer",
+              }}>
+              Turn on push →
+            </button>
+          )}
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -168,6 +227,76 @@ export default function NotificationsDrawer({ open, onClose, draftCount, onOpenI
               }}
             />
           )}
+          {pushState === "default" && (
+            <NotificationCard
+              C={C}
+              accent={C.live}
+              kicker="Push notifications"
+              title="Never miss a tilt moment"
+              body="Get nudged when you're over-trading, sync finishes, or your weekly recap lands."
+              ctaLabel="Turn on →"
+              onCta={() => setShowPrimer(true)}
+            />
+          )}
+        </div>
+      )}
+      {inboxRows.length > 0 && (
+        <button
+          onClick={() => setShowInbox(true)}
+          style={{
+            display: "block", width: "100%", marginTop: 12,
+            padding: "10px 0", borderRadius: 10,
+            border: `1px solid ${C.border}`, background: "transparent",
+            color: C.muted, fontFamily: MONO, fontSize: 10,
+            letterSpacing: "0.08em", textTransform: "uppercase", cursor: "pointer",
+          }}>
+          View all activity
+        </button>
+      )}
+      {showPrimer && (
+        <PermissionPrimerSheet
+          C={C}
+          onTurnOn={requestPush}
+          onLater={() => setShowPrimer(false)}
+        />
+      )}
+      {showInbox && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 9200, background: C.bg, overflowY: "auto" }}>
+          <NotificationInbox
+            C={C}
+            rows={inboxRows}
+            onMarkAllRead={() => {
+              const unreadIds = inboxRows.filter(r => r.unread).map(r => r.id);
+              void markNotificationsRead(unreadIds).then(() => {
+                setInboxRows(prev => prev.map(r => ({ ...r, unread: false })));
+              });
+            }}
+            onRow={_id => { /* navigate to relevant screen — future */ }}
+            title="Activity"
+          />
+          <button
+            onClick={() => setShowInbox(false)}
+            style={{
+              position: "fixed", top: "max(18px, env(safe-area-inset-top))", left: 18,
+              width: 36, height: 36, borderRadius: 999,
+              background: C.surface, border: `1px solid ${C.border2}`,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              cursor: "pointer", zIndex: 9201,
+            }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M14 6l-6 6 6 6" stroke={C.text} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+        </div>
+      )}
+      {pushState === "denied" && showPrimer && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 9200, background: C.bg, overflowY: "auto" }}>
+          <PermissionBlockedScreen
+            C={C}
+            browser="Chrome"
+            onReload={() => { window.location.reload(); }}
+            onBack={() => setShowPrimer(false)}
+          />
         </div>
       )}
     </div>

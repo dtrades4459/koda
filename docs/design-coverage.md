@@ -143,10 +143,10 @@ _Every kind, every surface — inbox, push, toast, permission._
 
 **Designs**: `koda-designs/cat06-notif.jsx` · **Target**: `src/components/NotificationFeed.tsx / src/NotificationsDrawer.tsx`
 
-- [x] [ ] 🟠 **In-app inbox row — read / unread / aggregated**
-- [x] [ ] 🟠 **Notification kinds ×14 (follow, circle, reaction, like, digest, sync-ok, sync-error, milestone, receipt, payment-failed, announcement, intervention, chat, mention/DM)**
-- [x] [ ] 🟠 **Permission prompts — default / denied / blocked-recover (per browser)**
-- [x] [ ] 🟠 **Push lock-screen — iOS short / iOS rich-media / Android short / Android rich-media**
+- [x] [x] 🟠 **In-app inbox row — read / unread / aggregated**
+- [x] [x] 🟠 **Notification kinds ×14 (follow, circle, reaction, like, digest, sync-ok, sync-error, milestone, receipt, payment-failed, announcement, intervention, chat, mention/DM)**
+- [x] [x] 🟠 **Permission prompts — default / denied / blocked-recover (per browser)**
+- [x] [x] 🟠 **Push lock-screen — iOS short / iOS rich-media / Android short / Android rich-media**
 - [x] [x] ⚪ **Banner toast — info / success / warn / error**
 
 ## 07 · System / connectivity
