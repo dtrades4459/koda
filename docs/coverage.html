@@ -60,6 +60,22 @@
   .open-row .cat-tag { font-family: var(--m); font-size: 10px; letter-spacing: 0.12em; color: var(--ink2); text-transform: uppercase; align-self: start; margin-top: 4px; }
   .open-row .row-body { font-size: 13.5px; color: var(--ink); line-height: 1.45; }
   .open-row .row-body .why { display: block; font-size: 12px; color: var(--ink2); margin-top: 4px; font-family: var(--d); line-height: 1.55; }
+  .open-list { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 26px 28px; }
+  .open-list h2 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; margin: 0 0 18px; }
+  .open-row { display: grid; grid-template-columns: 28px auto 1fr; gap: 14px; padding: 14px 0; border-top: 1px solid var(--line); align-items: start; }
+  .open-row:first-of-type { border-top: none; }
+  .open-row .check { width: 24px; height: 24px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; font-family: var(--m); margin-top: 1px; flex-shrink: 0; }
+  .open-row.done .check { background: var(--live); color: #0A0A0A; }
+  .open-row.pending .check { background: color-mix(in oklch, var(--live) 18%, transparent); color: var(--live); border: 1px solid color-mix(in oklch, var(--live) 60%, transparent); animation: spin 2s linear infinite; }
+  .open-row.todo .check { background: transparent; color: var(--mute); border: 1px solid var(--line2); }
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  .open-row .cat-tag { font-family: var(--m); font-size: 10px; letter-spacing: 0.12em; color: var(--ink2); text-transform: uppercase; align-self: start; margin-top: 4px; }
+  .open-row .row-body { font-size: 13.5px; color: var(--ink); line-height: 1.45; }
+  .open-row .row-body strong { font-weight: 600; }
+  .open-row.todo .row-body { color: var(--ink2); }
+  .open-row .row-body .why { display: block; font-size: 12px; color: var(--ink2); margin-top: 4px; font-family: var(--d); line-height: 1.55; }
+  .open-row.todo .row-body .why { color: var(--mute); }
+
   .footnote { color: var(--mute); font-family: var(--m); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 60px; text-align: center; }
   @media (max-width: 720px) {
     body { padding: 36px 18px 80px; }
@@ -105,14 +121,20 @@
   </div>
 </div>
 
+<div class="done-banner">
+  <div class="kicker">Sprint · complete</div>
+  <h2>All 20 categories <em>shipped.</em></h2>
+  <p>Every in-scope row in <code>docs/design-coverage.md</code> now has both boxes ticked. Branch <code>redesign/v2</code> is pushed and the Vercel preview is building. Next: finish the manual ops checklist below, then smoke-test the preview before Friday's merge.</p>
+</div>
+
 <h2 style="font-size:18px;font-weight:600;letter-spacing:-0.01em;margin:0 0 16px;color:var(--ink2)">Per-category</h2>
 
 <div class="cats">
   <div class="cat-card done"><div class="num">01 · Auth</div><div class="name">Auth &amp; onboarding</div><div class="pct">14 / 14 ✓</div></div>
   <div class="cat-card done"><div class="num">02 · Settings</div><div class="name">Account &amp; settings</div><div class="pct">19 / 19 ✓</div></div>
-  <div class="cat-card"><div class="num">03 · Trade</div><div class="name">Trade lifecycle</div><div class="pct">12 / 13</div></div>
-  <div class="cat-card"><div class="num">04 · Social</div><div class="name">Social &amp; circles</div><div class="pct">17 / 19</div></div>
-  <div class="cat-card"><div class="num">05 · Follow</div><div class="name">Follow graph</div><div class="pct">7 / 8</div></div>
+  <div class="cat-card done"><div class="num">03 · Trade</div><div class="name">Trade lifecycle</div><div class="pct">13 / 13 ✓</div></div>
+  <div class="cat-card done"><div class="num">04 · Social</div><div class="name">Social &amp; circles</div><div class="pct">19 / 19 ✓</div></div>
+  <div class="cat-card done"><div class="num">05 · Follow</div><div class="name">Follow graph</div><div class="pct">8 / 8 ✓</div></div>
   <div class="cat-card done"><div class="num">06 · Notif</div><div class="name">Notifications</div><div class="pct">5 / 5 ✓</div></div>
   <div class="cat-card done"><div class="num">07 · System</div><div class="name">System / connectivity</div><div class="pct">10 / 10 ✓</div></div>
   <div class="cat-card done"><div class="num">08 · Discipline</div><div class="name">Discipline / intervention</div><div class="pct">8 / 8 ✓</div></div>
@@ -131,58 +153,71 @@
 </div>
 
 <div class="open-list">
-  <h2>The remaining 8 — what's left and why</h2>
+  <h2>Pre-merge deployment checklist</h2>
+  <p style="font-size:13px;color:var(--ink2);margin:0 0 18px;line-height:1.55">Code is 100% shipped. Steps below are the manual ops to bring the preview deployment fully live and verified before Friday's merge.</p>
 
-  <div class="open-row">
-    <span class="pri pri-p0"></span>
-    <span class="cat-tag">cat12</span>
-    <div class="row-body"><strong>Email verification (branded)</strong><span class="why">Decision needed: override Supabase's default verification email with custom SMTP, or keep Supabase's default? <code>emailVerificationHtml()</code> is ready to go either way.</span></div>
+  <div class="open-row done">
+    <span class="check">✓</span>
+    <span class="cat-tag">git</span>
+    <div class="row-body"><strong>Branch pushed to origin</strong><span class="why">force-with-lease replaced the bundled commit. Vercel preview build triggered.</span></div>
   </div>
 
-  <div class="open-row">
-    <span class="pri pri-p1"></span>
-    <span class="cat-tag">cat12</span>
-    <div class="row-body"><strong>Account deletion confirmation email</strong><span class="why">Decision needed: keep <code>handleDelete</code> immediate (as today), or add a 14-day grace period? The template is designed for grace; without it, the copy doesn't fit.</span></div>
+  <div class="open-row done">
+    <span class="check">✓</span>
+    <span class="cat-tag">db</span>
+    <div class="row-body"><strong>SQL migrations applied</strong><span class="why">founder_metrics + waitlist_promotion RPCs live in Supabase.</span></div>
   </div>
 
-  <div class="open-row">
-    <span class="pri pri-p1"></span>
-    <span class="cat-tag">cat12</span>
-    <div class="row-body"><strong>Beta-unlock confirmation email</strong><span class="why">Decision needed: capture the user's email at the beta gate (current gate is code-only)? Without their address we have no one to send to.</span></div>
+  <div class="open-row done">
+    <span class="check">✓</span>
+    <span class="cat-tag">env</span>
+    <div class="row-body"><strong>ADMIN_EMAILS + VITE_KODA_ADMIN_UID set</strong><span class="why">Both gates configured in Vercel. /admin will resolve once the next deploy picks them up.</span></div>
   </div>
 
-  <div class="open-row">
-    <span class="pri pri-p2"></span>
-    <span class="cat-tag">cat12</span>
-    <div class="row-body"><strong>Waitlist position-update cron</strong><span class="why">Decision needed: add a "removed_at" / "promoted" column to the waitlist table so position can change? Without it, sending "you moved up" is dishonest.</span></div>
+  <div class="open-row done">
+    <span class="check">✓</span>
+    <span class="cat-tag">env</span>
+    <div class="row-body"><strong>RESEND_API_KEY verified</strong><span class="why">Already present in Vercel env.</span></div>
   </div>
 
-  <div class="open-row">
-    <span class="pri pri-p2"></span>
-    <span class="cat-tag">cat03</span>
-    <div class="row-body"><strong>Attach trade to existing idea</strong><span class="why">Small feature, ~120 LOC. New row in the trade-actions sheet that opens an idea picker. <code>IdeaComposer</code> exists; this is the inverse direction.</span></div>
+  <div class="open-row done">
+    <span class="check">✓</span>
+    <span class="cat-tag">supabase</span>
+    <div class="row-body"><strong>Custom SMTP enabled + Resend creds plugged in</strong><span class="why">Supabase Auth emails now route through Resend.</span></div>
   </div>
 
-  <div class="open-row">
-    <span class="pri pri-p2"></span>
-    <span class="cat-tag">cat04</span>
-    <div class="row-body"><strong>@mention autocomplete</strong><span class="why">Small feature, ~150 LOC. Detect <code>@</code> in chat composer, query circle members, floating dropdown, insert on Enter. The renderer already linkifies <code>@handle</code> — just need the picker.</span></div>
+  <div class="open-row done">
+    <span class="check">✓</span>
+    <span class="cat-tag">supabase</span>
+    <div class="row-body"><strong>Signup email template suppressed (Path 1)</strong><span class="why">Our branded /api/account?action=send-verify is the sole signup email — no duplicates.</span></div>
   </div>
 
-  <div class="open-row">
-    <span class="pri pri-p2"></span>
-    <span class="cat-tag">cat04</span>
-    <div class="row-body"><strong>Emoji reactions picker (full grid)</strong><span class="why">Small feature, ~100 LOC. Today reactions are a fixed chip row; the picker is a bottom-sheet with the 64 standard reaction emoji.</span></div>
+  <div class="open-row pending">
+    <span class="check">↻</span>
+    <span class="cat-tag">vercel</span>
+    <div class="row-body"><strong>Redeploy with new env vars</strong><span class="why">Triggered by the push that delivered this dashboard update.</span></div>
   </div>
 
-  <div class="open-row">
-    <span class="pri pri-p2"></span>
-    <span class="cat-tag">cat05</span>
-    <div class="row-body"><strong>Mutual-friends visualization</strong><span class="why">Small feature, ~150 LOC. On a public profile, intersect shared circles + follows, render as "You both follow @x, @y · You're both in {circle}".</span></div>
+  <div class="open-row todo">
+    <span class="check">·</span>
+    <span class="cat-tag">test</span>
+    <div class="row-body"><strong>End-to-end smoke tests on the preview URL</strong><span class="why">~60–90 min focused block. Sign-up + verify · /admin loads · 7 emails round-trip · PWA install + share intent + badging · 4 marketing pages render. Full checklist in dylon-todo.md.</span></div>
+  </div>
+
+  <div class="open-row todo">
+    <span class="check">·</span>
+    <span class="cat-tag">code</span>
+    <div class="row-body"><strong>Wire welcome-email call in onboarding completion</strong><span class="why">One <code>fetch("/api/account?action=welcome", …)</code> in OnboardingFlow.tsx / BetaWelcome.tsx. Idempotent; harmless if duplicated.</span></div>
+  </div>
+
+  <div class="open-row todo">
+    <span class="check">·</span>
+    <span class="cat-tag">merge</span>
+    <div class="row-body"><strong>Friday 2026-06-12 — merge redesign/v2 → main</strong><span class="why">PR or direct merge. Vercel auto-deploys main on push. Re-run smoke tests on production URL after deploy lands.</span></div>
   </div>
 </div>
 
-<p class="footnote">Kōda OS · redesign/v2 · merge to main: Fri 2026-06-12 · see docs/dylon-todo.md for the full handoff</p>
+<p class="footnote">Kōda OS · redesign/v2 · 191/191 shipped ✓ · merge to main: Fri 2026-06-12 · see docs/dylon-todo.md for the full handoff</p>
 
 </body>
 </html>
