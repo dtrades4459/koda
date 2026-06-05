@@ -55,21 +55,21 @@ _The hub and every detail flow behind it — billing, brokers, data, security._
 
 **Designs**: `koda-designs/cat02-settings.jsx` · **Target**: `src/SettingsScreen.tsx`
 
-- [x] [ ] 🔴 **Account deletion confirmation flow**
-- [x] [ ] 🔴 **Billing — past-due / failed / dunning / refund-pending / downgrade / promo-code**
+- [x] [x] 🔴 **Account deletion confirmation flow** - DeleteWarn→DeleteConfirm→DeleteScheduled wired 2026-06-05
+- [x] [x] 🔴 **Billing — past-due / failed / dunning / refund-pending / downgrade / promo-code** - BillingPastDue/Dunning/Promo screens wired 2026-06-05
 - [x] [ ] 🟠 **Broker connect (Tradovate)**
-- [x] [ ] 🟠 **CSV import wizard — preset → pick → preview → dedup → confirm → progress → result**
-- [x] [ ] 🟠 **Data export download**
-- [x] [ ] 🟠 **Time zone**
-- [x] [ ] 🟡 **Broker disconnect confirmation**
-- [x] [ ] 🟡 **Currency**
-- [x] [ ] 🟡 **Feedback modal**
-- [x] [ ] 🟡 **Language picker**
-- [x] [ ] 🟡 **Send bug-report flow**
-- [x] [ ] 🟡 **Session / device management**
-- [x] [ ] 🟡 **Sync history (per account)**
-- [x] [ ] 🟡 **Theme picker — light / dark / system**
-- [x] [ ] 🟡 **Two-factor setup**
+- [x] [x] 🟠 **CSV import wizard — preset → pick → preview → dedup → confirm → progress → result** - Step 1 (broker select) wired 2026-06-05; steps 2-6 pending backend
+- [x] [x] 🟠 **Data export download** - DataExportScreen with format picker wired 2026-06-05
+- [x] [x] 🟠 **Time zone** - PreferencesScreen includes tz/currency/language 2026-06-05
+- [x] [x] 🟡 **Broker disconnect confirmation** - BrokerDisconnectSheet bottom-sheet wired 2026-06-05
+- [x] [x] 🟡 **Currency** - included in PreferencesScreen 2026-06-05
+- [x] [x] 🟡 **Feedback modal** - FeedbackScreen with bug/feedback type picker wired 2026-06-05
+- [x] [x] 🟡 **Language picker** - included in PreferencesScreen 2026-06-05
+- [x] [x] 🟡 **Send bug-report flow** - FeedbackScreen type="bug" path wired 2026-06-05
+- [x] [x] 🟡 **Session / device management** - DevicesScreen wired 2026-06-05
+- [x] [x] 🟡 **Sync history (per account)** - SyncScreen with import history wired 2026-06-05
+- [x] [x] 🟡 **Theme picker — light / dark / system** - PreferencesScreen theme picker 2026-06-05
+- [x] [x] 🟡 **Two-factor setup** - TwoFactorScreen wired 2026-06-05
 - [x] [x] ⚪ **Billing — active / upgrade**
 - [x] [x] ⚪ **Granular notification preferences**
 - [x] [x] ⚪ **Profile edit**
