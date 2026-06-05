@@ -16,6 +16,11 @@ import { useUnreadCircles } from "./hooks/useUnreadCircles";
 import { useUnreadNotifications } from "./hooks/useUnreadNotifications";
 import { NotificationFeed } from "./components/NotificationFeed";
 import { SystemProvider } from "./components/SystemProvider";
+import {
+  LiveMonitorScreen, CooldownScreen, TiltHistoryScreen,
+  WeeklyDisciplineReportScreen, DisciplineScoreBreakdownScreen, MonthlyReviewScreen,
+} from "./discipline/DisciplineScreens";
+import type { TiltSignal as MonitorSignal, CooldownVariant } from "./discipline/DisciplineScreens";
 import { logInterventionEvent, linkTradeToRecentIntervention } from "./data/interventions";
 import { InterventionSheet } from "./components/InterventionSheet";
 import { PreSessionSheet } from "./components/PreSessionSheet";
@@ -206,12 +211,6 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   }
-  function formatLockCountdown(msRemaining: number): string {
-    const total = Math.max(0, Math.ceil(msRemaining / 1000));
-    const m = Math.floor(total / 60);
-    const s = total % 60;
-    return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-  }
   function runTiltCheck(): void {
     if (tilt.settings.enabled && tilt.state.active) {
       setInterventionSignals(tilt.state.signals);
@@ -226,7 +225,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     // beta users still get the intervention.
     if (!isPro) { navigateTo("log"); return; }
     if (tilt.lockedUntil !== null && tilt.lockedUntil > Date.now()) {
-      showToast(`Cooling off — ${formatLockCountdown(tilt.lockedUntil - Date.now())} remaining`);
+      navigateTo("cooldown");
       return;
     }
     if (preSession.needsCheck) {
@@ -1958,16 +1957,29 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                     const lastBreakTrade = broken[broken.length - 1];
                     const lastBreak = lastBreakTrade?.mistake || (lastBreakTrade ? "Rule broken" : null);
                     return (
-                      <LiveRuleMonitor
-                        C={C}
-                        pnl={pnlSum}
-                        maxLoss={maxLoss}
-                        trades={todays.length}
-                        maxTrades={maxTradesNum}
-                        useDollar={useDollar}
-                        lastBreak={lastBreak}
-                        onWrapUp={() => setDebriefOpen(true)}
-                      />
+                      <>
+                        <LiveRuleMonitor
+                          C={C}
+                          pnl={pnlSum}
+                          maxLoss={maxLoss}
+                          trades={todays.length}
+                          maxTrades={maxTradesNum}
+                          useDollar={useDollar}
+                          lastBreak={lastBreak}
+                          onWrapUp={() => setDebriefOpen(true)}
+                        />
+                        <button
+                          onClick={() => navigateTo("live-monitor")}
+                          style={{
+                            display: "block", width: "100%", marginTop: 8,
+                            padding: "9px 0", borderRadius: 10,
+                            border: `1px solid ${C.border}`, background: "transparent",
+                            color: C.muted, fontFamily: MONO, fontSize: 10,
+                            letterSpacing: "0.08em", textTransform: "uppercase", cursor: "pointer",
+                          }}>
+                          Monitor →
+                        </button>
+                      </>
                     );
                   })()}
                   {debrief.shouldOffer && (
@@ -3087,6 +3099,197 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                 }}
                 onBack={goBack}
               />
+            );
+          })()}
+
+          {/* ════════════════════════ DISCIPLINE ══════════════════════════ */}
+          {view === "cooldown" && (() => {
+            const cooldownMin = tilt.settings.cooldownMin;
+            const variant: CooldownVariant =
+              cooldownMin >= 30 ? "long" : cooldownMin >= 15 ? "medium" : "short";
+            return (
+              <div style={{ position: "fixed", inset: 0, zIndex: 9000, overflowY: "auto" }}>
+                <CooldownScreen
+                  C={C}
+                  variant={variant}
+                  onLogFeeling={() => { goBack(); navigateTo("log"); }}
+                  onReview={() => { goBack(); }}
+                />
+              </div>
+            );
+          })()}
+
+          {view === "live-monitor" && (() => {
+            const libSignals = tilt.state.signals;
+            const monitorSignals: MonitorSignal[] = libSignals.map(s => ({
+              id: s.id,
+              label: s.label,
+              detail: s.critical ? "Critical" : "Elevated",
+              pct: s.critical ? 82 : 55,
+              tone: s.critical ? "red" : "warn",
+            }));
+            const riskScore = libSignals.length === 0 ? 12
+              : Math.min(100, libSignals.length * 20 + (libSignals.some(s => s.critical) ? 30 : 0));
+            const riskLabel = riskScore < 30 ? "Calm" : riskScore < 70 ? "Elevated" : "High Risk";
+            const riskDescription = libSignals.length === 0
+              ? "All signals clear. You're trading clean."
+              : `${libSignals.length} signal${libSignals.length !== 1 ? "s" : ""} active. Stay with your plan.`;
+            return (
+              <div style={{ position: "fixed", inset: 0, zIndex: 9000, overflowY: "auto" }}>
+                <LiveMonitorScreen
+                  C={C}
+                  riskScore={riskScore}
+                  riskLabel={riskLabel}
+                  riskDescription={riskDescription}
+                  signals={monitorSignals}
+                />
+                <button
+                  onClick={goBack}
+                  style={{
+                    position: "fixed", top: "max(18px, env(safe-area-inset-top))", left: 18,
+                    width: 36, height: 36, borderRadius: 999,
+                    background: C.surface, border: `1px solid ${C.border2}`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    cursor: "pointer", zIndex: 9001,
+                  }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <path d="M14 6l-6 6 6 6" stroke={C.text} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+              </div>
+            );
+          })()}
+
+          {view === "tilt-history" && (() => {
+            const filters = ["All", "Lockout", "Intervention", "Warning"];
+            return (
+              <div style={{ position: "fixed", inset: 0, zIndex: 9000, overflowY: "auto" }}>
+                <TiltHistoryScreen
+                  C={C}
+                  items={[]}
+                  filters={filters}
+                  onBack={goBack}
+                />
+              </div>
+            );
+          })()}
+
+          {view === "weekly-discipline" && (() => {
+            const ds = disciplineScore;
+            const score = ds?.score ?? 0;
+            const grade = ds?.grade ?? "—";
+            const now = new Date();
+            const weekNum = Math.ceil((now.getDate() + new Date(now.getFullYear(), now.getMonth(), 1).getDay()) / 7);
+            const weekLabel = `Wk ${weekNum}`;
+            const prev = disciplineLog.length >= 2 ? disciplineLog[disciplineLog.length - 2].score : score;
+            const delta = score - prev;
+            const weekStart = new Date(); weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+            const weekStartStr = weekStart.toISOString().slice(0, 10);
+            const weekTrades = trades.filter(t => t.date >= weekStartStr);
+            const adherenceTrades = weekTrades.filter(t => t.ruleAdherence !== null && t.ruleAdherence !== undefined);
+            const keptTrades = adherenceTrades.filter(t => t.ruleAdherence === true);
+            const rulesKept = adherenceTrades.length ? `${keptTrades.length}/${adherenceTrades.length}` : "—";
+            const byDay = ["M", "T", "W", "T", "F"].map((day, i) => {
+              const d = new Date(weekStart);
+              d.setDate(weekStart.getDate() + i + 1);
+              const dateStr = d.toISOString().slice(0, 10);
+              const entry = disciplineLog.find(e => e.date === dateStr);
+              return { day, score: entry?.score ?? 0 };
+            });
+            return (
+              <div style={{ position: "fixed", inset: 0, zIndex: 9000, overflowY: "auto" }}>
+                <WeeklyDisciplineReportScreen
+                  C={C}
+                  score={score}
+                  weekLabel={`${grade} · ${weekLabel}`}
+                  deltaFromLastWeek={delta}
+                  rulesKept={rulesKept}
+                  interventions="—"
+                  lockouts="—"
+                  byDay={byDay}
+                  onBack={goBack}
+                />
+              </div>
+            );
+          })()}
+
+          {view === "discipline-score" && (() => {
+            const ds = disciplineScore;
+            const score = ds?.score ?? 0;
+            const grade = ds?.grade ?? "—";
+            const lines = ds ? [
+              {
+                label: "Rule adherence",
+                points: `+${ds.breakdown.rules.earned}`,
+                detail: `${ds.breakdown.rules.max} max`,
+                pct: ds.breakdown.rules.max > 0 ? Math.round((ds.breakdown.rules.earned / ds.breakdown.rules.max) * 100) : 0,
+                tone: ("green" as const),
+              },
+              ...(ds.breakdown.tradeLimit ? [{
+                label: "Trade limit",
+                points: `+${ds.breakdown.tradeLimit.earned}`,
+                detail: `${ds.breakdown.tradeLimit.max} max`,
+                pct: ds.breakdown.tradeLimit.max > 0 ? Math.round((ds.breakdown.tradeLimit.earned / ds.breakdown.tradeLimit.max) * 100) : 0,
+                tone: ("warn" as const),
+              }] : []),
+              ...(ds.breakdown.lossLimit ? [{
+                label: "Loss limit",
+                points: `+${ds.breakdown.lossLimit.earned}`,
+                detail: `${ds.breakdown.lossLimit.max} max`,
+                pct: ds.breakdown.lossLimit.max > 0 ? Math.round((ds.breakdown.lossLimit.earned / ds.breakdown.lossLimit.max) * 100) : 0,
+                tone: ("warn" as const),
+              }] : []),
+              {
+                label: "Trade awareness",
+                points: `+${ds.breakdown.awareness.earned}`,
+                detail: `${ds.breakdown.awareness.max} max`,
+                pct: ds.breakdown.awareness.max > 0 ? Math.round((ds.breakdown.awareness.earned / ds.breakdown.awareness.max) * 100) : 0,
+                tone: ("green" as const),
+              },
+            ] : [];
+            return (
+              <div style={{ position: "fixed", inset: 0, zIndex: 9000, overflowY: "auto" }}>
+                <DisciplineScoreBreakdownScreen
+                  C={C}
+                  score={score}
+                  grade={grade}
+                  period="this week"
+                  lines={lines}
+                  onBack={goBack}
+                />
+              </div>
+            );
+          })()}
+
+          {view === "monthly-review" && (() => {
+            const now = new Date();
+            const monthLabel = now.toLocaleString("default", { month: "long", year: "numeric" });
+            const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+            const monthTrades = trades.filter(t => t.date >= monthStart);
+            const wins = monthTrades.filter(t => t.outcome === "Win").length;
+            const total = monthTrades.length;
+            const winRatePct = total ? Math.round((wins / total) * 100) : 0;
+            const netR = monthTrades.reduce((a, t) => a + (parseFloat(t.pnl) || 0), 0);
+            const netStr = (netR >= 0 ? "+" : "") + netR.toFixed(1) + "R";
+            const mistakeTrades = monthTrades.filter(t => t.mistake);
+            const mistakeCounts: Record<string, number> = {};
+            mistakeTrades.forEach(t => {
+              if (t.mistake) mistakeCounts[t.mistake] = (mistakeCounts[t.mistake] ?? 0) + 1;
+            });
+            const topMistake = Object.entries(mistakeCounts).sort((a, b) => b[1] - a[1])[0];
+            return (
+              <div style={{ position: "fixed", inset: 0, zIndex: 9000, overflowY: "auto" }}>
+                <MonthlyReviewScreen
+                  C={C}
+                  month={monthLabel}
+                  net={netStr}
+                  tradeCount={total}
+                  winRate={`${winRatePct}%`}
+                  topMistakeLabel={topMistake?.[0]}
+                  topMistakeDetail={topMistake ? `${topMistake[1]} occurrence${topMistake[1] !== 1 ? "s" : ""} this month` : undefined}
+                  onBack={goBack}
+                />
+              </div>
             );
           })()}
 
