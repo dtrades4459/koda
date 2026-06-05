@@ -11,6 +11,7 @@
 
 export const config = { runtime: "nodejs" };
 
+import { timingSafeEqual } from "crypto";
 import { tryDecrypt, encrypt } from "./lib/cryptoUtils.js";
 import { getAdminClient, getUserIdFromJwt } from "./lib/supabaseAdmin.js";
 import { checkRateLimit, getClientIp } from "./lib/rateLimit.js";
@@ -50,7 +51,9 @@ function isCronAuthed(req: Req): boolean {
   if (!cronSecret) return false;
   const auth = req.headers["authorization"] as string | undefined;
   const token = auth?.startsWith("Bearer ") ? auth.slice(7) : "";
-  return token === cronSecret;
+  const a = Buffer.from(token);
+  const b = Buffer.from(cronSecret);
+  return a.length === b.length && timingSafeEqual(a, b);
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
