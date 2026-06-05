@@ -172,12 +172,12 @@ _The wedge feature, expanded past v1 into history and periodic reviews._
 
 **Designs**: `koda-designs/cat08-discip.jsx` · **Target**: `src/components/Intervention*.tsx`
 
-- [x] [ ] 🟠 **Cooldown countdown — short / medium / long**
-- [x] [ ] 🟠 **Live monitor — all 5 tilt signals visualised individually**
-- [x] [ ] 🟠 **Weekly discipline report**
-- [x] [ ] 🟡 **Discipline-score ring — detail breakdown**
-- [x] [ ] 🟡 **Intervention history list + filters**
-- [x] [ ] 🟡 **Monthly review**
+- [x] [x] 🟠 **Cooldown countdown — short / medium / long**
+- [x] [x] 🟠 **Live monitor — all 5 tilt signals visualised individually**
+- [x] [x] 🟠 **Weekly discipline report**
+- [x] [x] 🟡 **Discipline-score ring — detail breakdown**
+- [x] [x] 🟡 **Intervention history list + filters**
+- [x] [x] 🟡 **Monthly review**
 - [x] [ ] 🟡 **Yearly review**
 - [x] [x] ⚪ **Pre-session checklist + rule attachments**
 
@@ -187,11 +187,11 @@ _Calculator, prop-firm eval, checklist editor, shareable report cards._
 
 **Designs**: `koda-designs/cat09-power.jsx` · **Target**: `src/LotSizeCalculator.tsx / src/EvalAccountScreen.tsx`
 
-- [x] [ ] 🟠 **Prop-firm eval — account creation flow + reset prompt**
-- [x] [ ] 🟠 **Report card — downloadable image (IG square + X landscape)**
-- [x] [ ] 🟡 **Custom contract editor (add / edit / delete)**
-- [x] [ ] 🟡 **Pre-trade checklist editor (custom rules + reorder)**
-- [x] [ ] 🟡 **Year-in-review card**
+- [x] [x] 🟠 **Prop-firm eval — account creation flow + reset prompt**
+- [x] [x] 🟠 **Report card — downloadable image (IG square + X landscape)**
+- [x] [x] 🟡 **Custom contract editor (add / edit / delete)**
+- [x] [x] 🟡 **Pre-trade checklist editor (custom rules + reorder)**
+- [x] [x] 🟡 **Year-in-review card**
 - [x] [x] ⚪ **Lot-size calculator — full sheet**
 - [x] [x] ⚪ **Prop-firm eval — status (passing / at-risk / failed)**
 - [x] [x] ⚪ **Weekly report card — share view**
@@ -202,7 +202,7 @@ _Public surfaces — landing, pricing, deep-dives, legal, press._
 
 **Designs**: `koda-designs/cat10-mkt.jsx` · **Target**: `public/*.html + src/CookieConsent.tsx`
 
-- [x] [ ] 🔴 **Cookie-consent banner + preferences modal**
+- [x] [x] 🔴 **Cookie-consent banner + preferences modal**
 - [x] [ ] 🟡 **About / founder page**
 - [x] [ ] 🟡 **Blog post template**
 - [x] [ ] 🟡 **Contact**

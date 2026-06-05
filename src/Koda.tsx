@@ -27,6 +27,11 @@ import {
   ReportCardIGSquare, ReportCardXLandscape, YearInReviewCard,
 } from "./power/PowerScreens";
 import type { ContractDef, ChecklistRule } from "./power/PowerScreens";
+import {
+  CommandPalette, KeyboardShortcutsOverlay,
+  useCommandPalette, useGlobalShortcut,
+} from "./components/CommandPalette";
+import type { PaletteCommand, ShortcutGroup } from "./components/CommandPalette";
 import { logInterventionEvent, linkTradeToRecentIntervention } from "./data/interventions";
 import { InterventionSheet } from "./components/InterventionSheet";
 import { PreSessionSheet } from "./components/PreSessionSheet";
@@ -311,6 +316,9 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   const [homeSection, setHomeSection] = useState("feed");
   const [autoOpenCsv, setAutoOpenCsv] = useState(false);
   const [showEvalReset, setShowEvalReset] = useState(false);
+  const cmdPalette = useCommandPalette();
+  const [showShortcuts, setShowShortcuts] = useState(false);
+  useGlobalShortcut("?", () => setShowShortcuts(s => !s));
   const [customContracts, setCustomContracts] = useState<ContractDef[]>(() => {
     try { return JSON.parse(localStorage.getItem("koda_custom_contracts") ?? "[]"); } catch { return []; }
   });
@@ -5283,6 +5291,56 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
             onKeepFailed={() => setShowEvalReset(false)}
           />
         )}
+
+        {(() => {
+          const paletteCommands: PaletteCommand[] = [
+            { id: "log", label: "Log a trade", hint: "New entry", icon: "✦", group: "Quick actions", shortcut: "L", action: () => attemptLog() },
+            { id: "home", label: "Go home", hint: "Dashboard", icon: "⌂", group: "Navigate", shortcut: "H", action: () => { setView("home"); setHomeSection("feed"); } },
+            { id: "journal", label: "Open journal", hint: "Trade history", icon: "◫", group: "Navigate", shortcut: "J", action: () => navigateTo("journal") },
+            { id: "stats", label: "View stats", hint: "Performance", icon: "↗", group: "Navigate", shortcut: "S", action: () => navigateTo("stats") },
+            { id: "live-monitor", label: "Live monitor", hint: "Tilt signals", icon: "◉", group: "Navigate", action: () => navigateTo("live-monitor") },
+            { id: "report-card", label: "Report card", hint: "Share card", icon: "◼", group: "Navigate", action: () => navigateTo("report-card") },
+            { id: "weekly-discipline", label: "Weekly review", hint: "Discipline score", icon: "◈", group: "Navigate", action: () => navigateTo("weekly-discipline") },
+            { id: "settings", label: "Settings", hint: "Profile & preferences", icon: "⚙", group: "Navigate", action: () => { setView("home"); setHomeSection("settings"); } },
+            { id: "dark-mode", label: darkMode ? "Switch to light mode" : "Switch to dark mode", icon: darkMode ? "☀" : "◑", group: "App", action: () => setThemePreference(darkMode ? "light" : "dark") },
+            { id: "shortcuts", label: "Keyboard shortcuts", hint: "?", icon: "⌨", group: "App", shortcut: "?", action: () => { cmdPalette.setOpen(false); setShowShortcuts(true); } },
+          ];
+          const shortcutGroups: ShortcutGroup[] = [
+            {
+              group: "Navigation",
+              items: [
+                { combo: "⌘K", label: "Open command palette" },
+                { combo: "?", label: "This shortcuts overlay" },
+                { combo: "H", label: "Go home" },
+                { combo: "J", label: "Open journal" },
+                { combo: "S", label: "View stats" },
+              ],
+            },
+            {
+              group: "Actions",
+              items: [
+                { combo: "L", label: "Log a trade" },
+                { combo: "Esc", label: "Close modal / go back" },
+              ],
+            },
+          ];
+          return (
+            <>
+              <CommandPalette
+                C={C}
+                open={cmdPalette.open}
+                onClose={() => cmdPalette.setOpen(false)}
+                commands={paletteCommands}
+              />
+              <KeyboardShortcutsOverlay
+                C={C}
+                open={showShortcuts}
+                onClose={() => setShowShortcuts(false)}
+                groups={shortcutGroups}
+              />
+            </>
+          );
+        })()}
 
         <InterventionSheet
           open={interventionOpen}
