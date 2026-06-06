@@ -4,6 +4,7 @@ import KodaAuth from "./KodaAuth";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { CookieConsent } from "./CookieConsent";
 import { InstallHint } from "./components/InstallHint";
+import { InAppBrowserBanner } from "./InAppBrowserBanner";
 import { installStorage } from "./lib/storage";
 import { initSentry } from "./lib/sentry";
 import { initPostHog } from "./lib/posthog";
@@ -37,6 +38,7 @@ if ("serviceWorker" in navigator) {
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <ErrorBoundary>
+      <InAppBrowserBanner />
       <KodaAuth />
       <CookieConsent />
       <InstallHint />
