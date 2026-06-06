@@ -173,12 +173,14 @@ export function TradingCircles({
   // Returns the primary metric label + formatted value for a leaderboard entry
   function metricDisplay(entry: any, circle: any): { val: string; raw: number; label: string } {
     const m = circle?.metric || "dollar";
-    if (m === "dollar") { const v = entry.totalPnLDollar || 0; const pct = entry.pnlPercent; const val = pct !== null && pct !== undefined ? `${v >= 0 ? "+" : ""}$${Math.abs(v).toFixed(0)} (${pct >= 0 ? "+" : ""}${pct.toFixed(1)}%)` : `${v >= 0 ? "+" : ""}$${Math.abs(v).toFixed(0)}`; return { val, raw: v, label: "$ P&L" }; }
+    // Negative-value sign: previously losses showed as "$165" (no minus) — only color
+    // marked them as red, ambiguous with positive in red error states. Use explicit "-".
+    if (m === "dollar") { const v = entry.totalPnLDollar || 0; const pct = entry.pnlPercent; const sign = v >= 0 ? "+" : "-"; const pctSign = (p: number) => p >= 0 ? "+" : "-"; const val = pct !== null && pct !== undefined ? `${sign}$${Math.abs(v).toFixed(0)} (${pctSign(pct)}${Math.abs(pct).toFixed(1)}%)` : `${sign}$${Math.abs(v).toFixed(0)}`; return { val, raw: v, label: "$ P&L" }; }
     if (m === "r")       { const v = entry.totalPnL || 0; return { val: `${v >= 0 ? "+" : ""}${v.toFixed(1)}R`, raw: v, label: "R P&L" }; }
     if (m === "winrate") { const v = Number(entry.winRate) || 0; return { val: `${v.toFixed(0)}%`, raw: v, label: "WIN RATE" }; }
     if (m === "trades")  { const v = entry.total || 0; return { val: `${v}`, raw: v, label: "TRADES" }; }
     if (m === "avgr")    { const v = entry.avgRR || 0; return { val: `${v.toFixed(2)}R`, raw: v, label: "AVG R" }; }
-    const v = entry.totalPnLDollar || 0; return { val: `${v >= 0 ? "+" : ""}$${Math.abs(v).toFixed(0)}`, raw: v, label: "$ P&L" };
+    const v = entry.totalPnLDollar || 0; return { val: `${v >= 0 ? "+" : "-"}$${Math.abs(v).toFixed(0)}`, raw: v, label: "$ P&L" };
   }
 
   // Label for the circle's competition metric
@@ -192,6 +194,14 @@ export function TradingCircles({
     if (d > 0) return `${d}d ${h}h left`;
     const m = Math.floor((ms % 3600000) / 60000);
     return h > 0 ? `${h}h ${m}m left` : `${m}m left`;
+  }
+
+  // Handles are stored with a leading "@" (set by OnboardingFlow + Koda.tsx).
+  // Rendering code historically prepended another "@" → "@@handle" in UI.
+  // Combined with avatar-first-char fallback (also "@") it visually became "@@@handle".
+  // This helper strips any leading "@"s so the renderer can prepend exactly one.
+  function stripHandlePrefix(h: string | null | undefined): string {
+    return (h ?? "").replace(/^@+/, "");
   }
 
   function formatTrophyValue(r: ChallengeResult): string {
@@ -572,10 +582,14 @@ export function TradingCircles({
 
   // ── Derived circle stats ──────────────────────────────────────────────
   const myRank = leaderboard.findIndex((e: any) => e.memberCode === getMyCode()) + 1;
+  // Numeric guards: Supabase can return PG numeric/decimal columns as strings,
+  // which makes (s + e.winRate) string-concatenate → divide → NaN.
+  // Numeric guards: Supabase can return PG numeric/decimal columns as strings,
+  // which makes (s + e.winRate) string-concatenate → divide → NaN.
   const circleAvgWR = leaderboard.length > 0
-    ? Math.round(leaderboard.reduce((s: number, e: any) => s + (e.winRate || 0), 0) / leaderboard.length)
+    ? Math.round((leaderboard as LeaderboardEntry[]).reduce((s, e) => s + (Number(e.winRate) || 0), 0) / leaderboard.length)
     : 0;
-  const circleTotalTrades = leaderboard.reduce((s: number, e: any) => s + (e.total || 0), 0);
+  const circleTotalTrades = (leaderboard as LeaderboardEntry[]).reduce((s, e) => s + (Number(e.total) || 0), 0);
 
   function shareInviteLink(circle: any) {
     const url = `https://kodatrade.co.uk/?join=${circle.code}`;
@@ -1093,11 +1107,11 @@ export function TradingCircles({
                     return (
                       <div key={`msg-${item.data.id}`} style={{ display: "flex", gap: 9, padding: "5px 0" }}>
                         <div style={{ width: 24, height: 24, borderRadius: "50%", background: C.panel, border: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: C.text2, flexShrink: 0, marginTop: 2 }}>
-                          {(item.data.senderHandle || item.data.senderName || "?").charAt(0).toUpperCase()}
+                          {(stripHandlePrefix(item.data.senderHandle) || item.data.senderName || "?").charAt(0).toUpperCase()}
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: "flex", alignItems: "baseline", gap: 7, marginBottom: 2 }}>
-                            <span style={{ fontFamily: BODY, fontSize: 11, fontWeight: 600, color: C.text }}>@{item.data.senderHandle || item.data.senderName}</span>
+                            <span style={{ fontFamily: BODY, fontSize: 11, fontWeight: 600, color: C.text }}>@{stripHandlePrefix(item.data.senderHandle) || item.data.senderName}</span>
                             <span style={{ fontFamily: MONO, fontSize: 10, color: C.muted }}>{fmtMsgTime(item.data.createdAt)}</span>
                           </div>
                           <div style={{ fontFamily: BODY, fontSize: 13, color: C.text2, lineHeight: 1.5 }}>{item.data.text}</div>
@@ -1281,7 +1295,7 @@ export function TradingCircles({
                                     </div>
                                   )}
                                   <div style={{ maxWidth: "75%" }}>
-                                    {!isMe && <div onClick={() => openProfile && msg.sender_handle && openProfile(msg.sender_handle)} style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.08em", marginBottom: "4px", cursor: openProfile && msg.sender_handle ? "pointer" : "default" }}>{msg.sender_name}{msg.sender_handle ? ` @${msg.sender_handle}` : ""}</div>}
+                                    {!isMe && <div onClick={() => openProfile && msg.sender_handle && openProfile(msg.sender_handle)} style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.08em", marginBottom: "4px", cursor: openProfile && msg.sender_handle ? "pointer" : "default" }}>{msg.sender_name}{msg.sender_handle ? ` @${stripHandlePrefix(msg.sender_handle)}` : ""}</div>}
                                     <div style={{ background: isMe ? C.text : C.panel, color: isMe ? C.bg : C.text, borderRadius: isMe ? "16px 16px 4px 16px" : "16px 16px 16px 4px", padding: "10px 14px", fontFamily: BODY, fontSize: "14px", lineHeight: 1.5, wordBreak: "break-word", border: isMe ? "none" : `1px solid ${C.border}` }}>{msg.text}</div>
                                     <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, marginTop: "4px", display: "flex", gap: "10px", justifyContent: isMe ? "flex-end" : "flex-start", alignItems: "center" }}>
                                       <span>{fmtMsgTime(msg.created_at)}</span>
@@ -1295,7 +1309,9 @@ export function TradingCircles({
                     }
                     <div ref={chatBottomRef} />
                   </div>
-                  <div style={{ display: "flex", gap: "10px", alignItems: "flex-end", paddingTop: "14px", borderTop: `1px solid ${C.border}`, marginTop: "4px" }}>
+                  {/* Fixed compose bar — same positioning pattern as the feed compose bar
+                      so the bottom nav (~80px tall + safe area) doesn't cover the input. */}
+                  <div style={{ position: "fixed" as const, bottom: "calc(80px + env(safe-area-inset-bottom))", left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 500, padding: "10px 16px 14px", background: `linear-gradient(to top, ${C.bg} 80%, transparent)`, display: "flex", gap: "10px", alignItems: "flex-end", zIndex: 40 }}>
                     <textarea value={chatInput} onChange={e => setChatInput(e.target.value)}
                       onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendChatMessage(activeCircle.code, myId); } }}
                       placeholder="Message the circle…" rows={2}
@@ -1306,6 +1322,8 @@ export function TradingCircles({
                       {chatSending ? "…" : "Send"}
                     </button>
                   </div>
+                  {/* Spacer so the last message isn't covered by the fixed compose bar. */}
+                  <div style={{ height: "calc(140px + env(safe-area-inset-bottom))" }} aria-hidden />
                 </div>
               );
             })()}
@@ -1347,7 +1365,7 @@ export function TradingCircles({
                             {isMe && <span style={{ fontFamily: MONO, fontSize: "10px", color: C.green, letterSpacing: "0.12em" }}>· YOU</span>}
                             {(m.code === activeCircle.createdBy || m.isOwner) ? <span style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em" }}>OWNER</span> : null}
                           </div>
-                          {m.handle && <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.04em", marginTop: "2px" }}>@{m.handle}</div>}
+                          {m.handle && <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.04em", marginTop: "2px" }}>@{stripHandlePrefix(m.handle)}</div>}
                           {!m.handle && m.alias && <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.06em", marginTop: "2px" }}>{m.alias}</div>}
                           {lbEntry && <div style={{ fontFamily: MONO, fontSize: "10px", color: lbEntry.totalPnL >= 0 ? C.green : C.red, letterSpacing: "0.06em", marginTop: "2px" }}>{lbEntry.totalPnL >= 0 ? "+" : ""}{lbEntry.totalPnL.toFixed(1)}R · {Number(lbEntry.winRate ?? 0).toFixed(0)}% WR</div>}
                         </div>
