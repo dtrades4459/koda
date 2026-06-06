@@ -193,6 +193,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   const [interventionSignals, setInterventionSignals] = useState<TiltSignal[]>([]);
   const [preSessionOpen, setPreSessionOpen] = useState(false);
   const [debriefOpen, setDebriefOpen] = useState(false);
+  const [guardDismissed, setGuardDismissed] = useState(false);
   function todayLocalDate(): string {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -893,6 +894,28 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     if (loading || !profile.uid) return;
     if (profile.onboarded && !profile.priorTool) setShowFirstSessionSurvey(true);
   }, [loading, profile.uid, profile.onboarded, profile.priorTool]);
+
+  // Activation funnel events — session_guard_seen and app_opened_day2.
+  useEffect(() => {
+    if (loading || !profile.uid || !profile.onboarded || !profile.startDate) return;
+    const today = todayLocalDate();
+    const daysSince = Math.floor((Date.now() - Date.parse(profile.startDate)) / 86400000);
+    if (daysSince === 1) {
+      const key = `koda_day2_fired_${profile.uid}`;
+      if (!localStorage.getItem(key)) {
+        try { localStorage.setItem(key, "1"); } catch {}
+        phCapture("app_opened_day2");
+      }
+    }
+    const todayCount = trades.filter(t => t.date === today).length;
+    if (daysSince <= 7 && todayCount === 0) {
+      const key = `koda_guard_seen_${today}_${profile.uid}`;
+      if (!localStorage.getItem(key)) {
+        try { localStorage.setItem(key, "1"); } catch {}
+        phCapture("session_guard_seen");
+      }
+    }
+  }, [loading, profile.uid, profile.onboarded, profile.startDate, trades.length]);
 
   // Backfill: every user gets auto-joined to Kōda Global. The onboarding flow
   // already does this for new users; this effect covers existing users who
@@ -1693,7 +1716,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
       <OnboardingFlow
         C={C}
         allStrategyNames={allStrategyNames}
-        onComplete={async ({ name, handle, avatar, bio, twitter, instruments }: OnboardingData) => {
+        onComplete={async ({ name, handle, avatar, bio, twitter, instruments, strategy }: OnboardingData) => {
           // Set localStorage immediately so a refresh won't re-show onboarding
           // even if the Supabase write hasn't completed yet.
           try { localStorage.setItem(`koda_onboarded_${profile.uid}`, "1"); } catch {}
@@ -1714,11 +1737,12 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
             socialLinks: twitter.trim() ? { twitter: twitter.trim() } : profile.socialLinks,
           };
           await saveProfile(updated);
+          phCapture("onboarding_complete", { instruments: instruments.join(","), strategy });
           // Auto-join Kōda Global is handled by the backfill effect (line ~709)
           // which runs after React re-renders with the correct profile. Calling
           // joinCircleByCode here would invoke getMyCode() with the stale profile
           // closure (still {name:"Trader"}) and overwrite the just-saved name.
-          setView("log");
+          setView("home");
           // Show the first-run tour unless they've already seen it
           if (!localStorage.getItem("koda_tour_done")) setShowTour(true);
         }}
@@ -1970,6 +1994,23 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                       }} style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontSize: "18px", padding: "0 0 0 4px", lineHeight: 1, flexShrink: 0 }}>×</button>
                     </div>
                   )}
+                  {(() => {
+                    const today = todayLocalDate();
+                    const todayCount = trades.filter(t => t.date === today).length;
+                    const daysSince = profile.startDate
+                      ? Math.floor((Date.now() - Date.parse(profile.startDate)) / 86400000)
+                      : 999;
+                    if (guardDismissed || todayCount > 0 || daysSince > 7) return null;
+                    return (
+                      <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", background: `color-mix(in oklch, ${(C as any).live ?? "#44E5B8"} 8%, ${C.panel})`, border: `1px solid color-mix(in oklch, ${(C as any).live ?? "#44E5B8"} 25%, transparent)`, borderRadius: "12px", padding: "14px 16px", marginBottom: "16px" }}>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontFamily: MONO, fontSize: "10px", color: (C as any).live ?? "#44E5B8", letterSpacing: "0.14em", textTransform: "uppercase" as const, fontWeight: 700, marginBottom: "4px" }}>Session Guard · ON</div>
+                          <div style={{ fontFamily: BODY, fontSize: "13px", color: C.text, lineHeight: 1.5 }}>Open Kōda before you trade today. We'll watch your session and flag when it's time to stop.</div>
+                        </div>
+                        <button onClick={() => setGuardDismissed(true)} style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontSize: "18px", padding: "0 0 0 4px", lineHeight: 1, flexShrink: 0 }}>×</button>
+                      </div>
+                    );
+                  })()}
                   <HomeNewsWidget C={C} onOpenNews={() => primaryNav("news")} />
                   {(() => {
                     if (!preSession.startedToday || debrief.doneToday) return null;
