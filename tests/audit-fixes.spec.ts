@@ -32,15 +32,7 @@ async function dismissCookieBanner(page: Page) {
   }
 }
 
-/** Inject beta-gate bypass before the page boots so the auth screen is always visible. */
-async function bypassBetaGate(page: Page) {
-  await page.addInitScript(() => {
-    localStorage.setItem("koda_beta_unlocked", "1");
-  });
-}
-
 async function signIn(page: Page) {
-  await bypassBetaGate(page);
   await page.goto("/");
   await dismissCookieBanner(page);
   await page.locator('input[type="text"]').first().fill(EMAIL);
@@ -132,7 +124,6 @@ async function goToLogScreen(page: Page) {
 
 test.describe("Reset password", () => {
   test("R.1 — Forgot password link is visible on the auth screen", async ({ page }) => {
-    await bypassBetaGate(page);
     await page.goto("/");
     await dismissCookieBanner(page);
 
@@ -148,7 +139,6 @@ test.describe("Reset password", () => {
   });
 
   test("R.2 — Entering a username submits and shows reset confirmation", async ({ page }) => {
-    await bypassBetaGate(page);
     await page.goto("/");
     await dismissCookieBanner(page);
 

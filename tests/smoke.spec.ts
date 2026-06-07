@@ -52,7 +52,7 @@ test("app loads and shows auth screen (no 404)", async ({ page }) => {
     // Some error boundaries might surface "404" copy. Real check is below.
   });
 
-  // Either the auth form, the BetaGate, or the cookie banner should be visible.
+  // Either the auth form or the cookie banner should be visible.
   const visibleSurface = page.locator([
     'input[type="text"]',
     'input[type="password"]',

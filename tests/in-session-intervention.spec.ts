@@ -30,20 +30,13 @@ async function dismissCookieBanner(page: Page) {
   }
 }
 
-async function bypassBetaGate(page: Page) {
-  await page.addInitScript(() => {
-    localStorage.setItem("koda_beta_unlocked", "1");
-  });
-}
-
 // ─── I.1 — anonymous: auth screen ─────────────────────────────────────────
 
 test("anonymous: auth screen does not show intervention sheet", async ({ page }) => {
-  await bypassBetaGate(page);
   await page.goto("/");
   await dismissCookieBanner(page);
 
-  // Whether the auth form, the BetaGate, or the cookie banner is up — none of
+  // Whether the auth form or the cookie banner is up — none of
   // them should be the intervention sheet.
   await expect(page.getByText(/tilt signal/i)).not.toBeVisible();
   await expect(page.getByRole("button", { name: /i'm aware/i })).not.toBeVisible();
@@ -55,7 +48,6 @@ test.describe("authenticated intervention flow", () => {
   test.skip(!EMAIL || !PASSWORD, "TEST_EMAIL / TEST_PASSWORD not set — skipping");
 
   test("after 2 losing trades, tapping Log opens the sheet; Cancel dismisses", async ({ page }) => {
-    await bypassBetaGate(page);
     await page.goto("/");
     await dismissCookieBanner(page);
 

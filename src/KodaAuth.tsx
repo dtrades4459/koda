@@ -3,7 +3,6 @@ import { supabase } from "./lib/supabase";
 import { installStorage, clearStorageCache } from "./lib/storage";
 import type { Session } from "@supabase/supabase-js";
 import Koda from "./Koda";
-import { BetaGate, betaEnabled, isBetaUnlocked } from "./BetaGate";
 import { DARK } from "./theme";
 import { KodaMark, FloatingInput, Kicker, MONO, BODY, DISPLAY } from "./shared";
 
@@ -987,8 +986,7 @@ function LoadingScreen() {
 
 // â”€â”€â”€ ROOT AUTH WRAPPER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export default function KodaAuth() {
-  const [session,      setSession]      = useState<Session | null | undefined>(undefined);
-  const [betaUnlocked, setBetaUnlocked] = useState<boolean>(() => isBetaUnlocked());
+  const [session, setSession] = useState<Session | null | undefined>(undefined);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -1003,12 +1001,7 @@ export default function KodaAuth() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Wait for the session probe to finish first. If the user already has a
-  // Supabase session, they've passed the beta gate at some prior sign-up —
-  // re-gating them after an OAuth round-trip (where iOS Safari can drop
-  // localStorage) would be a confusing loop.
   if (session === undefined) return <LoadingScreen />;
-  if (!session && betaEnabled && !betaUnlocked) return <BetaGate onUnlocked={() => setBetaUnlocked(true)} />;
   if (!session) return <LandingPage onSuccess={() => {}} />;
 
   const jwtPlan = (session.user.app_metadata?.plan ?? "free") as "free" | "pro" | "elite";
