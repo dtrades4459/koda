@@ -416,20 +416,61 @@ export function CalendarView({ trades, C, onDayClick }: ChartProps & { onDayClic
   const [year, setYear] = useState(new Date().getFullYear());
   const [month, setMonth] = useState(new Date().getMonth());
   const hasDollar = trades.some(t => t.pnlDollar && t.pnlDollar !== "");
-  const [showDollar, setShowDollar] = useState(false);
+  const [showDollar, setShowDollar] = useState(hasDollar);
+
   const dayPnL: Record<string, { pnl: number; pnlDollar: number; count: number }> = {};
-  trades.forEach(t => { if (t.date) { if (!dayPnL[t.date]) dayPnL[t.date] = { pnl: 0, pnlDollar: 0, count: 0 }; dayPnL[t.date].pnl += parseFloat(t.pnl) || 0; dayPnL[t.date].pnlDollar += Number(t.pnlDollar) || 0; dayPnL[t.date].count++; } });
-  const firstDay = new Date(year, month, 1).getDay();
+  trades.forEach(t => {
+    if (t.date) {
+      if (!dayPnL[t.date]) dayPnL[t.date] = { pnl: 0, pnlDollar: 0, count: 0 };
+      dayPnL[t.date].pnl += parseFloat(t.pnl) || 0;
+      dayPnL[t.date].pnlDollar += Number(t.pnlDollar) || 0;
+      dayPnL[t.date].count++;
+    }
+  });
+
+  // Stat strip — current month only
+  const monthPrefix = `${year}-${String(month + 1).padStart(2, "0")}`;
+  const monthEntries = Object.entries(dayPnL).filter(([k]) => k.startsWith(monthPrefix));
+  const daysTraded = monthEntries.length;
+  const winDays = monthEntries.filter(([, v]) => (showDollar && hasDollar ? v.pnlDollar : v.pnl) > 0).length;
+  const lossDays = monthEntries.filter(([, v]) => (showDollar && hasDollar ? v.pnlDollar : v.pnl) < 0).length;
+  const monthPnl = monthEntries.reduce((s, [, v]) => s + (showDollar && hasDollar ? v.pnlDollar : v.pnl), 0);
+  const monthPnlStr = showDollar && hasDollar
+    ? `${monthPnl >= 0 ? "+" : ""}$${Math.abs(monthPnl).toLocaleString("en-US", { maximumFractionDigits: 0 })}`
+    : `${monthPnl >= 0 ? "+" : ""}${monthPnl.toFixed(1)}R`;
+
+  // Monday-first grid
+  const rawFirstDay = new Date(year, month, 1).getDay(); // 0=Sun
+  const offset = rawFirstDay === 0 ? 6 : rawFirstDay - 1;
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const cells: (number | null)[] = [];
-  for (let i = 0; i < firstDay; i++) cells.push(null);
+  for (let i = 0; i < offset; i++) cells.push(null);
   for (let d = 1; d <= daysInMonth; d++) cells.push(d);
   while (cells.length % 7 !== 0) cells.push(null);
-  const navBtn: React.CSSProperties = { background: "none", border: "none", color: C.text, padding: "6px 10px", cursor: "pointer", fontFamily: MONO, fontSize: "12px", letterSpacing: "0.06em" };
+
+  const today = new Date().toISOString().split("T")[0];
+  const navBtn: React.CSSProperties = { background: "none", border: "none", color: C.text, padding: "6px 10px", cursor: "pointer", fontFamily: MONO, fontSize: "14px" };
+
+  const statTile = (label: string, value: string | number, color?: string) => (
+    <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: "10px", padding: "10px 8px", textAlign: "center" as const, flex: 1 }}>
+      <div style={{ fontFamily: MONO, fontSize: "8px", color: C.muted, letterSpacing: "0.12em", textTransform: "uppercase" as const, marginBottom: "4px" }}>{label}</div>
+      <div style={{ fontFamily: MONO, fontSize: "15px", fontWeight: 700, color: color ?? C.text }}>{value}</div>
+    </div>
+  );
+
   return (
-    <div>
+    <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+      {/* Stat strip */}
+      <div style={{ display: "flex", gap: "8px" }}>
+        {statTile("Traded", daysTraded)}
+        {statTile("Win Days", winDays, C.green)}
+        {statTile("Loss Days", lossDays, C.red)}
+        {statTile("Month P&L", monthPnlStr, monthPnl >= 0 ? C.green : C.red)}
+      </div>
+
+      {/* R / $ toggle */}
       {hasDollar && (
-        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "8px" }}>
+        <div style={{ display: "flex", justifyContent: "flex-end" }}>
           <div style={{ display: "flex", background: C.panel, borderRadius: "999px", border: `1px solid ${C.border2}`, padding: "2px" }}>
             {(["R", "$"] as const).map(mode => (
               <button key={mode} onClick={() => setShowDollar(mode === "$")}
@@ -440,30 +481,70 @@ export function CalendarView({ trades, C, onDayClick }: ChartProps & { onDayClic
           </div>
         </div>
       )}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", borderBottom: `1px solid ${C.border}`, paddingBottom: "10px" }}>
+
+      {/* Month nav */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${C.border}`, paddingBottom: "10px" }}>
         <button onClick={() => { if (month === 0) { setMonth(11); setYear(y => y - 1); } else setMonth(m => m - 1); }} style={navBtn}>‹</button>
-        <span style={{ fontSize: "11px", color: C.text, fontFamily: MONO, letterSpacing: "0.12em", textTransform: "uppercase" }}>{fmtMonth(year, month)}</span>
+        <span style={{ fontSize: "11px", color: C.text, fontFamily: MONO, letterSpacing: "0.12em", textTransform: "uppercase" as const }}>{fmtMonth(year, month)}</span>
         <button onClick={() => { if (month === 11) { setMonth(0); setYear(y => y + 1); } else setMonth(m => m + 1); }} style={navBtn}>›</button>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: "2px", marginBottom: "4px" }}>
-        {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => <div key={i} style={{ textAlign: "center", fontSize: "11px", color: C.muted, padding: "4px 0", fontFamily: MONO, letterSpacing: "0.08em" }}>{d}</div>)}
+
+      {/* Day headers — Monday first */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: "3px" }}>
+        {["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"].map((d, i) => (
+          <div key={i} style={{ textAlign: "center" as const, fontSize: "9px", color: i >= 5 ? C.muted : C.text2, padding: "2px 0", fontFamily: MONO, letterSpacing: "0.06em", opacity: i >= 5 ? 0.5 : 1 }}>{d}</div>
+        ))}
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: "2px" }}>
+
+      {/* Calendar grid */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: "3px" }}>
         {cells.map((d, i) => {
-          if (!d) return <div key={i} />;
+          if (!d) return <div key={i} style={{ minHeight: "56px" }} />;
           const key = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
           const data = dayPnL[key];
-          const isToday = key === new Date().toISOString().split("T")[0];
-          const textCol = data ? (data.pnl > 0 ? C.green : data.pnl < 0 ? C.red : C.muted) : C.muted;
-          const displayVal = (showDollar && hasDollar ? data?.pnlDollar : data?.pnl) ?? 0;
-          const displayStr = data ? (showDollar && hasDollar
-            ? `${displayVal >= 0 ? "+" : ""}$${Math.abs(displayVal).toFixed(0)}`
-            : `${displayVal >= 0 ? "+" : ""}${displayVal.toFixed(1)}`) : "";
+          const isToday = key === today;
+          const isWeekend = (i % 7) >= 5;
+          const pnlVal = data ? (showDollar && hasDollar ? data.pnlDollar : data.pnl) : 0;
+          const isWin = data && pnlVal > 0;
+          const isLoss = data && pnlVal < 0;
+          const displayStr = data
+            ? (showDollar && hasDollar
+              ? `${pnlVal >= 0 ? "+" : ""}$${Math.abs(pnlVal).toLocaleString("en-US", { maximumFractionDigits: 0 })}`
+              : `${pnlVal >= 0 ? "+" : ""}${pnlVal.toFixed(1)}R`)
+            : "";
+
           return (
-            <div key={i} onClick={() => data && onDayClick?.(key)}
-              style={{ border: `1px solid ${isToday ? C.text : C.border}`, padding: "6px 3px", textAlign: "center", cursor: data ? "pointer" : "default", minHeight: "44px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: "2px", background: "transparent" }}>
-              <div style={{ fontSize: "11px", color: isToday ? C.text : C.text2, fontFamily: MONO }}>{d}</div>
-              {data && <div style={{ fontSize: "10px", color: textCol, fontFamily: MONO, letterSpacing: "0.04em" }}>{displayStr}</div>}
+            <div
+              key={i}
+              onClick={() => data && onDayClick?.(key)}
+              style={{
+                minHeight: "56px",
+                borderRadius: "6px",
+                border: `1px solid ${isToday ? C.green : isWin ? `color-mix(in oklch, ${C.green} 30%, transparent)` : isLoss ? `color-mix(in oklch, ${C.red} 30%, transparent)` : C.border}`,
+                background: isToday
+                  ? `color-mix(in oklch, ${C.green} 12%, transparent)`
+                  : isWin
+                  ? `color-mix(in oklch, ${C.green} 8%, transparent)`
+                  : isLoss
+                  ? `color-mix(in oklch, ${C.red} 8%, transparent)`
+                  : isWeekend ? `color-mix(in oklch, ${C.bg} 60%, transparent)` : "transparent",
+                display: "flex",
+                flexDirection: "column" as const,
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "2px",
+                cursor: data ? "pointer" : "default",
+                padding: "4px 2px",
+              }}
+            >
+              {isToday && <span style={{ fontFamily: MONO, fontSize: "7px", color: C.green, letterSpacing: "0.1em" }}>TODAY</span>}
+              <span style={{ fontFamily: MONO, fontSize: "10px", color: data ? (isWin ? C.green : isLoss ? C.red : C.muted) : isWeekend ? C.muted : C.text2, opacity: !data ? 0.4 : 1 }}>{d}</span>
+              {data && (
+                <>
+                  <span style={{ fontFamily: MONO, fontSize: "10px", fontWeight: 600, color: isWin ? C.green : C.red, letterSpacing: "0.02em" }}>{displayStr}</span>
+                  <span style={{ fontFamily: MONO, fontSize: "8px", color: C.muted }}>{data.count}t</span>
+                </>
+              )}
             </div>
           );
         })}
