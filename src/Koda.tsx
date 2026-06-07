@@ -2396,7 +2396,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                   )}
 
                   {/* Equity curve */}
-                  {trades.length > 1 && (
+                  {trades.length > 0 && (
                     <section style={{ marginTop: "clamp(40px, 6vw, 56px)" }}>
                       <div style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, letterSpacing: "0.14em", marginBottom: "16px", display: "flex", alignItems: "center", gap: "12px" }}>
                         <span style={{ flex: "0 0 24px", height: "1px", background: C.border2 }} />
