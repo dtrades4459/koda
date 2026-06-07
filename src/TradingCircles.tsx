@@ -184,9 +184,6 @@ export function TradingCircles({
     const v = entry.totalPnLDollar || 0; return { val: `${v >= 0 ? "+" : "-"}$${Math.abs(v).toFixed(0)}`, raw: v, label: "$ P&L" };
   }
 
-  // Label for the circle's competition metric
-  const METRIC_LABELS: Record<string, string> = { dollar: "$ DOLLAR P&L", r: "R-MULTIPLE", winrate: "WIN RATE", trades: "MOST TRADES", avgr: "AVG R" };
-
   function formatCountdown(endsAt: string): string {
     const ms = new Date(endsAt).getTime() - Date.now();
     if (ms <= 0) return "ended";
@@ -582,7 +579,6 @@ export function TradingCircles({
   }, [circleTab, activeCircle]);
 
   // ── Derived circle stats ──────────────────────────────────────────────
-  const myRank = leaderboard.findIndex((e: any) => e.memberCode === getMyCode()) + 1;
   // Numeric guards: Supabase can return PG numeric/decimal columns as strings,
   // which makes (s + e.winRate) string-concatenate → divide → NaN.
   // Numeric guards: Supabase can return PG numeric/decimal columns as strings,
@@ -898,88 +894,53 @@ export function TradingCircles({
                 ["TRADES", circleTotalTrades || "—"],
                 ["AVG WR", leaderboard.length > 0 ? `${circleAvgWR}%` : "—"],
               ].map(([k, v], i) => (
-                <div key={k as string} style={{ padding: "14px 10px", textAlign: "center", borderLeft: i > 0 ? `1px solid ${C.border}` : "none" }}>
+                <div key={k as string} style={{ padding: "16px 8px", textAlign: "center", borderLeft: i > 0 ? `1px solid ${C.border}` : "none" }}>
                   <div style={{ fontFamily: DISPLAY, fontSize: "20px", fontWeight: 500, color: C.text, letterSpacing: "-0.02em", lineHeight: 1 }}>{v}</div>
-                  <div style={{ fontFamily: MONO, fontSize: "8px", color: C.muted, letterSpacing: "0.12em", marginTop: "5px" }}>{k}</div>
+                  <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", marginTop: "8px" }}>{k}</div>
                 </div>
               ))}
             </div>
           </section>
 
-          {/* Top 3 mini-leaderboard */}
-          {leaderboard.length > 0 && (
-            <div style={{ background: `${C.green}08`, border: `1px solid ${C.green}22`, borderRadius: "12px", overflow: "hidden" }}>
-              <div style={{ padding: "10px 16px 8px", fontFamily: MONO, fontSize: "10px", color: C.green, letterSpacing: "0.14em" }}>
-                🏆 {METRIC_LABELS[activeCircle?.metric || "dollar"] || "$ DOLLAR P&L"}
-              </div>
-              {leaderboard.slice(0, 3).map((e, i) => {
-                const isMe = e.memberCode === getMyCode();
-                const md = metricDisplay(e, activeCircle);
-                return (
-                  <div key={e.memberCode} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 16px", borderTop: i === 0 ? `1px solid ${C.green}22` : `1px solid ${C.border}`, background: i === 0 ? `${C.green}08` : "transparent" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                      <span style={{ fontFamily: MONO, fontSize: "13px" }}>{MEDALS[i]}</span>
-                      <span style={{ fontFamily: DISPLAY, fontSize: "15px", fontWeight: 500, color: C.text, letterSpacing: "-0.01em" }}>{e.name}</span>
-                      {isMe && <span style={{ fontFamily: MONO, fontSize: "10px", color: C.green, letterSpacing: "0.12em" }}>YOU</span>}
-                    </div>
-                    <span style={{ fontFamily: DISPLAY, fontSize: "15px", fontWeight: 700, color: i === 0 ? C.green : C.text, letterSpacing: "-0.01em" }}>{md.val}</span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Your rank callout (if on the board) */}
-          {myRank > 0 && myRank > 1 && (
-            <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: "12px", padding: "12px 18px", display: "flex", alignItems: "center", gap: "14px" }}>
-              <span style={{ fontFamily: MONO, fontSize: "24px", fontWeight: 700, color: C.text2, letterSpacing: "-0.02em" }}>#{myRank}</span>
-              <div>
-                <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.14em", marginBottom: "2px" }}>YOUR RANK</div>
-                <div style={{ fontFamily: BODY, fontSize: "13px", color: C.text2 }}>Keep publishing to climb the board.</div>
-              </div>
-            </div>
-          )}
-
           {/* Publish strip */}
-          <section style={{ borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}`, padding: "20px 0" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
-              <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.14em" }}>YOUR STATS TO PUBLISH</div>
-              <div style={{ fontFamily: MONO, fontSize: "10px", color: C.text2, letterSpacing: "0.1em", background: C.panel, border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "3px 10px" }}>
-                RANKED BY {METRIC_LABELS[activeCircle?.metric || "dollar"] || "$ P&L"}
-              </div>
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "0", marginBottom: "14px" }}>
-              {[["W/L", `${wins}/${losses}`], ["WR", `${winRate}%`], hasDollarData ? ["$ P&L", `${totalPnlDollar >= 0 ? "+" : ""}$${Math.abs(totalPnlDollar).toFixed(0)}`] : ["P&L", `${pnlPos ? "+" : ""}${totalPnL}R`], ["AVG R", avgRR === "—" ? "—" : `${avgRR}R`]].map(([k, v], i) => (
-                <div key={k} style={{ padding: "4px 10px", borderLeft: i === 0 ? "none" : `1px solid ${C.border}` }}>
-                  <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", marginBottom: "6px" }}>{k}</div>
-                  <div style={{ fontFamily: DISPLAY, fontSize: "18px", fontWeight: 500, color: C.text, letterSpacing: "-0.02em" }}>{v}</div>
-                </div>
-              ))}
+          <section>
+            <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.14em", marginBottom: "10px" }}>YOUR STATS</div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 14px", fontFamily: MONO, fontSize: "12px", color: C.text2, marginBottom: "14px", letterSpacing: "0.04em" }}>
+              <span><span style={{ color: C.muted }}>W/L</span> {wins}/{losses}</span>
+              <span style={{ color: C.border2 }}>·</span>
+              <span><span style={{ color: C.muted }}>WR</span> {winRate}%</span>
+              <span style={{ color: C.border2 }}>·</span>
+              {hasDollarData ? (
+                <span><span style={{ color: C.muted }}>$P&L</span> <span style={{ color: totalPnlDollar >= 0 ? C.green : C.red }}>{totalPnlDollar >= 0 ? "+" : ""}${Math.abs(totalPnlDollar).toFixed(0)}</span></span>
+              ) : (
+                <span><span style={{ color: C.muted }}>P&L</span> <span style={{ color: pnlPos ? C.green : C.red }}>{pnlPos ? "+" : ""}{totalPnL}R</span></span>
+              )}
+              <span style={{ color: C.border2 }}>·</span>
+              <span><span style={{ color: C.muted }}>AVG</span> {avgRR === "—" ? "—" : `${avgRR}R`}</span>
             </div>
             <button onClick={() => publishToCircle(activeCircle.code)} style={{ ...pillPrimary(true), width: "100%", padding: "14px 20px" }}>PUBLISH MY STATS →</button>
           </section>
 
-          {/* Active challenge strip */}
+          {/* Active challenge pill */}
           {activeChallenge && (
             <div style={{
-              borderLeft: `2px solid ${C.accent ?? C.text2}`,
-              padding: "8px 12px",
-              background: "rgba(255,255,255,0.03)",
-              borderRadius: "0 8px 8px 0",
-              display: "flex",
+              alignSelf: "flex-start",
+              display: "inline-flex",
               alignItems: "center",
-              justifyContent: "space-between",
-              gap: 12,
+              gap: 10,
+              padding: "6px 12px",
+              border: `1px solid ${C.border2}`,
+              borderRadius: 999,
+              fontFamily: MONO,
+              fontSize: 10,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase" as const,
+              color: C.text2,
             }}>
-              <div>
-                <div style={{ fontFamily: DISPLAY, fontSize: 13, fontWeight: 600, color: C.text }}>{activeChallenge.title}</div>
-                <div style={{ fontFamily: MONO, fontSize: 10, color: C.muted, marginTop: 2, letterSpacing: "0.06em", textTransform: "uppercase" }}>
-                  {activeChallenge.metric} · challenge
-                </div>
-              </div>
-              <div style={{ fontFamily: MONO, fontSize: 11, fontWeight: 700, color: C.text2, letterSpacing: "0.05em", flexShrink: 0 }}>
-                {formatCountdown(activeChallenge.endsAt)}
-              </div>
+              <span style={{ color: C.muted }}>Challenge</span>
+              <span style={{ color: C.text, letterSpacing: "0.04em", textTransform: "none" as const }}>{activeChallenge.title}</span>
+              <span style={{ color: C.border2 }}>·</span>
+              <span style={{ fontWeight: 700 }}>{formatCountdown(activeChallenge.endsAt)}</span>
             </div>
           )}
 
@@ -1341,7 +1302,7 @@ export function TradingCircles({
                     </button>
                   </div>
                   {/* Spacer so the last message isn't covered by the fixed compose bar. */}
-                  <div style={{ height: "calc(140px + env(safe-area-inset-bottom))" }} aria-hidden />
+                  <div style={{ height: "calc(110px + env(safe-area-inset-bottom))" }} aria-hidden />
                 </div>
               );
             })()}
