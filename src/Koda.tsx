@@ -531,7 +531,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
 
   async function loadAll() {
     const store = storage;
-    const LOAD_KEYS = ["koda_trades","koda_profile","koda_checklists","koda_rules","koda_dark","koda_theme_pref","koda_circles","koda_thresholds","koda_custom_strategies"] as const;
+    const LOAD_KEYS = ["koda_trades","koda_profile","koda_checklists","koda_rules","koda_dark","koda_theme_pref","koda_circles","koda_thresholds","koda_custom_strategies","koda_stripe_customer","koda_session_started","koda_debrief_log","koda_intervention_lockout","koda_tradovate","koda_discipline_log"] as const;
     const [kv, v2ProfileRes] = await Promise.all([
       store.getMany([...LOAD_KEYS]).catch(() => new Map()),
       (isFlagOn("newProfile") && user?.id)
@@ -665,10 +665,9 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     } catch (e) { log.error("loadAll.customStrategies", e); }
     // Tradovate session loaded by useTradovate hook after loading completes.
 
-    // Load Stripe customer ID
+    // Load Stripe customer ID (pre-fetched in the LOAD_KEYS batch above)
     try {
-      const store = storage;
-      const stripeKv = await store.get("koda_stripe_customer").catch(() => null);
+      const stripeKv = kv.get("koda_stripe_customer") ?? null;
       if (stripeKv?.value) {
         const { customerId } = JSON.parse(stripeKv.value);
         if (customerId) setProfile(p => ({ ...p, stripeCustomerId: customerId }));
@@ -3086,6 +3085,13 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
             <div style={{ position: "relative" }}>
               {/* ambient orb */}
               <div style={{ position: "absolute", top: 100, right: -100, width: 320, height: 320, borderRadius: "50%", background: `radial-gradient(circle, ${C.orb2} 0%, transparent 65%)`, filter: "blur(60px)", opacity: darkMode ? 0.4 : 0.25, pointerEvents: "none", zIndex: 0 }} />
+              {/* Section sub-nav dropdown — mobile only; desktop shows Home sub-nav in sidebar with Journal highlighted */}
+              {!isDesktop && (
+                <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "8px", paddingBottom: "10px", borderBottom: `0.5px solid ${C.border}`, position: "relative", zIndex: 2 }}>
+                  <SubNavDropdown sections={HOME_SECTIONS} value="journal" onChange={(s: string) => { if (s === "rules") navigateTo("checklist"); else if (s === "journal") navigateTo("history"); else { setView("home"); setHomeSection(s); } }} C={C} />
+                  <GearButton onClick={() => { setView("home"); setHomeSection("settings"); }} active={false} C={C} />
+                </div>
+              )}
               {/* Title + summary */}
               <div style={{ padding: "12px 6px", position: "relative", zIndex: 2 }}>
                 <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.16em", textTransform: "uppercase" }}>Trade history</div>
@@ -4350,7 +4356,8 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                 </div>
               )}
               {!isDesktop && (
-                <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "8px", paddingBottom: "10px", borderBottom: `1px solid ${C.border}`, marginTop: "4px" }}>
+                <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "8px", paddingBottom: "10px", borderBottom: `1px solid ${C.border}`, marginTop: "4px", flexWrap: "wrap" }}>
+                  <SubNavDropdown sections={HOME_SECTIONS} value="rules" onChange={(s: string) => { if (s === "rules") navigateTo("checklist"); else if (s === "journal") navigateTo("history"); else { setView("home"); setHomeSection(s); } }} C={C} />
                   <SubNavDropdown sections={CHECKLIST_SECTIONS} value={checklistTab} onChange={setChecklistTab} C={C} />
                   <GearButton onClick={() => { setView("home"); setHomeSection("settings"); }} active={false} C={C} />
                 </div>
@@ -4476,29 +4483,40 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
               totalPnlDollar={totalPnlDollar}
               hasDollarData={hasDollarData}
               isPro={isPro}
+              isDesktop={isDesktop}
             />
           )}
 
           {/* ══════════════════════════ SOCIAL ══════════════════════════ */}
-          {view === "social" && socialSection !== "activity" && (
-            <FriendsFeed
-              friends={friends} friendFeed={friendFeed as any} showAddFriend={showAddFriend} setShowAddFriend={setShowAddFriend}
-              followHandleInput={followHandleInput} setFollowHandleInput={setFollowHandleInput}
-              followHandleMsg={followHandleMsg} followHandleLoading={followHandleLoading}
-              followByHandle={followByHandle} followUser={followUser} unfollowUser={unfollowUser}
-              following={following} followers={followers} followerProfiles={followerProfiles}
-              followingProfiles={followingProfiles}
-              publishFeed={publishFeed} refreshFeed={refreshFeed} reactToFeed={reactToFeed as any} myFeedReactions={myFeedReactions} profile={profile}
-              C={C as any} inp={inp} pillPrimary={pillPrimary} openProfile={openProfile}
-              myUid={myUid}
-              recentTrades={trades}
-              isDesktop={isDesktop}
-              section={socialSection as "feed" | "ideas" | "people"}
-              onSectionChange={(s) => setSocialSection(s)}
-            />
-          )}
-          {view === "social" && socialSection === "activity" && (
-            <NotificationFeed C={C} onMarkRead={refreshSocialUnread} />
+          {view === "social" && (
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              {/* Section sub-nav dropdown — mobile only; desktop uses the dropdown in the sidebar */}
+              {!isDesktop && (
+                <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "8px", paddingBottom: "10px", marginBottom: "12px", borderBottom: `0.5px solid ${C.border}` }}>
+                  <SubNavDropdown sections={SOCIAL_SECTIONS} value={socialSection} onChange={(s: string) => setSocialSection(s as "feed" | "ideas" | "people" | "activity")} C={C} />
+                </div>
+              )}
+              {socialSection !== "activity" && (
+                <FriendsFeed
+                  friends={friends} friendFeed={friendFeed as any} showAddFriend={showAddFriend} setShowAddFriend={setShowAddFriend}
+                  followHandleInput={followHandleInput} setFollowHandleInput={setFollowHandleInput}
+                  followHandleMsg={followHandleMsg} followHandleLoading={followHandleLoading}
+                  followByHandle={followByHandle} followUser={followUser} unfollowUser={unfollowUser}
+                  following={following} followers={followers} followerProfiles={followerProfiles}
+                  followingProfiles={followingProfiles}
+                  publishFeed={publishFeed} refreshFeed={refreshFeed} reactToFeed={reactToFeed as any} myFeedReactions={myFeedReactions} profile={profile}
+                  C={C as any} inp={inp} pillPrimary={pillPrimary} openProfile={openProfile}
+                  myUid={myUid}
+                  recentTrades={trades}
+                  isDesktop={isDesktop}
+                  section={socialSection as "feed" | "ideas" | "people"}
+                  onSectionChange={(s) => setSocialSection(s)}
+                />
+              )}
+              {socialSection === "activity" && (
+                <NotificationFeed C={C} onMarkRead={refreshSocialUnread} />
+              )}
+            </div>
           )}
           </div>{/* end main */}
         </div>{/* end grid */}

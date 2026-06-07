@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { DARK } from "../theme";
@@ -43,26 +43,21 @@ const calendarValue = {
   ],
 };
 
-interface Row { value: unknown }
-let rows: Record<string, Row | null> = {};
-
-vi.mock("../lib/supabase", () => ({
-  supabase: {
-    from: (_table: string) => ({
-      select: (_cols: string) => ({
-        eq: (_col: string, key: string) => ({
-          maybeSingle: async () => ({ data: rows[key] ?? null, error: null }),
-        }),
-      }),
-    }),
-  },
-}));
+let apiBody: { calendar: unknown; headlines: unknown } = { calendar: null, headlines: null };
 
 import { HomeNewsWidget } from "./HomeNewsWidget";
 
 describe("HomeNewsWidget", () => {
   beforeEach(() => {
-    rows = { koda_news_calendar: { value: calendarValue } };
+    apiBody = { calendar: calendarValue, headlines: null };
+    vi.stubGlobal("fetch", vi.fn(async () => ({
+      ok: true,
+      json: async () => apiBody,
+    } as Response)));
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it("shows the next high-or-medium event as hero with updated label", async () => {
@@ -94,8 +89,8 @@ describe("HomeNewsWidget", () => {
   });
 
   it("renders empty state when no events cached", async () => {
-    rows = {};
+    apiBody = { calendar: null, headlines: null };
     render(<HomeNewsWidget C={DARK} onOpenNews={() => {}} />);
-    expect(await screen.findByText(/News loading/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Loading news/i)).toBeInTheDocument();
   });
 });

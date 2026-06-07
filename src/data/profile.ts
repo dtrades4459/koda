@@ -98,7 +98,8 @@ export async function upsertProfile(p: Partial<Profile> & { userId: string }): P
     .select()
     .single();
   if (error) {
-    log.error("profile.upsertProfile", error, { userId: p.userId });
+    const wrapped = new Error(error.message || error.code || "upsert failed");
+    log.error("profile.upsertProfile", wrapped, { userId: p.userId, code: error.code, details: error.details, hint: error.hint });
     return null;
   }
   return fromRow(data);
