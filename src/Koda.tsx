@@ -345,6 +345,10 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   const [newRuleText, setNewRuleText] = useState("");
   const [addingCheck, setAddingCheck] = useState(false);
   const [addingRule, setAddingRule] = useState(false);
+  const [dailyCheckItems, setDailyCheckItems] = useState<{ id: number; text: string }[]>([]);
+  const [dailyTicks, setDailyTicks] = useState<Set<number>>(new Set());
+  const [newDailyCheckText, setNewDailyCheckText] = useState("");
+  const [addingDailyCheck, setAddingDailyCheck] = useState(false);
   const [calDayTrades, setCalDayTrades] = useState<{ key: string; trades: Trade[] } | null>(null);
   const [statsTab, setStatsTab] = useState("calendar");
   const [socialSection, setSocialSection] = useState<"feed" | "ideas" | "people" | "activity">("feed");
@@ -679,6 +683,18 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
       setProfile(p => ({ ...p, email: user.email }));
     }
 
+    // Daily checklist items
+    try {
+      const rawDailyItems = await storage.get("koda_daily_checklist");
+      if (rawDailyItems) setDailyCheckItems(JSON.parse(rawDailyItems.value));
+    } catch (e) { log.error("loadAll.dailyChecklist", e); }
+    // Today's ticks — key includes date so ticks reset automatically each day
+    try {
+      const todayKey = new Date().toISOString().slice(0, 10);
+      const rawTicks = await storage.get(`koda_daily_ticks_${todayKey}`);
+      if (rawTicks) setDailyTicks(new Set(JSON.parse(rawTicks.value)));
+    } catch (e) { log.error("loadAll.dailyTicks", e); }
+
     setLoading(false);
   }
 
@@ -1012,6 +1028,15 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
 
   async function saveStratThresholds(u: Record<string, { minCount: number; required: string[] }>) { setStratThresholds(u); await storage.set("koda_thresholds", JSON.stringify(u)); }
   async function saveStratRules(u: Record<string, { id: number; text: string }[]>) { setStratRules(u); await storage.set("koda_rules", JSON.stringify(u)); }
+  async function saveDailyCheckItems(items: { id: number; text: string }[]) {
+    setDailyCheckItems(items);
+    await storage.set("koda_daily_checklist", JSON.stringify(items));
+  }
+  async function saveDailyTicks(ticks: Set<number>) {
+    setDailyTicks(ticks);
+    const todayKey = new Date().toISOString().slice(0, 10);
+    await storage.set(`koda_daily_ticks_${todayKey}`, JSON.stringify([...ticks]));
+  }
   async function setThemePreference(next: ThemePref) {
     setThemePref(next);
     await storage.set("koda_theme_pref", JSON.stringify(next));
@@ -1258,6 +1283,20 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   async function addRule() { if (!newRuleText.trim()) return; const u = { ...stratRules, [activeStrategy]: [...ruleItems, { id: Date.now(), text: newRuleText.trim() }] }; await saveStratRules(u); setNewRuleText(""); setAddingRule(false); }
   async function deleteRule(id: number) { const u = { ...stratRules, [activeStrategy]: ruleItems.filter((r: { id: number; text: string }) => r.id !== id) }; await saveStratRules(u); }
   async function saveEditRule(id: number, text: string) { const u = { ...stratRules, [activeStrategy]: ruleItems.map((r: { id: number; text: string }) => r.id === id ? { ...r, text } : r) }; await saveStratRules(u); setEditingRule(null); }
+  async function toggleDailyTick(id: number) {
+    const next = new Set(dailyTicks);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    await saveDailyTicks(next);
+  }
+  async function addDailyCheckItem() {
+    if (!newDailyCheckText.trim()) return;
+    await saveDailyCheckItems([...dailyCheckItems, { id: Date.now(), text: newDailyCheckText.trim() }]);
+    setNewDailyCheckText("");
+    setAddingDailyCheck(false);
+  }
+  async function deleteDailyCheckItem(id: number) {
+    await saveDailyCheckItems(dailyCheckItems.filter(i => i.id !== id));
+  }
 
   // Friends
   // ── Stable user code (rename-safe) ──────────────────────────────
@@ -2886,41 +2925,90 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                 </div>
               )}
 
-              {/* RULES */}
+              {/* RULES + DAILY CHECKLIST */}
               {homeSection === "rules" && (
                 <div style={{ marginTop: "clamp(24px, 5vw, 40px)", display: "flex", flexDirection: "column", gap: "16px" }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
-                    <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase" }}>
+                  {/* Strategy selector */}
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" as const }}>
+                    <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase" as const }}>
                       Read before every {stratShort(activeStrategy)} session.
                     </div>
                     <StrategySelect strategies={allStrategyNames} value={activeStrategy} onChange={(s: string) => { setActiveStrategy(s); setEditingRule(null); }} C={C} align="right" />
                   </div>
-                  <div style={{ borderTop: `1px solid ${C.border}` }}>
-                    {ruleItems.map((rule: { id: number; text: string }, idx: number) => (
-                      <div key={rule.id} className="check-row" style={{ minHeight: "52px", borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: "14px", padding: "8px 0" }}>
-                        <span style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, letterSpacing: "0.08em", minWidth: "24px" }}>{String(idx + 1).padStart(2, "0")}</span>
-                        {editingRule === rule.id
-                          ? <EditInline val={rule.text} onSave={(t: string) => saveEditRule(rule.id, t)} onCancel={() => setEditingRule(null)} C={C} />
-                          : <>
-                            <span style={{ flex: 1, fontSize: "14px", color: C.text, lineHeight: 1.55, fontFamily: BODY }}>{rule.text}</span>
-                            <div className="ca" style={{ display: "flex", gap: "4px", opacity: 0, transition: "opacity 0.15s" }}>
-                              <button onClick={() => setEditingRule(rule.id)} style={{ background: "none", border: `1px solid ${C.border2}`, borderRadius: "6px", color: C.muted, fontSize: "10px", cursor: "pointer", fontFamily: MONO, letterSpacing: "0.08em", textTransform: "uppercase", padding: "8px 10px", minHeight: "44px" }}>edit</button>
-                              <button onClick={() => deleteRule(rule.id)} style={{ background: "none", border: `1px solid ${C.border2}`, borderRadius: "6px", color: C.red, fontSize: "10px", cursor: "pointer", fontFamily: MONO, letterSpacing: "0.08em", textTransform: "uppercase", padding: "8px 10px", minHeight: "44px" }}>rm</button>
-                            </div>
-                          </>}
+
+                  {/* Two-panel layout */}
+                  <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "1fr 1fr" : "1fr", gap: "20px", alignItems: "start" }}>
+
+                    {/* LEFT: Rules */}
+                    <div style={{ display: "flex", flexDirection: "column" as const, gap: "10px" }}>
+                      <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.14em", textTransform: "uppercase" as const }}>Rules</div>
+                      <div style={{ borderTop: `1px solid ${C.border}` }}>
+                        {ruleItems.map((rule: { id: number; text: string }, idx: number) => (
+                          <div key={rule.id} className="check-row" style={{ minHeight: "44px", borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: "14px", padding: "6px 0" }}>
+                            <span style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, letterSpacing: "0.08em", minWidth: "24px" }}>{String(idx + 1).padStart(2, "0")}</span>
+                            {editingRule === rule.id
+                              ? <EditInline val={rule.text} onSave={(t: string) => saveEditRule(rule.id, t)} onCancel={() => setEditingRule(null)} C={C} />
+                              : <>
+                                <span style={{ flex: 1, fontSize: "13px", color: C.text, lineHeight: 1.5, fontFamily: BODY }}>{rule.text}</span>
+                                <div className="ca" style={{ display: "flex", gap: "4px", opacity: 0, transition: "opacity 0.15s" }}>
+                                  <button onClick={() => setEditingRule(rule.id)} style={{ background: "none", border: `1px solid ${C.border2}`, borderRadius: "6px", color: C.muted, fontSize: "10px", cursor: "pointer", fontFamily: MONO, letterSpacing: "0.08em", textTransform: "uppercase" as const, padding: "6px 8px", minHeight: "36px" }}>edit</button>
+                                  <button onClick={() => deleteRule(rule.id)} style={{ background: "none", border: `1px solid ${C.border2}`, borderRadius: "6px", color: C.red, fontSize: "10px", cursor: "pointer", fontFamily: MONO, letterSpacing: "0.08em", textTransform: "uppercase" as const, padding: "6px 8px", minHeight: "36px" }}>rm</button>
+                                </div>
+                              </>}
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                  {addingRule
-                    ? <div style={{ display: "flex", gap: "10px", alignItems: "center", paddingTop: "8px" }}>
-                      <input autoFocus value={newRuleText} onChange={e => setNewRuleText(e.target.value)}
-                        onKeyDown={e => { if (e.key === "Enter") addRule(); if (e.key === "Escape") { setAddingRule(false); setNewRuleText(""); } }}
-                        placeholder="New rule..." style={{ ...inp, flex: 1 }} />
-                      <button onClick={addRule} style={{ ...pillPrimary(!!newRuleText.trim()), width: "auto", padding: "10px 16px" }}>Add</button>
-                      <button aria-label="Cancel" onClick={() => { setAddingRule(false); setNewRuleText(""); }} style={{ ...pillGhost, padding: "10px 14px" }}>X</button>
+                      {addingRule
+                        ? <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                          <input autoFocus value={newRuleText} onChange={e => setNewRuleText(e.target.value)}
+                            onKeyDown={e => { if (e.key === "Enter") addRule(); if (e.key === "Escape") { setAddingRule(false); setNewRuleText(""); } }}
+                            placeholder="New rule..." style={{ ...inp, flex: 1 }} />
+                          <button onClick={addRule} style={{ ...pillPrimary(!!newRuleText.trim()), width: "auto", padding: "10px 16px" }}>Add</button>
+                          <button aria-label="Cancel" onClick={() => { setAddingRule(false); setNewRuleText(""); }} style={{ ...pillGhost, padding: "10px 14px" }}>✕</button>
+                        </div>
+                        : <button onClick={() => setAddingRule(true)} style={{ ...pillGhost, alignSelf: "flex-start" as const }}>+ ADD RULE</button>
+                      }
                     </div>
-                    : <button onClick={() => setAddingRule(true)} style={{ ...pillGhost, alignSelf: "flex-start" }}>+ ADD RULE</button>
-                  }
+
+                    {/* RIGHT: Daily checklist */}
+                    <div style={{ display: "flex", flexDirection: "column" as const, gap: "10px" }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                        <div style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.14em", textTransform: "uppercase" as const }}>Pre-session checklist</div>
+                        <div style={{ fontFamily: MONO, fontSize: "8px", color: C.muted }}>
+                          {dailyTicks.size}/{dailyCheckItems.length} done
+                        </div>
+                      </div>
+                      <div style={{ borderTop: `1px solid ${C.border}` }}>
+                        {dailyCheckItems.map((item) => {
+                          const ticked = dailyTicks.has(item.id);
+                          return (
+                            <div key={item.id} className="check-row" style={{ minHeight: "44px", borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: "12px", padding: "6px 0", cursor: "pointer" }}
+                              onClick={() => toggleDailyTick(item.id)}>
+                              <div style={{ width: "18px", height: "18px", borderRadius: "4px", border: `1px solid ${ticked ? C.green : C.border2}`, background: ticked ? `color-mix(in oklch, ${C.green} 15%, transparent)` : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.15s" }}>
+                                {ticked && <span style={{ fontSize: "10px", color: C.green }}>✓</span>}
+                              </div>
+                              <span style={{ flex: 1, fontSize: "13px", color: ticked ? C.muted : C.text, fontFamily: BODY, textDecoration: ticked ? "line-through" : "none", transition: "all 0.15s", lineHeight: 1.5 }}>{item.text}</span>
+                              <div className="ca" style={{ opacity: 0, transition: "opacity 0.15s" }}>
+                                <button onClick={e => { e.stopPropagation(); deleteDailyCheckItem(item.id); }}
+                                  style={{ background: "none", border: `1px solid ${C.border2}`, borderRadius: "6px", color: C.red, fontSize: "10px", cursor: "pointer", fontFamily: MONO, padding: "6px 8px", minHeight: "36px" }}>rm</button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {addingDailyCheck
+                        ? <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                          <input autoFocus value={newDailyCheckText} onChange={e => setNewDailyCheckText(e.target.value)}
+                            onKeyDown={e => { if (e.key === "Enter") addDailyCheckItem(); if (e.key === "Escape") { setAddingDailyCheck(false); setNewDailyCheckText(""); } }}
+                            placeholder="New checklist item..." style={{ ...inp, flex: 1 }} />
+                          <button onClick={addDailyCheckItem} style={{ ...pillPrimary(!!newDailyCheckText.trim()), width: "auto", padding: "10px 16px" }}>Add</button>
+                          <button aria-label="Cancel" onClick={() => { setAddingDailyCheck(false); setNewDailyCheckText(""); }} style={{ ...pillGhost, padding: "10px 14px" }}>✕</button>
+                        </div>
+                        : <button onClick={() => setAddingDailyCheck(true)} style={{ ...pillGhost, alignSelf: "flex-start" as const }}>+ ADD ITEM</button>
+                      }
+                    </div>
+
+                  </div>
                 </div>
               )}
 
