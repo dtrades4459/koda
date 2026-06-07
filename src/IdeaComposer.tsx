@@ -2,6 +2,15 @@ import { type CSSProperties, useState, useRef } from "react";
 import type { Idea, IdeaCreateInput, Trade } from "./types";
 import { MONO, BODY, DISPLAY, compressImage } from "./shared";
 
+function dataUriToBlob(dataUri: string): Blob {
+  const [header, base64] = dataUri.split(",");
+  const mime = header.match(/:(.*?);/)?.[1] ?? "image/jpeg";
+  const bytes = atob(base64);
+  const arr = new Uint8Array(bytes.length);
+  for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+  return new Blob([arr], { type: mime });
+}
+
 interface IdeaComposerProps {
   open: boolean;
   onClose: () => void;
@@ -59,16 +68,12 @@ export function IdeaComposer({
       if (chartFile) {
         try {
           const dataUri = await compressImage(chartFile, 1600);
-          const res = await fetch(dataUri);
-          const blob = await res.blob();
+          const blob = dataUriToBlob(dataUri);
           const filename = `idea-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
           chartUrl = await supabaseUploadChart(blob, filename);
         } catch (uploadErr) {
-          // Mid-deploy SW activation + Safari surface this as the cryptic
-          // "Load failed". Name the step so we know whether the chart upload
-          // or the API POST is the culprit.
           const msg = uploadErr instanceof Error ? uploadErr.message : String(uploadErr);
-          throw new Error(`Chart upload failed (${msg}). Remove the chart and try again, or wait 30s and retry.`);
+          throw new Error(`Chart upload failed (${msg}). Remove the chart and try again.`);
         }
       }
 

@@ -24,8 +24,8 @@ const supabase = createClient(
   SUPABASE_ANON_KEY || "placeholder-anon-key",
 );
 
-async function uploadChart(file: Blob, filename: string): Promise<string> {
-  const path = `ideas/${filename}`;
+async function uploadChart(file: Blob, filename: string, userId: string): Promise<string> {
+  const path = `ideas/${userId}/${filename}`;
   const { error } = await supabase.storage.from("trade-screenshots").upload(path, file, {
     contentType: "image/jpeg", upsert: false,
   });
@@ -217,7 +217,7 @@ export function IdeasScreen({ myUid, recentTrades, C, inp, pillPrimary, isDeskto
         inp={inp}
         pillPrimary={pillPrimary}
         isDesktop={isDesktop}
-        supabaseUploadChart={uploadChart}
+        supabaseUploadChart={(file, filename) => uploadChart(file, filename, myUid)}
         authToken={authToken}
       />
 
