@@ -55,21 +55,35 @@ export function MiniSparkline({ trades, C }: ChartProps) {
 // ─── PNL CHART ───────────────────────────────────────────────────────────────
 export function PnLChart({ trades, C }: ChartProps) {
   if (!trades.length) return null;
+  const hasDollar = trades.some(t => parseFloat(t.pnlDollar) !== 0 && t.pnlDollar !== "" && t.pnlDollar != null);
   let r = 0;
   const pts: Array<{ x: number; y: number }> = [{ x: 0, y: 0 }];
-  trades.slice().reverse().forEach((t, i) => { r += parseFloat(t.pnl) || 0; pts.push({ x: i + 1, y: r }); });
+  trades.slice().reverse().forEach((t, i) => {
+    r += hasDollar ? (parseFloat(t.pnlDollar) || 0) : (parseFloat(t.pnl) || 0);
+    pts.push({ x: i + 1, y: r });
+  });
   const minY = Math.min(...pts.map(p => p.y)), maxY = Math.max(...pts.map(p => p.y)), rangeY = maxY - minY || 1;
   const W = 320, H = 96, PAD = 8;
   const cx = (x: number) => PAD + (x / (pts.length - 1 || 1)) * (W - PAD * 2);
   const cy = (y: number) => H - PAD - ((y - minY) / rangeY) * (H - PAD * 2);
   const pathD = pts.map((p, i) => `${i === 0 ? "M" : "L"}${cx(p.x)},${cy(p.y)}`).join(" ");
   const zeroY = cy(0);
+  const lastVal = pts[pts.length - 1]?.y ?? 0;
+  const valLabel = hasDollar
+    ? `${lastVal >= 0 ? "+" : ""}$${Math.abs(lastVal).toLocaleString("en-US", { maximumFractionDigits: 0 })}`
+    : `${lastVal >= 0 ? "+" : ""}${lastVal.toFixed(1)}R`;
+  const valColor = lastVal >= 0 ? C.green : C.red;
   return (
-    <svg width="100%" viewBox={`0 0 ${W} ${H}`}>
-      {zeroY > PAD && zeroY < H - PAD && <line x1={PAD} y1={zeroY} x2={W - PAD} y2={zeroY} stroke={C.border} strokeWidth="1" strokeDasharray="2,3" />}
-      <path d={pathD} fill="none" stroke={C.text} strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
-      {pts[pts.length - 1] && <circle cx={cx(pts[pts.length - 1].x)} cy={cy(pts[pts.length - 1].y)} r="2" fill={C.text} />}
-    </svg>
+    <div>
+      <div style={{ fontFamily: "monospace", fontSize: "11px", color: valColor, letterSpacing: "0.04em", marginBottom: "6px" }}>
+        {valLabel}
+      </div>
+      <svg width="100%" viewBox={`0 0 ${W} ${H}`}>
+        {zeroY > PAD && zeroY < H - PAD && <line x1={PAD} y1={zeroY} x2={W - PAD} y2={zeroY} stroke={C.border} strokeWidth="1" strokeDasharray="2,3" />}
+        <path d={pathD} fill="none" stroke={valColor} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        {pts[pts.length - 1] && <circle cx={cx(pts[pts.length - 1].x)} cy={cy(pts[pts.length - 1].y)} r="2.5" fill={valColor} />}
+      </svg>
+    </div>
   );
 }
 
