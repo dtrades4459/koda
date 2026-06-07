@@ -163,7 +163,7 @@ async function handleCreate(req: Req, res: Res) {
   const { data: profileRow, error: pErr } = await admin
     .from("profiles")
     .select("handle, name, avatar")
-    .eq("uid", uid)
+    .eq("user_id", uid)
     .maybeSingle();
 
   if (pErr) {
@@ -258,7 +258,7 @@ async function handleLike(req: Req, res: Res) {
     try {
       const [{ data: ideaRow }, { data: likerProfile }] = await Promise.all([
         admin.from("ideas").select("author_uid, title").eq("id", ideaId).maybeSingle(),
-        admin.from("profiles").select("name").eq("uid", uid).maybeSingle(),
+        admin.from("profiles").select("name").eq("user_id", uid).maybeSingle(),
       ]);
       const idea = ideaRow as { author_uid: string; title: string } | null;
       if (idea && idea.author_uid !== uid) {
