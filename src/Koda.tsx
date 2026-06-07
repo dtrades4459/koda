@@ -346,7 +346,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   const [addingCheck, setAddingCheck] = useState(false);
   const [addingRule, setAddingRule] = useState(false);
   const [calDayTrades, setCalDayTrades] = useState<{ key: string; trades: Trade[] } | null>(null);
-  const [statsTab, setStatsTab] = useState("performance");
+  const [statsTab, setStatsTab] = useState("calendar");
   const [socialSection, setSocialSection] = useState<"feed" | "ideas" | "people" | "activity">("feed");
   const [disciplineLog, setDisciplineLog] = useState<DisciplineLogEntry[]>([]);
   const [setupPeriod, setSetupPeriod] = useState<"month" | "all">("month");
@@ -2768,7 +2768,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                       {(Object.entries(sessionStats) as [string, { w: number; l: number; pnl: number }][]).map(([session, v]) => {
                         const wr = v.w + v.l > 0 ? ((v.w / (v.w + v.l)) * 100).toFixed(0) : "0";
                         return (
-                          <div key={session} style={{ display: "grid", gridTemplateColumns: "1fr auto auto", gap: "12px", alignItems: "baseline", padding: "12px 0", borderBottom: `1px solid ${C.border}` }}>
+                          <div key={session} style={{ display: "grid", gridTemplateColumns: "1fr auto auto", gap: "12px", alignItems: "baseline", padding: "6px 0", borderBottom: `1px solid ${C.border}` }}>
                             <span style={{ fontFamily: BODY, fontSize: "13px", color: C.text }}>{session}</span>
                             <span style={{ fontFamily: MONO, fontSize: "11px", color: C.text, letterSpacing: "0.04em" }}>{wr}%</span>
                             <span style={{ fontFamily: MONO, fontSize: "11px", color: v.pnl >= 0 ? C.green : C.red, letterSpacing: "0.04em", minWidth: "60px", textAlign: "right" }}>{v.pnl >= 0 ? "+" : ""}{v.pnl.toFixed(1)}R</span>
