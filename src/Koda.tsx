@@ -4479,25 +4479,35 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
           )}
 
           {/* ══════════════════════════ SOCIAL ══════════════════════════ */}
-          {view === "social" && socialSection !== "activity" && (
-            <FriendsFeed
-              friends={friends} friendFeed={friendFeed as any} showAddFriend={showAddFriend} setShowAddFriend={setShowAddFriend}
-              followHandleInput={followHandleInput} setFollowHandleInput={setFollowHandleInput}
-              followHandleMsg={followHandleMsg} followHandleLoading={followHandleLoading}
-              followByHandle={followByHandle} followUser={followUser} unfollowUser={unfollowUser}
-              following={following} followers={followers} followerProfiles={followerProfiles}
-              followingProfiles={followingProfiles}
-              publishFeed={publishFeed} refreshFeed={refreshFeed} reactToFeed={reactToFeed as any} myFeedReactions={myFeedReactions} profile={profile}
-              C={C as any} inp={inp} pillPrimary={pillPrimary} openProfile={openProfile}
-              myUid={myUid}
-              recentTrades={trades}
-              isDesktop={isDesktop}
-              section={socialSection as "feed" | "ideas" | "people"}
-              onSectionChange={(s) => setSocialSection(s)}
-            />
-          )}
-          {view === "social" && socialSection === "activity" && (
-            <NotificationFeed C={C} onMarkRead={refreshSocialUnread} />
+          {view === "social" && (
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              {/* Section sub-nav dropdown — mobile only; desktop uses the dropdown in the sidebar */}
+              {!isDesktop && (
+                <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "8px", paddingBottom: "10px", marginBottom: "12px", borderBottom: `0.5px solid ${C.border}` }}>
+                  <SubNavDropdown sections={SOCIAL_SECTIONS} value={socialSection} onChange={(s: string) => setSocialSection(s as "feed" | "ideas" | "people" | "activity")} C={C} />
+                </div>
+              )}
+              {socialSection !== "activity" && (
+                <FriendsFeed
+                  friends={friends} friendFeed={friendFeed as any} showAddFriend={showAddFriend} setShowAddFriend={setShowAddFriend}
+                  followHandleInput={followHandleInput} setFollowHandleInput={setFollowHandleInput}
+                  followHandleMsg={followHandleMsg} followHandleLoading={followHandleLoading}
+                  followByHandle={followByHandle} followUser={followUser} unfollowUser={unfollowUser}
+                  following={following} followers={followers} followerProfiles={followerProfiles}
+                  followingProfiles={followingProfiles}
+                  publishFeed={publishFeed} refreshFeed={refreshFeed} reactToFeed={reactToFeed as any} myFeedReactions={myFeedReactions} profile={profile}
+                  C={C as any} inp={inp} pillPrimary={pillPrimary} openProfile={openProfile}
+                  myUid={myUid}
+                  recentTrades={trades}
+                  isDesktop={isDesktop}
+                  section={socialSection as "feed" | "ideas" | "people"}
+                  onSectionChange={(s) => setSocialSection(s)}
+                />
+              )}
+              {socialSection === "activity" && (
+                <NotificationFeed C={C} onMarkRead={refreshSocialUnread} />
+              )}
+            </div>
           )}
           </div>{/* end main */}
         </div>{/* end grid */}
