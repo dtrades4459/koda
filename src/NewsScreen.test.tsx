@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { DARK } from "./theme";
@@ -80,29 +80,21 @@ const headlinesValue = {
   ],
 };
 
-interface Row { value: unknown }
-let rows: Record<string, Row | null> = {};
-
-vi.mock("./lib/supabase", () => ({
-  supabase: {
-    from: (_table: string) => ({
-      select: (_cols: string) => ({
-        eq: (_col: string, key: string) => ({
-          maybeSingle: async () => ({ data: rows[key] ?? null, error: null }),
-        }),
-      }),
-    }),
-  },
-}));
+let apiBody: { calendar: unknown; headlines: unknown } = { calendar: null, headlines: null };
 
 import { NewsScreen } from "./NewsScreen";
 
 describe("NewsScreen", () => {
   beforeEach(() => {
-    rows = {
-      koda_news_calendar:  { value: calendarValue },
-      koda_news_headlines: { value: headlinesValue },
-    };
+    apiBody = { calendar: calendarValue, headlines: headlinesValue };
+    vi.stubGlobal("fetch", vi.fn(async () => ({
+      ok: true,
+      json: async () => apiBody,
+    } as Response)));
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it("renders today high and medium events, hides low-impact and next-week events", async () => {
@@ -145,11 +137,11 @@ describe("NewsScreen", () => {
     expect(screen.getByText("ACTUAL")).toBeInTheDocument();
   });
 
-  it("does not render impact filter chip buttons", async () => {
+  it("renders HIGH and MED impact filter chips but not LOW", async () => {
     render(<NewsScreen C={DARK} />);
     await screen.findByText("Today AM event");
-    expect(screen.queryByRole("button", { name: /HIGH/i, pressed: true })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /MED/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /LOW/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /HIGH/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /MED/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^LOW$/i })).not.toBeInTheDocument();
   });
 });

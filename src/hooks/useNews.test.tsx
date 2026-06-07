@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 
 const calendarValue = {
@@ -31,29 +31,21 @@ const headlinesValue = {
   ],
 };
 
-interface Row { value: unknown }
-let rows: Record<string, Row | null> = {};
-
-vi.mock("../lib/supabase", () => ({
-  supabase: {
-    from: (_table: string) => ({
-      select: (_cols: string) => ({
-        eq: (_col: string, key: string) => ({
-          maybeSingle: async () => ({ data: rows[key] ?? null, error: null }),
-        }),
-      }),
-    }),
-  },
-}));
+let apiBody: { calendar: unknown; headlines: unknown } = { calendar: null, headlines: null };
 
 import { useNews } from "./useNews";
 
 describe("useNews", () => {
   beforeEach(() => {
-    rows = {
-      koda_news_calendar:  { value: calendarValue },
-      koda_news_headlines: { value: headlinesValue },
-    };
+    apiBody = { calendar: calendarValue, headlines: headlinesValue };
+    vi.stubGlobal("fetch", vi.fn(async () => ({
+      ok: true,
+      json: async () => apiBody,
+    } as Response)));
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it("loads and parses both caches", async () => {
@@ -63,8 +55,8 @@ describe("useNews", () => {
     expect(result.current.headlines?.items[0].source).toBe("Reuters");
   });
 
-  it("returns null caches when rows are missing", async () => {
-    rows = {};
+  it("returns null caches when API body has nulls", async () => {
+    apiBody = { calendar: null, headlines: null };
     const { result } = renderHook(() => useNews());
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.calendar).toBeNull();
@@ -72,10 +64,7 @@ describe("useNews", () => {
   });
 
   it("returns null when stored value is malformed", async () => {
-    rows = {
-      koda_news_calendar:  { value: { unrelated: "shape" } },
-      koda_news_headlines: { value: 42 },
-    };
+    apiBody = { calendar: { unrelated: "shape" }, headlines: 42 };
     const { result } = renderHook(() => useNews());
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.calendar).toBeNull();
