@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect, useRef, Fragment } from "react";
 import { supabase } from "./lib/supabase";
-import { StrategyPill, stratCode, KodaMark, MONO, BODY, DISPLAY, EmptyCirclesState, CornerGlow } from "./shared";
+import { StrategyPill, stratCode, KodaMark, MONO, BODY, DISPLAY, EmptyCirclesState, CornerGlow, SubNavDropdown } from "./shared";
 import { KODA_GLOBAL_CODE } from "./hooks/useCircles";
 import { readCircleMembers } from "./data/circles";
 import { markChatRead } from "./data/chatReads";
@@ -84,6 +84,7 @@ export interface TradingCirclesProps {
   totalPnlDollar: number;
   hasDollarData: boolean;
   isPro: boolean;
+  isDesktop: boolean;
 }
 
 // Raw DB row shape returned by the circle_messages Supabase query.
@@ -106,7 +107,7 @@ export function TradingCircles({
   STRATEGY_NAMES, C, inp, sel, lbl, pillPrimary, pillGhost,
   following, followUser, unfollowUser, kickMember, leaveCircle,
   openProfile, isJoiningCircle, isCreatingCircle,
-  totalPnlDollar, hasDollarData, isPro,
+  totalPnlDollar, hasDollarData, isPro, isDesktop,
 }: TradingCirclesProps) {
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [lbSort, setLbSort] = useState<"all" | "week">("all");
@@ -985,43 +986,60 @@ export function TradingCircles({
           {/* Tabs: Feed / Leaderboard / Chat / Members / Trophies */}
           <section>
             <div style={{ marginBottom: "20px" }}>
-              {/* Tab underline bar */}
-              <div style={{ display: "flex", borderBottom: `1px solid ${C.border}`, overflowX: "auto", gap: 0, marginBottom: circleTab === "leaderboard" ? "10px" : 0 }}>
-                {(["feed", "leaderboard", "chat", "members", "trophies"] as const).map(t => (
-                  <button
-                    key={t}
-                    onClick={() => {
-                      setCircleTab(t);
-                      if (t === "chat") loadChatMessages(activeCircle.code);
-                      if (t === "members" && activeCircle) {
-                        setMembersLoading(true);
-                        readCircleMembers(activeCircle.code, activeCircle.members || [])
-                          .then(fresh => { setActiveCircle((c: unknown) => c ? { ...(c as object), members: fresh } : c); })
-                          .catch((err) => { console.error("Failed to refresh members:", err); })
-                          .finally(() => setMembersLoading(false));
-                      }
-                    }}
-                    style={{
-                      background: "none",
-                      border: "none",
-                      borderBottom: `2px solid ${circleTab === t ? C.text : "transparent"}`,
-                      marginBottom: -1,
-                      padding: "9px 12px",
-                      cursor: "pointer",
-                      fontFamily: MONO,
-                      fontSize: "10px",
-                      fontWeight: 600,
-                      letterSpacing: "0.1em",
-                      textTransform: "uppercase",
-                      color: circleTab === t ? C.text : C.muted,
-                      whiteSpace: "nowrap",
-                      flexShrink: 0,
-                    }}
-                  >
-                    {t === "leaderboard" ? "Board" : t.charAt(0).toUpperCase() + t.slice(1)}
-                  </button>
-                ))}
-              </div>
+              {(() => {
+                const CIRCLE_TAB_SECTIONS = [
+                  { id: "feed", label: "Feed" },
+                  { id: "leaderboard", label: "Board" },
+                  { id: "chat", label: "Chat" },
+                  { id: "members", label: "Members" },
+                  { id: "trophies", label: "Trophies" },
+                ];
+                const handleTabChange = (t: typeof circleTab) => {
+                  setCircleTab(t);
+                  if (t === "chat") loadChatMessages(activeCircle.code);
+                  if (t === "members" && activeCircle) {
+                    setMembersLoading(true);
+                    readCircleMembers(activeCircle.code, activeCircle.members || [])
+                      .then(fresh => { setActiveCircle((c: unknown) => c ? { ...(c as object), members: fresh } : c); })
+                      .catch((err) => { console.error("Failed to refresh members:", err); })
+                      .finally(() => setMembersLoading(false));
+                  }
+                };
+                return isDesktop ? (
+                  /* Desktop: underline tab bar */
+                  <div style={{ display: "flex", borderBottom: `1px solid ${C.border}`, overflowX: "auto", gap: 0, marginBottom: circleTab === "leaderboard" ? "10px" : 0 }}>
+                    {(["feed", "leaderboard", "chat", "members", "trophies"] as const).map(t => (
+                      <button
+                        key={t}
+                        onClick={() => handleTabChange(t)}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          borderBottom: `2px solid ${circleTab === t ? C.text : "transparent"}`,
+                          marginBottom: -1,
+                          padding: "9px 12px",
+                          cursor: "pointer",
+                          fontFamily: MONO,
+                          fontSize: "10px",
+                          fontWeight: 600,
+                          letterSpacing: "0.1em",
+                          textTransform: "uppercase",
+                          color: circleTab === t ? C.text : C.muted,
+                          whiteSpace: "nowrap",
+                          flexShrink: 0,
+                        }}
+                      >
+                        {t === "leaderboard" ? "Board" : t.charAt(0).toUpperCase() + t.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  /* Mobile: dropdown */
+                  <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", paddingBottom: "10px", borderBottom: `1px solid ${C.border}` }}>
+                    <SubNavDropdown sections={CIRCLE_TAB_SECTIONS} value={circleTab} onChange={(s: string) => handleTabChange(s as typeof circleTab)} C={C} />
+                  </div>
+                );
+              })()}
               {/* Leaderboard sort controls */}
               {circleTab === "leaderboard" && (
                 <div style={{ display: "flex", gap: "6px", alignItems: "center", justifyContent: "flex-end", paddingTop: "10px" }}>

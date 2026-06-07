@@ -3085,6 +3085,13 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
             <div style={{ position: "relative" }}>
               {/* ambient orb */}
               <div style={{ position: "absolute", top: 100, right: -100, width: 320, height: 320, borderRadius: "50%", background: `radial-gradient(circle, ${C.orb2} 0%, transparent 65%)`, filter: "blur(60px)", opacity: darkMode ? 0.4 : 0.25, pointerEvents: "none", zIndex: 0 }} />
+              {/* Section sub-nav dropdown — mobile only; desktop shows Home sub-nav in sidebar with Journal highlighted */}
+              {!isDesktop && (
+                <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "8px", paddingBottom: "10px", borderBottom: `0.5px solid ${C.border}`, position: "relative", zIndex: 2 }}>
+                  <SubNavDropdown sections={HOME_SECTIONS} value="journal" onChange={(s: string) => { if (s === "rules") navigateTo("checklist"); else if (s === "journal") navigateTo("history"); else { setView("home"); setHomeSection(s); } }} C={C} />
+                  <GearButton onClick={() => { setView("home"); setHomeSection("settings"); }} active={false} C={C} />
+                </div>
+              )}
               {/* Title + summary */}
               <div style={{ padding: "12px 6px", position: "relative", zIndex: 2 }}>
                 <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.16em", textTransform: "uppercase" }}>Trade history</div>
@@ -4349,7 +4356,8 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                 </div>
               )}
               {!isDesktop && (
-                <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "8px", paddingBottom: "10px", borderBottom: `1px solid ${C.border}`, marginTop: "4px" }}>
+                <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "8px", paddingBottom: "10px", borderBottom: `1px solid ${C.border}`, marginTop: "4px", flexWrap: "wrap" }}>
+                  <SubNavDropdown sections={HOME_SECTIONS} value="rules" onChange={(s: string) => { if (s === "rules") navigateTo("checklist"); else if (s === "journal") navigateTo("history"); else { setView("home"); setHomeSection(s); } }} C={C} />
                   <SubNavDropdown sections={CHECKLIST_SECTIONS} value={checklistTab} onChange={setChecklistTab} C={C} />
                   <GearButton onClick={() => { setView("home"); setHomeSection("settings"); }} active={false} C={C} />
                 </div>
@@ -4475,6 +4483,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
               totalPnlDollar={totalPnlDollar}
               hasDollarData={hasDollarData}
               isPro={isPro}
+              isDesktop={isDesktop}
             />
           )}
 
