@@ -1,50 +1,49 @@
 // src/components/InstallHint.tsx
 // ═══════════════════════════════════════════════════════════════════════════════
-// Kōda · iOS PWA install hint
+// Kōda · PWA install hint (iOS + Android)
 //
-// iOS Safari blocks push notifications until the app is installed via
-// "Add to Home Screen". The onboarding "Enable notifications" step is wasted
-// on Safari users until they install. This banner surfaces the install path
-// so the feature chain actually completes on iOS.
+// Two platforms, one banner:
+//   - iOS Safari: shows visual "tap Share → Add to Home Screen" instructions
+//     (iOS has no native install prompt).
+//   - Android Chromium: when the `beforeinstallprompt` event fires, shows a
+//     one-tap "Install Kōda" button that triggers the native prompt.
+//
+// Why this matters: iOS Safari blocks push notifications until the app is
+// installed via "Add to Home Screen". On Android Chrome, the user has to
+// dig through ⋮ menu to install — most never do. A nudge captures both.
 //
 // Show conditions (all must hold):
-//   - iOS device (Safari or in-app browsers running WebKit)
+//   - iOS device, OR Android Chromium with deferred install prompt available
 //   - NOT already running in standalone PWA mode
 //   - User hasn't dismissed it previously (localStorage)
-//   - Delay 3s after mount so it doesn't slap users on first paint
-//
-// Android Chrome handles install via beforeinstallprompt natively — no banner
-// needed for that path.
+//   - Delay 3s after mount + cookie consent dismissed so banners don't stack
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { useEffect, useState } from "react";
+import { isStandalone, isIOS, useInstallPrompt } from "../lib/pwa";
+
+// iPadOS reports as Mac in newer versions — augment the shared isIOS() check.
+function isIOSDevice(): boolean {
+  if (isIOS()) return true;
+  if (typeof navigator === "undefined") return false;
+  return navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent);
+}
 
 const DISMISS_KEY = "koda_install_hint_dismissed";
 const COOKIE_CONSENT_KEY = "koda_cookie_consent";
 const SHOW_DELAY_MS = 3000;
 
-function isIOS(): boolean {
-  if (typeof navigator === "undefined") return false;
-  const ua = navigator.userAgent;
-  // iPad on iPadOS reports as Mac in newer versions — check touch points too.
-  const iOSDevice = /iPad|iPhone|iPod/.test(ua);
-  const iPadOS = navigator.maxTouchPoints > 1 && /Macintosh/.test(ua);
-  return iOSDevice || iPadOS;
-}
-
-function isStandalone(): boolean {
-  if (typeof window === "undefined") return false;
-  // iOS Safari sets navigator.standalone; other browsers use matchMedia.
-  const navAny = navigator as Navigator & { standalone?: boolean };
-  if (navAny.standalone === true) return true;
-  return window.matchMedia?.("(display-mode: standalone)").matches ?? false;
-}
-
 export function InstallHint() {
   const [show, setShow] = useState(false);
+  const { canPrompt, triggerPrompt } = useInstallPrompt();
+
+  const ios = isIOSDevice();
+  // Android (or any Chromium) gets the banner only when the native prompt
+  // is actually available — otherwise there's nothing to suggest.
+  const eligible = (ios || canPrompt) && !isStandalone();
 
   useEffect(() => {
-    if (!isIOS() || isStandalone()) return;
+    if (!eligible) return;
 
     // Wait for the cookie consent banner to be dismissed so the two
     // bottom-pinned banners don't stack on top of each other. Poll the
@@ -129,23 +128,50 @@ export function InstallHint() {
           }} />
           Install for push + offline
         </div>
-        <div style={{ fontSize: "13px", lineHeight: 1.45, color: "#F2F2EE" }}>
-          Tap{" "}
-          <span style={{
-            display: "inline-flex", alignItems: "center", justifyContent: "center",
-            width: "18px", height: "18px", verticalAlign: "-4px",
-            background: "rgba(255,255,255,0.08)",
-            borderRadius: "4px",
-            marginInline: "2px",
-          }} aria-label="Share button">
-            <svg width="11" height="13" viewBox="0 0 11 13" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <path d="M5.5 1 V 8" />
-              <path d="M3 3.5 L 5.5 1 L 8 3.5" />
-              <path d="M2 6 H 1.5 V 12 H 9.5 V 6 H 9" />
-            </svg>
-          </span>
-          {" "}then <strong style={{ fontWeight: 600 }}>Add to Home Screen</strong> to install Kōda. Notifications need it.
-        </div>
+        {ios ? (
+          <div style={{ fontSize: "13px", lineHeight: 1.45, color: "#F2F2EE" }}>
+            Tap{" "}
+            <span style={{
+              display: "inline-flex", alignItems: "center", justifyContent: "center",
+              width: "18px", height: "18px", verticalAlign: "-4px",
+              background: "rgba(255,255,255,0.08)",
+              borderRadius: "4px",
+              marginInline: "2px",
+            }} aria-label="Share button">
+              <svg width="11" height="13" viewBox="0 0 11 13" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M5.5 1 V 8" />
+                <path d="M3 3.5 L 5.5 1 L 8 3.5" />
+                <path d="M2 6 H 1.5 V 12 H 9.5 V 6 H 9" />
+              </svg>
+            </span>
+            {" "}then <strong style={{ fontWeight: 600 }}>Add to Home Screen</strong> to install Kōda. Notifications need it.
+          </div>
+        ) : (
+          <>
+            <div style={{ fontSize: "13px", lineHeight: 1.45, color: "#F2F2EE", marginBottom: 10 }}>
+              Install Kōda for push notifications + offline access.
+            </div>
+            <button
+              onClick={async () => {
+                const choice = await triggerPrompt();
+                if (choice) dismiss();
+              }}
+              style={{
+                background: "#F2F2EE",
+                color: "#13110E",
+                border: "none",
+                borderRadius: 999,
+                padding: "8px 14px",
+                fontSize: 12,
+                fontWeight: 600,
+                fontFamily: "'Geist', -apple-system, sans-serif",
+                cursor: "pointer",
+              }}
+            >
+              Install Kōda →
+            </button>
+          </>
+        )}
       </div>
       <button
         onClick={dismiss}
