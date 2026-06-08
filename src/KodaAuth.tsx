@@ -5,6 +5,7 @@ import type { Session } from "@supabase/supabase-js";
 import Koda from "./Koda";
 import { DARK } from "./theme";
 import { KodaMark, FloatingInput, Kicker, MONO, BODY, DISPLAY } from "./shared";
+import { phCapture } from "./lib/posthog";
 
 // â”€â”€â”€ THEME (dark-only for auth surfaces) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const C = DARK;
@@ -317,14 +318,19 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
   const authRef     = useRef<HTMLElement>(null);
   const featuresRef = useRef<HTMLElement>(null);
 
+  useEffect(() => { phCapture("landing_page_viewed"); }, []);
+
   const handleStarted = () => {
+    phCapture("landing_cta_clicked", { cta: "get_started" });
     setModeRequest({ mode: "signup", nonce: Date.now() });
     authRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
   };
   const handleSeeAction = () => {
+    phCapture("landing_cta_clicked", { cta: "see_whats_included" });
     featuresRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
   const handleSignIn = () => {
+    phCapture("landing_cta_clicked", { cta: "sign_in" });
     setModeRequest({ mode: "signin", nonce: Date.now() });
     authRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
   };
