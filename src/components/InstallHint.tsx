@@ -56,7 +56,12 @@ export function InstallHint() {
       try {
         if (localStorage.getItem(DISMISS_KEY) === "1") return false;
         const consent = localStorage.getItem(COOKIE_CONSENT_KEY);
-        if (consent !== "accepted" && consent !== "rejected") return false;
+        // Support both legacy strings ("accepted"/"rejected") and current JSON format.
+        if (!consent) return false;
+        if (consent !== "accepted" && consent !== "rejected") {
+          try { if (typeof JSON.parse(consent) !== "object") return false; }
+          catch { return false; }
+        }
       } catch { /* fall through and show */ }
       showTimer = window.setTimeout(() => { if (mounted) setShow(true); }, SHOW_DELAY_MS);
       return true;
@@ -76,7 +81,7 @@ export function InstallHint() {
       if (pollId !== null) window.clearInterval(pollId);
       if (showTimer !== null) window.clearTimeout(showTimer);
     };
-  }, []);
+  }, [eligible]);
 
   function dismiss() {
     setShow(false);
