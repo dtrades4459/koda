@@ -77,6 +77,9 @@ export default defineConfig({
     ...(hasAuth ? [{
       name: "auth-setup",
       testMatch: /auth\.setup\.ts/,
+      // Always start with no session so the sign-in form renders.
+      // Otherwise a previously saved storageState would land us already signed in.
+      use: { storageState: undefined as unknown as string | undefined },
     }] : []),
 
     {

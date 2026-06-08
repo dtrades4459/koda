@@ -37,3 +37,11 @@ src/TRADR.tsx.tmp
 .vercel
 .env*
 .gstack/
+
+# Playwright generated artifacts
+playwright/.auth/
+test-results/
+playwright-report/
+
+# Vite PWA dev artifacts
+dev-dist/

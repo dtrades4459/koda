@@ -449,7 +449,7 @@ export function OnboardingFlow({ C, onComplete }: {
               <span style={{ fontStyle: "italic", fontWeight: 500, color: C.text2 }}>{name || "trader"}.</span>
             </h1>
             <p style={{ fontSize: "15px", color: C.text2, lineHeight: 1.65, marginBottom: "20px" }}>
-              You've been added to the Kōda Global circle. Log your first trade — the stats follow automatically.
+              Open Kōda tomorrow BEFORE your first trade of the day. We'll watch your session and tell you when to stop.
             </p>
 
             <div style={{
@@ -489,7 +489,7 @@ export function OnboardingFlow({ C, onComplete }: {
             </div>
 
             <button onClick={finish} disabled={saving} style={pillPrimary(!saving)}>
-              {saving ? "Setting up…" : "Log my first trade →"}
+              {saving ? "Setting up…" : "Head to my session →"}
             </button>
           </div>
         )}
