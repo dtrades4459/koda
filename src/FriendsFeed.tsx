@@ -100,7 +100,8 @@ export function FriendsFeed({
       }} />
 
       <div style={{ position: "relative", zIndex: 1 }}>
-        {/* Header */}
+        {/* Header — hidden on Ideas tab; IdeasScreen renders its own header */}
+        {tab !== "ideas" && (
         <div style={{ marginBottom: "4px" }}>
           <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.16em", textTransform: "uppercase" as const, marginBottom: "6px" }}>
             Friends · Live
@@ -130,9 +131,10 @@ export function FriendsFeed({
             </div>
           </div>
         </div>
+        )}
 
-        {/* Follow panel */}
-        {showAddFriend && (
+        {/* Follow panel — also hidden on Ideas since the toggle is gone */}
+        {showAddFriend && tab !== "ideas" && (
           <div style={{
             margin: "16px 0", padding: "18px",
             border: `1px solid ${C.border2}`, borderRadius: "22px",

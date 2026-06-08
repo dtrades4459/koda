@@ -25,7 +25,11 @@ const supabase = createClient(
 );
 
 async function uploadChart(file: Blob, filename: string, userId: string): Promise<string> {
-  const path = `ideas/${userId}/${filename}`;
+  // Storage RLS (003_storage_bucket.sql) requires foldername[1] = auth.uid().
+  // Previous path `ideas/{userId}/{filename}` put "ideas" at position [1] and
+  // was silently rejected. UID-first matches the existing trade-screenshots
+  // convention and keeps each user's uploads under one folder.
+  const path = `${userId}/ideas/${filename}`;
   const { error } = await supabase.storage.from("trade-screenshots").upload(path, file, {
     contentType: "image/jpeg", upsert: false,
   });
@@ -118,7 +122,7 @@ export function IdeasScreen({ myUid, recentTrades, C, inp, pillPrimary, isDeskto
     setIdeas(prev => [idea, ...prev]);
   }
 
-  const containerStyle: CSSProperties = { maxWidth: "680px", margin: "0 auto", paddingBottom: "120px" };
+  const containerStyle: CSSProperties = { width: "100%", paddingBottom: "120px" };
 
   return (
     <div data-testid="ideas-screen" style={containerStyle}>
@@ -197,7 +201,10 @@ export function IdeasScreen({ myUid, recentTrades, C, inp, pillPrimary, isDeskto
         style={{
           position: "fixed",
           bottom: isDesktop ? "28px" : "calc(96px + env(safe-area-inset-bottom))",
-          right: "16px",
+          // Aligns with the page-frame's clamp(16px, 4vw, 48px) horizontal padding
+          // in Koda.tsx so the FAB sits at the content's right edge on desktop
+          // instead of orphaned 32px off in the gutter on wide viewports.
+          right: isDesktop ? "clamp(16px, 4vw, 48px)" : "16px",
           zIndex: 50,
           background: C.text, color: C.bg, border: "none", borderRadius: "999px",
           padding: "14px 20px", minHeight: "48px", cursor: "pointer",
