@@ -806,10 +806,12 @@ export function TradingCircles({
             <label style={lbl}>Competition metric</label>
             <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "8px" }}>
               {([
+                // "trades" intentionally hidden — rewards overtrading, which the
+                // tilt/cooldown system explicitly works against. Existing circles
+                // with metric="trades" still render via metricDisplay's branch.
                 ["dollar",     "$ Dollar P&L"],
                 ["r",          "R-Multiple"],
                 ["winrate",    "Win Rate"],
-                ["trades",     "Most Trades"],
                 ["avgr",       "Avg R"],
                 ["discipline", "Discipline"],
               ] as const).map(([val, label]) => (
@@ -824,7 +826,6 @@ export function TradingCircles({
                 dollar:     "Leaderboard ranks by total dollar P&L.",
                 r:          "Leaderboard ranks by total R gained/lost.",
                 winrate:    "Leaderboard ranks by win percentage.",
-                trades:     "Leaderboard ranks by number of trades logged.",
                 avgr:       "Leaderboard ranks by average R per trade.",
                 discipline: "Leaderboard ranks by 7-day discipline score — rules followed, risk limits, awareness.",
               }[circleForm.metric as string] || "Leaderboard ranks by total dollar P&L."}
@@ -1555,10 +1556,14 @@ export function TradingCircles({
                 <option value="r">R-Multiple</option>
                 <option value="dollar">$ P&L</option>
                 <option value="winrate">Win Rate</option>
-                <option value="trades">Most Trades</option>
                 <option value="avgr">Avg R</option>
                 <option value="discipline">Discipline</option>
               </select>
+              {challengeForm.metric === "discipline" && (
+                <div style={{ fontFamily: BODY, fontSize: 11.5, color: C.muted, marginTop: 6, lineHeight: 1.45 }}>
+                  Ranks members with at least 3 tagged trades in the last 7 days.
+                </div>
+              )}
             </div>
 
             {/* Duration */}
