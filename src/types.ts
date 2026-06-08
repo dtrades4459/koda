@@ -113,7 +113,7 @@ export interface CircleChallenge {
   id: string;
   circleCode: string;
   title: string;
-  metric: "dollar" | "r" | "winrate" | "trades" | "avgr";
+  metric: "dollar" | "r" | "winrate" | "trades" | "avgr" | "discipline";
   startedAt: string;
   endsAt: string;
   createdBy: string;

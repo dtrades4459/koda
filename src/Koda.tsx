@@ -503,8 +503,10 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     const avgRR = rrTs.length
       ? (rrTs.reduce((a, t) => a + parseFloat(t.rr), 0) / rrTs.length).toFixed(2)
       : "0";
-    return `${w}:${l}:${pnl.toFixed(2)}:${avgRR}`;
-  }, [trades]);
+    // Append discipline so a score change alone (e.g. a new tagged trade flipping
+    // the rule-adherence percentage) triggers a circle republish.
+    return `${w}:${l}:${pnl.toFixed(2)}:${avgRR}:${disciplineScore?.score ?? "x"}`;
+  }, [trades, disciplineScore]);
 
 
   // ── Follows sync (every 2 min) ───────────────────────────────────
@@ -854,8 +856,12 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
       }
       return acc;
     }, {});
-    return { wins: w, losses: l, total, winRate, totalPnL, totalPnlDollar, weekPnL, avgRR, streak, stratStats };
-  }, [trades]);
+    return {
+      wins: w, losses: l, total, winRate, totalPnL, totalPnlDollar, weekPnL, avgRR, streak, stratStats,
+      disciplineScore: disciplineScore?.score ?? null,
+      disciplineGrade: disciplineScore?.grade ?? null,
+    };
+  }, [trades, disciplineScore]);
 
   const {
     myCircles, setMyCircles,

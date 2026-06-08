@@ -41,6 +41,10 @@ export interface LeaderboardEntry {
   streak: { type: string; count: number } | null;
   topStrategy: string | null;
   pnlPercent?: number | null;
+  /** Process-metric score 0-100; null when the user has <3 tagged trades in the window. */
+  disciplineScore?: number | null;
+  /** Letter grade ("A+"..."F") matching disciplineScore. */
+  disciplineGrade?: string | null;
   updatedAt: string | null;
 }
 
@@ -65,6 +69,10 @@ export interface CircleStats {
   avgRR: string;
   streak: { type: string | null; count: number };
   stratStats: Record<string, { w: number; l: number; be: number; pnl: number; count: number }>;
+  /** 0-100 discipline score from calcDisciplineScore, or null when not enough tagged trades. */
+  disciplineScore: number | null;
+  /** Letter grade matching disciplineScore. */
+  disciplineGrade: string | null;
 }
 
 interface UseCirclesParams {
@@ -526,6 +534,8 @@ export function useCircles({
           (a[1] as { w: number; count: number }).w / Math.max((a[1] as { w: number; count: number }).count, 1)
         )[0]?.[0] || null,
       pnlPercent,
+      disciplineScore: s.disciplineScore,
+      disciplineGrade: s.disciplineGrade,
       updatedAt: new Date().toISOString(),
     };
     try {
@@ -568,7 +578,9 @@ export function useCircles({
         entries.push({
           memberCode: m.code, name: m.name, handle: m.handle, avatar: m.avatar,
           wins: 0, losses: 0, total: 0, winRate: 0, totalPnL: 0, avgRR: 0,
-          streak: null, topStrategy: null, updatedAt: null,
+          streak: null, topStrategy: null,
+          disciplineScore: null, disciplineGrade: null,
+          updatedAt: null,
         });
       }
     }
@@ -578,11 +590,13 @@ export function useCircles({
       entries.sort((a, b) => (b.weekPnL || 0) - (a.weekPnL || 0));
     } else {
       entries.sort((a, b) => {
-        if (metric === "dollar")  return (b.totalPnLDollar || 0) - (a.totalPnLDollar || 0);
-        if (metric === "r")       return (b.totalPnL || 0) - (a.totalPnL || 0);
-        if (metric === "winrate") return (b.winRate || 0) - (a.winRate || 0);
-        if (metric === "trades")  return (b.total || 0) - (a.total || 0);
-        if (metric === "avgr")    return (b.avgRR || 0) - (a.avgRR || 0);
+        if (metric === "dollar")     return (b.totalPnLDollar || 0) - (a.totalPnLDollar || 0);
+        if (metric === "r")          return (b.totalPnL || 0) - (a.totalPnL || 0);
+        if (metric === "winrate")    return (b.winRate || 0) - (a.winRate || 0);
+        if (metric === "trades")     return (b.total || 0) - (a.total || 0);
+        if (metric === "avgr")       return (b.avgRR || 0) - (a.avgRR || 0);
+        // -1 sentinel keeps null-discipline members ranked below anyone with a real score.
+        if (metric === "discipline") return (b.disciplineScore ?? -1) - (a.disciplineScore ?? -1);
         return (b.totalPnLDollar || 0) - (a.totalPnLDollar || 0);
       });
     }

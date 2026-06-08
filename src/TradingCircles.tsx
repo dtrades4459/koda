@@ -24,6 +24,8 @@ interface LeaderboardEntry {
   topStrategy?: string | null;
   streak?: { count: number; type: string } | null;
   avgRR?: number;
+  disciplineScore?: number | null;
+  disciplineGrade?: string | null;
   updatedAt?: string | null;
 }
 
@@ -181,6 +183,12 @@ export function TradingCircles({
     if (m === "winrate") { const v = Number(entry.winRate) || 0; return { val: `${v.toFixed(0)}%`, raw: v, label: "WIN RATE" }; }
     if (m === "trades")  { const v = entry.total || 0; return { val: `${v}`, raw: v, label: "TRADES" }; }
     if (m === "avgr")    { const v = entry.avgRR || 0; return { val: `${v.toFixed(2)}R`, raw: v, label: "AVG R" }; }
+    if (m === "discipline") {
+      const s = entry.disciplineScore;
+      if (s === null || s === undefined) return { val: "—", raw: -1, label: "DISCIPLINE" };
+      const g = entry.disciplineGrade ? ` ${entry.disciplineGrade}` : "";
+      return { val: `${s.toFixed(0)}${g}`, raw: s, label: "DISCIPLINE" };
+    }
     const v = entry.totalPnLDollar || 0; return { val: `${v >= 0 ? "+" : "-"}$${Math.abs(v).toFixed(0)}`, raw: v, label: "$ P&L" };
   }
 
@@ -205,9 +213,10 @@ export function TradingCircles({
   function formatTrophyValue(r: ChallengeResult): string {
     const metric = r.challenge?.metric ?? "dollar";
     const v = r.winningValue;
-    if (metric === "dollar")  return `${v >= 0 ? "+" : ""}$${Math.abs(v).toFixed(0)}`;
-    if (metric === "winrate") return `${v.toFixed(1)}%`;
-    if (metric === "trades")  return `${Math.round(v)} trades`;
+    if (metric === "dollar")     return `${v >= 0 ? "+" : ""}$${Math.abs(v).toFixed(0)}`;
+    if (metric === "winrate")    return `${v.toFixed(1)}%`;
+    if (metric === "trades")     return `${Math.round(v)} trades`;
+    if (metric === "discipline") return `${v.toFixed(0)} /100`;
     return `${v >= 0 ? "+" : ""}${v.toFixed(2)}R`;
   }
 
@@ -797,11 +806,12 @@ export function TradingCircles({
             <label style={lbl}>Competition metric</label>
             <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "8px" }}>
               {([
-                ["dollar", "$ Dollar P&L"],
-                ["r",      "R-Multiple"],
-                ["winrate","Win Rate"],
-                ["trades", "Most Trades"],
-                ["avgr",   "Avg R"],
+                ["dollar",     "$ Dollar P&L"],
+                ["r",          "R-Multiple"],
+                ["winrate",    "Win Rate"],
+                ["trades",     "Most Trades"],
+                ["avgr",       "Avg R"],
+                ["discipline", "Discipline"],
               ] as const).map(([val, label]) => (
                 <button key={val} onClick={() => setCircleForm((f: any) => ({ ...f, metric: val }))}
                   style={{ background: (circleForm.metric || "dollar") === val ? C.text : "transparent", border: `1px solid ${(circleForm.metric || "dollar") === val ? C.text : C.border2}`, borderRadius: "999px", padding: "7px 14px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.08em", color: (circleForm.metric || "dollar") === val ? C.bg : C.muted, textTransform: "uppercase", transition: "all 100ms" }}>
@@ -811,11 +821,12 @@ export function TradingCircles({
             </div>
             <div style={{ fontFamily: BODY, fontSize: "12px", color: C.muted, marginTop: "8px", lineHeight: 1.55 }}>
               {{
-                dollar:  "Leaderboard ranks by total dollar P&L.",
-                r:       "Leaderboard ranks by total R gained/lost.",
-                winrate: "Leaderboard ranks by win percentage.",
-                trades:  "Leaderboard ranks by number of trades logged.",
-                avgr:    "Leaderboard ranks by average R per trade.",
+                dollar:     "Leaderboard ranks by total dollar P&L.",
+                r:          "Leaderboard ranks by total R gained/lost.",
+                winrate:    "Leaderboard ranks by win percentage.",
+                trades:     "Leaderboard ranks by number of trades logged.",
+                avgr:       "Leaderboard ranks by average R per trade.",
+                discipline: "Leaderboard ranks by 7-day discipline score — rules followed, risk limits, awareness.",
               }[circleForm.metric as string] || "Leaderboard ranks by total dollar P&L."}
             </div>
           </div>
@@ -860,7 +871,7 @@ export function TradingCircles({
           {/* Header bar */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "14px" }}>
             <button onClick={() => { setCirclesView("browse"); setActiveCircle(null); setLeaderboard([]); }} style={{ ...pillGhost, padding: "8px 14px" }}>‹ BACK</button>
-            {!activeCircle.isOwner && (
+            {!activeCircle.isOwner && activeCircle.code !== KODA_GLOBAL_CODE && (
               <button onClick={() => setShowLeaveSheet(true)}
                 style={{ background: "transparent", color: C.muted, border: `0.5px solid ${C.border2}`, borderRadius: "999px", padding: "8px 14px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase" }}>
                 Leave
@@ -1546,6 +1557,7 @@ export function TradingCircles({
                 <option value="winrate">Win Rate</option>
                 <option value="trades">Most Trades</option>
                 <option value="avgr">Avg R</option>
+                <option value="discipline">Discipline</option>
               </select>
             </div>
 
