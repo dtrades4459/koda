@@ -6,6 +6,7 @@ type VercelResponse = { status(n: number): VercelResponse; json(d: unknown): Ver
 
 import { createClient } from "@supabase/supabase-js";
 import webpush from "web-push";
+import { checkRateLimit, getClientIp } from "./lib/rateLimit.js";
 
 // Service-role client — used for all DB access and JWT verification
 // (auth.getUser(token) works with the service role key)
@@ -143,6 +144,9 @@ export async function deliverNotification(opts: DeliverOpts): Promise<void> {
 
 // ---------------------------------------------------------------------------
 async function handleNotifyCircle(req: VercelRequest, res: VercelResponse) {
+  const allowed = await checkRateLimit("push_notify", getClientIp(req), { limit: 20, windowMs: 60_000 });
+  if (!allowed) return res.status(429).json({ error: "Too many requests" });
+
   const auth = req.headers.authorization as string | undefined;
   if (!auth?.startsWith("Bearer ")) return res.status(401).json({ error: "No token" });
 
@@ -192,6 +196,9 @@ async function handleNotifyCircle(req: VercelRequest, res: VercelResponse) {
 }
 
 async function handleNotifyFollow(req: VercelRequest, res: VercelResponse) {
+  const allowed = await checkRateLimit("push_notify", getClientIp(req), { limit: 20, windowMs: 60_000 });
+  if (!allowed) return res.status(429).json({ error: "Too many requests" });
+
   const auth = req.headers.authorization as string | undefined;
   if (!auth?.startsWith("Bearer ")) return res.status(401).json({ error: "No token" });
 
@@ -219,6 +226,9 @@ async function handleNotifyFollow(req: VercelRequest, res: VercelResponse) {
 }
 
 async function handleNotifyCircleJoin(req: VercelRequest, res: VercelResponse) {
+  const allowed = await checkRateLimit("push_notify", getClientIp(req), { limit: 20, windowMs: 60_000 });
+  if (!allowed) return res.status(429).json({ error: "Too many requests" });
+
   const auth = req.headers.authorization as string | undefined;
   if (!auth?.startsWith("Bearer ")) return res.status(401).json({ error: "No token" });
 
@@ -248,6 +258,9 @@ async function handleNotifyCircleJoin(req: VercelRequest, res: VercelResponse) {
 }
 
 async function handleNotifyReaction(req: VercelRequest, res: VercelResponse) {
+  const allowed = await checkRateLimit("push_notify", getClientIp(req), { limit: 20, windowMs: 60_000 });
+  if (!allowed) return res.status(429).json({ error: "Too many requests" });
+
   const auth = req.headers.authorization as string | undefined;
   if (!auth?.startsWith("Bearer ")) return res.status(401).json({ error: "No token" });
 
@@ -276,6 +289,9 @@ async function handleNotifyReaction(req: VercelRequest, res: VercelResponse) {
 }
 
 async function handleNotifyLike(req: VercelRequest, res: VercelResponse) {
+  const allowed = await checkRateLimit("push_notify", getClientIp(req), { limit: 20, windowMs: 60_000 });
+  if (!allowed) return res.status(429).json({ error: "Too many requests" });
+
   const auth = req.headers.authorization as string | undefined;
   if (!auth?.startsWith("Bearer ")) return res.status(401).json({ error: "No token" });
 

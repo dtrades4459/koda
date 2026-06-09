@@ -44,9 +44,7 @@ export default async function handler(req: Req, res: Res) {
   const hlStale  = age(byKey["koda_news_headlines"]) > STALE_HEADLINES_MS;
 
   if (calStale || hlStale) {
-    const host = (req.headers["host"] as string) ?? "kodatrade.co.uk";
-    const proto = host.startsWith("localhost") ? "http" : "https";
-    const baseUrl = `${proto}://${host}`;
+    const baseUrl = process.env.APP_URL ?? "https://kodatrade.co.uk";
     const headers = { Authorization: `Bearer ${process.env.CRON_SECRET ?? ""}` };
 
     await Promise.all([
