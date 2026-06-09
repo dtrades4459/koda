@@ -1,6 +1,11 @@
 -- Seeds the 50K Eval Challenge circle into shared_kv and creates its
 -- challenge row. ON CONFLICT / WHERE NOT EXISTS make both inserts safely
 -- re-runnable without creating duplicate rows.
+--
+-- The FK on shared_kv.owner_id references auth.users, which blocks the
+-- sentinel UUID (all-zeros) used for system-owned rows. Drop it here —
+-- RLS policies already enforce per-user ownership, so the FK is redundant.
+ALTER TABLE shared_kv DROP CONSTRAINT IF EXISTS shared_kv_owner_id_fkey;
 
 INSERT INTO shared_kv (key, value, owner_id)
 VALUES (
