@@ -64,7 +64,7 @@ import { FirstSessionSurvey } from "./components/FirstSessionSurvey";
 import { LoadingSplash } from "./components/LoadingSplash";
 import { OfflineBanner } from "./components/OfflineBanner";
 import { CompetitionBanner } from "./components/CompetitionBanner";
-import { COMP_CIRCLE_CODE, markCompetitionJoined } from "./lib/competition";
+import { COMP_CIRCLE_CODE, COMP_START_TS, COMP_END_TS, markCompetitionJoined } from "./lib/competition";
 import { HomeNewsWidget } from "./components/HomeNewsWidget";
 import { NewsScreen } from "./NewsScreen";
 
@@ -865,6 +865,47 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     };
   }, [trades, disciplineScore]);
 
+  // Stats filtered to the competition window (June 15 – July 15).
+  // Published to the 50K-EVAL-2026 leaderboard so pre-window trades never count.
+  const compCircleStats = useMemo((): CircleStats => {
+    const wt = trades.filter(t => {
+      const d = new Date(t.date).getTime();
+      return d >= COMP_START_TS && d <= COMP_END_TS;
+    });
+    const w = wt.filter(t => t.outcome === "Win").length;
+    const l = wt.filter(t => t.outcome === "Loss").length;
+    const total = wt.length;
+    const winRate = total ? ((w / total) * 100).toFixed(1) : 0;
+    const totalPnL = wt.reduce((a, t) => a + (parseFloat(t.pnl) || 0), 0).toFixed(2);
+    const totalPnlDollar = wt.reduce((a, t) => a + (parseFloat(t.pnlDollar) || 0), 0);
+    const rrTs = wt.filter(t => t.rr);
+    const avgRR = rrTs.length ? (rrTs.reduce((a, t) => a + parseFloat(t.rr), 0) / rrTs.length).toFixed(2) : "—";
+    const streak = (() => {
+      if (!wt.length) return { type: null as string | null, count: 0 };
+      let count = 0, type: string | null = null;
+      for (const t of wt) {
+        if (t.outcome === "Win" || t.outcome === "Loss") {
+          if (type === null) { type = t.outcome; count = 1; }
+          else if (t.outcome === type) count++;
+          else break;
+        }
+      }
+      return { type, count };
+    })();
+    const stratStats = wt.reduce((acc: Record<string, { w: number; l: number; be: number; pnl: number; count: number }>, t) => {
+      if (t.strategy) {
+        if (!acc[t.strategy]) acc[t.strategy] = { w: 0, l: 0, be: 0, pnl: 0, count: 0 };
+        acc[t.strategy].count++;
+        if (t.outcome === "Win") acc[t.strategy].w++;
+        if (t.outcome === "Loss") acc[t.strategy].l++;
+        if (t.outcome === "Breakeven") acc[t.strategy].be++;
+        acc[t.strategy].pnl += parseFloat(t.pnl) || 0;
+      }
+      return acc;
+    }, {});
+    return { wins: w, losses: l, total, winRate, totalPnL, totalPnlDollar, weekPnL: 0, avgRR, streak, stratStats, disciplineScore: null, disciplineGrade: null };
+  }, [trades]);
+
   const {
     myCircles, setMyCircles,
     circlesView, setCirclesView,
@@ -884,6 +925,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     getMyCode,
     homeSection,
     stats: circleStats,
+    compStats: compCircleStats,
     statsFingerprint,
     showToast,
   });

@@ -16,6 +16,7 @@ import { storage } from "../lib/storage";
 import { log } from "../lib/log";
 import { subscribeToCircle } from "../data/circles";
 import type { Circle, CircleMember, Profile } from "../types";
+import { COMP_CIRCLE_CODE } from "../lib/competition";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -90,6 +91,8 @@ interface UseCirclesParams {
   stats: CircleStats;
   /** Cheap hash of win/loss/pnl/avgR — triggers auto-publish when it changes. */
   statsFingerprint: string;
+  /** Competition-window filtered stats (June 15–July 15). Used only for the 50K-EVAL-2026 circle. */
+  compStats?: CircleStats;
   /** Toast callback. */
   showToast: (msg: string) => void;
 }
@@ -103,6 +106,7 @@ export function useCircles({
   getMyCode,
   homeSection,
   stats,
+  compStats,
   statsFingerprint,
   showToast,
 }: UseCirclesParams) {
@@ -126,6 +130,8 @@ export function useCircles({
   getMyCodeRef.current = getMyCode;
   const statsRef = useRef(stats);
   statsRef.current = stats;
+  const compStatsRef = useRef(compStats);
+  compStatsRef.current = compStats;
   const myCirclesRef = useRef<Circle[]>(myCircles);
   myCirclesRef.current = myCircles;
 
@@ -507,7 +513,9 @@ export function useCircles({
 
   async function publishToCircle(circleCode: string, silent = false) {
     const myCode = getMyCodeRef.current();
-    const s = statsRef.current;
+    const s = circleCode === COMP_CIRCLE_CODE && compStatsRef.current != null
+      ? compStatsRef.current
+      : statsRef.current;
     const p = profileRef.current;
     const accountSize = parseFloat((p as any).fundedAmount || (p as any).accountBalance || "0") || 0;
     const pnlPercent = accountSize > 0 && s.totalPnlDollar !== 0
