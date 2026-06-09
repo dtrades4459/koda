@@ -63,6 +63,8 @@ import { ConfluenceTracker } from "./components/ConfluenceTracker";
 import { FirstSessionSurvey } from "./components/FirstSessionSurvey";
 import { LoadingSplash } from "./components/LoadingSplash";
 import { OfflineBanner } from "./components/OfflineBanner";
+import { CompetitionBanner } from "./components/CompetitionBanner";
+import { COMP_CIRCLE_CODE, markCompetitionJoined } from "./lib/competition";
 import { HomeNewsWidget } from "./components/HomeNewsWidget";
 import { NewsScreen } from "./NewsScreen";
 
@@ -1327,6 +1329,12 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     await saveDailyCheckItems(dailyCheckItems.filter(i => i.id !== id));
   }
 
+  async function handleJoinCompetition(): Promise<void> {
+    await joinCircleByCode(COMP_CIRCLE_CODE);
+    markCompetitionJoined();
+    navigateTo("circles");
+  }
+
   // Friends
   // ── Stable user code (rename-safe) ──────────────────────────────
   // Once a user has a code, it is LOCKED to their profile.code field. Renaming
@@ -1988,6 +1996,11 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
               {/* FEED */}
               {homeSection === "feed" && (
                 <div>
+                  <CompetitionBanner
+                    C={C}
+                    isMobile={!isDesktop}
+                    onJoin={handleJoinCompetition}
+                  />
                   {announcement && announcement.id !== announcementDismissedId && (
                     <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", background: `color-mix(in oklch, ${C.accent ?? "#60a5fa"} 8%, ${C.panel})`, border: `1px solid color-mix(in oklch, ${C.accent ?? "#60a5fa"} 25%, transparent)`, borderRadius: "12px", padding: "14px 16px", marginBottom: "16px" }}>
                       <div style={{ flex: 1 }}>
