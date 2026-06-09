@@ -130,7 +130,7 @@ export function SettingsScreen({
   }
 
   return (
-    <div style={{ padding: "12px 16px 0", display: "flex", flexDirection: "column", gap: 0, marginTop: "clamp(4px, 2vw, 12px)" }}>
+    <div style={{ padding: "12px 16px calc(120px + env(safe-area-inset-bottom))", display: "flex", flexDirection: "column", gap: 0, marginTop: "clamp(4px, 2vw, 12px)" }}>
 
       {/* ── User card ── */}
       <div style={{ margin: "0 0 16px", borderRadius: 22, padding: 18, background: C.panel, border: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: 14 }}>
