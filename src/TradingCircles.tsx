@@ -2,7 +2,7 @@
 import { supabase } from "./lib/supabase";
 import { StrategyPill, stratCode, KodaMark, MONO, BODY, DISPLAY, EmptyCirclesState, CornerGlow, SubNavDropdown } from "./shared";
 import { KODA_GLOBAL_CODE } from "./hooks/useCircles";
-import { COMP_CIRCLE_CODE, shouldShowCompetitionCard } from "./lib/competition";
+import { COMP_CIRCLE_CODE, shouldShowCompetitionCard, compStatusText } from "./lib/competition";
 import { readCircleMembers } from "./data/circles";
 import { markChatRead } from "./data/chatReads";
 import { useUnreadCircles } from "./hooks/useUnreadCircles";
@@ -115,6 +115,7 @@ export function TradingCircles({
 }: TradingCirclesProps) {
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [lbSort, setLbSort] = useState<"all" | "week">("all");
+  const [lbMetric, setLbMetric] = useState<"r" | "dollar">("r");
   const [compMemberCount, setCompMemberCount] = useState<number | null>(null);
   const [loadingLB, setLoadingLB] = useState(false);
   const [lbError, setLbError] = useState(false);
@@ -627,6 +628,15 @@ export function TradingCircles({
     a.code === KODA_GLOBAL_CODE ? -1 : b.code === KODA_GLOBAL_CODE ? 1 : 0
   );
 
+  const isCompCircle = activeCircle?.code === COMP_CIRCLE_CODE;
+  const displayLeaderboard = isCompCircle
+    ? [...leaderboard].sort((a, b) =>
+        lbMetric === "dollar"
+          ? ((b.totalPnLDollar ?? 0) - (a.totalPnLDollar ?? 0))
+          : (b.totalPnL - a.totalPnL)
+      )
+    : leaderboard;
+
   return (
     <div style={{ position: "relative" }}>
       {/* ambient orb */}
@@ -960,6 +970,16 @@ export function TradingCircles({
             {activeCircle.description && (
               <div style={{ fontFamily: BODY, fontSize: "14px", color: C.text2, lineHeight: 1.6, maxWidth: "48ch", marginBottom: "16px" }}>{activeCircle.description}</div>
             )}
+            {activeCircle.code === COMP_CIRCLE_CODE && (
+              <div style={{
+                fontFamily: MONO, fontSize: 10, color: C.muted,
+                letterSpacing: "0.1em", textTransform: "uppercase" as const,
+                textAlign: "center" as const,
+                padding: "8px 0 14px",
+              }}>
+                {compStatusText(activeCircle.members?.length ?? 0)}
+              </div>
+            )}
             {/* Aggregate stats bar */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "0", background: C.panel, borderRadius: "12px", overflow: "hidden", border: `1px solid ${C.border}` }}>
               {[
@@ -1106,6 +1126,28 @@ export function TradingCircles({
                     }}
                     style={{ background: "none", border: "none", color: loadingLB ? C.dim : C.muted, cursor: loadingLB ? "default" : "pointer", fontFamily: MONO, fontSize: "11px", opacity: loadingLB ? 0.5 : 1 }}
                   >↻</button>
+                  {isCompCircle && (
+                    <div style={{ display: "flex", gap: 2, marginLeft: 8 }}>
+                      {(["r", "dollar"] as const).map(m => (
+                        <button
+                          key={m}
+                          onClick={() => setLbMetric(m)}
+                          style={{
+                            background: lbMetric === m ? C.live : "transparent",
+                            color: lbMetric === m ? "#0A0A0A" : C.muted,
+                            border: `1px solid ${lbMetric === m ? C.live : C.border2}`,
+                            borderRadius: 999, padding: "4px 10px",
+                            cursor: "pointer", fontFamily: MONO,
+                            fontSize: "10px", letterSpacing: "0.08em",
+                            textTransform: "uppercase" as const,
+                            fontWeight: lbMetric === m ? 700 : 400,
+                          }}
+                        >
+                          {m === "r" ? "R" : "$"}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -1296,7 +1338,7 @@ export function TradingCircles({
                       };
                       return (
                         <>
-                          {leaderboard.map((entry, i) => renderRow(entry, i))}
+                          {displayLeaderboard.map((entry, i) => renderRow(entry, i))}
                         </>
                       );
                     })()}
@@ -1529,6 +1571,29 @@ export function TradingCircles({
               LINK copies a join URL · SHARE sends a ready-made invite.
             </div>
           </section>
+
+          {/* Competition rules footer */}
+          {activeCircle?.code === COMP_CIRCLE_CODE && (
+            <div style={{
+              textAlign: "center" as const,
+              padding: "24px 0 12px",
+              borderTop: `1px solid ${C.border}`,
+              marginTop: 8,
+            }}>
+              <a
+                href="/competition-rules.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  fontFamily: MONO, fontSize: 10, color: C.muted,
+                  letterSpacing: "0.08em", textDecoration: "none",
+                  textTransform: "uppercase" as const,
+                }}
+              >
+                View competition rules \u2192
+              </a>
+            </div>
+          )}
 
           {/* Compose bar \u2014 fixed bottom, feed tab only */}
           {circleTab === "feed" && (
