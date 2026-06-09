@@ -630,11 +630,14 @@ export function TradingCircles({
 
   const isCompCircle = activeCircle?.code === COMP_CIRCLE_CODE;
   const displayLeaderboard = isCompCircle
-    ? [...leaderboard].sort((a, b) =>
-        lbMetric === "dollar"
+    ? [...leaderboard].sort((a, b) => {
+        // Staff always sink to the bottom
+        if (a.staff && !b.staff) return 1;
+        if (!a.staff && b.staff) return -1;
+        return lbMetric === "dollar"
           ? ((b.totalPnLDollar ?? 0) - (a.totalPnLDollar ?? 0))
-          : (b.totalPnL - a.totalPnL)
-      )
+          : (b.totalPnL - a.totalPnL);
+      })
     : leaderboard;
 
   return (
@@ -1272,34 +1275,44 @@ export function TradingCircles({
                         const isMe = entry.memberCode === myCode;
                         const md = metricDisplay(entry, activeCircle);
                         const pPos = md.raw >= 0;
-                        const isFirst = i === 0;
+                        const isStaffRow = isCompCircle && !!entry.staff;
+                        const isFirst = i === 0 && !isStaffRow;
                         const pnlCol = isFirst && pPos ? C.green : pPos ? C.text : C.red;
                         const isExpanded = expandedMember === entry.memberCode;
                         const isFollowing = (following || []).includes(entry.memberCode);
-                        const medal = MEDALS[i] || null;
+                        const medal = isStaffRow ? null : (MEDALS[i] || null);
                         return (
                           <div key={entry.memberCode} style={{ borderBottom: `1px solid ${C.border}`, background: isFirst ? `${C.green}08` : "transparent" }}>
                             <div
                               onClick={() => setExpandedMember(isExpanded ? null : entry.memberCode)}
                               style={{ padding: "16px 0", display: "grid", gridTemplateColumns: "auto 1fr auto", alignItems: "center", gap: "14px", cursor: "pointer", paddingLeft: isExpanded ? "10px" : 0, paddingRight: isExpanded ? "10px" : 0 }}>
                               <span style={{ fontFamily: MONO, fontSize: "13px", color: isFirst ? C.green : C.muted, letterSpacing: "0.06em", minWidth: "28px" }}>
-                                {medal || String(i + 1).padStart(2, "0")}
+                                {isStaffRow ? "🏁" : (medal || String(i + 1).padStart(2, "0"))}
                               </span>
                               <div style={{ minWidth: 0 }}>
                                 <div style={{ display: "flex", alignItems: "baseline", gap: "8px", flexWrap: "wrap" }}>
                                   <span style={{ fontFamily: DISPLAY, fontSize: "17px", fontWeight: 500, color: C.text, letterSpacing: "-0.01em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{entry.name}</span>
                                   {isMe && <span style={{ fontFamily: MONO, fontSize: "10px", color: C.green, letterSpacing: "0.12em", textTransform: "uppercase" }}>· YOU</span>}
+                                  {isStaffRow && <span style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.12em", textTransform: "uppercase" as const, border: `1px solid ${C.border2}`, borderRadius: 4, padding: "1px 5px" }}>REFEREE</span>}
                                 </div>
-                                <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginTop: "3px", fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.06em", textTransform: "uppercase" }}>
-                                  <span>{entry.total} trades</span>
-                                  <span style={{ color: Number(entry.winRate ?? 0) >= 50 ? C.green : Number(entry.winRate ?? 0) > 0 ? C.red : C.muted }}>{Number(entry.winRate ?? 0).toFixed(0)}% WR</span>
-                                  {entry.topStrategy && <span>{stratCode(entry.topStrategy)}</span>}
-                                  {entry.streak?.count >= 2 && <span style={{ color: entry.streak.type === "Win" ? C.green : C.red }}>{entry.streak.count}{entry.streak.type === "Win" ? "W" : "L"}</span>}
-                                </div>
+                                {!isStaffRow && (
+                                  <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginTop: "3px", fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                                    <span>{entry.total} trades</span>
+                                    <span style={{ color: Number(entry.winRate ?? 0) >= 50 ? C.green : Number(entry.winRate ?? 0) > 0 ? C.red : C.muted }}>{Number(entry.winRate ?? 0).toFixed(0)}% WR</span>
+                                    {entry.topStrategy && <span>{stratCode(entry.topStrategy)}</span>}
+                                    {entry.streak?.count >= 2 && <span style={{ color: entry.streak.type === "Win" ? C.green : C.red }}>{entry.streak.count}{entry.streak.type === "Win" ? "W" : "L"}</span>}
+                                  </div>
+                                )}
                               </div>
                               <div style={{ textAlign: "right", flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
-                                <div style={{ fontFamily: DISPLAY, fontSize: "18px", fontWeight: 700, color: pnlCol, letterSpacing: "-0.01em", lineHeight: 1 }}>{md.val}</div>
-                                <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.06em" }}>{md.label}</div>
+                                {isStaffRow ? (
+                                  <div style={{ fontFamily: MONO, fontSize: "13px", color: C.border2 }}>—</div>
+                                ) : (
+                                  <>
+                                    <div style={{ fontFamily: DISPLAY, fontSize: "18px", fontWeight: 700, color: pnlCol, letterSpacing: "-0.01em", lineHeight: 1 }}>{md.val}</div>
+                                    <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.06em" }}>{md.label}</div>
+                                  </>
+                                )}
                               </div>
                             </div>
                             {isExpanded && (

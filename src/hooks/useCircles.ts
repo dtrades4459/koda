@@ -16,7 +16,7 @@ import { storage } from "../lib/storage";
 import { log } from "../lib/log";
 import { subscribeToCircle } from "../data/circles";
 import type { Circle, CircleMember, Profile } from "../types";
-import { COMP_CIRCLE_CODE } from "../lib/competition";
+import { COMP_CIRCLE_CODE, COMP_STAFF_UIDS } from "../lib/competition";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -47,6 +47,8 @@ export interface LeaderboardEntry {
   /** Letter grade ("A+"..."F") matching disciplineScore. */
   disciplineGrade?: string | null;
   updatedAt: string | null;
+  /** True for competition staff — shown as referees, stats excluded from scoring. */
+  staff?: true;
 }
 
 export interface CircleForm {
@@ -513,10 +515,11 @@ export function useCircles({
 
   async function publishToCircle(circleCode: string, silent = false) {
     const myCode = getMyCodeRef.current();
+    const p = profileRef.current;
+    const isCompStaff = circleCode === COMP_CIRCLE_CODE && COMP_STAFF_UIDS.has(p.uid ?? "");
     const s = circleCode === COMP_CIRCLE_CODE && compStatsRef.current != null
       ? compStatsRef.current
       : statsRef.current;
-    const p = profileRef.current;
     const accountSize = parseFloat((p as any).fundedAmount || (p as any).accountBalance || "0") || 0;
     const pnlPercent = accountSize > 0 && s.totalPnlDollar !== 0
       ? (s.totalPnlDollar / accountSize) * 100
@@ -545,6 +548,7 @@ export function useCircles({
       disciplineScore: s.disciplineScore,
       disciplineGrade: s.disciplineGrade,
       updatedAt: new Date().toISOString(),
+      ...(isCompStaff ? { staff: true as const } : {}),
     };
     try {
       await storage.set(
