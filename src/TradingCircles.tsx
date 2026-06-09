@@ -116,7 +116,7 @@ export function TradingCircles({
   const [loadingLB, setLoadingLB] = useState(false);
   const [lbError, setLbError] = useState(false);
   const [membersLoading, setMembersLoading] = useState(false);
-  const [circleTab, setCircleTab] = useState<"feed" | "leaderboard" | "chat" | "members" | "trophies">("feed");
+  const [circleTab, setCircleTab] = useState<"feed" | "leaderboard" | "chat" | "members" | "trophies">("chat");
   const [chatMessages, setChatMessages] = useState<any[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [chatSending, setChatSending] = useState(false);
@@ -1248,7 +1248,7 @@ export function TradingCircles({
               const myId = profile?.uid;
               return (
                 <div>
-                  <div style={{ borderTop: `1px solid ${C.border}`, minHeight: "420px", maxHeight: "min(72dvh, 720px)", overflowY: "auto", paddingTop: "8px" }}>
+                  <div style={{ borderTop: `1px solid ${C.border}`, minHeight: "280px", maxHeight: "min(48dvh, 480px)", overflowY: "auto", paddingTop: "8px" }}>
                     {chatLoading
                       ? <div style={{ padding: "12px 0", display: "flex", flexDirection: "column", gap: 14 }}>
                           {[{ side: "left", w: "70%" }, { side: "right", w: "55%" }, { side: "left", w: "60%" }, { side: "right", w: "45%" }].map((row, i) => (
