@@ -412,7 +412,7 @@ export function TradingCircles({
     setActiveCircle(circle);
     setCirclesView("detail");
     setExpandedMember(null);
-    setCircleTab("feed");
+    setCircleTab(circle.code === COMP_CIRCLE_CODE ? "chat" : "feed");
     setChatMessages([]);
     setChatInput("");
     setFeedItems([]);
@@ -1042,13 +1042,18 @@ export function TradingCircles({
           <section>
             <div style={{ marginBottom: "20px" }}>
               {(() => {
-                const CIRCLE_TAB_SECTIONS = [
-                  { id: "feed", label: "Feed" },
-                  { id: "leaderboard", label: "Board" },
-                  { id: "chat", label: "Chat" },
-                  { id: "members", label: "Members" },
-                  { id: "trophies", label: "Trophies" },
-                ];
+                const CIRCLE_TAB_SECTIONS = isCompCircle
+                  ? [
+                      { id: "leaderboard", label: "Board" },
+                      { id: "chat", label: "Chat" },
+                    ]
+                  : [
+                      { id: "feed", label: "Feed" },
+                      { id: "leaderboard", label: "Board" },
+                      { id: "chat", label: "Chat" },
+                      { id: "members", label: "Members" },
+                      { id: "trophies", label: "Trophies" },
+                    ];
                 const handleTabChange = (t: typeof circleTab) => {
                   setCircleTab(t);
                   if (t === "chat") loadChatMessages(activeCircle.code);
@@ -1063,7 +1068,10 @@ export function TradingCircles({
                 return isDesktop ? (
                   /* Desktop: underline tab bar */
                   <div style={{ display: "flex", borderBottom: `1px solid ${C.border}`, overflowX: "auto", gap: 0, marginBottom: circleTab === "leaderboard" ? "10px" : 0 }}>
-                    {(["feed", "leaderboard", "chat", "members", "trophies"] as const).map(t => (
+                    {(isCompCircle
+                      ? (["leaderboard", "chat"] as const)
+                      : (["feed", "leaderboard", "chat", "members", "trophies"] as const)
+                    ).map(t => (
                       <button
                         key={t}
                         onClick={() => handleTabChange(t)}
@@ -1098,7 +1106,7 @@ export function TradingCircles({
               {/* Leaderboard sort controls */}
               {circleTab === "leaderboard" && (
                 <div style={{ display: "flex", gap: "6px", alignItems: "center", justifyContent: "flex-end", paddingTop: "10px" }}>
-                  {(["all", "week"] as const).map(s => (
+                  {!isCompCircle && (["all", "week"] as const).map(s => (
                     <button key={s} onClick={() => {
                       setLbSort(s);
                       if (activeCircle) {
@@ -1344,6 +1352,14 @@ export function TradingCircles({
                     })()}
                   </div>
                 )}
+                {isCompCircle && (
+                  <div style={{ textAlign: "center" as const, padding: "24px 0 8px" }}>
+                    <a href="/competition-rules.html" target="_blank" rel="noopener noreferrer"
+                      style={{ fontFamily: MONO, fontSize: 10, color: C.muted, letterSpacing: "0.08em", textDecoration: "none", textTransform: "uppercase" as const }}>
+                      View competition rules →
+                    </a>
+                  </div>
+                )}
               </div>
             )}
 
@@ -1556,7 +1572,7 @@ export function TradingCircles({
           </section>
 
           {/* Invite strip */}
-          <section style={{ borderTop: `1px solid ${C.border}`, paddingTop: "22px" }}>
+          {!isCompCircle && <section style={{ borderTop: `1px solid ${C.border}`, paddingTop: "22px" }}>
             <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.14em", marginBottom: "12px" }}>INVITE TO CIRCLE</div>
             <div style={{ display: "flex", gap: "8px", alignItems: "center", marginBottom: "12px" }}>
               <div style={{ flex: 1, borderBottom: `1px solid ${C.border2}`, padding: "12px 0", fontFamily: MONO, fontSize: "16px", color: C.text, letterSpacing: "0.14em" }}>{activeCircle.code}</div>
@@ -1570,30 +1586,7 @@ export function TradingCircles({
             <div style={{ fontFamily: BODY, fontSize: "12px", color: C.muted, lineHeight: 1.5 }}>
               LINK copies a join URL · SHARE sends a ready-made invite.
             </div>
-          </section>
-
-          {/* Competition rules footer */}
-          {activeCircle?.code === COMP_CIRCLE_CODE && (
-            <div style={{
-              textAlign: "center" as const,
-              padding: "24px 0 12px",
-              borderTop: `1px solid ${C.border}`,
-              marginTop: 8,
-            }}>
-              <a
-                href="/competition-rules.html"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  fontFamily: MONO, fontSize: 10, color: C.muted,
-                  letterSpacing: "0.08em", textDecoration: "none",
-                  textTransform: "uppercase" as const,
-                }}
-              >
-                View competition rules \u2192
-              </a>
-            </div>
-          )}
+          </section>}
 
           {/* Compose bar \u2014 fixed bottom, feed tab only */}
           {circleTab === "feed" && (
