@@ -4632,6 +4632,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
               hasDollarData={hasDollarData}
               isPro={isPro}
               isDesktop={isDesktop}
+              onJoinCompetition={handleJoinCompetition}
             />
           )}
 

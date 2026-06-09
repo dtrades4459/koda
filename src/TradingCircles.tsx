@@ -2,6 +2,7 @@
 import { supabase } from "./lib/supabase";
 import { StrategyPill, stratCode, KodaMark, MONO, BODY, DISPLAY, EmptyCirclesState, CornerGlow, SubNavDropdown } from "./shared";
 import { KODA_GLOBAL_CODE } from "./hooks/useCircles";
+import { COMP_CIRCLE_CODE, shouldShowCompetitionCard } from "./lib/competition";
 import { readCircleMembers } from "./data/circles";
 import { markChatRead } from "./data/chatReads";
 import { useUnreadCircles } from "./hooks/useUnreadCircles";
@@ -87,6 +88,7 @@ export interface TradingCirclesProps {
   hasDollarData: boolean;
   isPro: boolean;
   isDesktop: boolean;
+  onJoinCompetition: () => Promise<void>;
 }
 
 // Raw DB row shape returned by the circle_messages Supabase query.
@@ -109,10 +111,11 @@ export function TradingCircles({
   STRATEGY_NAMES, C, inp, sel, lbl, pillPrimary, pillGhost,
   following, followUser, unfollowUser, kickMember, leaveCircle,
   openProfile, isJoiningCircle, isCreatingCircle,
-  totalPnlDollar, hasDollarData, isPro, isDesktop,
+  totalPnlDollar, hasDollarData, isPro, isDesktop, onJoinCompetition,
 }: TradingCirclesProps) {
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [lbSort, setLbSort] = useState<"all" | "week">("all");
+  const [compMemberCount, setCompMemberCount] = useState<number | null>(null);
   const [loadingLB, setLoadingLB] = useState(false);
   const [lbError, setLbError] = useState(false);
   const [membersLoading, setMembersLoading] = useState(false);
@@ -464,6 +467,9 @@ export function TradingCircles({
     }
   }
 
+  const myCircleCodes = myCircles.map(c => c.code);
+  const showCompCard = shouldShowCompetitionCard(myCircleCodes);
+
   useEffect(() => {
     if (circlesView !== "detail" || !activeCircle) return;
     let alive = true;
@@ -587,6 +593,15 @@ export function TradingCircles({
     return () => { alive = false; };
   }, [circleTab, activeCircle]);
 
+  useEffect(() => {
+    if (!showCompCard) return;
+    supabase
+      .from("shared_kv")
+      .select("*", { count: "exact", head: true })
+      .ilike("key", `koda_circle_entry_${COMP_CIRCLE_CODE}_%`)
+      .then(({ count }) => { if (count !== null) setCompMemberCount(count); });
+  }, [showCompCard]);
+
   // ── Derived circle stats ──────────────────────────────────────────────
   // Numeric guards: Supabase can return PG numeric/decimal columns as strings,
   // which makes (s + e.winRate) string-concatenate → divide → NaN.
@@ -634,6 +649,53 @@ export function TradingCircles({
             <div style={{ flex: 1 }} />
             <button onClick={() => setCirclesView("create")} style={{ padding: "6px 14px", borderRadius: "999px", background: "transparent", color: C.text2, border: `1px solid ${C.border2}`, fontFamily: BODY, fontSize: "11px", fontWeight: 500, cursor: "pointer", flexShrink: 0 }}>+ New</button>
           </div>
+
+          {showCompCard && (
+            <div
+              style={{
+                background: (C as any).surfaceGlass ?? C.panel,
+                backdropFilter: "blur(20px) saturate(160%)",
+                WebkitBackdropFilter: "blur(20px) saturate(160%)",
+                border: `1px solid color-mix(in oklch, ${C.live} 25%, transparent)`,
+                borderRadius: 16,
+                padding: "16px 18px",
+                marginBottom: 12,
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{
+                    fontFamily: MONO, fontSize: 9, color: C.live,
+                    letterSpacing: "0.16em", textTransform: "uppercase" as const,
+                    fontWeight: 700, marginBottom: 6,
+                  }}>
+                    ⚡ Featured Competition
+                  </div>
+                  <div style={{
+                    fontFamily: DISPLAY, fontSize: 16, fontWeight: 600,
+                    color: C.text, letterSpacing: "-0.01em", marginBottom: 2,
+                  }}>
+                    50K Eval Challenge
+                  </div>
+                  <div style={{ fontFamily: MONO, fontSize: 10, color: C.muted, letterSpacing: "0.06em" }}>
+                    June 15 – July 15 · R-multiple leaderboard
+                    {compMemberCount !== null && ` · ${compMemberCount} trader${compMemberCount === 1 ? "" : "s"} entered`}
+                  </div>
+                </div>
+                <button
+                  onClick={onJoinCompetition}
+                  style={{
+                    background: C.live, color: "#0A0A0A", border: "none",
+                    borderRadius: 999, padding: "9px 18px",
+                    fontFamily: BODY, fontSize: 12, fontWeight: 600,
+                    cursor: "pointer", flexShrink: 0, whiteSpace: "nowrap" as const,
+                  }}
+                >
+                  Enter ▶
+                </button>
+              </div>
+            </div>
+          )}
 
           {sortedCircles.length > 0 ? (
             <>
