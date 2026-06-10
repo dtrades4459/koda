@@ -1,6 +1,7 @@
 import { type CSSProperties } from "react";
 import type { Idea } from "../types";
 import { MONO, BODY, DISPLAY, AvatarCircle } from "../shared";
+import { useSignedUrl } from "../hooks/useSignedUrl";
 
 interface IdeaCardProps {
   idea: Idea;
@@ -44,6 +45,7 @@ export function IdeaCard({ idea, expanded = false, C, onLike, onExpand, onOpenCh
 
   const dirCol = directionColor(idea.direction, C);
   const typeCol = idea.type === "pre" ? (C.live ?? "#a78bfa") : (C.green ?? "#34d399");
+  const chartUrl = useSignedUrl(idea.chartUrl);
 
   const hasPrices = !!(idea.entryPrice || idea.stopPrice || idea.targetPrice);
 
@@ -72,13 +74,13 @@ export function IdeaCard({ idea, expanded = false, C, onLike, onExpand, onOpenCh
             {idea.title}
           </div>
         </div>
-        {idea.chartUrl && !expanded && (
+        {chartUrl && !expanded && (
           <button
             data-testid={`idea-chart-thumb-${idea.id}`}
-            onClick={(e) => { e.stopPropagation(); onOpenChart?.(idea.chartUrl!); }}
+            onClick={(e) => { e.stopPropagation(); onOpenChart?.(chartUrl); }}
             style={{
               width: "56px", height: "56px", flexShrink: 0,
-              background: `${C.panel} center/cover no-repeat url("${idea.chartUrl}")`,
+              background: `${C.panel} center/cover no-repeat url("${chartUrl}")`,
               border: "none", borderRadius: "8px", cursor: "pointer", padding: 0,
             }}
             aria-label="Open chart"
@@ -96,13 +98,13 @@ export function IdeaCard({ idea, expanded = false, C, onLike, onExpand, onOpenCh
       </div>
 
       {/* Expanded chart full-width */}
-      {expanded && idea.chartUrl && (
+      {expanded && chartUrl && (
         <button
-          onClick={(e) => { e.stopPropagation(); onOpenChart?.(idea.chartUrl!); }}
+          onClick={(e) => { e.stopPropagation(); onOpenChart?.(chartUrl); }}
           style={{ width: "100%", maxHeight: "360px", border: "none", padding: 0, marginBottom: "10px", cursor: "zoom-in", borderRadius: "10px", overflow: "hidden", background: "transparent" }}
           aria-label="Open chart"
         >
-          <img src={idea.chartUrl} alt="" style={{ width: "100%", height: "auto", display: "block", borderRadius: "10px" }} />
+          <img src={chartUrl} alt="" style={{ width: "100%", height: "auto", display: "block", borderRadius: "10px" }} />
         </button>
       )}
 

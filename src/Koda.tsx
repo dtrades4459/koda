@@ -22,6 +22,8 @@ import { PostSessionDebriefSheet } from "./components/PostSessionDebriefSheet";
 import { LiveRuleMonitor } from "./components/LiveRuleMonitor";
 import { InSessionStatsCard } from "./components/InSessionStatsCard";
 import { ComputedBadge } from "./components/ComputedBadge";
+import { SignedImg } from "./components/SignedImg";
+import { resolveScreenshotUrl } from "./lib/screenshots";
 import type { TiltSignal } from "./lib/tilt";
 import type { CircleStats } from "./hooks/useCircles";
 import { getProfile, upsertProfile } from "./data/profile";
@@ -3486,7 +3488,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                             <div style={{ margin: "0 2px" }}>
                               {t.screenshot ? (
                                 <div style={{ borderRadius: 22, overflow: "hidden", background: C.panel, border: `1px solid ${C.border}`, position: "relative" }}>
-                                  <img src={t.screenshot} alt="chart" loading="lazy" style={{ width: "100%", display: "block", maxHeight: 240, objectFit: "cover" }} />
+                                  <SignedImg src={t.screenshot} alt="chart" loading="lazy" style={{ width: "100%", display: "block", maxHeight: 240, objectFit: "cover" }} />
                                   <div style={{ display: "flex", gap: 10, padding: "12px 18px", fontFamily: MONO, fontSize: 10 }}>
                                     {t.entryPrice && <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: C.text2 }}><span style={{ width: 6, height: 6, borderRadius: 999, background: (C as any).live ?? C.accent }} />Entry {t.entryPrice}</span>}
                                     {t.slPrice && <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: C.text2 }}><span style={{ width: 6, height: 6, borderRadius: 999, background: C.red }} />Stop {t.slPrice}</span>}
@@ -3636,7 +3638,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                               ) : (
                                 <button onClick={() => setConfirmDelete(t.id)} style={{ ...pillGhost, padding: "8px 14px", color: C.red, borderColor: `${C.red}55` }}>DELETE</button>
                               )}
-                              {t.screenshot && <a href={t.screenshot} target="_blank" rel="noreferrer" style={{ ...pillGhost, padding: "8px 14px", textDecoration: "none", display: "inline-flex", alignItems: "center" }}>CHART ↗</a>}
+                              {t.screenshot && <a href={t.screenshot} target="_blank" rel="noreferrer" onClick={(e) => { e.preventDefault(); void resolveScreenshotUrl(t.screenshot).then((u) => window.open(u, "_blank", "noopener,noreferrer")); }} style={{ ...pillGhost, padding: "8px 14px", textDecoration: "none", display: "inline-flex", alignItems: "center" }}>CHART ↗</a>}
                             </div>
                           </div>
                         )}

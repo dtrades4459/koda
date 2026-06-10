@@ -2,6 +2,7 @@
 import type { SharedTrade } from "../types";
 import { MONO } from "../shared";
 import type { Theme } from "../theme";
+import { SignedImg } from "./SignedImg";
 
 const REACTIONS = ["🔥","💎","👍","🎯","💀","🤯"];
 
@@ -82,7 +83,7 @@ export function SharedTradeCard({ trade, myCode, C, onReact }: Props) {
 
         {/* Screenshot */}
         {trade.screenshot && (
-          <img src={trade.screenshot} alt="trade screenshot" style={{ width: "100%", borderRadius: 7, maxHeight: 200, objectFit: "cover" }} />
+          <SignedImg src={trade.screenshot} alt="trade screenshot" style={{ width: "100%", borderRadius: 7, maxHeight: 200, objectFit: "cover" }} />
         )}
       </div>
 

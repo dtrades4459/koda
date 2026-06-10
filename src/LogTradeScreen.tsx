@@ -12,6 +12,7 @@ import type { Trade } from "./types";
 import { Card, Kicker, Pill, MONO, BODY, DISPLAY } from "./shared";
 import type { Theme } from "./theme";
 import { SESSIONS, BIAS, EMOTION_TAGS, MISTAKE_TAGS, getEmotionTags } from "./tradeConstants";
+import { SignedImg } from "./components/SignedImg";
 
 export interface LogTradeScreenProps {
   C: Record<string, string>;
@@ -399,7 +400,7 @@ export function LogTradeScreen({
         <Kicker C={T}>Screenshot</Kicker>
         {form.screenshot ? (
           <div style={{ position: "relative", marginTop: 8 }}>
-            <img src={form.screenshot} alt="screenshot"
+            <SignedImg src={form.screenshot} alt="screenshot"
               style={{ width: "100%", border: `1px solid ${C.border}`, borderRadius: 12,
                 display: "block", maxHeight: 200, objectFit: "cover" }} loading="lazy" />
             <button onClick={() => removeScreenshot(null)}
