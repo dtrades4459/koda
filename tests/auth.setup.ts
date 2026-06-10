@@ -18,8 +18,9 @@ setup("sign in", async ({ page }) => {
   const username = process.env.TEST_EMAIL!;
   const password = process.env.TEST_PASSWORD!;
 
-  // Bypass beta gate before navigation so the auth form actually renders.
+  // Clear any stale auth state and bypass beta gate before navigation.
   await page.addInitScript(() => {
+    localStorage.clear();
     localStorage.setItem("koda_beta_unlocked", "1");
   });
 
