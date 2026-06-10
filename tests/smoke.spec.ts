@@ -149,6 +149,50 @@ test.describe("cookie consent (PECR / GDPR)", () => {
   });
 });
 
+// ─── T.6 — checkout reaches Stripe (revenue path) ──────────────────────────
+
+test.describe("checkout smoke", () => {
+  test.skip(!EMAIL || !PASSWORD, "TEST_EMAIL / TEST_PASSWORD not set — skipping");
+
+  test("checkout API returns a live checkout.stripe.com URL", async ({ page }) => {
+    await page.goto("/");
+    await dismissCookieBanner(page, "accept");
+
+    // The auth-setup project saved the Supabase session into storageState
+    // (localStorage). Call the checkout endpoint exactly like UpgradeModal
+    // does. No payment happens — Stripe just issues a checkout session,
+    // which expires on its own. A failure here means the revenue path is
+    // down: bad STRIPE_* env, broken function, or Stripe API trouble.
+    const result = await page.evaluate(async () => {
+      const key = Object.keys(localStorage).find(
+        (k) => k.startsWith("sb-") && k.endsWith("-auth-token"),
+      );
+      if (!key) return { error: "no supabase session in localStorage" };
+      const parsed = JSON.parse(localStorage.getItem(key) ?? "{}") as {
+        currentSession?: { access_token?: string; user?: { id?: string; email?: string } };
+        access_token?: string;
+        user?: { id?: string; email?: string };
+      };
+      const session = parsed.currentSession ?? parsed;
+      const token = session.access_token;
+      const user = session.user;
+      if (!token || !user?.id) return { error: "session missing token or user id" };
+
+      const res = await fetch("/api/stripe?action=checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ userId: user.id, email: user.email ?? "smoke@users.kodatrade.co.uk" }),
+      });
+      const body = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
+      return { status: res.status, url: body.url, serverError: body.error };
+    });
+
+    expect(result.error, result.error).toBeUndefined();
+    expect(result.status, `checkout returned ${result.status}: ${result.serverError ?? ""}`).toBe(200);
+    expect(result.url ?? "").toMatch(/^https:\/\/checkout\.stripe\.com\//);
+  });
+});
+
 // ─── T.5 — full authenticated happy path ──────────────────────────────────
 
 test.describe("authenticated flow", () => {

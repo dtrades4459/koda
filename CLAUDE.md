@@ -124,7 +124,7 @@ Do **not** bypass with `--no-verify`. If the hook fails, fix the underlying issu
 - RLS: anyone can read, only `auth.uid() = owner_id` can write
 - Used for: circle metadata, member rows, leaderboard entries, public profiles
 - **`owner_id` is NOT NULL** — system keys use sentinel `'00000000-0000-0000-0000-000000000000'::uuid`
-- **Gotcha:** `owner_id` has a FK to `auth.users` and the sentinel UUID is NOT in `auth.users` — direct upserts with the sentinel return a FK violation. Rate-limit gets around this via a `SECURITY DEFINER` RPC. For new system-owned cache data, prefer a dedicated table (see `public.news_cache`).
+- The old FK from `owner_id` to `auth.users` was **dropped** 2026-06-09 (`20260615_seed_competition_circle.sql`) — sentinel-UUID upserts now work directly. RLS still enforces ownership on writes.
 
 ### `public.profiles` (v2 — live but behind `newProfile` flag)
 - One row per user: `user_id`, `handle`, `name`, `avatar`, `bio`, `onboarded`, `prefs` (jsonb), etc.
@@ -368,7 +368,8 @@ Koda.tsx is ~4100 lines. OneDrive can truncate large writes. Use Edit tool for t
 | `20260601_announcements.sql` | `announcements` table + RLS — verified 2026-06-04: RLS enabled, single `announcements_read` policy (`USING (true)` for authenticated, writes service-role only). Safe. | ✅ |
 | `20260601_news_cache.sql` | `news_cache` table (public read, service-role writes) for the News section | ✅ |
 | `20260603_intervention_events.sql` | `intervention_events` table + RLS for in-session intervention v1 | ✅ |
-| `20260603_circle_messages_members_only.sql` | Strict `circle_messages` SELECT policy. Applied + reverted 2026-06-04: broke chat because `cm_read_member` on `circle_members` is recursive — the EXISTS subquery silently returns 0 rows. Currently back to `USING (true)`. Proper fix needs a non-recursive `cm_read_member` + a `SECURITY DEFINER is_circle_member(text)` helper. | ⚠️ reverted (open) |
+| `20260603_circle_messages_members_only.sql` | Strict `circle_messages` SELECT policy. Applied + reverted 2026-06-04 (recursive `cm_read_member` zeroed the EXISTS). Superseded by `20260610_circle_messages_strict_rls.sql`. | ⛔ superseded |
+| `20260610_circle_messages_strict_rls.sql` | Runbook C closed: `SECURITY DEFINER is_circle_member(text)` helper + non-recursive `cm_read_member` + strict members-only `circle_messages` SELECT. Applied + verified 2026-06-10. | ✅ |
 | `20260603_chat_reads.sql` | `chat_reads` table for engagement loop unread tracking | ✅ |
 | `20260603_notification_feed.sql` | `notification_feed` table for engagement loop in-app inbox + weekly digest | ✅ |
 | `20260604_backfill_circles_and_members.sql` (applied as SQL paste) | Backfilled `public.circles` (1 row: KODA-GLOBAL) and `public.circle_members` (14 rows) from `koda_circle_*` KV rows. Sentinel-UUID-owned KODA-GLOBAL maps to Dylon's UID. | ✅ |
@@ -380,7 +381,8 @@ Koda.tsx is ~4100 lines. OneDrive can truncate large writes. Use Edit tool for t
 
 - **Telegram feedback**: @Tradrfeedbackbot needs to be added to group `-5187303282`. Even with correct chat ID, bot must be a group member to send messages. Verify by forwarding a message from the group to `@userinfobot` to confirm the group ID matches.
 - **v2 data migration**: profiles, follows, circles, trades all still reading from KV. Migration plan: dual-write behind feature flag, backfill, flip flag, delete old path. Do profile first (smallest blast radius), trades last.
-- **`circle_messages` strict RLS restore**: backfill + triggers are in place (2026-06-04). The remaining blocker is `cm_read_member` on `public.circle_members` — it's recursive and silently zeros the EXISTS subquery in `circle_messages_select`. Proper fix: rewrite `cm_read_member` to be non-recursive (e.g. `user_id = auth.uid()`) + add a `SECURITY DEFINER is_circle_member(p_code text)` helper for cross-table membership checks, then re-apply the strict `circle_messages_select` policy. Until this lands the chat SELECT policy is `USING (true)` (open).
+- ~~**`circle_messages` strict RLS restore**~~ — CLOSED 2026-06-10 via `20260610_circle_messages_strict_rls.sql`. Chat reads are members-only; banned members excluded.
+- **`trade-screenshots` bucket is PRIVATE** (since 2026-06-10): never render a stored screenshot URL with a bare `<img src>` — always go through `SignedImg` / `useSignedUrl` / `resolveScreenshotUrl` (`src/lib/screenshots.ts`). Stored values stay as legacy public-URL strings; they are path identifiers now.
 - **Broker auto-sync (Tradovate) — `liveBrokerSync` flag gated**: Live Connections panel + connect/disconnect/manual-sync wiring shipped 2026-06-04 in `src/DataSourcesScreen.tsx`. Gated behind `isFlagOn("liveBrokerSync")` because Tradovate's Partner API requires partner-program approval (not self-serve) — confirmed from `partner.tradovate.com/llms-full.txt`. Path forward is either (a) email Tradovate Eval Support to apply, or (b) lean into CSV as the live broker integration. Old `useTradovate` hook + `api/tradovate.ts` proxy + `src/lib/tradovate.ts` + ~150 lines of dead UI in `Koda.tsx` (home widget + connect sheet) are still wired but non-functional — queued for a focused removal session.
 - **Engagement loop follow-ups** (per `docs/superpowers/plans/2026-06-03-social-retention-roadmap.md`): moderation, leaderboard integrity, KV→Postgres unification, Ideas→Feed integration, badges, comments, viral invites. Sequenced; ship moderation before badges/comments/viral.
 - **Split Koda.tsx**: ~4100 lines — extract remaining inline screens to reduce file size.

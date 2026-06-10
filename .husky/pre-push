@@ -1,0 +1,12 @@
+#!/usr/bin/env sh
+
+# Push to main = production deploy (Vercel auto-deploys). Prove the bundle
+# builds before it leaves this machine — catches missing-import breakage
+# (see incident 2026-06-02) that lint/typecheck alone let through.
+
+npm run build || {
+  echo ""
+  echo "Pre-push blocked: production build failed."
+  echo "push = deploy — fix the build before pushing."
+  exit 1
+}

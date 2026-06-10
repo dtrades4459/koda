@@ -2,14 +2,19 @@
 
 > One-page pickup card. Read first. Heavier rolling context: `NEXT_SESSION.md`. Operating rules + file map: `CLAUDE.md`. Per-session journals: `docs/superpowers/sessions/`.
 
-**Updated:** 2026-06-07 (Sun PM, pre-dogfood)
-**On `main`:** `4f90823` — fix(social/mobile): QA bugs + mobile sub-navs + circle de-clutter + news tests (#27)
+**Updated:** 2026-06-10 (Wed, security sprint)
+**On `main`:** `85134f3` — feat(security): render screenshots via short-lived signed URLs (Runbook B step 1)
 **Prod:** https://kodatrade.co.uk · auto-deploys on push to main
 **Stage:** Closed beta · ~14 members in KODA-GLOBAL · Monday dogfood + TikTok push imminent
 
 ---
 
-## Just shipped (2026-06-07)
+## Just shipped (2026-06-10)
+
+- **Runbook C closed** — `circle_messages` strict members-only RLS live in prod (`20260610_circle_messages_strict_rls.sql`): non-recursive `cm_read_member` + `SECURITY DEFINER is_circle_member()`. Verified: stranger sees 0 rows, member sees all, chat loads.
+- **Runbook B closed** — `trade-screenshots` bucket is now PRIVATE. All renders go through signed URLs (`lib/screenshots.ts` + `useSignedUrl` + `SignedImg`, commit `85134f3`). Verified: 5 surfaces load, logged-out CDN URL fails.
+
+## Previously shipped (2026-06-07)
 
 - 4 social bugs from QA audit (NaN% AVG WR · `@@@handle` · chat input covered · losses missing minus sign)
 - Mobile sub-nav dropdowns added where missing: Social, History, Checklist, Circles detail
@@ -24,10 +29,10 @@ Use Kōda every NY AM as a real trader. Log every trade in-app. Day 7 + Day 14 c
 ## Open threads (priority order)
 
 1. **30-day dogfood, starts Mon 2026-06-08** — daily NY AM use of Kōda as a real trader. Gates the TikTok distribution push.
-2. **`circle_messages` strict RLS** (Runbook C) — non-recursive `cm_read_member` + `SECURITY DEFINER is_circle_member`. Chat SELECT is `USING (true)` until then.
-3. **`trade-screenshots` private bucket** (Runbook B) — bucket is `public:true`; any UID can fetch any trader's screenshots. Dual-write migrate.
+2. **Deploy-gating smoke test** — ci.yml exists but SMOKE_TEST_* secrets unset (auth'd smoke never runs), e2e is continue-on-error, and direct pushes bypass the "build" protection rule. In progress 2026-06-10.
+3. **v2 dual-write decision** — finish or roll back `newTrades`/`newProfile`. Verify `trade-gate` counts cover KV-only users (free-limit enforcement gap).
 4. **Tradovate dead-code teardown** — `useTradovate` + `api/tradovate.ts` + `src/lib/tradovate.ts` + ~150 lines of dead UI in `Koda.tsx`. `liveBrokerSync` flag stays default-off.
-5. **`Koda.tsx` split** — ~4100 lines. Extract Home / Stats / Settings / Log per `TradingCircles.tsx` pattern.
+5. **`Koda.tsx` split** — ~4,950 lines. Extract Home / Stats / Settings / Log per `TradingCircles.tsx` pattern.
 
 ## Active flags
 
