@@ -31,7 +31,6 @@ import { upsertTrade as upsertTradeV2, deleteTradeByClientId as deleteTradeV2ByC
 import { shareTrade } from "./data/circlesSharedTrades";
 import { KODA_GLOBAL_CODE } from "./hooks/useCircles";
 import { STRATEGIES, STRATEGY_NAMES, getAllStrategiesMap, addExtraStrategies } from "./data/strategies";
-import { useTradovate } from "./hooks/useTradovate";
 
 import type { TradeComment, ReactionMap, Trade, Profile, Circle, Insight, StrategyDef } from "./types";
 import { AvatarCircle, SectionKicker, StrategySelect, SubNavDropdown, GearButton, Toast, ToastStack, KodaMarkFilled, KodaMark, GlassOrb, Pill, Card, Kicker, Delta, IconButton, EmptyState, outcomeColor, outcomeLetter, stratCode, stratShort, compressImage, MONO, BODY, DISPLAY, EmptyTradesState, CelebrationOverlay } from "./shared";
@@ -406,12 +405,10 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   const [showCalc,    setShowCalc]    = useState(false);
   const [showFirstSessionSurvey, setShowFirstSessionSurvey] = useState(false);
 
-  const [showLiveModal, setShowLiveModal] = useState(false);
   const [fontScale, setFontScale] = useState<number>(() => {
     try { return parseFloat(localStorage.getItem("koda_font_scale") ?? "1") || 1; } catch { return 1; }
   });
 
-  // Tradovate — state + handlers managed by useTradovate (wired below after saveTrades).
 
   // Swipe — non-passive listener so preventDefault() stops browser chrome from shifting
   const swipeRef = useRef<HTMLDivElement | null>(null);
@@ -542,7 +539,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
 
   async function loadAll() {
     const store = storage;
-    const LOAD_KEYS = ["koda_trades","koda_profile","koda_checklists","koda_rules","koda_dark","koda_theme_pref","koda_circles","koda_thresholds","koda_custom_strategies","koda_stripe_customer","koda_session_started","koda_debrief_log","koda_intervention_lockout","koda_tradovate","koda_discipline_log"] as const;
+    const LOAD_KEYS = ["koda_trades","koda_profile","koda_checklists","koda_rules","koda_dark","koda_theme_pref","koda_circles","koda_thresholds","koda_custom_strategies","koda_stripe_customer","koda_session_started","koda_debrief_log","koda_intervention_lockout","koda_discipline_log"] as const;
     const [kv, v2ProfileRes] = await Promise.all([
       store.getMany([...LOAD_KEYS]).catch(() => new Map()),
       (isFlagOn("newProfile") && user?.id)
@@ -674,7 +671,6 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
         
       }
     } catch (e) { log.error("loadAll.customStrategies", e); }
-    // Tradovate session loaded by useTradovate hook after loading completes.
 
     // Load Stripe customer ID (pre-fetched in the LOAD_KEYS batch above)
     try {
@@ -810,16 +806,6 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
       void linkTradeToRecentIntervention(profile.uid, newTradeId);
     }
   }
-  // ── Tradovate ─────────────────────────────────────────────────────────────
-  // Placed here because saveTrades (defined above) must exist before the hook.
-  const {
-    tradovateSession, tradovatePositions,
-    tradovateConnecting, tradovateSyncing,
-    tradovateError, tradovateForm,
-    setTradovateForm,
-    connectTradovate, refreshTradovatePositions,
-    syncTradovateFills, disconnectTradovate,
-  } = useTradovate({ loading, trades, saveTrades, showToast });
 
   // ── Circles ───────────────────────────────────────────────────────────────
   // circleStats is a memo so it can be computed here (before loadAll / the
@@ -2389,92 +2375,6 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                       </section>
                     );
                   })()}
-
-                  {/* Live positions — hidden until broker API is ready */}
-                  {isFlagOn("livePositions") && <section style={{ marginTop: "clamp(40px, 6vw, 56px)" }}>
-                    {/* Section label */}
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                        <span style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.14em" }}>LIVE POSITIONS</span>
-                        {tradovateSession && (
-                          <span style={{ position: "relative", display: "inline-flex", width: "7px", height: "7px" }}>
-                            <span style={{ position: "absolute", inset: 0, borderRadius: "50%", background: C.green, opacity: 0.3, animation: "livePulse 2.4s ease-in-out infinite" }} />
-                            <span style={{ position: "relative", display: "inline-block", width: "7px", height: "7px", borderRadius: "50%", background: C.green }} />
-                          </span>
-                        )}
-                      </div>
-                      {tradovateSession && (
-                        <button onClick={() => setShowLiveModal(true)}
-                          style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", padding: 0 }}>
-                          Manage →
-                        </button>
-                      )}
-                    </div>
-
-                    {tradovateSession ? (
-                      /* ── Connected: show positions ── */
-                      <div style={{ border: `1px solid ${C.border}`, borderRadius: "10px", overflow: "hidden" }}>
-                        {/* Account bar */}
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px 14px", borderBottom: `1px solid ${C.border}`, background: C.panel ?? "transparent" }}>
-                          <span style={{ display: "inline-block", width: "6px", height: "6px", borderRadius: "50%", background: C.green, flexShrink: 0 }} />
-                          <span style={{ fontFamily: MONO, fontSize: "11px", color: C.text2, letterSpacing: "0.06em" }}>
-                            {tradovateSession.accountName ?? "Tradovate"}
-                          </span>
-                          <span style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.06em" }}>
-                            · {tradovateSession.env.toUpperCase()}
-                          </span>
-                          {tradovateSession.lastSyncTime && (
-                            <span style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.04em", marginLeft: "auto" }}>
-                              synced {new Date(tradovateSession.lastSyncTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                            </span>
-                          )}
-                        </div>
-                        {tradovatePositions.length === 0 ? (
-                          <div style={{ padding: "28px 14px", fontFamily: BODY, fontSize: "13px", color: C.muted, textAlign: "center" }}>
-                            No open positions right now
-                          </div>
-                        ) : (
-                          tradovatePositions.map((pos, idx) => (
-                            <div key={pos.contractId} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "13px 14px", borderBottom: idx < tradovatePositions.length - 1 ? `1px solid ${C.border}` : "none" }}>
-                              <div>
-                                <div style={{ fontFamily: MONO, fontSize: "13px", color: C.text, letterSpacing: "0.04em" }}>{pos.symbol}</div>
-                                <div style={{ fontFamily: MONO, fontSize: "10px", color: pos.netPos > 0 ? C.green : C.red, marginTop: "3px", letterSpacing: "0.04em" }}>
-                                  {pos.netPos > 0 ? "▲ Long" : "▼ Short"} {Math.abs(pos.netPos)} ct · avg {pos.netPrice.toFixed(2)}
-                                </div>
-                              </div>
-                              <div style={{ textAlign: "right" }}>
-                                <div style={{ fontFamily: DISPLAY, fontSize: "17px", fontWeight: 600, color: pos.openPnl >= 0 ? C.green : C.red, letterSpacing: "-0.01em" }}>
-                                  {pos.openPnlStr}
-                                </div>
-                              </div>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    ) : (
-                      /* ── Not connected: styled connect card ── */
-                      <button onClick={() => setShowLiveModal(true)}
-                        style={{ width: "100%", background: "transparent", border: `1px solid ${C.border}`, borderRadius: "10px", padding: "0", cursor: "pointer", textAlign: "left", display: "block" }}>
-                        <div style={{ padding: "18px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px" }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-                            {/* Icon */}
-                            <div style={{ width: "38px", height: "38px", borderRadius: "8px", border: `1px solid ${C.border2}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.muted} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                                <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>
-                              </svg>
-                            </div>
-                            <div>
-                              <div style={{ fontFamily: BODY, fontSize: "14px", fontWeight: 600, color: C.text, marginBottom: "3px" }}>Connect Tradovate</div>
-                              <div style={{ fontFamily: BODY, fontSize: "12px", color: C.muted, lineHeight: 1.4 }}>
-                                Live positions · Auto-import fills
-                              </div>
-                            </div>
-                          </div>
-                          <span style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", flexShrink: 0 }}>Set up →</span>
-                        </div>
-                      </button>
-                    )}
-                  </section>}
 
                   {/* Zero-state CTA — shown instead of charts when user has no trades */}
                   {trades.length === 0 && (
@@ -4786,144 +4686,6 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
             style={{ position: "fixed", bottom: isDesktop ? "28px" : "calc(96px + env(safe-area-inset-bottom))", right: "16px", zIndex: 998, background: C.text, color: C.bg, border: "none", borderRadius: "999px", padding: "12px 20px", minHeight: "44px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", boxShadow: "0 2px 12px rgba(0,0,0,0.25)", display: "flex", alignItems: "center" }}>
             Feedback
           </button>
-        )}
-
-        {/* ── Tradovate connect / live positions sheet ── */}
-        {showLiveModal && (
-          <div style={{ position: "fixed", inset: 0, zIndex: 9998, background: "rgba(0,0,0,0.65)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}
-            onClick={() => setShowLiveModal(false)}>
-            <div style={{ background: C.bg, borderRadius: "20px 20px 0 0", width: "100%", maxWidth: "clamp(0px, 100%, min(560px, 92vw))", padding: "10px 24px calc(40px + env(safe-area-inset-bottom))", maxHeight: "92vh", overflowY: "auto" }}
-              onClick={e => e.stopPropagation()}>
-              <div style={{ width: "36px", height: "4px", background: C.border2, borderRadius: "2px", margin: "14px auto 28px" }} />
-
-              {!tradovateSession ? (
-                /* ── Connect form ── */
-                <>
-                  <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.18em", textTransform: "uppercase", marginBottom: "10px" }}>Tradovate · Connect Account</div>
-                  <div style={{ fontFamily: DISPLAY, fontSize: "22px", fontWeight: 500, color: C.text, letterSpacing: "-0.02em", marginBottom: "6px" }}>Live Positions</div>
-                  <div style={{ fontFamily: BODY, fontSize: "13px", color: C.muted, lineHeight: 1.55, marginBottom: "24px" }}>
-                    Connect your Tradovate account to see open positions in real time and auto-import closed fills into your journal.
-                  </div>
-
-                  {/* Env toggle */}
-                  <div style={{ display: "flex", gap: "8px", marginBottom: "18px" }}>
-                    {(["demo", "live"] as const).map(env => (
-                      <button key={env} onClick={() => setTradovateForm(f => ({ ...f, env }))}
-                        style={{ flex: 1, padding: "10px", border: `1px solid ${tradovateForm.env === env ? C.text : C.border2}`, borderRadius: "6px", background: tradovateForm.env === env ? C.text : "transparent", color: tradovateForm.env === env ? C.bg : C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", transition: "all 0.15s" }}>
-                        {env}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "18px" }}>
-                    <div>
-                      <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "6px" }}>Username</div>
-                      <input
-                        type="text"
-                        value={tradovateForm.username}
-                        onChange={e => setTradovateForm(f => ({ ...f, username: e.target.value }))}
-                        placeholder="Tradovate username"
-                        autoComplete="username"
-                        style={{ width: "100%", background: C.panel, border: `1px solid ${C.border2}`, borderRadius: "8px", padding: "12px 14px", fontFamily: BODY, fontSize: "14px", color: C.text, outline: "none", boxSizing: "border-box" }}
-                      />
-                    </div>
-                    <div>
-                      <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "6px" }}>Password</div>
-                      <input
-                        type="password"
-                        value={tradovateForm.password}
-                        onChange={e => setTradovateForm(f => ({ ...f, password: e.target.value }))}
-                        onKeyDown={e => { if (e.key === "Enter") connectTradovate(); }}
-                        placeholder="••••••••"
-                        autoComplete="current-password"
-                        style={{ width: "100%", background: C.panel, border: `1px solid ${C.border2}`, borderRadius: "8px", padding: "12px 14px", fontFamily: BODY, fontSize: "14px", color: C.text, outline: "none", boxSizing: "border-box" }}
-                      />
-                    </div>
-                  </div>
-
-                  {tradovateError && (
-                    <div style={{ fontFamily: BODY, fontSize: "12px", color: C.red, marginBottom: "14px", padding: "10px 14px", background: C.red + "18", borderRadius: "6px" }}>
-                      {tradovateError}
-                    </div>
-                  )}
-
-                  <div style={{ fontFamily: BODY, fontSize: "11px", color: C.dim, lineHeight: 1.5, marginBottom: "20px" }}>
-                    Credentials are sent to your Vercel proxy and never stored in plain text. Only the session token is saved locally.
-                  </div>
-
-                  <button
-                    onClick={connectTradovate}
-                    disabled={tradovateConnecting || !tradovateForm.username.trim() || !tradovateForm.password.trim()}
-                    style={{ width: "100%", padding: "14px", border: "none", borderRadius: "8px", background: tradovateConnecting || !tradovateForm.username.trim() || !tradovateForm.password.trim() ? C.border2 : C.text, color: tradovateConnecting || !tradovateForm.username.trim() || !tradovateForm.password.trim() ? C.muted : C.bg, cursor: tradovateConnecting || !tradovateForm.username.trim() || !tradovateForm.password.trim() ? "not-allowed" : "pointer", fontFamily: MONO, fontSize: "11px", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "12px" }}>
-                    {tradovateConnecting ? "Connecting…" : "Connect Tradovate →"}
-                  </button>
-                  <button onClick={() => setShowLiveModal(false)}
-                    style={{ width: "100%", padding: "12px", border: `1px solid ${C.border2}`, borderRadius: "8px", background: "transparent", color: C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase" }}>
-                    Cancel
-                  </button>
-                </>
-              ) : (
-                /* ── Connected state ── */
-                <>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px" }}>
-                    <div>
-                      <div style={{ fontFamily: MONO, fontSize: "10px", color: C.green, letterSpacing: "0.18em", textTransform: "uppercase", marginBottom: "6px", display: "flex", alignItems: "center", gap: "6px" }}>
-                        <span style={{ display: "inline-block", width: "6px", height: "6px", borderRadius: "50%", background: C.green }} />
-                        Connected
-                      </div>
-                      <div style={{ fontFamily: DISPLAY, fontSize: "20px", fontWeight: 500, color: C.text, letterSpacing: "-0.02em" }}>
-                        {tradovateSession.accountName ?? "Tradovate"}
-                      </div>
-                      <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.06em", marginTop: "4px" }}>
-                        {tradovateSession.env.toUpperCase()} ACCOUNT{tradovateSession.lastSyncTime ? ` · Last sync ${new Date(tradovateSession.lastSyncTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : ""}
-                      </div>
-                    </div>
-                    <button onClick={syncTradovateFills} disabled={tradovateSyncing}
-                      style={{ padding: "10px 18px", border: `1px solid ${C.border2}`, borderRadius: "999px", background: "transparent", color: tradovateSyncing ? C.muted : C.text, cursor: tradovateSyncing ? "not-allowed" : "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.10em", textTransform: "uppercase", whiteSpace: "nowrap" }}>
-                      {tradovateSyncing ? "Syncing…" : "Sync fills"}
-                    </button>
-                  </div>
-
-                  {/* Live positions list */}
-                  <div style={{ marginBottom: "24px" }}>
-                    <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <span>Open Positions {tradovatePositions.length > 0 && `(${tradovatePositions.length})`}</span>
-                      <button onClick={() => refreshTradovatePositions(tradovateSession)} style={{ background: "none", border: "none", color: C.dim, cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase" }}>Refresh</button>
-                    </div>
-                    {tradovatePositions.length === 0 ? (
-                      <div style={{ fontFamily: BODY, fontSize: "13px", color: C.muted, padding: "20px 0", textAlign: "center", borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}` }}>
-                        No open positions
-                      </div>
-                    ) : (
-                      <div style={{ borderTop: `1px solid ${C.border}` }}>
-                        {tradovatePositions.map(pos => (
-                          <div key={pos.contractId} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: `1px solid ${C.border}` }}>
-                            <div>
-                              <div style={{ fontFamily: MONO, fontSize: "13px", color: C.text, letterSpacing: "0.04em" }}>{pos.symbol}</div>
-                              <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, marginTop: "2px" }}>
-                                {pos.netPos > 0 ? "+" : ""}{pos.netPos} contracts · avg {pos.netPrice.toFixed(2)}
-                              </div>
-                            </div>
-                            <div style={{ textAlign: "right" }}>
-                              <div style={{ fontFamily: DISPLAY, fontSize: "15px", fontWeight: 500, color: pos.openPnl >= 0 ? C.green : C.red, letterSpacing: "-0.01em" }}>
-                                {pos.openPnlStr}
-                              </div>
-                              <div style={{ fontFamily: MONO, fontSize: "10px", color: C.dim, letterSpacing: "0.06em", textTransform: "uppercase", marginTop: "2px" }}>Open P&L</div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  <button onClick={disconnectTradovate}
-                    style={{ width: "100%", padding: "12px", border: `1px solid ${C.red}55`, borderRadius: "8px", background: "transparent", color: C.red, cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase" }}>
-                    Disconnect Account
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
         )}
 
         {/* ── First-run tour ── */}
