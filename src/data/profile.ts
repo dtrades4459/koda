@@ -98,6 +98,18 @@ export async function upsertProfile(p: Partial<Profile> & { userId: string }): P
     .select()
     .single();
   if (error) {
+    // KODA-TT-P: handle-collision (23505) fires in a retry loop from callers;
+    // demote so a stuck user doesn't spam Sentry. Caller still gets null.
+    if (error.code === "23505" && /handle/.test(error.message ?? "")) {
+      log.warn("profile.upsertProfile", "handle collision (KODA-TT-P)", {
+        userId: p.userId,
+        attempted_handle: p.handle,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+      });
+      return null;
+    }
     const wrapped = new Error(error.message || error.code || "upsert failed");
     log.error("profile.upsertProfile", wrapped, { userId: p.userId, code: error.code, details: error.details, hint: error.hint });
     return null;
