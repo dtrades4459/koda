@@ -63,14 +63,18 @@ This spec covers **Tradovate only**. Research (this session, 2026-06-10) confirm
    Tradovate ── auto email ──▶  user's Gmail
                                       │
                                       ▼  (user's Gmail filter forwards)
-                          Postmark Inbound MX (in.kodatrade.co.uk)
+            Inbound provider MX (in.kodatrade.co.uk)
+              ┌─────────────────────────────────────┐
+              │   v1: Postmark Inbound              │
+              │   v2: Self-hosted Postfix + shim    │
+              └─────────────────────────────────────┘
                                       │
-                                      ▼  (JSON webhook + base64 attachments)
+                                      ▼  (normalized JSON + base64 attachments)
                           POST /api/email/inbound  (Vercel function)
                                       │
                 ┌─────────────────────┴───────────────────┐
                 ▼                                          ▼
-        Postmark HMAC verify                 Look up user by `+token` alias
+        Provider HMAC / shared-secret      Look up user by `+token` alias
                 ▼                                          ▼
         Sender allowlist                       Reject unknown / replay
    (`noreply@tradovate.com`)                              │
@@ -87,6 +91,33 @@ This spec covers **Tradovate only**. Research (this session, 2026-06-10) confirm
                                                           ▼
                                        Web push to user's devices
 ```
+
+### 4a · Provider-agnostic boundary
+
+`/api/email/inbound` accepts a **normalized inbound envelope**, not Postmark's native shape:
+
+```ts
+interface InboundEmail {
+  messageId: string;           // RFC 5322 Message-ID
+  to: string;                  // routing address (carries the +token alias)
+  from: string;                // unwrapped original sender
+  subject: string;
+  receivedAt: string;          // ISO 8601 UTC
+  attachments: Array<{
+    filename: string;
+    contentType: string;
+    contentBase64: string;
+  }>;
+  rawHeaders: Record<string, string>;
+}
+```
+
+Two thin adapters live in `api/email/providers/`:
+
+- **`postmark.ts`** (v1, live next week) — verifies Postmark's webhook HMAC, maps their JSON to `InboundEmail`.
+- **`postfix-shim.ts`** (v2, once Dylon's private mail server is up) — verifies a shared HMAC secret set in Vercel env, accepts the JSON our Postfix-side shim posts.
+
+Adapter choice is decided by the URL path or a header — both adapters POST to the same `/api/email/inbound` core which only sees `InboundEmail`. Provider migration is a DNS swap + env var change, **no application logic touched**.
 
 ---
 
@@ -252,7 +283,7 @@ Two layers:
 
 ## 10 · Security
 
-- **HMAC verify the Postmark webhook.** Reject unsigned requests.
+- **HMAC verify the inbound webhook.** v1: Postmark's signature on every request. v2: shared HMAC secret between Postfix shim and Vercel function. Reject unsigned requests in both modes.
 - **Sender allowlist:** only `noreply@tradovate.com` (or its current SPF-verified equivalent — TBD on fixture). Forwarded mail preserves the original sender in `From` only sometimes; we may need to use the `Reply-To` or `X-Original-From` header set by Gmail filter forwarding. **This is a known risk** — see Open Questions.
 - **Token entropy:** 8 hex chars = 32 bits. Sufficient for spam-deterrence (an attacker can't guess a token), insufficient for cryptographic auth — but the sender allowlist is the real gate. The token just routes.
 - **Token rotation:** user-triggered, single-button. Old token rejected immediately.
@@ -311,12 +342,33 @@ Two layers:
 
 ## 14 · Open questions / risks
 
-1. **PDF contains exec IDs?** Needs Dylon's real fixture. If no → synthetic key (lower-quality dedupe).
-2. **Forwarded-email sender header:** Gmail strips the original `From` and replaces it with the user's own address; we need to read `X-Forwarded-For`, `Reply-To`, or parse the subject. Postmark gives us the parsed headers — we just need to confirm which one carries the original Tradovate address through Gmail's forwarder.
-3. **Tradovate template stability.** No way to know in advance. Mitigation: store raw PDF + parse_confidence, alert on regressions.
-4. **`in.kodatrade.co.uk` subdomain setup.** Need DNS MX record pointed at Postmark. ~10 minutes of ops work; non-blocking but on the runbook.
-5. **Postmark account exists?** If not, create one before plan execution. Cost zero at our volume.
-6. **Push notification permissions** — if user hasn't granted them, fall back to silent (banner still works on next open).
+1. **🚨 PLAN BLOCKER — Eval/sim account email support.** Wedge ICP is 50K eval-challenge aspirants, not live-funded traders. Tradovate confirmed auto-emails for live accounts (ON by default); unconfirmed whether eval/sim accounts get the same treatment. **Dylon owns verification this week**: log in to Tradovate → Account → Notifications, look for the daily statement toggle. If eval accounts don't auto-email, the wedge ICP fits the feature differently and the spec changes (likely: ship for live first, add a "coming soon" state for eval).
+2. **PDF contains exec IDs?** Needs Dylon's real fixture. If no → synthetic key (lower-quality dedupe).
+3. **Forwarded-email sender header:** Gmail strips the original `From` and replaces it with the user's own address; we need to read `X-Forwarded-For`, `Reply-To`, or parse the subject. Postmark gives us the parsed headers — we just need to confirm which one carries the original Tradovate address through Gmail's forwarder.
+4. **Tradovate template stability.** No way to know in advance. Mitigation: store raw PDF + parse_confidence, alert on regressions.
+5. **`in.kodatrade.co.uk` subdomain setup.** v1 needs DNS MX record pointed at Postmark. v2 needs DNS MX record pointed at the private mail server. ~10 minutes of ops work per swap.
+6. **Postmark account exists?** If not, create one before plan execution. Cost zero at our volume.
+7. **Push notification permissions** — if user hasn't granted them, fall back to silent (banner still works on next open).
+
+---
+
+## 14a · Migration path (v1 Postmark → v2 self-hosted)
+
+Per session decision 2026-06-10: ship AutoJournal on Postmark Inbound for v1 to keep the wedge sprint on schedule. Migrate to Dylon's private mail server (going live Friday 2026-06-12 alongside the private code-hosting move) once it's stable.
+
+**Migration is small** because of the §4a provider-agnostic boundary:
+
+1. Stand up Postfix (or Stalwart) on the private box, MX-record `in.kodatrade.co.uk` to it.
+2. Drop in a ~50-line Postfix-to-webhook shim: receive mail via a Postfix transport hook, JSON-encode into the `InboundEmail` shape, POST to `/api/email/inbound` with the shared-secret HMAC header.
+3. Set `INBOUND_PROVIDER=postfix` env var in Vercel; deploy.
+4. Test with a forwarded statement; confirm trades land.
+5. Cancel Postmark when v2 has 7 days of clean runs.
+
+No application logic changes. No DB changes. No client changes. Strictly an infra swap.
+
+Risks during migration:
+- Dual-running both providers briefly is **not safe** (would double-process emails). Cut-over is a clean DNS swap, not parallel.
+- Self-hosted Postfix needs basic spam filtering (rspamd or similar) to avoid the webhook getting hammered by junk. Built into both Mailcow and Stalwart.
 
 ---
 
