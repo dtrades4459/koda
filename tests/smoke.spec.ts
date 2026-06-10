@@ -127,8 +127,10 @@ test.describe("cookie consent (PECR / GDPR)", () => {
     await banner.getByRole("button", { name: /accept/i }).click();
     await expect(banner).not.toBeVisible();
 
+    // CookieConsent stores granular JSON: { essential, analytics, marketing, ts }
     const stored = await page.evaluate(() => localStorage.getItem("koda_cookie_consent"));
-    expect(stored).toBe("accepted");
+    expect(stored, "consent choice should be persisted").toBeTruthy();
+    expect(JSON.parse(stored!)).toMatchObject({ essential: true, analytics: true });
 
     await page.reload();
     await expect(page.getByRole("dialog", { name: /cookie consent/i })).not.toBeVisible();
@@ -141,8 +143,10 @@ test.describe("cookie consent (PECR / GDPR)", () => {
     await banner.getByRole("button", { name: /reject/i }).click();
     await expect(banner).not.toBeVisible();
 
+    // Reject keeps essential cookies but must record analytics: false
     const stored = await page.evaluate(() => localStorage.getItem("koda_cookie_consent"));
-    expect(stored).toBe("rejected");
+    expect(stored, "consent choice should be persisted").toBeTruthy();
+    expect(JSON.parse(stored!)).toMatchObject({ essential: true, analytics: false });
 
     await page.reload();
     await expect(page.getByRole("dialog", { name: /cookie consent/i })).not.toBeVisible();

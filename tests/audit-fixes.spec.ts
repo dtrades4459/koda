@@ -157,10 +157,14 @@ test.describe("Reset password", () => {
     // Use a valid username format (alphanumeric, no @ or dots — those fail USERNAME_RE).
     await usernameInput.fill("smoketestuser");
 
-    // Stub the reset-password API so the UI transitions to "reset-sent" regardless
-    // of whether the test-environment email service is configured.
-    await page.route("**/api/reset-password", (route) =>
-      route.fulfill({ status: 200, body: JSON.stringify({ ok: true }) })
+    // Stub the reset-password API so the UI transitions to "reset-sent" without
+    // hitting prod — the live endpoint rate-limits 5/10min per IP and GitHub
+    // runners share IPs. NB: the endpoint merged into /api/account?action=…
+    // during the 12-function consolidation; the old "**/api/reset-password"
+    // glob silently never matched.
+    await page.route(
+      (url) => url.pathname.endsWith("/api/account") && url.searchParams.get("action") === "reset-password",
+      (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true }) })
     );
 
     // Click the specific "Send reset link" button (not the OAuth buttons).

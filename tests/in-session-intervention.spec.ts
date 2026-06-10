@@ -36,9 +36,9 @@ test("anonymous: auth screen does not show intervention sheet", async ({ page })
   await page.goto("/");
   await dismissCookieBanner(page);
 
-  // Whether the auth form or the cookie banner is up — none of
-  // them should be the intervention sheet.
-  await expect(page.getByText(/tilt signal/i)).not.toBeVisible();
+  // Whether the auth form or the cookie banner is up — none of them should
+  // be the intervention sheet. Target the sheet's unique CTA, not loose
+  // text: the auth screen's marketing blurb legitimately says "tilt signal".
   await expect(page.getByRole("button", { name: /i'm aware/i })).not.toBeVisible();
 });
 

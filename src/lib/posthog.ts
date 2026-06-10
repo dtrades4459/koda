@@ -12,8 +12,17 @@ export const COOKIE_CONSENT_KEY = "koda_cookie_consent";
 
 export function hasAnalyticsConsent(): boolean {
   if (typeof window === "undefined") return false;
-  try { return localStorage.getItem(COOKIE_CONSENT_KEY) === "accepted"; }
-  catch { return false; }
+  try {
+    const raw = localStorage.getItem(COOKIE_CONSENT_KEY);
+    if (!raw) return false;
+    // Legacy string format (pre-granular-consent banner)
+    if (raw === "accepted") return true;
+    if (raw === "rejected") return false;
+    // Granular format written by CookieConsent.tsx:
+    //   { essential: true, analytics: bool, marketing: bool, ts: number }
+    const p: unknown = JSON.parse(raw);
+    return typeof p === "object" && p !== null && (p as { analytics?: unknown }).analytics === true;
+  } catch { return false; }
 }
 
 export function initPostHog() {
