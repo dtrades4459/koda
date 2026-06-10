@@ -31,8 +31,8 @@ Use Kōda every NY AM as a real trader. Log every trade in-app. Day 7 + Day 14 c
 1. **30-day dogfood, starts Mon 2026-06-08** — daily NY AM use of Kōda as a real trader. Gates the TikTok distribution push.
 2. **Deploy-gating smoke test** — ci.yml exists but SMOKE_TEST_* secrets unset (auth'd smoke never runs), e2e is continue-on-error, and direct pushes bypass the "build" protection rule. In progress 2026-06-10.
 3. **v2 trades migration — DECIDED: finish.** Stage 1 (backfill) done 2026-06-10: all KV trades now in `public.trades`, verified per-user (incl. one id-collision rescue under client_id `…-dup1`). Stage 2 = flip reads to `public.trades` + retire KV path — scheduled AFTER the 50K Eval launch (2026-06-15). NB: `api/trade-gate.ts` is dead code (journaling is free always, no trade limits) — delete in teardown, frees a Hobby function slot.
-4. **Tradovate dead-code teardown** — `useTradovate` + `api/tradovate.ts` + `src/lib/tradovate.ts` + ~150 lines of dead UI in `Koda.tsx`. `liveBrokerSync` flag stays default-off.
-5. **`Koda.tsx` split** — ~4,950 lines. Extract Home / Stats / Settings / Log per `TradingCircles.tsx` pattern.
+4. ~~**Tradovate dead-code teardown**~~ — DONE 2026-06-10 (`700a0f8`): 1,057 lines deleted incl. `api/tradovate.ts` + `api/trade-gate.ts` → **2 Vercel function slots freed (10/12 used)**, AutoJournal webhook is unblocked. Live Connections panel + server broker sync untouched.
+5. **`Koda.tsx` split** — ~4,720 lines. Extract Home / Stats / Settings / Log per `TradingCircles.tsx` pattern.
 
 ## Active flags
 
