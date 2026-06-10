@@ -83,7 +83,7 @@ The existing leaderboard writer for this circle must always write both `r` and `
 
 ### Visibility rules (all must be true to show)
 - `localStorage.getItem("koda_comp_2026_joined") !== "1"` (not already joined)
-- `Date.now() < 1752624000000` (before July 15 2026 23:59 UTC — hardcoded constant)
+- `Date.now() < COMP_END_TS` (before July 15 2026 23:59 UTC — `new Date("2026-07-15T23:59:59Z").getTime()`)
 - User is logged in (caller responsibility — banner is only rendered inside the authenticated app)
 
 ### Layout
@@ -213,7 +213,7 @@ Contains the following rules (styled to match `/privacy.html`):
 
 ```ts
 const COMP_CIRCLE_CODE = "50K-EVAL-2026";
-const COMP_END_TS = 1752624000000; // 2026-07-15T23:59:00Z
+const COMP_END_TS = new Date("2026-07-15T23:59:59Z").getTime(); // 1784159999000
 const COMP_JOINED_KEY = "koda_comp_2026_joined";
 ```
 
