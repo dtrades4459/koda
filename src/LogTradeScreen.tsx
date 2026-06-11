@@ -13,6 +13,7 @@ import { Card, Kicker, Pill, MONO, BODY, DISPLAY } from "./shared";
 import type { Theme } from "./theme";
 import { SESSIONS, BIAS, EMOTION_TAGS, MISTAKE_TAGS, getEmotionTags } from "./tradeConstants";
 import { SignedImg } from "./components/SignedImg";
+import { CompShotWarning } from "./components/CompShotWarning";
 
 export interface LogTradeScreenProps {
   C: Record<string, string>;
@@ -422,6 +423,7 @@ export function LogTradeScreen({
               onChange={e => handleScreenshotUpload(e, null)} style={{ display: "none" }} />
           </label>
         )}
+        <CompShotWarning C={T} date={form.date || ""} hasScreenshot={!!form.screenshot} />
       </Card>
 
       {/* ── Save button (design-spec: teal arrow CTA) ── */}
