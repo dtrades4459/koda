@@ -506,6 +506,9 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
       : "0";
     // Append discipline so a score change alone (e.g. a new tagged trade flipping
     // the rule-adherence percentage) triggers a circle republish.
+    // Screenshot coverage is deliberately NOT in the fingerprint: a screenshot-only
+    // edit doesn't republish (shotsMissing refreshes on the next stats change; the
+    // comp self strip recomputes locally so the entrant always sees fresh numbers).
     return `${w}:${l}:${pnl.toFixed(2)}:${avgRR}:${disciplineScore?.score ?? "x"}`;
   }, [trades, disciplineScore]);
 
@@ -4579,6 +4582,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
               isPro={isPro}
               isDesktop={isDesktop}
               onJoinCompetition={handleJoinCompetition}
+              myCompEligibility={myCompEligibility}
             />
           )}
 

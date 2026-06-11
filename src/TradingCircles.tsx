@@ -2,7 +2,7 @@
 import { supabase } from "./lib/supabase";
 import { StrategyPill, stratCode, KodaMark, MONO, BODY, DISPLAY, EmptyCirclesState, CornerGlow, SubNavDropdown } from "./shared";
 import { KODA_GLOBAL_CODE } from "./hooks/useCircles";
-import { COMP_CIRCLE_CODE, shouldShowCompetitionCard, compStatusText } from "./lib/competition";
+import { COMP_CIRCLE_CODE, COMP_MIN_TRADES, shouldShowCompetitionCard, compStatusText, type CompEligibility } from "./lib/competition";
 import { readCircleMembers } from "./data/circles";
 import { markChatRead } from "./data/chatReads";
 import { useUnreadCircles } from "./hooks/useUnreadCircles";
@@ -89,6 +89,8 @@ export interface TradingCirclesProps {
   isPro: boolean;
   isDesktop: boolean;
   onJoinCompetition: () => Promise<void>;
+  /** Viewer's own comp eligibility — drives the self strip on the comp leaderboard. */
+  myCompEligibility: CompEligibility;
 }
 
 // Raw DB row shape returned by the circle_messages Supabase query.
@@ -111,7 +113,7 @@ export function TradingCircles({
   STRATEGY_NAMES, C, inp, sel, lbl, pillPrimary, pillGhost,
   following, followUser, unfollowUser, kickMember, leaveCircle,
   openProfile, isJoiningCircle, isCreatingCircle,
-  totalPnlDollar, hasDollarData, isPro, isDesktop, onJoinCompetition,
+  totalPnlDollar, hasDollarData, isPro, isDesktop, onJoinCompetition, myCompEligibility,
 }: TradingCirclesProps) {
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [lbSort, setLbSort] = useState<"all" | "week">("all");
@@ -1252,6 +1254,20 @@ export function TradingCircles({
             {/* ── LEADERBOARD ── */}
             {circleTab === "leaderboard" && (
               <div>
+                {isCompCircle && (() => {
+                  const e = myCompEligibility;
+                  const head = e.eligible
+                    ? `ELIGIBLE · ${e.trades} TRADES`
+                    : `${e.trades}/${COMP_MIN_TRADES} TRADES`;
+                  const tail = e.missingShots > 0
+                    ? `${e.missingShots} MISSING SCREENSHOT${e.missingShots === 1 ? "" : "S"}`
+                    : "ALL SCREENSHOTS ATTACHED";
+                  return (
+                    <div style={{ fontFamily: MONO, fontSize: 10, color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase" as const, textAlign: "center" as const, padding: "6px 0 14px" }}>
+                      {head} · {tail}
+                    </div>
+                  );
+                })()}
                 {lbError && (
                   <div style={{ padding: "20px", textAlign: "center", fontFamily: BODY, fontSize: "13px", color: C.muted }}>
                     Couldn't load leaderboard. <button onClick={async () => { if (!activeCircle) return; setLoadingLB(true); setLbError(false); try { const [e, ch] = await Promise.all([fetchCircleLeaderboard(activeCircle, lbSort), fetchActiveChallenge(activeCircle.code)]); setLeaderboard(e); setActiveChallenge(ch); } catch { setLbError(true); } setLoadingLB(false); }} style={{ background: "none", border: "none", color: C.accent, cursor: "pointer", fontFamily: MONO, fontSize: "11px", textDecoration: "underline" }}>Try again</button>
@@ -1294,6 +1310,9 @@ export function TradingCircles({
                                   <span style={{ fontFamily: DISPLAY, fontSize: "17px", fontWeight: 500, color: C.text, letterSpacing: "-0.01em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{entry.name}</span>
                                   {isMe && <span style={{ fontFamily: MONO, fontSize: "10px", color: C.green, letterSpacing: "0.12em", textTransform: "uppercase" }}>· YOU</span>}
                                   {isStaffRow && <span style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.12em", textTransform: "uppercase" as const, border: `1px solid ${C.border2}`, borderRadius: 4, padding: "1px 5px" }}>REFEREE</span>}
+                                  {isCompCircle && !isStaffRow && (entry.total < COMP_MIN_TRADES || (entry.shotsMissing ?? 0) > 0) && (
+                                    <span style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.12em", textTransform: "uppercase" as const, border: `1px solid ${C.border2}`, borderRadius: 4, padding: "1px 5px" }}>INELIGIBLE</span>
+                                  )}
                                 </div>
                                 {!isStaffRow && (
                                   <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginTop: "3px", fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.06em", textTransform: "uppercase" }}>
