@@ -1316,7 +1316,7 @@ export function TradingCircles({
                                   <span style={{ fontFamily: DISPLAY, fontSize: "17px", fontWeight: 500, color: C.text, letterSpacing: "-0.01em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{entry.name}</span>
                                   {isMe && <span style={{ fontFamily: MONO, fontSize: "10px", color: C.green, letterSpacing: "0.12em", textTransform: "uppercase" }}>· YOU</span>}
                                   {isStaffRow && <span style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.12em", textTransform: "uppercase" as const, border: `1px solid ${C.border2}`, borderRadius: 4, padding: "1px 5px" }}>REFEREE</span>}
-                                  {isCompCircle && compStarted && !isStaffRow && (entry.total < COMP_MIN_TRADES || (entry.shotsMissing ?? 0) > 0) && (
+                                  {isCompCircle && compStarted && !isStaffRow && !isMe && (entry.total < COMP_MIN_TRADES || (entry.shotsMissing ?? 0) > 0) && (
                                     <span style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.12em", textTransform: "uppercase" as const, border: `1px solid ${C.border2}`, borderRadius: 4, padding: "1px 5px" }}>INELIGIBLE</span>
                                   )}
                                 </div>

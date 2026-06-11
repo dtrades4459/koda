@@ -104,6 +104,10 @@ mono small-caps, `C.muted`:
 row markers are hidden until `isCompetitionStarted()` — before Jun 15 everyone
 has 0 window trades and would be wrongly flagged; the circle header's
 "Starts in X days" carries the status instead.
+**Own-row exclusion (added in final review, 2026-06-11):** the INELIGIBLE pill
+never renders on the viewer's own row (`!isMe`) — published coverage can lag a
+screenshot-only repair, and the always-fresh self strip is the authoritative
+self view.
 
 ## 6. Stretch — referee coverage line
 
