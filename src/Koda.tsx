@@ -65,7 +65,7 @@ import { FirstSessionSurvey } from "./components/FirstSessionSurvey";
 import { LoadingSplash } from "./components/LoadingSplash";
 import { OfflineBanner } from "./components/OfflineBanner";
 import { CompetitionBanner } from "./components/CompetitionBanner";
-import { COMP_CIRCLE_CODE, COMP_START_TS, COMP_END_TS, markCompetitionJoined } from "./lib/competition";
+import { COMP_CIRCLE_CODE, markCompetitionJoined, compEligibility, isInCompWindow } from "./lib/competition";
 import { HomeNewsWidget } from "./components/HomeNewsWidget";
 import { NewsScreen } from "./NewsScreen";
 
@@ -856,10 +856,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   // Stats filtered to the competition window (June 15 – July 15).
   // Published to the 50K-EVAL-2026 leaderboard so pre-window trades never count.
   const compCircleStats = useMemo((): CircleStats => {
-    const wt = trades.filter(t => {
-      const d = new Date(t.date).getTime();
-      return d >= COMP_START_TS && d <= COMP_END_TS;
-    });
+    const wt = trades.filter(t => isInCompWindow(t.date));
     const w = wt.filter(t => t.outcome === "Win").length;
     const l = wt.filter(t => t.outcome === "Loss").length;
     const total = wt.length;
@@ -894,6 +891,10 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     return { wins: w, losses: l, total, winRate, totalPnL, totalPnlDollar, weekPnL: 0, avgRR, streak, stratStats, disciplineScore: null, disciplineGrade: null };
   }, [trades]);
 
+  // Eligibility per the published competition rules: min 10 window trades,
+  // screenshot on every window trade. Self strip + published shotsMissing.
+  const myCompEligibility = useMemo(() => compEligibility(trades), [trades]);
+
   const {
     myCircles, setMyCircles,
     circlesView, setCirclesView,
@@ -914,6 +915,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     homeSection,
     stats: circleStats,
     compStats: compCircleStats,
+    compEligibility: myCompEligibility,
     statsFingerprint,
     showToast,
   });

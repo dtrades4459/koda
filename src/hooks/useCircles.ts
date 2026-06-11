@@ -16,7 +16,7 @@ import { storage } from "../lib/storage";
 import { log } from "../lib/log";
 import { subscribeToCircle } from "../data/circles";
 import type { Circle, CircleMember, Profile } from "../types";
-import { COMP_CIRCLE_CODE, COMP_STAFF_UIDS } from "../lib/competition";
+import { COMP_CIRCLE_CODE, COMP_STAFF_UIDS, type CompEligibility } from "../lib/competition";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -49,6 +49,8 @@ export interface LeaderboardEntry {
   updatedAt: string | null;
   /** True for competition staff — shown as referees, stats excluded from scoring. */
   staff?: true;
+  /** Comp-window trades missing a screenshot. Absent on entries published before 2026-06-11. */
+  shotsMissing?: number;
 }
 
 export interface CircleForm {
@@ -95,6 +97,8 @@ interface UseCirclesParams {
   statsFingerprint: string;
   /** Competition-window filtered stats (June 15–July 15). Used only for the 50K-EVAL-2026 circle. */
   compStats?: CircleStats;
+  /** Competition eligibility snapshot — published as shotsMissing on the comp entry. */
+  compEligibility?: CompEligibility;
   /** Toast callback. */
   showToast: (msg: string) => void;
 }
@@ -109,6 +113,7 @@ export function useCircles({
   homeSection,
   stats,
   compStats,
+  compEligibility,
   statsFingerprint,
   showToast,
 }: UseCirclesParams) {
@@ -134,6 +139,8 @@ export function useCircles({
   statsRef.current = stats;
   const compStatsRef = useRef(compStats);
   compStatsRef.current = compStats;
+  const compEligibilityRef = useRef(compEligibility);
+  compEligibilityRef.current = compEligibility;
   const myCirclesRef = useRef<Circle[]>(myCircles);
   myCirclesRef.current = myCircles;
 
@@ -548,6 +555,9 @@ export function useCircles({
       disciplineScore: s.disciplineScore,
       disciplineGrade: s.disciplineGrade,
       updatedAt: new Date().toISOString(),
+      ...(circleCode === COMP_CIRCLE_CODE && compEligibilityRef.current
+        ? { shotsMissing: compEligibilityRef.current.missingShots }
+        : {}),
       ...(isCompStaff ? { staff: true as const } : {}),
     };
     try {
