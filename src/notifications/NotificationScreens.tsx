@@ -239,7 +239,7 @@ function AppChip() {
       width: 22, height: 22, borderRadius: 6, background: "#0A0A0B",
       display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
     }}>
-      <KodaMark size={14} color="#F2F2EE" strokeWidth={2} />
+      <KodaMark size={14} color="#F2F2EE" />
     </div>
   );
 }

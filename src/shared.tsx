@@ -52,17 +52,20 @@ export function outcomeLetter(outcome: string) {
 }
 
 // ─── TR MARK ─────────────────────────────────────────────────────────────────
-export function KodaMark({ size = 28, color = "currentColor", strokeWidth = 1.6 }: {
+// Brand mark — four bold forward chevrons (Discipline · Momentum · Progress ·
+// Success). Rebranded 2026-06-11; brand mint is #45E0C6, but color stays a prop
+// so headers can render the white/theme variant of the lockup.
+export function KodaMark({ size = 28, color = "currentColor", strokeWidth = 9 }: {
   size?: number; color?: string; strokeWidth?: number;
 }) {
   const w = size;
   const h = size * 0.80;
   return (
     <svg width={w} height={h} viewBox="0 0 100 80" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: "block", flexShrink: 0 }}>
-      <path d="M8 8 L8 72 L40 40 Z" stroke={color} strokeWidth={strokeWidth} strokeLinejoin="miter" fill="none" />
-      <path d="M28 8 L28 72 L60 40 Z" stroke={color} strokeWidth={strokeWidth} strokeLinejoin="miter" fill="none" />
-      <path d="M48 8 L48 72 L80 40 Z" stroke={color} strokeWidth={strokeWidth} strokeLinejoin="miter" fill="none" />
-      <path d="M68 8 L68 72 L100 40 Z" stroke={color} strokeWidth={strokeWidth} strokeLinejoin="miter" fill="none" />
+      <path d="M8 8 L34 40 L8 72" stroke={color} strokeWidth={strokeWidth} strokeLinejoin="miter" fill="none" />
+      <path d="M26 8 L52 40 L26 72" stroke={color} strokeWidth={strokeWidth} strokeLinejoin="miter" fill="none" />
+      <path d="M44 8 L70 40 L44 72" stroke={color} strokeWidth={strokeWidth} strokeLinejoin="miter" fill="none" />
+      <path d="M62 8 L88 40 L62 72" stroke={color} strokeWidth={strokeWidth} strokeLinejoin="miter" fill="none" />
     </svg>
   );
 }
@@ -72,11 +75,11 @@ export function KodaMarkFilled({ size = 28, bg = "#0C0C0B" }: { size?: number; b
   return (
     <svg width={size} height={size} viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style={{ display: "block", flexShrink: 0 }}>
       <rect width="100" height="100" rx="18" fill={bg}/>
-      <g fill="none" stroke="#EDEDE8" strokeWidth="2.2" strokeLinejoin="miter" strokeLinecap="square">
-        <polygon points="10,23 37,50 10,77"/>
-        <polygon points="28,23 55,50 28,77"/>
-        <polygon points="46,23 73,50 46,77"/>
-        <polygon points="64,23 91,50 64,77"/>
+      <g fill="none" stroke="#45E0C6" strokeWidth="8" strokeLinejoin="miter">
+        <polyline points="14,20 38,50 14,80"/>
+        <polyline points="31,20 55,50 31,80"/>
+        <polyline points="48,20 72,50 48,80"/>
+        <polyline points="65,20 89,50 65,80"/>
       </g>
     </svg>
   );
