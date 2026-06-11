@@ -9,11 +9,11 @@
   <rect width="1200" height="630" fill="url(#orb1)"/>
   <rect width="1200" height="630" fill="url(#orb2)"/>
   <!-- 4-chevron mark, large -->
-  <g transform="translate(96, 215) scale(1.8)" stroke="#F2F2EE" stroke-width="1.6" stroke-linejoin="miter" fill="none">
-    <polyline points="8,8 22,40 8,72"/>
-    <polyline points="28,8 42,40 28,72"/>
-    <polyline points="48,8 62,40 48,72"/>
-    <polyline points="68,8 82,40 68,72"/>
+  <g transform="translate(96, 215) scale(1.8)" stroke="#45E0C6" stroke-width="9" stroke-linejoin="miter" fill="none">
+    <polyline points="8,8 34,40 8,72"/>
+    <polyline points="26,8 52,40 26,72"/>
+    <polyline points="44,8 70,40 44,72"/>
+    <polyline points="62,8 88,40 62,72"/>
   </g>
   <!-- Wordmark -->
   <text x="96" y="430" font-family="Geist, Inter, system-ui, sans-serif" font-size="72" font-weight="600" letter-spacing="14" fill="#F2F2EE">Kōda</text>

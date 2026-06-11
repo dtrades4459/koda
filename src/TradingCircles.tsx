@@ -778,7 +778,7 @@ export function TradingCircles({
                   <CornerGlow C={C} />
                   <div style={{ display: "flex", alignItems: "center", gap: "12px", position: "relative", zIndex: 1 }}>
                     <div style={{ width: 40, height: 40, borderRadius: "14px", background: (C as any).accentSoft ?? C.panel, border: `1px solid ${C.border2}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <KodaMark size={16} color={C.accent} strokeWidth={2} />
+                      <KodaMark size={16} color={C.accent} />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
