@@ -17,6 +17,7 @@ import { log } from "../lib/log";
 import { subscribeToCircle } from "../data/circles";
 import type { Circle, CircleMember, Profile } from "../types";
 import { COMP_CIRCLE_CODE, COMP_STAFF_UIDS, type CompEligibility } from "../lib/competition";
+import { METRIC_VALUE, type CircleMetric } from "../lib/leaderboardSort";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -607,20 +608,12 @@ export function useCircles({
       }
     }
 
-    const metric = circle.metric || "dollar";
     if (sort === "week") {
       entries.sort((a, b) => (b.weekPnL || 0) - (a.weekPnL || 0));
     } else {
-      entries.sort((a, b) => {
-        if (metric === "dollar")     return (b.totalPnLDollar || 0) - (a.totalPnLDollar || 0);
-        if (metric === "r")          return (b.totalPnL || 0) - (a.totalPnL || 0);
-        if (metric === "winrate")    return (b.winRate || 0) - (a.winRate || 0);
-        if (metric === "trades")     return (b.total || 0) - (a.total || 0);
-        if (metric === "avgr")       return (b.avgRR || 0) - (a.avgRR || 0);
-        // -1 sentinel keeps null-discipline members ranked below anyone with a real score.
-        if (metric === "discipline") return (b.disciplineScore ?? -1) - (a.disciplineScore ?? -1);
-        return (b.totalPnLDollar || 0) - (a.totalPnLDollar || 0);
-      });
+      // Unknown/missing circle.metric falls back to dollar, as before.
+      const mv = METRIC_VALUE[(circle.metric || "dollar") as CircleMetric] ?? METRIC_VALUE.dollar;
+      entries.sort((a, b) => mv(b) - mv(a));
     }
     return entries;
   }

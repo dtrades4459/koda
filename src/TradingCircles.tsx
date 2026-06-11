@@ -4,6 +4,7 @@ import { StrategyPill, stratCode, KodaMark, MONO, BODY, DISPLAY, EmptyCirclesSta
 import { KODA_GLOBAL_CODE } from "./hooks/useCircles";
 import { COMP_CIRCLE_CODE, COMP_MIN_TRADES, COMP_STAFF_UIDS, isCompetitionStarted, shouldShowCompetitionCard, compStatusText, type CompEligibility } from "./lib/competition";
 import { readCircleMembers } from "./data/circles";
+import { sortLeaderboard, METRIC_VALUE, type LeaderboardSortKey } from "./lib/leaderboardSort";
 import { markChatRead } from "./data/chatReads";
 import { useUnreadCircles } from "./hooks/useUnreadCircles";
 import { createChallenge, fetchActiveChallenge, fetchTrophies } from "./data/circlesChallenges";
@@ -120,6 +121,7 @@ export function TradingCircles({
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [lbSort, setLbSort] = useState<"all" | "week">("all");
   const [lbMetric, setLbMetric] = useState<"r" | "dollar">("r");
+  const [lbViewSort, setLbViewSort] = useState<LeaderboardSortKey>("rank");
   const [compMemberCount, setCompMemberCount] = useState<number | null>(null);
   const [loadingLB, setLoadingLB] = useState(false);
   const [lbError, setLbError] = useState(false);
@@ -186,18 +188,18 @@ export function TradingCircles({
     const m = circle?.metric || "dollar";
     // Negative-value sign: previously losses showed as "$165" (no minus) — only color
     // marked them as red, ambiguous with positive in red error states. Use explicit "-".
-    if (m === "dollar") { const v = entry.totalPnLDollar || 0; const pct = entry.pnlPercent; const sign = v >= 0 ? "+" : "-"; const pctSign = (p: number) => p >= 0 ? "+" : "-"; const val = pct !== null && pct !== undefined ? `${sign}$${Math.abs(v).toFixed(0)} (${pctSign(pct)}${Math.abs(pct).toFixed(1)}%)` : `${sign}$${Math.abs(v).toFixed(0)}`; return { val, raw: v, label: "$ P&L" }; }
-    if (m === "r")       { const v = entry.totalPnL || 0; return { val: `${v >= 0 ? "+" : ""}${v.toFixed(1)}R`, raw: v, label: "R P&L" }; }
-    if (m === "winrate") { const v = Number(entry.winRate) || 0; return { val: `${v.toFixed(0)}%`, raw: v, label: "WIN RATE" }; }
-    if (m === "trades")  { const v = entry.total || 0; return { val: `${v}`, raw: v, label: "TRADES" }; }
-    if (m === "avgr")    { const v = entry.avgRR || 0; return { val: `${v.toFixed(2)}R`, raw: v, label: "AVG R" }; }
+    if (m === "dollar") { const v = METRIC_VALUE.dollar(entry); const pct = entry.pnlPercent; const sign = v >= 0 ? "+" : "-"; const pctSign = (p: number) => p >= 0 ? "+" : "-"; const val = pct !== null && pct !== undefined ? `${sign}$${Math.abs(v).toFixed(0)} (${pctSign(pct)}${Math.abs(pct).toFixed(1)}%)` : `${sign}$${Math.abs(v).toFixed(0)}`; return { val, raw: v, label: "$ P&L" }; }
+    if (m === "r")       { const v = METRIC_VALUE.r(entry); return { val: `${v >= 0 ? "+" : ""}${v.toFixed(1)}R`, raw: v, label: "R P&L" }; }
+    if (m === "winrate") { const v = METRIC_VALUE.winrate(entry); return { val: `${v.toFixed(0)}%`, raw: v, label: "WIN RATE" }; }
+    if (m === "trades")  { const v = METRIC_VALUE.trades(entry); return { val: `${v}`, raw: v, label: "TRADES" }; }
+    if (m === "avgr")    { const v = METRIC_VALUE.avgr(entry); return { val: `${v.toFixed(2)}R`, raw: v, label: "AVG R" }; }
     if (m === "discipline") {
       const s = entry.disciplineScore;
       if (s === null || s === undefined) return { val: "—", raw: -1, label: "DISCIPLINE" };
       const g = entry.disciplineGrade ? ` ${entry.disciplineGrade}` : "";
       return { val: `${s.toFixed(0)}${g}`, raw: s, label: "DISCIPLINE" };
     }
-    const v = entry.totalPnLDollar || 0; return { val: `${v >= 0 ? "+" : "-"}$${Math.abs(v).toFixed(0)}`, raw: v, label: "$ P&L" };
+    const v = METRIC_VALUE.dollar(entry); return { val: `${v >= 0 ? "+" : "-"}$${Math.abs(v).toFixed(0)}`, raw: v, label: "$ P&L" };
   }
 
   function formatCountdown(endsAt: string): string {
@@ -637,16 +639,15 @@ export function TradingCircles({
   // 0 window trades and would be wrongly flagged INELIGIBLE (header shows "Starts in X days").
   const compStarted = isCompetitionStarted();
   const viewerIsStaff = COMP_STAFF_UIDS.has(profile.uid ?? "");
+  // Official comp ranking is R P&L only — medals/rank numbers never move.
+  // The $ toggle (and the sort chips) re-order the VIEW with ranks pinned.
   const displayLeaderboard = isCompCircle
-    ? [...leaderboard].sort((a, b) => {
-        // Staff always sink to the bottom
-        if (a.staff && !b.staff) return 1;
-        if (!a.staff && b.staff) return -1;
-        return lbMetric === "dollar"
-          ? ((b.totalPnLDollar ?? 0) - (a.totalPnLDollar ?? 0))
-          : (b.totalPnL - a.totalPnL);
-      })
+    ? [...leaderboard].sort((a, b) => METRIC_VALUE.r(b) - METRIC_VALUE.r(a))
     : leaderboard;
+  const lbViewKey: LeaderboardSortKey =
+    isCompCircle && lbMetric === "dollar" && lbViewSort === "rank" ? "dollar" : lbViewSort;
+  // Staff sinking + rank assignment (staff get none) live in sortLeaderboard.
+  const rankedLeaderboard = sortLeaderboard(displayLeaderboard, lbViewKey);
 
   return (
     <div style={{ position: "relative" }}>
@@ -1169,6 +1170,22 @@ export function TradingCircles({
                   )}
                 </div>
               )}
+              {circleTab === "leaderboard" && (
+                <div style={{ display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap", paddingTop: "8px" }}>
+                  <span style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.14em", textTransform: "uppercase" as const }}>Sort</span>
+                  {([["rank", "RANK"], ["winrate", "WIN %"], ["trades", "TRADES"], ["avgr", "AVG R"]] as const).map(([k, label]) => (
+                    // Transparent button = 44px hit area (DESIGN.md minimum); the
+                    // visible pill lives on the inner span so visuals match the
+                    // lbSort pills above.
+                    <button key={k} onClick={() => setLbViewSort(k)} aria-pressed={lbViewSort === k}
+                      style={{ background: "none", border: "none", padding: 0, minHeight: 44, display: "inline-flex", alignItems: "center", cursor: "pointer" }}>
+                      <span style={{ background: lbViewSort === k ? C.text2 + "22" : "transparent", border: `1px solid ${lbViewSort === k ? C.text2 : C.border2}`, borderRadius: "999px", padding: "4px 10px", fontFamily: MONO, fontSize: "10px", color: lbViewSort === k ? C.text : C.muted, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                        {label}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* ── FEED TAB ── */}
@@ -1293,23 +1310,23 @@ export function TradingCircles({
                   <div style={{ borderTop: `1px solid ${C.border}` }}>
                     {(() => {
                       const myCode = getMyCode();
-                      const renderRow = (entry: typeof leaderboard[number], i: number) => {
+                      const renderRow = (entry: typeof rankedLeaderboard[number]) => {
                         const isMe = entry.memberCode === myCode;
                         const md = metricDisplay(entry, activeCircle);
                         const pPos = md.raw >= 0;
                         const isStaffRow = isCompCircle && !!entry.staff;
-                        const isFirst = i === 0 && !isStaffRow;
+                        const isFirst = entry.rank === 1 && !isStaffRow;
                         const pnlCol = isFirst && pPos ? C.green : pPos ? C.text : C.red;
                         const isExpanded = expandedMember === entry.memberCode;
                         const isFollowing = (following || []).includes(entry.memberCode);
-                        const medal = isStaffRow ? null : (MEDALS[i] || null);
+                        const medal = isStaffRow || entry.rank == null ? null : (MEDALS[entry.rank - 1] || null);
                         return (
                           <div key={entry.memberCode} style={{ borderBottom: `1px solid ${C.border}`, background: isFirst ? `${C.green}08` : "transparent" }}>
                             <div
                               onClick={() => setExpandedMember(isExpanded ? null : entry.memberCode)}
                               style={{ padding: "16px 0", display: "grid", gridTemplateColumns: "auto 1fr auto", alignItems: "center", gap: "14px", cursor: "pointer", paddingLeft: isExpanded ? "10px" : 0, paddingRight: isExpanded ? "10px" : 0 }}>
                               <span style={{ fontFamily: MONO, fontSize: "13px", color: isFirst ? C.green : C.muted, letterSpacing: "0.06em", minWidth: "28px" }}>
-                                {isStaffRow ? "🏁" : (medal || String(i + 1).padStart(2, "0"))}
+                                {isStaffRow ? "🏁" : (medal || String(entry.rank ?? 0).padStart(2, "0"))}
                               </span>
                               <div style={{ minWidth: 0 }}>
                                 <div style={{ display: "flex", alignItems: "baseline", gap: "8px", flexWrap: "wrap" }}>
@@ -1389,7 +1406,7 @@ export function TradingCircles({
                       };
                       return (
                         <>
-                          {displayLeaderboard.map((entry, i) => renderRow(entry, i))}
+                          {rankedLeaderboard.map(entry => renderRow(entry))}
                         </>
                       );
                     })()}
