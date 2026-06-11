@@ -49,3 +49,34 @@ export function compStatusText(memberCount: number): string {
 export function shouldShowCompetitionCard(myCircleCodes: string[]): boolean {
   return isCompetitionActive() && !myCircleCodes.includes(COMP_CIRCLE_CODE);
 }
+
+// ── Eligibility (published rules: min 10 trades, screenshot on every window trade) ──
+
+export const COMP_MIN_TRADES = 10;
+
+/** True when a trade's date (YYYY-MM-DD form value) falls inside the comp window. */
+export function isInCompWindow(dateStr: string): boolean {
+  const t = Date.parse(dateStr);
+  if (Number.isNaN(t)) return false;
+  return t >= COMP_START_TS && t <= COMP_END_TS;
+}
+
+export interface CompEligibility {
+  /** Trades dated inside the competition window. */
+  trades: number;
+  /** Window trades with no screenshot attached. */
+  missingShots: number;
+  eligible: boolean;
+}
+
+export function compEligibility(
+  trades: Array<{ date: string; screenshot: string }>
+): CompEligibility {
+  const wt = trades.filter(t => isInCompWindow(t.date));
+  const missingShots = wt.filter(t => !t.screenshot).length;
+  return {
+    trades: wt.length,
+    missingShots,
+    eligible: wt.length >= COMP_MIN_TRADES && missingShots === 0,
+  };
+}

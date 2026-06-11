@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
-  COMP_CIRCLE_CODE, COMP_END_TS, COMP_START_TS, COMP_JOINED_KEY,
+  COMP_CIRCLE_CODE, COMP_END_TS, COMP_START_TS, COMP_JOINED_KEY, COMP_MIN_TRADES,
   isCompetitionActive, isCompetitionStarted, isCompetitionJoined,
   markCompetitionJoined, compDaysRemaining, compDaysUntilStart,
   compStatusText, shouldShowCompetitionCard,
+  isInCompWindow, compEligibility,
 } from "./competition";
 
 describe("competition helpers", () => {
@@ -91,6 +92,64 @@ describe("competition helpers", () => {
     it("returns false after competition ends", () => {
       vi.setSystemTime(COMP_END_TS + 1000);
       expect(shouldShowCompetitionCard([])).toBe(false);
+    });
+  });
+});
+
+describe("eligibility helpers", () => {
+  describe("isInCompWindow", () => {
+    it("is false the day before the window opens", () => {
+      expect(isInCompWindow("2026-06-14")).toBe(false);
+    });
+    it("is true on the first day", () => {
+      expect(isInCompWindow("2026-06-15")).toBe(true);
+    });
+    it("is true on the last day", () => {
+      expect(isInCompWindow("2026-07-15")).toBe(true);
+    });
+    it("is false the day after the window closes", () => {
+      expect(isInCompWindow("2026-07-16")).toBe(false);
+    });
+    it("is false for empty or garbage dates", () => {
+      expect(isInCompWindow("")).toBe(false);
+      expect(isInCompWindow("not-a-date")).toBe(false);
+    });
+  });
+
+  describe("compEligibility", () => {
+    const shot = (date: string) => ({ date, screenshot: "trade-screenshots/x.png" });
+    const noShot = (date: string) => ({ date, screenshot: "" });
+
+    it("returns zeros for an empty trade list", () => {
+      expect(compEligibility([])).toEqual({ trades: 0, missingShots: 0, eligible: false });
+    });
+
+    it("ignores trades outside the window", () => {
+      const r = compEligibility([shot("2026-06-01"), shot("2026-06-20"), noShot("2026-08-01")]);
+      expect(r.trades).toBe(1);
+      expect(r.missingShots).toBe(0);
+    });
+
+    it("counts missing screenshots inside the window", () => {
+      const r = compEligibility([shot("2026-06-16"), noShot("2026-06-17"), noShot("2026-06-18")]);
+      expect(r.missingShots).toBe(2);
+      expect(r.eligible).toBe(false);
+    });
+
+    it("is not eligible at 9 window trades even with full coverage", () => {
+      const r = compEligibility(Array.from({ length: 9 }, () => shot("2026-06-20")));
+      expect(r.trades).toBe(9);
+      expect(r.eligible).toBe(false);
+    });
+
+    it("is eligible at 10 window trades with full coverage", () => {
+      const r = compEligibility(Array.from({ length: COMP_MIN_TRADES }, () => shot("2026-06-20")));
+      expect(r.eligible).toBe(true);
+    });
+
+    it("is not eligible at 10 window trades with one missing shot", () => {
+      const ts = [...Array.from({ length: 9 }, () => shot("2026-06-20")), noShot("2026-06-21")];
+      expect(compEligibility(ts).eligible).toBe(false);
     });
   });
 });
