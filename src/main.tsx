@@ -31,7 +31,31 @@ captureUtm();
 // but an explicit register here ensures it's active even if the inject fails.
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(() => {});
+    navigator.serviceWorker
+      .register("/sw.js", { scope: "/" })
+      .then(registration => {
+        // Installed PWAs can sit resident for days without a real page load,
+        // so the browser never re-checks sw.js on its own. Force a check
+        // whenever the app returns to the foreground, plus hourly while open.
+        const checkForUpdate = () => registration.update().catch(() => {});
+        document.addEventListener("visibilitychange", () => {
+          if (document.visibilityState === "visible") checkForUpdate();
+        });
+        setInterval(checkForUpdate, 60 * 60 * 1000);
+      })
+      .catch(() => {});
+  });
+
+  // sw.ts calls skipWaiting() + clientsClaim(), so a new deploy takes control
+  // as soon as it installs — but the page keeps running the OLD bundle until
+  // it reloads. Reload once on takeover. Skipped on first-ever install
+  // (hadController false) so new visitors don't get a pointless refresh.
+  const hadController = Boolean(navigator.serviceWorker.controller);
+  let reloadedForUpdate = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (!hadController || reloadedForUpdate) return;
+    reloadedForUpdate = true;
+    window.location.reload();
   });
 }
 
