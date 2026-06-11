@@ -2,7 +2,7 @@
 import { supabase } from "./lib/supabase";
 import { StrategyPill, stratCode, KodaMark, MONO, BODY, DISPLAY, EmptyCirclesState, CornerGlow, SubNavDropdown } from "./shared";
 import { KODA_GLOBAL_CODE } from "./hooks/useCircles";
-import { COMP_CIRCLE_CODE, COMP_MIN_TRADES, isCompetitionStarted, shouldShowCompetitionCard, compStatusText, type CompEligibility } from "./lib/competition";
+import { COMP_CIRCLE_CODE, COMP_MIN_TRADES, COMP_STAFF_UIDS, isCompetitionStarted, shouldShowCompetitionCard, compStatusText, type CompEligibility } from "./lib/competition";
 import { readCircleMembers } from "./data/circles";
 import { markChatRead } from "./data/chatReads";
 import { useUnreadCircles } from "./hooks/useUnreadCircles";
@@ -28,6 +28,8 @@ interface LeaderboardEntry {
   disciplineScore?: number | null;
   disciplineGrade?: string | null;
   updatedAt?: string | null;
+  staff?: boolean;
+  shotsMissing?: number;
 }
 
 interface CircleFormShape {
@@ -634,6 +636,7 @@ export function TradingCircles({
   // Eligibility UI stays hidden until the window opens — pre-window everyone has
   // 0 window trades and would be wrongly flagged INELIGIBLE (header shows "Starts in X days").
   const compStarted = isCompetitionStarted();
+  const viewerIsStaff = COMP_STAFF_UIDS.has(profile.uid ?? "");
   const displayLeaderboard = isCompCircle
     ? [...leaderboard].sort((a, b) => {
         // Staff always sink to the bottom
@@ -1323,6 +1326,11 @@ export function TradingCircles({
                                     <span style={{ color: Number(entry.winRate ?? 0) >= 50 ? C.green : Number(entry.winRate ?? 0) > 0 ? C.red : C.muted }}>{Number(entry.winRate ?? 0).toFixed(0)}% WR</span>
                                     {entry.topStrategy && <span>{stratCode(entry.topStrategy)}</span>}
                                     {entry.streak?.count >= 2 && <span style={{ color: entry.streak.type === "Win" ? C.green : C.red }}>{entry.streak.count}{entry.streak.type === "Win" ? "W" : "L"}</span>}
+                                    {isCompCircle && compStarted && viewerIsStaff && (
+                                      <span style={{ color: (entry.shotsMissing ?? 0) > 0 ? C.text : C.muted, fontWeight: (entry.shotsMissing ?? 0) > 0 ? 700 : 400 }}>
+                                        {entry.shotsMissing != null ? `${entry.shotsMissing} missing shots` : "shots n/a"}
+                                      </span>
+                                    )}
                                   </div>
                                 )}
                               </div>
