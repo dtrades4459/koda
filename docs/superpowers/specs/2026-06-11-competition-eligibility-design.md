@@ -100,6 +100,10 @@ mono small-caps, `C.muted`:
 **Backwards compatibility rule:** entries published before this change lack
 `shotsMissing` — `undefined` must never flag a row on its own; only `total`
 (always present) can flag such rows for the min-trades half.
+**Pre-window guard (added in review, 2026-06-11):** both the self strip and the
+row markers are hidden until `isCompetitionStarted()` — before Jun 15 everyone
+has 0 window trades and would be wrongly flagged; the circle header's
+"Starts in X days" carries the status instead.
 
 ## 6. Stretch — referee coverage line
 

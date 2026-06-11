@@ -2,7 +2,7 @@
 import { supabase } from "./lib/supabase";
 import { StrategyPill, stratCode, KodaMark, MONO, BODY, DISPLAY, EmptyCirclesState, CornerGlow, SubNavDropdown } from "./shared";
 import { KODA_GLOBAL_CODE } from "./hooks/useCircles";
-import { COMP_CIRCLE_CODE, COMP_MIN_TRADES, shouldShowCompetitionCard, compStatusText, type CompEligibility } from "./lib/competition";
+import { COMP_CIRCLE_CODE, COMP_MIN_TRADES, isCompetitionStarted, shouldShowCompetitionCard, compStatusText, type CompEligibility } from "./lib/competition";
 import { readCircleMembers } from "./data/circles";
 import { markChatRead } from "./data/chatReads";
 import { useUnreadCircles } from "./hooks/useUnreadCircles";
@@ -631,6 +631,9 @@ export function TradingCircles({
   );
 
   const isCompCircle = activeCircle?.code === COMP_CIRCLE_CODE;
+  // Eligibility UI stays hidden until the window opens — pre-window everyone has
+  // 0 window trades and would be wrongly flagged INELIGIBLE (header shows "Starts in X days").
+  const compStarted = isCompetitionStarted();
   const displayLeaderboard = isCompCircle
     ? [...leaderboard].sort((a, b) => {
         // Staff always sink to the bottom
@@ -1254,7 +1257,7 @@ export function TradingCircles({
             {/* ── LEADERBOARD ── */}
             {circleTab === "leaderboard" && (
               <div>
-                {isCompCircle && (() => {
+                {isCompCircle && compStarted && (() => {
                   const e = myCompEligibility;
                   const head = e.eligible
                     ? `ELIGIBLE · ${e.trades} TRADES`
@@ -1310,7 +1313,7 @@ export function TradingCircles({
                                   <span style={{ fontFamily: DISPLAY, fontSize: "17px", fontWeight: 500, color: C.text, letterSpacing: "-0.01em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{entry.name}</span>
                                   {isMe && <span style={{ fontFamily: MONO, fontSize: "10px", color: C.green, letterSpacing: "0.12em", textTransform: "uppercase" }}>· YOU</span>}
                                   {isStaffRow && <span style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.12em", textTransform: "uppercase" as const, border: `1px solid ${C.border2}`, borderRadius: 4, padding: "1px 5px" }}>REFEREE</span>}
-                                  {isCompCircle && !isStaffRow && (entry.total < COMP_MIN_TRADES || (entry.shotsMissing ?? 0) > 0) && (
+                                  {isCompCircle && compStarted && !isStaffRow && (entry.total < COMP_MIN_TRADES || (entry.shotsMissing ?? 0) > 0) && (
                                     <span style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.12em", textTransform: "uppercase" as const, border: `1px solid ${C.border2}`, borderRadius: 4, padding: "1px 5px" }}>INELIGIBLE</span>
                                   )}
                                 </div>
