@@ -26,7 +26,7 @@ import { SignedImg } from "./components/SignedImg";
 import { resolveScreenshotUrl } from "./lib/screenshots";
 import type { TiltSignal } from "./lib/tilt";
 import type { CircleStats } from "./hooks/useCircles";
-import { getProfile, upsertProfile } from "./data/profile";
+import { getProfile, getProfileByHandle, upsertProfile } from "./data/profile";
 import { upsertTrade as upsertTradeV2, deleteTradeByClientId as deleteTradeV2ByClientId } from "./data/trades";
 import { shareTrade } from "./data/circlesSharedTrades";
 import { KODA_GLOBAL_CODE } from "./hooks/useCircles";
@@ -1443,9 +1443,15 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   }
   async function isHandleTaken(handle: string): Promise<boolean> {
     const existing = await resolveHandle(handle);
-    if (!existing) return false;
-    // It's taken only if owned by someone else.
-    return existing.code !== getMyCode();
+    if (existing && existing.code !== getMyCode()) return true;
+    // The v2 profiles table has its own unique handle column and can disagree
+    // with the legacy registry. Public owners are visible to the client —
+    // catch those here; private rows are handled by upsertProfile's fallback.
+    if (isFlagOn("newProfile") && user?.id) {
+      const v2 = await getProfileByHandle(handle);
+      if (v2 && v2.userId !== user.id) return true;
+    }
+    return false;
   }
 
   // ── Follow system (per-row edges, one-way) ─────────────────────

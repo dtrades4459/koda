@@ -91,23 +91,38 @@ export async function getProfileByHandle(handle: string): Promise<Profile | null
   return data ? fromRow(data) : null;
 }
 
+// Safari surfaces fetch failures as "Load failed", Chrome as "Failed to
+// fetch" — client connectivity blips, not app bugs. Keep them out of Sentry.
+const NETWORK_ERROR_RE = /load failed|failed to fetch|network ?error|network request failed/i;
+
 export async function upsertProfile(p: Partial<Profile> & { userId: string }): Promise<Profile | null> {
-  const { data, error } = await supabase
+  const row = toRow(p);
+  let { data, error } = await supabase
     .from("profiles")
-    .upsert(toRow(p), { onConflict: "user_id" })
+    .upsert(row, { onConflict: "user_id" })
     .select()
     .single();
+  if (error && error.code === "23505" && /handle/.test(error.message ?? "")) {
+    // KODA-TT-P/T: the handle is owned by another account in v2 — often a
+    // private/backfilled row the client can't see, so no pre-check can catch
+    // it. Retry under a per-user fallback handle so the v2 row always exists
+    // (losing it would break this user at the read-flip cutover). Legacy KV
+    // keeps serving their display handle until the registries are reconciled.
+    const fallback = `user_${p.userId.slice(0, 8)}`;
+    log.info("profile.upsertProfile", `handle collision — retrying as ${fallback}`, {
+      userId: p.userId,
+      attempted_handle: p.handle,
+    });
+    ({ data, error } = await supabase
+      .from("profiles")
+      .upsert({ ...row, handle: fallback }, { onConflict: "user_id" })
+      .select()
+      .single());
+  }
   if (error) {
-    // KODA-TT-P: handle-collision (23505) fires in a retry loop from callers;
-    // demote so a stuck user doesn't spam Sentry. Caller still gets null.
-    if (error.code === "23505" && /handle/.test(error.message ?? "")) {
-      log.warn("profile.upsertProfile", "handle collision (KODA-TT-P)", {
-        userId: p.userId,
-        attempted_handle: p.handle,
-        code: error.code,
-        details: error.details,
-        hint: error.hint,
-      });
+    if (NETWORK_ERROR_RE.test(error.message ?? "")) {
+      // KODA-TT-V: transient network failure — caller falls back to legacy KV.
+      log.info("profile.upsertProfile", `transient network error: ${error.message}`, { userId: p.userId });
       return null;
     }
     const wrapped = new Error(error.message || error.code || "upsert failed");
