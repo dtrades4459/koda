@@ -1,6 +1,6 @@
 export const config = { runtime: "nodejs" };
 
-import { getAdminClient } from "./lib/supabaseAdmin.js";
+import { getAdminClient } from "./_lib/supabaseAdmin.js";
 
 type Req = { method?: string; headers: Record<string, string | string[] | undefined> };
 type Res = { status(n: number): Res; json(d: unknown): Res; end(): void; setHeader(k: string, v: string): void };

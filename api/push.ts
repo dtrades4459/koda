@@ -6,7 +6,7 @@ type VercelResponse = { status(n: number): VercelResponse; json(d: unknown): Ver
 
 import { createClient } from "@supabase/supabase-js";
 import webpush from "web-push";
-import { checkRateLimit, getClientIp } from "./lib/rateLimit.js";
+import { checkRateLimit, getClientIp } from "./_lib/rateLimit.js";
 
 // Service-role client — used for all DB access and JWT verification
 // (auth.getUser(token) works with the service role key)

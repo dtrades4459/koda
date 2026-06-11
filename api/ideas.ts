@@ -7,7 +7,7 @@
 
 export const config = { runtime: "nodejs" };
 
-import { getAdminClient, getUserIdFromJwt } from "./lib/supabaseAdmin.js";
+import { getAdminClient, getUserIdFromJwt } from "./_lib/supabaseAdmin.js";
 import { deliverNotification } from "./push.js";
 
 type Req = {

@@ -11,9 +11,9 @@
 
 export const config = { runtime: "nodejs" };
 
-import { tryDecrypt, encrypt } from "./lib/cryptoUtils.js";
-import { getAdminClient, getUserIdFromJwt } from "./lib/supabaseAdmin.js";
-import { checkRateLimit, getClientIp } from "./lib/rateLimit.js";
+import { tryDecrypt, encrypt } from "./_lib/cryptoUtils.js";
+import { getAdminClient, getUserIdFromJwt } from "./_lib/supabaseAdmin.js";
+import { checkRateLimit, getClientIp } from "./_lib/rateLimit.js";
 import { deliverNotification } from "./push.js";
 
 type Req = { method?: string; headers: Record<string, string | string[] | undefined>; body: Record<string, unknown>; query: Record<string, string | string[] | undefined> };
@@ -810,7 +810,7 @@ export default async function handler(req: Req, res: Res) {
 
   if (job === 'daily-digest') {
     if (!isCronAuthed(req)) return res.status(401).json({ error: 'Unauthorized' });
-    const { sendDailyDigest } = await import('./lib/metrics/digest.js');
+    const { sendDailyDigest } = await import('./_lib/metrics/digest.js');
     await sendDailyDigest();
     return res.status(200).json({ ok: true });
   }

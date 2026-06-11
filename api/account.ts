@@ -10,9 +10,9 @@ export const config = { runtime: "nodejs" };
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 import { timingSafeEqual } from "crypto";
-import { checkRateLimit, getClientIp } from "./lib/rateLimit.js";
-import { getAdminClient, getUserIdFromJwt } from "./lib/supabaseAdmin.js";
-import { sendEmail, waitlistConfirmHtml } from "./lib/email.js";
+import { checkRateLimit, getClientIp } from "./_lib/rateLimit.js";
+import { getAdminClient, getUserIdFromJwt } from "./_lib/supabaseAdmin.js";
+import { sendEmail, waitlistConfirmHtml } from "./_lib/email.js";
 
 type Req = { method?: string; headers: Record<string, string | string[] | undefined>; body: Record<string, unknown>; query: Record<string, string | string[] | undefined> };
 type Res = { status(n: number): Res; json(d: unknown): Res; end(): void; setHeader(k: string, v: string): void };

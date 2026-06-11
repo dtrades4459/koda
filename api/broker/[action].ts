@@ -8,9 +8,9 @@
 
 export const config = { runtime: "nodejs" };
 
-import { getAdminClient, getUserIdFromJwt } from "../lib/supabaseAdmin.js";
-import { encrypt } from "../lib/cryptoUtils.js";
-import { checkRateLimit, getClientIp } from "../lib/rateLimit.js";
+import { getAdminClient, getUserIdFromJwt } from "../_lib/supabaseAdmin.js";
+import { encrypt } from "../_lib/cryptoUtils.js";
+import { checkRateLimit, getClientIp } from "../_lib/rateLimit.js";
 
 type VercelRequest  = { method?: string; headers: Record<string, string | string[] | undefined>; body: Record<string, unknown>; query: Record<string, string | string[] | undefined> };
 type VercelResponse = { status(n: number): VercelResponse; json(d: unknown): VercelResponse; end(): void; setHeader(k: string, v: string): void };

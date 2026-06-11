@@ -15,7 +15,7 @@ export const config = { runtime: "nodejs", api: { bodyParser: false } };
 
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
-import { sendEmail, receiptHtml } from "./lib/email.js";
+import { sendEmail, receiptHtml } from "./_lib/email.js";
 
 type Req = { method?: string; headers: Record<string, string | string[] | undefined>; body: Record<string, unknown>; query: Record<string, string | string[] | undefined>; on(event: string, cb: (chunk: Buffer) => void): Req };
 type Res = { status(n: number): Res; json(d: unknown): Res; end(): void; setHeader(k: string, v: string): void };

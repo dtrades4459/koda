@@ -4,16 +4,16 @@ type Req = { method?: string; headers: Record<string, string | string[] | undefi
 type Res = { status(n: number): Res; json(d: unknown): Res; end(): void };
 
 import { timingSafeEqual } from 'crypto';
-import { isAuthorized, getChatId, type TelegramUpdate } from './lib/telegram/auth.js';
+import { isAuthorized, getChatId, type TelegramUpdate } from './_lib/telegram/auth.js';
 import Stripe from 'stripe';
-import { getAdminClient } from './lib/supabaseAdmin.js';
-import { b, code } from './lib/telegram/format.js';
-import { getUserMetrics, formatUserMetrics } from './lib/metrics/users.js';
-import { getTradeMetrics, formatTradeMetrics } from './lib/metrics/trades.js';
-import { getRevenueMetrics, formatRevenueMetrics } from './lib/metrics/revenue.js';
-import { getSentryMetrics, formatSentryMetrics } from './lib/metrics/errors.js';
-import { getPostHogMetrics, formatPostHogMetrics } from './lib/metrics/analytics.js';
-import { sendDailyDigest } from './lib/metrics/digest.js';
+import { getAdminClient } from './_lib/supabaseAdmin.js';
+import { b, code } from './_lib/telegram/format.js';
+import { getUserMetrics, formatUserMetrics } from './_lib/metrics/users.js';
+import { getTradeMetrics, formatTradeMetrics } from './_lib/metrics/trades.js';
+import { getRevenueMetrics, formatRevenueMetrics } from './_lib/metrics/revenue.js';
+import { getSentryMetrics, formatSentryMetrics } from './_lib/metrics/errors.js';
+import { getPostHogMetrics, formatPostHogMetrics } from './_lib/metrics/analytics.js';
+import { sendDailyDigest } from './_lib/metrics/digest.js';
 
 const TOKEN  = process.env.TELEGRAM_BUSINESSTATS_TOKEN!;
 const SECRET = process.env.TELEGRAM_BUSINESSTATS_SECRET!;
