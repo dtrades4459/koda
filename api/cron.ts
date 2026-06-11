@@ -512,107 +512,94 @@ async function handleSync(req: Req, res: Res) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// Job: news-calendar  (Finnhub → news_cache)
+// Job: news-calendar  (ForexFactory → news_cache)
 //
-// Finnhub's free-tier economic calendar provides actuals once events release,
-// unlike ForexFactory's free JSON feed which never populates the actual field.
+// Reverted from Finnhub 2026-06-11: Finnhub removed /calendar/economic from
+// the free tier — every call 403s (key still valid; invalid keys get 401).
+// Trade-off: the free FF feed never populates `actual`, so released events
+// show forecast/previous only. The client already renders actual:null fine.
 // ══════════════════════════════════════════════════════════════════════════════
 
-const FINNHUB_CALENDAR_URL = "https://finnhub.io/api/v1/calendar/economic";
+const FF_URLS = [
+  "https://nfs.faireconomy.media/ff_calendar_thisweek.json",
+  "https://nfs.faireconomy.media/ff_calendar_nextweek.json",
+];
 
-type FinnhubEvent = {
-  actual?: number | null;
-  country?: string;
-  estimate?: number | null;
-  event?: string;
+type FFEvent = {
+  title?: string;
+  country?: string;   // currency codes already (USD, EUR, …) or "All"
+  date?: string;      // ISO with offset, e.g. "2026-06-07T05:15:00-04:00"
   impact?: string;
-  prev?: number | null;
-  time?: string;
-  unit?: string;
-};
-
-// Finnhub uses ISO 3166 two-letter country codes; our app filters on currency
-// codes (USD, EUR, etc.) so map the common ones we care about.
-const COUNTRY_TO_CURRENCY: Record<string, string> = {
-  US: "USD", GB: "GBP", JP: "JPY", AU: "AUD", CA: "CAD", CH: "CHF",
-  NZ: "NZD", CN: "CNY",
-  DE: "EUR", FR: "EUR", IT: "EUR", ES: "EUR", NL: "EUR", BE: "EUR",
-  AT: "EUR", IE: "EUR", FI: "EUR", PT: "EUR", GR: "EUR", EU: "EUR",
+  forecast?: string;
+  previous?: string;
 };
 
 function kebab(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 }
 
-function withUnit(val: number | null | undefined, unit: string | undefined): string | null {
-  if (val === null || val === undefined) return null;
-  return `${val}${unit ?? ""}`;
-}
-
-function normaliseFinnhubEvent(raw: FinnhubEvent): Record<string, unknown> | null {
-  if (!raw.event || !raw.country || !raw.time) return null;
-  // Finnhub time is "YYYY-MM-DD HH:mm:ss" in UTC; convert to ISO with Z.
-  const time = `${raw.time.replace(" ", "T")}Z`;
+function normaliseFFEvent(raw: FFEvent): Record<string, unknown> | null {
+  if (!raw.title || !raw.country || !raw.date) return null;
+  const time = raw.date;
   const impactRaw = (raw.impact ?? "").toLowerCase();
   const impact = ["high", "medium", "low", "holiday"].includes(impactRaw)
     ? impactRaw
     : "low";
   const day = time.slice(0, 10);
-  const id = `ec-${kebab(raw.event)}-${day}`;
-  const country = COUNTRY_TO_CURRENCY[raw.country] ?? raw.country;
+  const id = `ff-${kebab(raw.title)}-${day}`;
   return {
     id,
-    title: raw.event,
-    country,
+    title: raw.title,
+    country: raw.country,
     time,
     impact,
-    forecast: withUnit(raw.estimate ?? null, raw.unit),
-    previous: withUnit(raw.prev ?? null, raw.unit),
-    actual:   withUnit(raw.actual ?? null, raw.unit),
+    forecast: raw.forecast || null,
+    previous: raw.previous || null,
+    actual: null,
   };
+}
+
+async function fetchFFWeek(url: string): Promise<FFEvent[]> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 10_000);
+  try {
+    const upstream = await fetch(url, { signal: ctrl.signal });
+    if (!upstream.ok) {
+      console.error("[news-calendar] upstream non-200:", upstream.status, url);
+      return [];
+    }
+    const raw = (await upstream.json()) as unknown;
+    if (!Array.isArray(raw)) {
+      console.error("[news-calendar] invalid response shape:", url);
+      return [];
+    }
+    return raw as FFEvent[];
+  } catch (err) {
+    console.error("[news-calendar] fetch failed:", url, err);
+    return [];
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 async function handleNewsCalendar(req: Req, res: Res) {
   if (!isCronAuthed(req)) return res.status(401).json({ error: "Unauthorized" });
 
-  const apiKey = process.env.FINNHUB_API_KEY;
-  if (!apiKey) {
-    console.error("[news-calendar] FINNHUB_API_KEY not set");
-    return res.status(200).json({ ok: false, reason: "no api key" });
-  }
-
   try {
-    // Window: 7 days back (capture actuals as they fill in) to 14 days ahead.
-    const now = new Date();
-    const from = new Date(now); from.setUTCDate(from.getUTCDate() - 7);
-    const to   = new Date(now); to.setUTCDate(to.getUTCDate() + 14);
-    const fmt = (d: Date) => d.toISOString().slice(0, 10);
-    const url = `${FINNHUB_CALENDAR_URL}?from=${fmt(from)}&to=${fmt(to)}&token=${apiKey}`;
+    // This week + next week; tolerate one feed failing.
+    const weeks = await Promise.all(FF_URLS.map(fetchFFWeek));
 
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 10_000);
-    const upstream = await fetch(url, { signal: ctrl.signal });
-    clearTimeout(timer);
-
-    if (!upstream.ok) {
-      console.error("[news-calendar] upstream non-200:", upstream.status);
-      return res.status(200).json({ ok: false, reason: `upstream ${upstream.status}` });
-    }
-    const body = (await upstream.json()) as unknown;
-    if (
-      typeof body !== "object" ||
-      body === null ||
-      !Array.isArray((body as { economicCalendar?: unknown[] }).economicCalendar)
-    ) {
-      console.error("[news-calendar] invalid response shape");
-      return res.status(200).json({ ok: false, reason: "bad shape" });
-    }
-    const rawEvents = (body as { economicCalendar: FinnhubEvent[] }).economicCalendar;
-
+    // Dedupe the overlap between the two feeds on id+time (NOT id alone —
+    // the same title can legitimately recur at different times in one day).
+    const seen = new Set<string>();
     const events: Record<string, unknown>[] = [];
-    for (const item of rawEvents) {
-      const ev = normaliseFinnhubEvent(item);
-      if (ev) events.push(ev);
+    for (const item of weeks.flat()) {
+      const ev = normaliseFFEvent(item);
+      const dedupeKey = ev ? `${ev.id}|${ev.time}` : "";
+      if (ev && !seen.has(dedupeKey)) {
+        seen.add(dedupeKey);
+        events.push(ev);
+      }
     }
     if (events.length === 0) {
       console.error("[news-calendar] no valid events after normalization");
