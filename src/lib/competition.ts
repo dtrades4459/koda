@@ -4,7 +4,7 @@ export const COMP_CIRCLE_CODE = "50K-EVAL-2026";
 export const COMP_STAFF_UIDS = new Set([
   "f38aae7d-e953-4a00-a5aa-5370677ca876", // Dylon
   "83583169-6fc4-486a-a371-ae41c3c5f645", // Bruno
-  "0f507c1d-770b-4884-b3c2-84870fab2c6d", // Dan
+  "0f507c1d-770b-4884-b3c2-848701ab2c6d", // Dan
 ]);
 export const COMP_END_TS = new Date("2026-07-15T23:59:59Z").getTime();
 export const COMP_START_TS = new Date("2026-06-15T00:00:00Z").getTime();
