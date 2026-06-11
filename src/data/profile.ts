@@ -95,6 +95,30 @@ export async function getProfileByHandle(handle: string): Promise<Profile | null
 // fetch" — client connectivity blips, not app bugs. Keep them out of Sentry.
 const NETWORK_ERROR_RE = /load failed|failed to fetch|network ?error|network request failed/i;
 
+function isHandleCollision(error: { code?: string; message?: string } | null): boolean {
+  return !!error && error.code === "23505" && /handle/.test(error.message ?? "");
+}
+
+// Fallbacks tried in order when the wanted handle collides: the user's own
+// email prefix ("trader.joe+x@gmail.com" → "traderjoe"), then user_<uid8>
+// which cannot collide. Skips prefixes too short to be a valid handle.
+async function fallbackHandles(userId: string, collided: string | undefined): Promise<string[]> {
+  const out: string[] = [];
+  try {
+    const { data } = await supabase.auth.getUser();
+    const local = data.user?.email
+      ?.split("@")[0]
+      ?.replace(/\+.*$/, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9_]/g, "") ?? "";
+    if (local.length >= 3 && local !== collided) out.push(local);
+  } catch {
+    // auth unavailable — uid fallback below still applies
+  }
+  out.push(`user_${userId.slice(0, 8)}`);
+  return out;
+}
+
 export async function upsertProfile(p: Partial<Profile> & { userId: string }): Promise<Profile | null> {
   const row = toRow(p);
   let { data, error } = await supabase
@@ -102,22 +126,24 @@ export async function upsertProfile(p: Partial<Profile> & { userId: string }): P
     .upsert(row, { onConflict: "user_id" })
     .select()
     .single();
-  if (error && error.code === "23505" && /handle/.test(error.message ?? "")) {
+  if (isHandleCollision(error)) {
     // KODA-TT-P/T: the handle is owned by another account in v2 — often a
     // private/backfilled row the client can't see, so no pre-check can catch
-    // it. Retry under a per-user fallback handle so the v2 row always exists
-    // (losing it would break this user at the read-flip cutover). Legacy KV
-    // keeps serving their display handle until the registries are reconciled.
-    const fallback = `user_${p.userId.slice(0, 8)}`;
-    log.info("profile.upsertProfile", `handle collision — retrying as ${fallback}`, {
-      userId: p.userId,
-      attempted_handle: p.handle,
-    });
-    ({ data, error } = await supabase
-      .from("profiles")
-      .upsert({ ...row, handle: fallback }, { onConflict: "user_id" })
-      .select()
-      .single());
+    // it. Retry under fallbacks so the v2 row always exists (losing it would
+    // break this user at the read-flip cutover). Legacy KV keeps serving
+    // their display handle until the registries are reconciled.
+    for (const fallback of await fallbackHandles(p.userId, row.handle as string | undefined)) {
+      log.info("profile.upsertProfile", `handle collision — retrying as ${fallback}`, {
+        userId: p.userId,
+        attempted_handle: p.handle,
+      });
+      ({ data, error } = await supabase
+        .from("profiles")
+        .upsert({ ...row, handle: fallback }, { onConflict: "user_id" })
+        .select()
+        .single());
+      if (!isHandleCollision(error)) break;
+    }
   }
   if (error) {
     if (NETWORK_ERROR_RE.test(error.message ?? "")) {

@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 vi.mock("../lib/supabase", () => ({
   supabase: {
     from: vi.fn(),
+    auth: { getUser: vi.fn() },
   },
 }));
 
@@ -34,23 +35,67 @@ const ROW = {
   public_trades: false, onboarded: true, prefs: {}, created_at: "", updated_at: "",
 };
 
-describe("upsertProfile", () => {
-  beforeEach(() => vi.clearAllMocks());
+const COLLISION = {
+  error: { code: "23505", message: 'duplicate key value violates unique constraint "profiles_handle_key"' },
+};
 
-  it("retries with a per-user fallback handle on a 23505 handle collision (KODA-TT-T)", async () => {
-    const upsert = mockUpsertChain(
-      { error: { code: "23505", message: 'duplicate key value violates unique constraint "profiles_handle_key"' } },
-      { data: ROW },
-    );
+function mockAuthEmail(email: string | null) {
+  (supabase.auth.getUser as any).mockResolvedValue({
+    data: { user: email ? { id: USER_ID, email } : null },
+  });
+}
+
+describe("upsertProfile", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockAuthEmail(null);
+  });
+
+  it("falls back to the email prefix on a 23505 handle collision (KODA-TT-T)", async () => {
+    mockAuthEmail("Trader.Joe+koda@gmail.com");
+    const upsert = mockUpsertChain(COLLISION, { data: ROW });
+
+    const result = await upsertProfile({ userId: USER_ID, handle: "trader" });
+
+    expect(upsert).toHaveBeenCalledTimes(2);
+    expect(upsert.mock.calls[1][0]).toMatchObject({ handle: "traderjoe" });
+    expect(result).not.toBeNull();
+    // Collisions are handled, not exceptional — must not reach Sentry as warn/error.
+    expect(log.warn).not.toHaveBeenCalled();
+    expect(log.error).not.toHaveBeenCalled();
+  });
+
+  it("falls back to user_<uid8> when the email prefix is also taken", async () => {
+    mockAuthEmail("trader.joe@gmail.com");
+    const upsert = mockUpsertChain(COLLISION, COLLISION, { data: ROW });
+
+    const result = await upsertProfile({ userId: USER_ID, handle: "trader" });
+
+    expect(upsert).toHaveBeenCalledTimes(3);
+    expect(upsert.mock.calls[2][0]).toMatchObject({ handle: `user_${USER_ID.slice(0, 8)}` });
+    expect(result).not.toBeNull();
+    expect(log.error).not.toHaveBeenCalled();
+  });
+
+  it("falls back to user_<uid8> directly when no email is available", async () => {
+    const upsert = mockUpsertChain(COLLISION, { data: ROW });
 
     const result = await upsertProfile({ userId: USER_ID, handle: "trader" });
 
     expect(upsert).toHaveBeenCalledTimes(2);
     expect(upsert.mock.calls[1][0]).toMatchObject({ handle: `user_${USER_ID.slice(0, 8)}` });
     expect(result).not.toBeNull();
-    // Collisions are handled, not exceptional — must not reach Sentry as warn/error.
-    expect(log.warn).not.toHaveBeenCalled();
-    expect(log.error).not.toHaveBeenCalled();
+  });
+
+  it("skips the email prefix when it equals the handle that just collided", async () => {
+    mockAuthEmail("trader@gmail.com");
+    const upsert = mockUpsertChain(COLLISION, { data: ROW });
+
+    const result = await upsertProfile({ userId: USER_ID, handle: "trader" });
+
+    expect(upsert).toHaveBeenCalledTimes(2);
+    expect(upsert.mock.calls[1][0]).toMatchObject({ handle: `user_${USER_ID.slice(0, 8)}` });
+    expect(result).not.toBeNull();
   });
 
   it("logs transient network failures as info, not error (KODA-TT-V)", async () => {
