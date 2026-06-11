@@ -43,6 +43,7 @@ src/
     sentry.ts           error monitoring
     utm.ts              UTM persistence across OAuth round-trip
     stats.ts            P&L / win-rate / R-multiple math
+    leaderboardSort.ts  circle leaderboard view-sort (pinned ranks, METRIC_VALUE map)
 api/                    Vercel serverless functions (Stripe, Resend, cron, push)
 public/                 static HTML pages (privacy, terms, cookies, faq, changelog) + PWA assets
 supabase/migrations/    SQL migrations (run via Supabase dashboard, idempotent)

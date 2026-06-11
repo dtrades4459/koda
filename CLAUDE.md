@@ -84,6 +84,7 @@ Do **not** bypass with `--no-verify`. If the hook fails, fix the underlying issu
 | `src/lib/news.ts` | News types (`CalendarEvent`, `Headline`, `Impact`, `NewsCache<T>`) + defensive parsers |
 | `src/lib/tilt.ts` | Pure tilt evaluator — `evaluateTilt(trades, profile, now)`. No React, no DB. 5 signals + firing rule. Test in `src/lib/tilt.test.ts` (22 cases). |
 | `src/hooks/useTiltState.ts` | Memoised evaluator + cooldown read/write to `koda_intervention_lockout` user_kv key. Reads `profile.prefs.intervention` for settings. |
+| `src/lib/leaderboardSort.ts` | `sortLeaderboard(entries, key)` — leaderboard view-sort with ranks/medals pinned to incoming (official-metric) order; staff rows sink, no rank. Exports `METRIC_VALUE` metric→value map shared by useCircles ranking + `metricDisplay`. Tests: `src/lib/leaderboardSort.test.ts`. |
 | `src/data/interventions.ts` | CRUD against `public.intervention_events`. `logInterventionEvent`, `linkTradeToRecentIntervention`, `getInterventionStats`. Emits `intervention_fired` PostHog event. |
 | `src/components/InterventionSheet.tsx` | Presentational sheet (mobile) / modal (desktop). Backdrop tap = same as Cancel button. No silent dismiss. |
 | `src/components/InterventionGate.tsx` | Reusable gate wrapper — passthrough / cooldown pill / tap intercept. Not yet wired into Koda.tsx (centralised `attemptLog()` handler used instead). |
@@ -264,7 +265,7 @@ Bottom-nav tabs (mobile): Home / News / Stats / Circles / Social. Sub-sections u
 - Trade logging with P&L, R-multiple, notes, screenshots, emotional state, rule adherence
 - Stats dashboard (win rate, avg R, streak, equity curve, MAE/MFE, session heatmaps, day-of-week)
 - Supabase persistence across devices
-- Trading Circles — create/join by code, leaderboard (top 5 visible, rest blurred), live chat, challenges
+- Trading Circles — create/join by code, leaderboard (top 5 visible, rest blurred; view-sort chips RANK / WIN % / TRADES / AVG R re-order the list while ranks + medals stay pinned to the circle's official metric — comp circle rank is R-only, $ toggle is view-only), live chat, challenges
 - Friend feed — follow by handle, see friends' trades
 - Public profiles — ProfileModal with stats + follow/unfollow
 - 5-step onboarding + post-onboarding survey (prior tool, almost-stopped reason)
