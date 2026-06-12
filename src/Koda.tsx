@@ -1853,7 +1853,10 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
         }}>
 
         {/* ── MASTHEAD ── */}
-        <header style={{ padding: isDesktop ? "calc(16px + env(safe-area-inset-top)) 40px 0" : "calc(8px + env(safe-area-inset-top)) 22px 6px", position: "sticky", top: 0, background: C.bg, zIndex: 10 }}>
+        {/* Mobile: cap the safe-area inset — iOS standalone reports an inflated
+            value that left a dead band under the status bar. 47px clears the
+            Dynamic Island; max() keeps a floor on devices reporting 0. */}
+        <header style={{ padding: isDesktop ? "calc(16px + env(safe-area-inset-top)) 40px 0" : "max(8px, min(env(safe-area-inset-top), 47px)) 22px 6px", position: "sticky", top: 0, background: C.bg, zIndex: 10 }}>
           <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", paddingBottom: isDesktop ? "14px" : 0 }}>
             {/* Left: back button when history exists, otherwise logo */}
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
