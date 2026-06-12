@@ -545,7 +545,7 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
             </div>
           </div>
 
-          {/* Auth column — glass card with corner glow + OS badge */}
+          {/* Auth column — glass card with corner glow */}
           <aside ref={authRef} id="auth" className="koda-auth-card koda-anchor" style={{
             position: "relative", padding: 32, borderRadius: 28,
             background: "rgba(19,19,23,0.7)",
@@ -564,18 +564,13 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
               filter: "blur(50px)", opacity: 0.4, pointerEvents: "none",
             }} />
 
-            {/* Logo + OS badge */}
+            {/* Logo */}
             <div style={{
               position: "relative", zIndex: 1, display: "flex", alignItems: "center",
               gap: 9, justifyContent: "center", marginBottom: 26,
             }}>
               <KodaMark size={24} color={C.text} />
               <span style={{ fontFamily: DISPLAY, fontWeight: 600, fontSize: 14, letterSpacing: "0.22em", color: C.text }}>Kōda</span>
-              <span style={{
-                fontFamily: MONO, fontWeight: 500, fontSize: 9, letterSpacing: "0.16em",
-                color: C.text, padding: "2px 6px", borderRadius: 4,
-                border: `1px solid ${C.border2}`, lineHeight: 1,
-              }}>OS</span>
             </div>
 
             {/* Kicker */}

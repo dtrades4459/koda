@@ -1,5 +1,5 @@
 import { DARK } from "../theme";
-import { MONO, DISPLAY, KodaMarkFilled } from "../shared";
+import { DISPLAY, KodaMarkFilled } from "../shared";
 
 // First-paint splash. Always renders in the DARK palette regardless of the
 // user's saved theme since the theme is not known yet at this point.
@@ -21,7 +21,6 @@ export function LoadingSplash() {
       {/* Wordmark */}
       <div style={{ display: "flex", alignItems: "baseline", gap: "8px" }}>
         <span style={{ fontFamily: DISPLAY, fontWeight: 600, fontSize: "18px", letterSpacing: "0.22em", color: DARK.text }}>Kōda</span>
-        <span style={{ fontFamily: MONO, fontWeight: 500, fontSize: "9px", letterSpacing: "0.16em", color: DARK.text2, padding: "2px 5px", borderRadius: "4px", border: `1px solid ${DARK.border2}`, lineHeight: 1 }}>OS</span>
       </div>
       {/* Breathing dots */}
       <div style={{ display: "flex", gap: "6px" }}>

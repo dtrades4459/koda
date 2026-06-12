@@ -25,7 +25,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: { componentStack: string }) {
-    console.error("[Kōda OS] Uncaught error:", error, info.componentStack);
+    console.error("[Kōda] Uncaught error:", error, info.componentStack);
     this.setState({ info: info.componentStack ?? "" });
     (window as any).Sentry?.captureException?.(error, {
       extra: { componentStack: info.componentStack },
@@ -57,7 +57,7 @@ export class ErrorBoundary extends Component<Props, State> {
             color: C.text,
             marginBottom: "48px",
           }}>
-            Kōda<span style={{ color: C.blue }}> OS</span>
+            Kōda
           </div>
 
           {/* Error kicker */}
