@@ -52,6 +52,7 @@ import { LotSizeCalculator } from "./LotSizeCalculator";
 import { TradeTagger } from "./TradeTagger";
 import { phIdentify, phCapture, phReset } from "./lib/posthog";
 import { readUtm } from "./lib/utm";
+import { readRef, applyRefAttribution } from "./lib/ref";
 import EvalAccountScreen from "./EvalAccountScreen";
 import WeeklyReportCard from "./WeeklyReportCard";
 import NotificationsDrawer from "./NotificationsDrawer";
@@ -643,7 +644,10 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
         prior_tool: p.priorTool,
         almost_stopped_reason: p.almostStoppedReason,
         ...readUtm(),
+        ...(readRef() ? { ref: readRef()!.ref } : {}),
       });
+      // Stamp the share-card referral onto auth user_metadata (once, best-effort).
+      void applyRefAttribution();
     } catch (e) { log.error("loadAll.profile", e); }
 
     try { if (sc) setStratChecklists(JSON.parse(sc.value)); }

@@ -9,6 +9,7 @@ import { installStorage } from "./lib/storage";
 import { initSentry } from "./lib/sentry";
 import { initPostHog } from "./lib/posthog";
 import { captureUtm } from "./lib/utm";
+import { captureRef } from "./lib/ref";
 import "./lib/flags"; // side-effect: exposes window.kodaFlags
 import "./index.css";
 
@@ -26,6 +27,10 @@ initPostHog();
 
 // Capture UTM params before auth redirect so they survive the OAuth round-trip.
 captureUtm();
+
+// Capture ?ref= (share-card referrals) the same way — localStorage, so it
+// also survives a days-later return visit before signup.
+captureRef();
 
 // Register service worker explicitly. VitePWA's auto-inject handles updates,
 // but an explicit register here ensures it's active even if the inject fails.

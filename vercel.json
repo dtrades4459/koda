@@ -25,6 +25,11 @@
       "source": "/koda-vs-tradezella.html",
       "destination": "/comparison.html",
       "permanent": true
+    },
+    {
+      "source": "/join",
+      "destination": "/",
+      "permanent": false
     }
   ],
   "headers": [
