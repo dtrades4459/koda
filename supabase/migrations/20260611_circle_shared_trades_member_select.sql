@@ -1,0 +1,109 @@
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- Kōda · circle_shared_trades SELECT — restrict to circle members only (H1)
+--
+-- WHAT THIS DOES
+--   Replaces the SELECT policy on circle_shared_trades so a row is only readable
+--   by users who are members of the same circle, matched via the non-recursive
+--   SECURITY DEFINER helper public.is_circle_member(circle_code).
+--
+-- WHY THIS IS CRITICAL (Security Audit 2026-06-11, Finding H1)
+--   The prior policy was `USING (true)`, which let any authenticated user read
+--   every row in the table — i.e. dump the P&L, notes, strategy, and screenshot
+--   URL of every trade shared into every circle, including PRIVATE circles the
+--   user never joined.
+--
+--   This is the same world-read bug that was already closed for circle_messages
+--   (20260603_circle_messages_members_only.sql, hardened again in
+--   20260610_circle_messages_strict_rls.sql). circle_shared_trades had its
+--   INSERT and UPDATE policies hardened in 20260531_security_fixes.sql, but the
+--   SELECT side was left open. This migration brings it in line.
+--
+-- DEPENDENCY
+--   Requires public.is_circle_member(text), created in
+--   20260610_circle_messages_strict_rls.sql. That helper runs as SECURITY
+--   DEFINER and bypasses RLS, so it does not re-introduce the circle_members
+--   recursion that the 002 policy suffered from.
+--
+-- HOW TO VERIFY
+--   From a user NOT in some circle X (browser console, signed in):
+--     await window.supabase
+--       .from('circle_shared_trades').select('circle_code').eq('circle_code','X');
+--   Should return 0 rows after this migration. Before, it returned every row.
+--
+-- SERVICE ROLE NOTE
+--   All /api/* functions use the service_role client (supabaseAdmin.ts) which
+--   bypasses RLS entirely. Cron auto-messages and fan-out are unaffected.
+--
+-- IDEMPOTENT — safe to re-run.
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+-- ── Pre-flight (run the read-only block at the bottom FIRST) ───────────────────
+-- Confirm no current sharer would lose sight of their own shared trades because
+-- their circle_members row is missing. Expect 0 rows from check B before applying.
+
+drop policy if exists "circle_shared_trades_select" on public.circle_shared_trades;
+create policy "circle_shared_trades_select" on public.circle_shared_trades
+  for select to authenticated
+  using (public.is_circle_member(circle_code));
+
+notify pgrst, 'reload schema';
+
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- PRE-FLIGHT CHECKS — run these BEFORE the migration (read-only, safe anytime)
+-- ═══════════════════════════════════════════════════════════════════════════════
+--
+-- A. Per-circle shared-trade counts (sanity — which circles have shares):
+--
+--   select circle_code, count(*) as shares
+--   from public.circle_shared_trades
+--   group by circle_code
+--   order by shares desc;
+--
+-- B. THE BLOCKER CHECK — authors who shared a trade into a circle they are NOT
+--    currently a member of. These users will lose read access to those specific
+--    rows after the migration (by design — same as circle_messages). Review the
+--    output; if it is only people who deliberately left a circle, that is fine.
+--    If it includes active members, their circle_members row is missing and the
+--    20260604 sync trigger gaps must be back-filled first:
+--
+--   select distinct st.circle_code, st.author_handle, st.author_uid
+--   from public.circle_shared_trades st
+--   left join public.circle_members cm
+--     on cm.circle_code = st.circle_code and cm.user_id = st.author_uid
+--   where st.author_uid is not null
+--     and cm.user_id is null;
+--
+--    Back-fill any active-member gaps it finds with (adjust circle_code per row):
+--
+--   insert into public.circle_members (circle_code, user_id)
+--   select '<CIRCLE_CODE>', st.author_uid
+--   from public.circle_shared_trades st
+--   where st.circle_code = '<CIRCLE_CODE>' and st.author_uid is not null
+--   on conflict do nothing;
+--
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- POST-FLIGHT VERIFICATION — run AFTER the migration
+-- ═══════════════════════════════════════════════════════════════════════════════
+--
+-- 1. Positive (in app): open a circle you belong to — shared trades still load.
+--
+-- 2. Negative (SQL Editor, simulates a logged-in user who is in NO circles —
+--    the all-zeros uuid is never a member). Expect visible_shares = 0:
+--
+--   begin;
+--   set local role authenticated;
+--   set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-000000000001","role":"authenticated"}';
+--   select count(*) as visible_shares from public.circle_shared_trades;
+--   rollback;
+--
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- EMERGENCY ROLLBACK — paste this if shared trades break (returns to open state)
+-- ═══════════════════════════════════════════════════════════════════════════════
+--
+--   drop policy if exists "circle_shared_trades_select" on public.circle_shared_trades;
+--   create policy "circle_shared_trades_select" on public.circle_shared_trades
+--     for select to authenticated using (true);
+--   notify pgrst, 'reload schema';
+--
+-- ═══════════════════════════════════════════════════════════════════════════════
