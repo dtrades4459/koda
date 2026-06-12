@@ -4,12 +4,16 @@ import { log } from "../lib/log";
 import type { SharedTrade, Trade, Profile } from "../types";
 import { uidForCode } from "./follows";
 import { notifyReaction } from "./notifications";
+import { readVisibility } from "../lib/circleVisibility";
 
 export async function shareTrade(
   circleCode: string,
   author: Pick<Profile, "name" | "handle" | "avatar" | "code">,
   trade: Trade
-): Promise<"ok" | "duplicate" | "error"> {
+): Promise<"ok" | "duplicate" | "blocked" | "error"> {
+  // Privacy: the per-circle "Trade sharing" toggle gates every code path,
+  // not just the picker UI.
+  if (!(await readVisibility(circleCode)).tradeLogs) return "blocked";
   const side = trade.direction === "short" ? "short" : "long";
   const rawOutcome = (trade.outcome || "").toLowerCase();
   const outcome = (["win", "loss", "be"].includes(rawOutcome) ? rawOutcome : "loss") as "win" | "loss" | "be";

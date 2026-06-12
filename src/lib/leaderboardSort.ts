@@ -13,7 +13,9 @@ export type LeaderboardSortKey = "rank" | "winrate" | "trades" | "avgr" | "dolla
 export type CircleMetric = "dollar" | "r" | "winrate" | "trades" | "avgr" | "discipline";
 
 export interface LeaderboardSortable {
-  winRate?: number | null;
+  // string admitted for legacy entries that published winRate via toFixed();
+  // null = withheld by privacy toggle. Number()||0 guards below cover both.
+  winRate?: number | string | null;
   total?: number | null;
   avgRR?: number | null;
   totalPnL?: number | null;

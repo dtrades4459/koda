@@ -857,6 +857,10 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
       wins: w, losses: l, total, winRate, totalPnL, totalPnlDollar, weekPnL, avgRR, streak, stratStats,
       disciplineScore: disciplineScore?.score ?? null,
       disciplineGrade: disciplineScore?.grade ?? null,
+      ruleCompliancePct: disciplineScore
+        ? Math.round((disciplineScore.breakdown.rules.earned / disciplineScore.breakdown.rules.max) * 100)
+        : null,
+      taggedCount: disciplineScore?.taggedCount ?? null,
     };
   }, [trades, disciplineScore]);
 
@@ -895,7 +899,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
       }
       return acc;
     }, {});
-    return { wins: w, losses: l, total, winRate, totalPnL, totalPnlDollar, weekPnL: 0, avgRR, streak, stratStats, disciplineScore: null, disciplineGrade: null };
+    return { wins: w, losses: l, total, winRate, totalPnL, totalPnlDollar, weekPnL: 0, avgRR, streak, stratStats, disciplineScore: null, disciplineGrade: null, ruleCompliancePct: null, taggedCount: null };
   }, [trades]);
 
   // Eligibility per the published competition rules: min 10 window trades,
@@ -4934,6 +4938,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                   );
                   if (result === "ok") showToast("Shared to circle!");
                   else if (result === "duplicate") showToast("Already shared to this circle");
+                  else if (result === "blocked") showToast("Trade sharing is off for this circle — see its Sharing settings");
                   else showToast("Failed to share");
                 }}
                 style={{ width: "100%", padding: "13px", background: C.text, border: "none", borderRadius: 10, color: C.bg, fontSize: "0.8125rem", fontWeight: 600, cursor: "pointer", fontFamily: MONO, opacity: sharingToCircle ? 1 : 0.4 }}
