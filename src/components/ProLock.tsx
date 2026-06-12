@@ -15,12 +15,12 @@ export function ProLock({ C, label, description, onUpgrade }: ProLockProps) {
       padding: "40px 20px", textAlign: "center",
       display: "flex", flexDirection: "column", alignItems: "center", gap: "12px",
     }}>
-      <div style={{ fontSize: "22px", opacity: 0.5 }}>🔒</div>
-      <div style={{ fontFamily: BODY, fontSize: "14px", fontWeight: 600, color: C.text }}>{label}</div>
-      <div style={{ fontFamily: BODY, fontSize: "12px", color: C.muted, maxWidth: "240px", lineHeight: 1.6 }}>{description}</div>
+      <div style={{ fontSize: "1.375rem", opacity: 0.5 }}>🔒</div>
+      <div style={{ fontFamily: BODY, fontSize: "0.875rem", fontWeight: 600, color: C.text }}>{label}</div>
+      <div style={{ fontFamily: BODY, fontSize: "0.75rem", color: C.muted, maxWidth: "240px", lineHeight: 1.6 }}>{description}</div>
       <button onClick={onUpgrade} style={{
         background: C.live, color: "#0A0A0A", border: "none", borderRadius: "999px",
-        padding: "10px 22px", fontFamily: MONO, fontSize: "11px", fontWeight: 700,
+        padding: "10px 22px", fontFamily: MONO, fontSize: "0.6875rem", fontWeight: 700,
         letterSpacing: "0.08em", textTransform: "uppercase" as const, cursor: "pointer",
       }}>Upgrade to Pro →</button>
     </div>

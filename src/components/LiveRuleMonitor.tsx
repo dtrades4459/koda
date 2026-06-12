@@ -89,7 +89,7 @@ export function LiveRuleMonitor({
           animation: "kPulse 1.6s ease-in-out infinite",
         }} />
         <span style={{
-          fontFamily: MONO, fontSize: 9, letterSpacing: "0.18em",
+          fontFamily: MONO, fontSize: "0.5625rem", letterSpacing: "0.18em",
           textTransform: "uppercase", color: C.live, fontWeight: 700,
         }}>
           Session live
@@ -102,7 +102,7 @@ export function LiveRuleMonitor({
               background: "transparent", color: C.muted,
               border: `1px solid ${C.border2}`, borderRadius: 999,
               padding: "4px 10px",
-              fontFamily: MONO, fontSize: 9, letterSpacing: "0.12em",
+              fontFamily: MONO, fontSize: "0.5625rem", letterSpacing: "0.12em",
               textTransform: "uppercase", cursor: "pointer",
             }}>
             Wrap up
@@ -112,22 +112,22 @@ export function LiveRuleMonitor({
 
       <div style={{ display: "flex", gap: 8 }}>
         <div style={{ flex: 1 }}>
-          <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.14em", color: C.muted, marginBottom: 4 }}>P&amp;L</div>
-          <div style={{ fontFamily: MONO, fontSize: 14, color: lossColor, fontWeight: 600 }}>
+          <div style={{ fontFamily: MONO, fontSize: "0.5625rem", letterSpacing: "0.14em", color: C.muted, marginBottom: 4 }}>P&amp;L</div>
+          <div style={{ fontFamily: MONO, fontSize: "0.875rem", color: lossColor, fontWeight: 600 }}>
             {pnlText}
             <span style={{ color: C.muted, fontWeight: 400 }}>{limitText}</span>
           </div>
         </div>
         <div style={{ flex: 1, borderLeft: `1px solid ${C.border}`, paddingLeft: 12 }}>
-          <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.14em", color: C.muted, marginBottom: 4 }}>Trades</div>
-          <div style={{ fontFamily: MONO, fontSize: 14, color: tradeColor, fontWeight: 600 }}>
+          <div style={{ fontFamily: MONO, fontSize: "0.5625rem", letterSpacing: "0.14em", color: C.muted, marginBottom: 4 }}>Trades</div>
+          <div style={{ fontFamily: MONO, fontSize: "0.875rem", color: tradeColor, fontWeight: 600 }}>
             {tradeText}
           </div>
         </div>
         {lastBreak && (
           <div style={{ flex: 1, borderLeft: `1px solid ${C.border}`, paddingLeft: 12 }}>
-            <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.14em", color: C.muted, marginBottom: 4 }}>Last break</div>
-            <div style={{ fontFamily: BODY, fontSize: 12, color: C.red, fontWeight: 600 }}>
+            <div style={{ fontFamily: MONO, fontSize: "0.5625rem", letterSpacing: "0.14em", color: C.muted, marginBottom: 4 }}>Last break</div>
+            <div style={{ fontFamily: BODY, fontSize: "0.75rem", color: C.red, fontWeight: 600 }}>
               {lastBreak}
             </div>
           </div>

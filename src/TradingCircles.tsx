@@ -659,17 +659,17 @@ export function TradingCircles({
         <>
           {/* Title */}
           <div style={{ padding: "12px 6px 14px", position: "relative", zIndex: 2 }}>
-            <div style={{ fontFamily: MONO, fontSize: "10px", fontWeight: 500, letterSpacing: "0.16em", textTransform: "uppercase", color: C.muted }}>Trading circles</div>
-            <div style={{ fontFamily: DISPLAY, fontSize: "26px", fontWeight: 500, letterSpacing: "-0.02em", marginTop: "4px", color: C.text }}>
+            <div style={{ fontFamily: MONO, fontSize: "0.625rem", fontWeight: 500, letterSpacing: "0.16em", textTransform: "uppercase", color: C.muted }}>Trading circles</div>
+            <div style={{ fontFamily: DISPLAY, fontSize: "1.625rem", fontWeight: 500, letterSpacing: "-0.02em", marginTop: "4px", color: C.text }}>
               Compete with <span style={{ fontWeight: 600 }}>your circle</span>
             </div>
           </div>
 
           {/* Pill tabs */}
           <div style={{ display: "flex", gap: "6px", padding: "0 6px 12px", position: "relative", zIndex: 2, flexWrap: "wrap" }}>
-            <div style={{ padding: "6px 14px", borderRadius: "999px", background: C.text, color: C.bg, border: `1px solid ${C.text}`, fontFamily: BODY, fontSize: "11px", fontWeight: 500, flexShrink: 0 }}>Joined</div>
+            <div style={{ padding: "6px 14px", borderRadius: "999px", background: C.text, color: C.bg, border: `1px solid ${C.text}`, fontFamily: BODY, fontSize: "0.6875rem", fontWeight: 500, flexShrink: 0 }}>Joined</div>
             <div style={{ flex: 1 }} />
-            <button onClick={() => setCirclesView("create")} style={{ padding: "6px 14px", borderRadius: "999px", background: "transparent", color: C.text2, border: `1px solid ${C.border2}`, fontFamily: BODY, fontSize: "11px", fontWeight: 500, cursor: "pointer", flexShrink: 0 }}>+ New</button>
+            <button onClick={() => setCirclesView("create")} style={{ padding: "6px 14px", borderRadius: "999px", background: "transparent", color: C.text2, border: `1px solid ${C.border2}`, fontFamily: BODY, fontSize: "0.6875rem", fontWeight: 500, cursor: "pointer", flexShrink: 0 }}>+ New</button>
           </div>
 
           {showCompCard && (
@@ -687,7 +687,7 @@ export function TradingCircles({
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{
-                    fontFamily: MONO, fontSize: 9, color: C.live,
+                    fontFamily: MONO, fontSize: "0.5625rem", color: C.live,
                     letterSpacing: "0.16em", textTransform: "uppercase" as const,
                     fontWeight: 700, marginBottom: 6,
                   }}>
@@ -699,7 +699,7 @@ export function TradingCircles({
                   }}>
                     50K Eval Challenge
                   </div>
-                  <div style={{ fontFamily: MONO, fontSize: 10, color: C.muted, letterSpacing: "0.06em" }}>
+                  <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.06em" }}>
                     June 15 – July 15 · R-multiple leaderboard
                     {compMemberCount !== null && ` · ${compMemberCount} trader${compMemberCount === 1 ? "" : "s"} entered`}
                   </div>
@@ -709,7 +709,7 @@ export function TradingCircles({
                   style={{
                     background: C.live, color: "#0A0A0A", border: "none",
                     borderRadius: 999, padding: "9px 18px",
-                    fontFamily: BODY, fontSize: 12, fontWeight: 600,
+                    fontFamily: BODY, fontSize: "0.75rem", fontWeight: 600,
                     cursor: "pointer", flexShrink: 0, whiteSpace: "nowrap" as const,
                   }}
                 >
@@ -728,8 +728,8 @@ export function TradingCircles({
                 <div style={{ position: "absolute", top: -60, left: -60, width: 200, height: 200, borderRadius: "50%", background: `conic-gradient(from 200deg at 50% 50%, ${(C as any).orb3 ?? C.green}, ${C.accent}, ${(C as any).orb2 ?? C.accent}, ${(C as any).orb3 ?? C.green})`, filter: "blur(40px)", opacity: 0.4, pointerEvents: "none", zIndex: 0 }} />
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", position: "relative", zIndex: 1 }}>
                   <div>
-                    <div style={{ fontFamily: MONO, fontSize: "10px", fontWeight: 500, letterSpacing: "0.16em", textTransform: "uppercase", color: C.accent }}>● LIVE · YOUR CIRCLE</div>
-                    <div style={{ fontFamily: DISPLAY, fontSize: "22px", fontWeight: 600, color: C.text, marginTop: "8px", letterSpacing: "-0.02em", display: "flex", alignItems: "center", gap: 8 }}>
+                    <div style={{ fontFamily: MONO, fontSize: "0.625rem", fontWeight: 500, letterSpacing: "0.16em", textTransform: "uppercase", color: C.accent }}>● LIVE · YOUR CIRCLE</div>
+                    <div style={{ fontFamily: DISPLAY, fontSize: "1.375rem", fontWeight: 600, color: C.text, marginTop: "8px", letterSpacing: "-0.02em", display: "flex", alignItems: "center", gap: 8 }}>
                       {circle.name}
                       {unread[circle.code] > 0 && (
                         <span
@@ -741,7 +741,7 @@ export function TradingCircles({
                             background: C.accent,
                             color: C.bg,
                             fontFamily: MONO,
-                            fontSize: 9,
+                            fontSize: "0.5625rem",
                             fontWeight: 700,
                             padding: "0 5px",
                             display: "inline-flex",
@@ -754,16 +754,16 @@ export function TradingCircles({
                         </span>
                       )}
                     </div>
-                    <div style={{ fontSize: "12px", color: C.text2, marginTop: "4px", fontFamily: MONO }}>{circle.code} · {circle.members?.length || 1} members</div>
+                    <div style={{ fontSize: "0.75rem", color: C.text2, marginTop: "4px", fontFamily: MONO }}>{circle.code} · {circle.members?.length || 1} members</div>
                   </div>
                 </div>
                 {/* Avatar stack */}
                 <div style={{ display: "flex", marginTop: "18px", alignItems: "center", position: "relative", zIndex: 1 }}>
                   {(circle.members || []).slice(0, 5).map((m: CircleMember, i: number) => (
-                    <div key={m.code || i} style={{ width: 34, height: 34, borderRadius: "999px", background: `linear-gradient(135deg, oklch(0.7 0.16 ${200 + i * 30}), oklch(0.5 0.18 ${280 + i * 20}))`, border: `2px solid ${C.bg}`, marginLeft: i === 0 ? 0 : -10, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontFamily: DISPLAY, fontWeight: 600, fontSize: "10px" }}>{(m.name || "?").slice(0, 2).toUpperCase()}</div>
+                    <div key={m.code || i} style={{ width: 34, height: 34, borderRadius: "999px", background: `linear-gradient(135deg, oklch(0.7 0.16 ${200 + i * 30}), oklch(0.5 0.18 ${280 + i * 20}))`, border: `2px solid ${C.bg}`, marginLeft: i === 0 ? 0 : -10, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontFamily: DISPLAY, fontWeight: 600, fontSize: "0.625rem" }}>{(m.name || "?").slice(0, 2).toUpperCase()}</div>
                   ))}
                   {(circle.members?.length || 0) > 5 && (
-                    <div style={{ marginLeft: -10, height: 34, padding: "0 12px", borderRadius: "999px", background: C.panel2, border: `1px solid ${C.border2}`, display: "flex", alignItems: "center", color: C.text2, fontSize: "11px", fontFamily: MONO }}>+{(circle.members?.length || 0) - 5}</div>
+                    <div style={{ marginLeft: -10, height: 34, padding: "0 12px", borderRadius: "999px", background: C.panel2, border: `1px solid ${C.border2}`, display: "flex", alignItems: "center", color: C.text2, fontSize: "0.6875rem", fontFamily: MONO }}>+{(circle.members?.length || 0) - 5}</div>
                   )}
                 </div>
               </div>
@@ -782,7 +782,7 @@ export function TradingCircles({
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        <div style={{ fontFamily: DISPLAY, fontSize: "14px", fontWeight: 600, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{circle.name}</div>
+                        <div style={{ fontFamily: DISPLAY, fontSize: "0.875rem", fontWeight: 600, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{circle.name}</div>
                         {unread[circle.code] > 0 && (
                           <span
                             aria-label={`${unread[circle.code]} unread`}
@@ -793,7 +793,7 @@ export function TradingCircles({
                               background: C.accent,
                               color: C.bg,
                               fontFamily: MONO,
-                              fontSize: 9,
+                              fontSize: "0.5625rem",
                               fontWeight: 700,
                               padding: "0 5px",
                               display: "inline-flex",
@@ -806,9 +806,9 @@ export function TradingCircles({
                           </span>
                         )}
                       </div>
-                      <div style={{ fontSize: "11px", color: C.text2, marginTop: "2px", fontFamily: MONO }}>{circle.code} · {circle.members?.length || 1} members</div>
+                      <div style={{ fontSize: "0.6875rem", color: C.text2, marginTop: "2px", fontFamily: MONO }}>{circle.code} · {circle.members?.length || 1} members</div>
                     </div>
-                    <div style={{ fontFamily: MONO, fontSize: "12px", fontWeight: 600, color: C.text2 }}>
+                    <div style={{ fontFamily: MONO, fontSize: "0.75rem", fontWeight: 600, color: C.text2 }}>
                       {circle.isOwner ? "OWNER" : "›"}
                     </div>
                   </div>
@@ -819,7 +819,7 @@ export function TradingCircles({
 
             {/* Join circle button */}
             <div style={{ marginTop: "12px", display: "flex", gap: "8px", position: "relative", zIndex: 2 }}>
-              <button onClick={() => setCirclesView("join")} style={{ flex: 1, background: "transparent", color: C.text, border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "12px 18px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+              <button onClick={() => setCirclesView("join")} style={{ flex: 1, background: "transparent", color: C.text, border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "12px 18px", cursor: "pointer", fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.08em", textTransform: "uppercase" }}>
                 ⤵ Join with code
               </button>
             </div>
@@ -837,9 +837,9 @@ export function TradingCircles({
             <button onClick={() => setCirclesView("browse")} style={{ width: 36, height: 36, borderRadius: "999px", background: C.panel, border: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
               <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M12 4L6 10l6 6" stroke={C.text} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
             </button>
-            <div style={{ fontFamily: MONO, fontSize: "10px", fontWeight: 500, letterSpacing: "0.16em", textTransform: "uppercase", color: C.muted }}>Create a circle</div>
+            <div style={{ fontFamily: MONO, fontSize: "0.625rem", fontWeight: 500, letterSpacing: "0.16em", textTransform: "uppercase", color: C.muted }}>Create a circle</div>
           </div>
-          <h2 style={{ fontFamily: DISPLAY, fontSize: "26px", fontWeight: 500, letterSpacing: "-0.02em", lineHeight: 1.1, color: C.text, marginTop: "4px" }}>
+          <h2 style={{ fontFamily: DISPLAY, fontSize: "1.625rem", fontWeight: 500, letterSpacing: "-0.02em", lineHeight: 1.1, color: C.text, marginTop: "4px" }}>
             Start <span style={{ fontStyle: "italic", fontWeight: 500, color: C.text2 }}>something small</span>.
           </h2>
           {/* Symbol picker */}
@@ -850,7 +850,7 @@ export function TradingCircles({
                 const active = (circleForm.emoji || "◆") === em;
                 return (
                   <button key={em} onClick={() => setCircleForm((f: any) => ({ ...f, emoji: em }))}
-                    style={{ width: "36px", height: "36px", borderRadius: "8px", fontSize: "16px", fontFamily: MONO, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", background: active ? C.text : "transparent", color: active ? C.bg : C.muted, border: `1px solid ${active ? C.text : C.border2}`, transition: "all 100ms", lineHeight: 1 }}>
+                    style={{ width: "36px", height: "36px", borderRadius: "8px", fontSize: "1rem", fontFamily: MONO, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", background: active ? C.text : "transparent", color: active ? C.bg : C.muted, border: `1px solid ${active ? C.text : C.border2}`, transition: "all 100ms", lineHeight: 1 }}>
                     {em}
                   </button>
                 );
@@ -863,7 +863,7 @@ export function TradingCircles({
             <label style={lbl}>Strategy focus (optional)</label>
             <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "8px" }}>
               <button onClick={() => setCircleForm((f: any) => ({ ...f, strategy: "" }))}
-                style={{ background: circleForm.strategy === "" ? C.text : "transparent", border: `1px solid ${circleForm.strategy === "" ? C.text : C.border2}`, borderRadius: "999px", padding: "7px 13px", cursor: "pointer", fontFamily: MONO, fontSize: "11px", letterSpacing: "0.06em", color: circleForm.strategy === "" ? C.bg : C.muted, textTransform: "uppercase" }}>
+                style={{ background: circleForm.strategy === "" ? C.text : "transparent", border: `1px solid ${circleForm.strategy === "" ? C.text : C.border2}`, borderRadius: "999px", padding: "7px 13px", cursor: "pointer", fontFamily: MONO, fontSize: "0.6875rem", letterSpacing: "0.06em", color: circleForm.strategy === "" ? C.bg : C.muted, textTransform: "uppercase" }}>
                 Any
               </button>
               {STRATEGY_NAMES.map((s: string) => (
@@ -876,12 +876,12 @@ export function TradingCircles({
             <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
               {[["public", "● Public"], ["private", "◐ Private"]].map(([val, label]) => (
                 <button key={val} onClick={() => setCircleForm((f: any) => ({ ...f, privacy: val }))}
-                  style={{ background: circleForm.privacy === val ? C.text : "transparent", border: `1px solid ${circleForm.privacy === val ? C.text : C.border2}`, borderRadius: "999px", padding: "10px 18px", cursor: "pointer", fontFamily: MONO, fontSize: "11px", letterSpacing: "0.08em", color: circleForm.privacy === val ? C.bg : C.text, textTransform: "uppercase" }}>
+                  style={{ background: circleForm.privacy === val ? C.text : "transparent", border: `1px solid ${circleForm.privacy === val ? C.text : C.border2}`, borderRadius: "999px", padding: "10px 18px", cursor: "pointer", fontFamily: MONO, fontSize: "0.6875rem", letterSpacing: "0.08em", color: circleForm.privacy === val ? C.bg : C.text, textTransform: "uppercase" }}>
                   {label}
                 </button>
               ))}
             </div>
-            <div style={{ fontFamily: BODY, fontSize: "12px", color: C.muted, marginTop: "10px", lineHeight: 1.55 }}>
+            <div style={{ fontFamily: BODY, fontSize: "0.75rem", color: C.muted, marginTop: "10px", lineHeight: 1.55 }}>
               {circleForm.privacy === "public" ? "Anyone with the invite code can join." : "Invite only — you share the code."}
             </div>
           </div>
@@ -900,12 +900,12 @@ export function TradingCircles({
                 ["discipline", "Discipline"],
               ] as const).map(([val, label]) => (
                 <button key={val} onClick={() => setCircleForm((f: any) => ({ ...f, metric: val }))}
-                  style={{ background: (circleForm.metric || "dollar") === val ? C.text : "transparent", border: `1px solid ${(circleForm.metric || "dollar") === val ? C.text : C.border2}`, borderRadius: "999px", padding: "7px 14px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.08em", color: (circleForm.metric || "dollar") === val ? C.bg : C.muted, textTransform: "uppercase", transition: "all 100ms" }}>
+                  style={{ background: (circleForm.metric || "dollar") === val ? C.text : "transparent", border: `1px solid ${(circleForm.metric || "dollar") === val ? C.text : C.border2}`, borderRadius: "999px", padding: "7px 14px", cursor: "pointer", fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.08em", color: (circleForm.metric || "dollar") === val ? C.bg : C.muted, textTransform: "uppercase", transition: "all 100ms" }}>
                   {label}
                 </button>
               ))}
             </div>
-            <div style={{ fontFamily: BODY, fontSize: "12px", color: C.muted, marginTop: "8px", lineHeight: 1.55 }}>
+            <div style={{ fontFamily: BODY, fontSize: "0.75rem", color: C.muted, marginTop: "8px", lineHeight: 1.55 }}>
               {{
                 dollar:     "Leaderboard ranks by total dollar P&L.",
                 r:          "Leaderboard ranks by total R gained/lost.",
@@ -928,23 +928,23 @@ export function TradingCircles({
             <button onClick={() => setCirclesView("browse")} style={{ width: 36, height: 36, borderRadius: "999px", background: C.panel, border: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
               <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M12 4L6 10l6 6" stroke={C.text} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
             </button>
-            <div style={{ fontFamily: MONO, fontSize: "10px", fontWeight: 500, letterSpacing: "0.16em", textTransform: "uppercase", color: C.muted }}>Join a circle</div>
+            <div style={{ fontFamily: MONO, fontSize: "0.625rem", fontWeight: 500, letterSpacing: "0.16em", textTransform: "uppercase", color: C.muted }}>Join a circle</div>
           </div>
           <div style={{ textAlign: "center", padding: "32px 0" }}>
-            <div style={{ fontFamily: MONO, fontSize: "28px", color: C.muted, marginBottom: "20px", letterSpacing: "-0.02em" }}>⤵</div>
+            <div style={{ fontFamily: MONO, fontSize: "1.75rem", color: C.muted, marginBottom: "20px", letterSpacing: "-0.02em" }}>⤵</div>
             <div style={{ fontFamily: DISPLAY, fontSize: "clamp(28px, 6vw, 38px)", fontWeight: 500, letterSpacing: "-0.02em", color: C.text, marginBottom: "32px", fontStyle: "italic" }}>
               Enter the code.
             </div>
             <input value={circleJoinCode} onChange={e => setCircleJoinCode(e.target.value.toUpperCase())}
               onKeyDown={e => e.key === "Enter" && joinCircle()}
               placeholder="KODA-ABCD-EFGH"
-              style={{ ...inp, textAlign: "center", fontFamily: MONO, fontSize: "22px", letterSpacing: "0.14em", padding: "16px 0" }} />
+              style={{ ...inp, textAlign: "center", fontFamily: MONO, fontSize: "1.375rem", letterSpacing: "0.14em", padding: "16px 0" }} />
             <button onClick={joinCircle} disabled={isJoiningCircle || !circleJoinCode.trim()} style={{ ...pillPrimary(!!circleJoinCode.trim() && !isJoiningCircle), marginTop: "20px" }}>
               {isJoiningCircle ? "Joining…" : "Join →"}
             </button>
-            {circleMsg && <div style={{ fontFamily: BODY, fontSize: "13px", color: circleMsg.toLowerCase().includes("joined") ? C.green : C.red, marginTop: "14px" }}>{circleMsg}</div>}
+            {circleMsg && <div style={{ fontFamily: BODY, fontSize: "0.8125rem", color: circleMsg.toLowerCase().includes("joined") ? C.green : C.red, marginTop: "14px" }}>{circleMsg}</div>}
           </div>
-          <div style={{ fontFamily: BODY, fontSize: "12px", color: C.muted, lineHeight: 1.6, textAlign: "center", maxWidth: "32ch", margin: "0 auto" }}>
+          <div style={{ fontFamily: BODY, fontSize: "0.75rem", color: C.muted, lineHeight: 1.6, textAlign: "center", maxWidth: "32ch", margin: "0 auto" }}>
             Ask the circle owner for their invite link or code, then paste it above.
           </div>
         </div>
@@ -958,7 +958,7 @@ export function TradingCircles({
             <button onClick={() => { setCirclesView("browse"); setActiveCircle(null); setLeaderboard([]); }} style={{ ...pillGhost, padding: "8px 14px" }}>‹ BACK</button>
             {!activeCircle.isOwner && activeCircle.code !== KODA_GLOBAL_CODE && (
               <button onClick={() => setShowLeaveSheet(true)}
-                style={{ background: "transparent", color: C.muted, border: `0.5px solid ${C.border2}`, borderRadius: "999px", padding: "8px 14px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase" }}>
+                style={{ background: "transparent", color: C.muted, border: `0.5px solid ${C.border2}`, borderRadius: "999px", padding: "8px 14px", cursor: "pointer", fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.12em", textTransform: "uppercase" }}>
                 Leave
               </button>
             )}
@@ -967,24 +967,24 @@ export function TradingCircles({
           {/* Circle hero */}
           <section>
             <div style={{ display: "flex", alignItems: "center", gap: "18px", marginBottom: "16px" }}>
-              <div style={{ width: "56px", height: "56px", borderRadius: "12px", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: MONO, fontSize: "28px", color: C.text, flexShrink: 0, border: `1px solid ${C.border2}` }}>
+              <div style={{ width: "56px", height: "56px", borderRadius: "12px", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: MONO, fontSize: "1.75rem", color: C.text, flexShrink: 0, border: `1px solid ${C.border2}` }}>
                 {activeCircle.emoji || "◆"}
               </div>
               <div>
                 <h1 style={{ fontFamily: DISPLAY, fontSize: "clamp(32px, 8vw, 48px)", fontWeight: 700, letterSpacing: "-0.03em", lineHeight: 0.95, color: C.text, marginBottom: "6px" }}>
                   {activeCircle.name}
                 </h1>
-                <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.08em", textTransform: "uppercase" }}>
                   {activeCircle.code}
                 </div>
               </div>
             </div>
             {activeCircle.description && (
-              <div style={{ fontFamily: BODY, fontSize: "14px", color: C.text2, lineHeight: 1.6, maxWidth: "48ch", marginBottom: "16px" }}>{activeCircle.description}</div>
+              <div style={{ fontFamily: BODY, fontSize: "0.875rem", color: C.text2, lineHeight: 1.6, maxWidth: "48ch", marginBottom: "16px" }}>{activeCircle.description}</div>
             )}
             {activeCircle.code === COMP_CIRCLE_CODE && (
               <div style={{
-                fontFamily: MONO, fontSize: 10, color: C.muted,
+                fontFamily: MONO, fontSize: "0.625rem", color: C.muted,
                 letterSpacing: "0.1em", textTransform: "uppercase" as const,
                 textAlign: "center" as const,
                 padding: "8px 0 14px",
@@ -1001,8 +1001,8 @@ export function TradingCircles({
                 ["AVG WR", leaderboard.length > 0 ? `${circleAvgWR}%` : "—"],
               ].map(([k, v], i) => (
                 <div key={k as string} style={{ padding: "16px 8px", textAlign: "center", borderLeft: i > 0 ? `1px solid ${C.border}` : "none" }}>
-                  <div style={{ fontFamily: DISPLAY, fontSize: "20px", fontWeight: 500, color: C.text, letterSpacing: "-0.02em", lineHeight: 1 }}>{v}</div>
-                  <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", marginTop: "8px" }}>{k}</div>
+                  <div style={{ fontFamily: DISPLAY, fontSize: "1.25rem", fontWeight: 500, color: C.text, letterSpacing: "-0.02em", lineHeight: 1 }}>{v}</div>
+                  <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.1em", marginTop: "8px" }}>{k}</div>
                 </div>
               ))}
             </div>
@@ -1010,8 +1010,8 @@ export function TradingCircles({
 
           {/* Publish strip */}
           <section>
-            <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.14em", marginBottom: "10px" }}>YOUR STATS</div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 14px", fontFamily: MONO, fontSize: "12px", color: C.text2, marginBottom: "14px", letterSpacing: "0.04em" }}>
+            <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.14em", marginBottom: "10px" }}>YOUR STATS</div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 14px", fontFamily: MONO, fontSize: "0.75rem", color: C.text2, marginBottom: "14px", letterSpacing: "0.04em" }}>
               <span><span style={{ color: C.muted }}>W/L</span> {wins}/{losses}</span>
               <span style={{ color: C.border2 }}>·</span>
               <span><span style={{ color: C.muted }}>WR</span> {winRate}%</span>
@@ -1038,7 +1038,7 @@ export function TradingCircles({
               border: `1px solid ${C.border2}`,
               borderRadius: 999,
               fontFamily: MONO,
-              fontSize: 10,
+              fontSize: "0.625rem",
               letterSpacing: "0.08em",
               textTransform: "uppercase" as const,
               color: C.text2,
@@ -1095,7 +1095,7 @@ export function TradingCircles({
                           padding: "9px 12px",
                           cursor: "pointer",
                           fontFamily: MONO,
-                          fontSize: "10px",
+                          fontSize: "0.625rem",
                           fontWeight: 600,
                           letterSpacing: "0.1em",
                           textTransform: "uppercase",
@@ -1128,7 +1128,7 @@ export function TradingCircles({
                           .catch(() => setLoadingLB(false));
                       }
                     }}
-                      style={{ background: lbSort === s ? C.text2 + "22" : "transparent", border: `1px solid ${lbSort === s ? C.text2 : C.border2}`, borderRadius: "999px", padding: "4px 10px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", color: lbSort === s ? C.text : C.muted, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                      style={{ background: lbSort === s ? C.text2 + "22" : "transparent", border: `1px solid ${lbSort === s ? C.text2 : C.border2}`, borderRadius: "999px", padding: "4px 10px", cursor: "pointer", fontFamily: MONO, fontSize: "0.625rem", color: lbSort === s ? C.text : C.muted, letterSpacing: "0.08em", textTransform: "uppercase" }}>
                       {s === "all" ? "ALL TIME" : "THIS WEEK"}
                     </button>
                   ))}
@@ -1144,7 +1144,7 @@ export function TradingCircles({
                         setLoadingLB(false);
                       }
                     }}
-                    style={{ background: "none", border: "none", color: loadingLB ? C.dim : C.muted, cursor: loadingLB ? "default" : "pointer", fontFamily: MONO, fontSize: "11px", opacity: loadingLB ? 0.5 : 1 }}
+                    style={{ background: "none", border: "none", color: loadingLB ? C.dim : C.muted, cursor: loadingLB ? "default" : "pointer", fontFamily: MONO, fontSize: "0.6875rem", opacity: loadingLB ? 0.5 : 1 }}
                   >↻</button>
                   {isCompCircle && (
                     <div style={{ display: "flex", gap: 2, marginLeft: 8 }}>
@@ -1158,7 +1158,7 @@ export function TradingCircles({
                             border: `1px solid ${lbMetric === m ? C.live : C.border2}`,
                             borderRadius: 999, padding: "4px 10px",
                             cursor: "pointer", fontFamily: MONO,
-                            fontSize: "10px", letterSpacing: "0.08em",
+                            fontSize: "0.625rem", letterSpacing: "0.08em",
                             textTransform: "uppercase" as const,
                             fontWeight: lbMetric === m ? 700 : 400,
                           }}
@@ -1172,14 +1172,14 @@ export function TradingCircles({
               )}
               {circleTab === "leaderboard" && (
                 <div style={{ display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap", paddingTop: "8px" }}>
-                  <span style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.14em", textTransform: "uppercase" as const }}>Sort</span>
+                  <span style={{ fontFamily: MONO, fontSize: "0.5625rem", color: C.muted, letterSpacing: "0.14em", textTransform: "uppercase" as const }}>Sort</span>
                   {([["rank", "RANK"], ["winrate", "WIN %"], ["trades", "TRADES"], ["avgr", "AVG R"]] as const).map(([k, label]) => (
                     // Transparent button = 44px hit area (DESIGN.md minimum); the
                     // visible pill lives on the inner span so visuals match the
                     // lbSort pills above.
                     <button key={k} onClick={() => setLbViewSort(k)} aria-pressed={lbViewSort === k}
                       style={{ background: "none", border: "none", padding: 0, minHeight: 44, display: "inline-flex", alignItems: "center", cursor: "pointer" }}>
-                      <span style={{ background: lbViewSort === k ? C.text2 + "22" : "transparent", border: `1px solid ${lbViewSort === k ? C.text2 : C.border2}`, borderRadius: "999px", padding: "4px 10px", fontFamily: MONO, fontSize: "10px", color: lbViewSort === k ? C.text : C.muted, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                      <span style={{ background: lbViewSort === k ? C.text2 + "22" : "transparent", border: `1px solid ${lbViewSort === k ? C.text2 : C.border2}`, borderRadius: "999px", padding: "4px 10px", fontFamily: MONO, fontSize: "0.625rem", color: lbViewSort === k ? C.text : C.muted, letterSpacing: "0.08em", textTransform: "uppercase" }}>
                         {label}
                       </span>
                     </button>
@@ -1237,29 +1237,29 @@ export function TradingCircles({
                   if (item.type === "message") {
                     return (
                       <div key={`msg-${item.data.id}`} style={{ display: "flex", gap: 9, padding: "5px 0" }}>
-                        <div style={{ width: 24, height: 24, borderRadius: "50%", background: C.panel, border: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: C.text2, flexShrink: 0, marginTop: 2 }}>
+                        <div style={{ width: 24, height: 24, borderRadius: "50%", background: C.panel, border: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.5625rem", fontWeight: 700, color: C.text2, flexShrink: 0, marginTop: 2 }}>
                           {(stripHandlePrefix(item.data.senderHandle) || item.data.senderName || "?").charAt(0).toUpperCase()}
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: "flex", alignItems: "baseline", gap: 7, marginBottom: 2 }}>
-                            <span style={{ fontFamily: BODY, fontSize: 11, fontWeight: 600, color: C.text }}>@{stripHandlePrefix(item.data.senderHandle) || item.data.senderName}</span>
-                            <span style={{ fontFamily: MONO, fontSize: 10, color: C.muted }}>{fmtMsgTime(item.data.createdAt)}</span>
+                            <span style={{ fontFamily: BODY, fontSize: "0.6875rem", fontWeight: 600, color: C.text }}>@{stripHandlePrefix(item.data.senderHandle) || item.data.senderName}</span>
+                            <span style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted }}>{fmtMsgTime(item.data.createdAt)}</span>
                           </div>
-                          <div style={{ fontFamily: BODY, fontSize: 13, color: C.text2, lineHeight: 1.5 }}>{item.data.text}</div>
+                          <div style={{ fontFamily: BODY, fontSize: "0.8125rem", color: C.text2, lineHeight: 1.5 }}>{item.data.text}</div>
                         </div>
                       </div>
                     );
                   }
                   if (item.type === "challenge_started") {
                     return (
-                      <div key={`ch-${item.data.id}`} style={{ fontFamily: MONO, fontSize: 10, color: C.muted, letterSpacing: "0.04em", textAlign: "center", padding: "4px 0" }}>
+                      <div key={`ch-${item.data.id}`} style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.04em", textAlign: "center", padding: "4px 0" }}>
                         challenge started · {item.data.title}
                       </div>
                     );
                   }
                   if (item.type === "member_joined") {
                     return (
-                      <div key={`join-${item.data.id}`} style={{ fontFamily: MONO, fontSize: 10, color: C.muted, letterSpacing: "0.04em", textAlign: "center", padding: "4px 0" }}>
+                      <div key={`join-${item.data.id}`} style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.04em", textAlign: "center", padding: "4px 0" }}>
                         {item.data.text}
                       </div>
                     );
@@ -1268,7 +1268,7 @@ export function TradingCircles({
                 })}
 
                 {!feedLoading && feedItems.length === 0 && (
-                  <div style={{ fontFamily: BODY, fontSize: 13, color: C.muted, textAlign: "center", padding: "32px 0" }}>No activity yet. Say something!</div>
+                  <div style={{ fontFamily: BODY, fontSize: "0.8125rem", color: C.muted, textAlign: "center", padding: "32px 0" }}>No activity yet. Say something!</div>
                 )}
                 <div ref={feedBottomRef} />
               </div>
@@ -1286,14 +1286,14 @@ export function TradingCircles({
                     ? `${e.missingShots} MISSING SCREENSHOT${e.missingShots === 1 ? "" : "S"}`
                     : "ALL SCREENSHOTS ATTACHED";
                   return (
-                    <div style={{ fontFamily: MONO, fontSize: 10, color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase" as const, textAlign: "center" as const, padding: "6px 0 14px" }}>
+                    <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase" as const, textAlign: "center" as const, padding: "6px 0 14px" }}>
                       {head} · {tail}
                     </div>
                   );
                 })()}
                 {lbError && (
-                  <div style={{ padding: "20px", textAlign: "center", fontFamily: BODY, fontSize: "13px", color: C.muted }}>
-                    Couldn't load leaderboard. <button onClick={async () => { if (!activeCircle) return; setLoadingLB(true); setLbError(false); try { const [e, ch] = await Promise.all([fetchCircleLeaderboard(activeCircle, lbSort), fetchActiveChallenge(activeCircle.code)]); setLeaderboard(e); setActiveChallenge(ch); } catch { setLbError(true); } setLoadingLB(false); }} style={{ background: "none", border: "none", color: C.accent, cursor: "pointer", fontFamily: MONO, fontSize: "11px", textDecoration: "underline" }}>Try again</button>
+                  <div style={{ padding: "20px", textAlign: "center", fontFamily: BODY, fontSize: "0.8125rem", color: C.muted }}>
+                    Couldn't load leaderboard. <button onClick={async () => { if (!activeCircle) return; setLoadingLB(true); setLbError(false); try { const [e, ch] = await Promise.all([fetchCircleLeaderboard(activeCircle, lbSort), fetchActiveChallenge(activeCircle.code)]); setLeaderboard(e); setActiveChallenge(ch); } catch { setLbError(true); } setLoadingLB(false); }} style={{ background: "none", border: "none", color: C.accent, cursor: "pointer", fontFamily: MONO, fontSize: "0.6875rem", textDecoration: "underline" }}>Try again</button>
                   </div>
                 )}
                 {loadingLB ? (
@@ -1302,9 +1302,9 @@ export function TradingCircles({
                   </div>
                 ) : leaderboard.length === 0 ? (
                   <div style={{ padding: "40px 24px", textAlign: "center", background: C.panel, borderRadius: "12px" }}>
-                    <div style={{ fontFamily: MONO, fontSize: "24px", color: C.border2, marginBottom: "12px" }}>—</div>
-                    <div style={{ fontFamily: DISPLAY, fontSize: "16px", fontStyle: "italic", color: C.text2, marginBottom: "6px" }}>No stats published yet.</div>
-                    <div style={{ fontFamily: BODY, fontSize: "13px", color: C.muted }}>Be the first — hit "Publish My Stats" above.</div>
+                    <div style={{ fontFamily: MONO, fontSize: "1.5rem", color: C.border2, marginBottom: "12px" }}>—</div>
+                    <div style={{ fontFamily: DISPLAY, fontSize: "1rem", fontStyle: "italic", color: C.text2, marginBottom: "6px" }}>No stats published yet.</div>
+                    <div style={{ fontFamily: BODY, fontSize: "0.8125rem", color: C.muted }}>Be the first — hit "Publish My Stats" above.</div>
                   </div>
                 ) : (
                   <div style={{ borderTop: `1px solid ${C.border}` }}>
@@ -1325,20 +1325,20 @@ export function TradingCircles({
                             <div
                               onClick={() => setExpandedMember(isExpanded ? null : entry.memberCode)}
                               style={{ padding: "16px 0", display: "grid", gridTemplateColumns: "auto 1fr auto", alignItems: "center", gap: "14px", cursor: "pointer", paddingLeft: isExpanded ? "10px" : 0, paddingRight: isExpanded ? "10px" : 0 }}>
-                              <span style={{ fontFamily: MONO, fontSize: "13px", color: isFirst ? C.green : C.muted, letterSpacing: "0.06em", minWidth: "28px" }}>
+                              <span style={{ fontFamily: MONO, fontSize: "0.8125rem", color: isFirst ? C.green : C.muted, letterSpacing: "0.06em", minWidth: "28px" }}>
                                 {isStaffRow ? "🏁" : (medal || String(entry.rank ?? 0).padStart(2, "0"))}
                               </span>
                               <div style={{ minWidth: 0 }}>
                                 <div style={{ display: "flex", alignItems: "baseline", gap: "8px", flexWrap: "wrap" }}>
-                                  <span style={{ fontFamily: DISPLAY, fontSize: "17px", fontWeight: 500, color: C.text, letterSpacing: "-0.01em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{entry.name}</span>
-                                  {isMe && <span style={{ fontFamily: MONO, fontSize: "10px", color: C.green, letterSpacing: "0.12em", textTransform: "uppercase" }}>· YOU</span>}
-                                  {isStaffRow && <span style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.12em", textTransform: "uppercase" as const, border: `1px solid ${C.border2}`, borderRadius: 4, padding: "1px 5px" }}>REFEREE</span>}
+                                  <span style={{ fontFamily: DISPLAY, fontSize: "1.0625rem", fontWeight: 500, color: C.text, letterSpacing: "-0.01em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{entry.name}</span>
+                                  {isMe && <span style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.green, letterSpacing: "0.12em", textTransform: "uppercase" }}>· YOU</span>}
+                                  {isStaffRow && <span style={{ fontFamily: MONO, fontSize: "0.5625rem", color: C.muted, letterSpacing: "0.12em", textTransform: "uppercase" as const, border: `1px solid ${C.border2}`, borderRadius: 4, padding: "1px 5px" }}>REFEREE</span>}
                                   {isCompCircle && compStarted && !isStaffRow && !isMe && (entry.total < COMP_MIN_TRADES || (entry.shotsMissing ?? 0) > 0) && (
-                                    <span style={{ fontFamily: MONO, fontSize: "9px", color: C.muted, letterSpacing: "0.12em", textTransform: "uppercase" as const, border: `1px solid ${C.border2}`, borderRadius: 4, padding: "1px 5px" }}>INELIGIBLE</span>
+                                    <span style={{ fontFamily: MONO, fontSize: "0.5625rem", color: C.muted, letterSpacing: "0.12em", textTransform: "uppercase" as const, border: `1px solid ${C.border2}`, borderRadius: 4, padding: "1px 5px" }}>INELIGIBLE</span>
                                   )}
                                 </div>
                                 {!isStaffRow && (
-                                  <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginTop: "3px", fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                                  <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginTop: "3px", fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.06em", textTransform: "uppercase" }}>
                                     <span>{entry.total} trades</span>
                                     <span style={{ color: Number(entry.winRate ?? 0) >= 50 ? C.green : Number(entry.winRate ?? 0) > 0 ? C.red : C.muted }}>{Number(entry.winRate ?? 0).toFixed(0)}% WR</span>
                                     {entry.topStrategy && <span>{stratCode(entry.topStrategy)}</span>}
@@ -1353,11 +1353,11 @@ export function TradingCircles({
                               </div>
                               <div style={{ textAlign: "right", flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
                                 {isStaffRow ? (
-                                  <div style={{ fontFamily: MONO, fontSize: "13px", color: C.border2 }}>—</div>
+                                  <div style={{ fontFamily: MONO, fontSize: "0.8125rem", color: C.border2 }}>—</div>
                                 ) : (
                                   <>
-                                    <div style={{ fontFamily: DISPLAY, fontSize: "18px", fontWeight: 700, color: pnlCol, letterSpacing: "-0.01em", lineHeight: 1 }}>{md.val}</div>
-                                    <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.06em" }}>{md.label}</div>
+                                    <div style={{ fontFamily: DISPLAY, fontSize: "1.125rem", fontWeight: 700, color: pnlCol, letterSpacing: "-0.01em", lineHeight: 1 }}>{md.val}</div>
+                                    <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.06em" }}>{md.label}</div>
                                   </>
                                 )}
                               </div>
@@ -1365,26 +1365,26 @@ export function TradingCircles({
                             {isExpanded && (
                               <div style={{ padding: "0 10px 16px", display: "flex", flexDirection: "column", gap: "12px" }}>
                                 <div>
-                                  <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.14em", marginBottom: "4px" }}>
+                                  <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.14em", marginBottom: "4px" }}>
                                     {entry.alias && entry.alias !== entry.memberCode ? "ALIAS · USER CODE" : "USER CODE"}
                                   </div>
                                   <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                    <span style={{ fontFamily: MONO, fontSize: "13px", color: C.text, letterSpacing: "0.10em", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                    <span style={{ fontFamily: MONO, fontSize: "0.8125rem", color: C.text, letterSpacing: "0.10em", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                                       {entry.alias && entry.alias !== entry.memberCode ? `${entry.alias} · ${entry.memberCode}` : entry.memberCode}
                                     </span>
                                     <button onClick={(e) => { e.stopPropagation(); navigator.clipboard?.writeText(entry.memberCode); showToast("Code copied"); }}
-                                      style={{ ...pillGhost, padding: "6px 12px", fontSize: "9px" }}>COPY</button>
+                                      style={{ ...pillGhost, padding: "6px 12px", fontSize: "0.5625rem" }}>COPY</button>
                                   </div>
                                 </div>
                                 {!isMe && (
                                   <div style={{ display: "flex", gap: "8px" }}>
                                     <button onClick={(e) => { e.stopPropagation(); if (isFollowing) { unfollowUser(entry.memberCode); } else { followUser(entry.memberCode); } }}
-                                      style={{ background: isFollowing ? "transparent" : C.text, color: isFollowing ? C.muted : C.bg, border: `1px solid ${isFollowing ? C.border2 : C.text}`, borderRadius: "999px", padding: "8px 18px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", flex: 1 }}>
+                                      style={{ background: isFollowing ? "transparent" : C.text, color: isFollowing ? C.muted : C.bg, border: `1px solid ${isFollowing ? C.border2 : C.text}`, borderRadius: "999px", padding: "8px 18px", cursor: "pointer", fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.12em", textTransform: "uppercase", flex: 1 }}>
                                       {isFollowing ? "✓ Following" : "+ Follow"}
                                     </button>
                                     {activeCircle?.isOwner && (
                                       <button onClick={async (e) => { e.stopPropagation(); await kickMember(activeCircle.code, entry.memberCode); setLeaderboard(prev => prev.filter(r => r.memberCode !== entry.memberCode)); setExpandedMember(null); }}
-                                        style={{ background: "transparent", color: C.red, border: `1px solid ${C.red}44`, borderRadius: "999px", padding: "8px 14px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase" }}>
+                                        style={{ background: "transparent", color: C.red, border: `1px solid ${C.red}44`, borderRadius: "999px", padding: "8px 14px", cursor: "pointer", fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.12em", textTransform: "uppercase" }}>
                                         KICK
                                       </button>
                                     )}
@@ -1392,10 +1392,10 @@ export function TradingCircles({
                                 )}
                                 {entry.handle && openProfile && (
                                   <button onClick={(e) => { e.stopPropagation(); openProfile(entry.handle); }}
-                                    style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", padding: 0, textDecoration: "underline" }}>View Profile →</button>
+                                    style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.1em", textTransform: "uppercase", padding: 0, textDecoration: "underline" }}>View Profile →</button>
                                 )}
                                 {entry.updatedAt && (
-                                  <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.10em", textTransform: "uppercase" }}>
+                                  <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.10em", textTransform: "uppercase" }}>
                                     Last published · {new Date(entry.updatedAt).toLocaleString()}
                                   </div>
                                 )}
@@ -1415,7 +1415,7 @@ export function TradingCircles({
                 {isCompCircle && (
                   <div style={{ textAlign: "center" as const, padding: "24px 0 8px" }}>
                     <a href="/competition-rules.html" target="_blank" rel="noopener noreferrer"
-                      style={{ fontFamily: MONO, fontSize: 10, color: C.muted, letterSpacing: "0.08em", textDecoration: "none", textTransform: "uppercase" as const }}>
+                      style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.08em", textDecoration: "none", textTransform: "uppercase" as const }}>
                       View competition rules →
                     </a>
                   </div>
@@ -1440,9 +1440,9 @@ export function TradingCircles({
                         </div>
                       : chatMessages.length === 0
                         ? <div style={{ padding: "48px 0", textAlign: "center" }}>
-                            <div style={{ fontFamily: MONO, fontSize: "22px", color: C.border2, marginBottom: "10px", letterSpacing: "0.14em" }}>· · ·</div>
-                            <div style={{ fontFamily: DISPLAY, fontSize: "16px", fontStyle: "italic", color: C.text2, marginBottom: "6px" }}>No messages yet.</div>
-                            <div style={{ fontFamily: BODY, fontSize: "12px", color: C.muted }}>Be the first to say something.</div>
+                            <div style={{ fontFamily: MONO, fontSize: "1.375rem", color: C.border2, marginBottom: "10px", letterSpacing: "0.14em" }}>· · ·</div>
+                            <div style={{ fontFamily: DISPLAY, fontSize: "1rem", fontStyle: "italic", color: C.text2, marginBottom: "6px" }}>No messages yet.</div>
+                            <div style={{ fontFamily: BODY, fontSize: "0.75rem", color: C.muted }}>Be the first to say something.</div>
                           </div>
                         : (chatMessages as ChatMsg[]).map((msg, i) => {
                             const isMe = msg.sender_id === myId;
@@ -1451,7 +1451,7 @@ export function TradingCircles({
                                 {msg.id === firstUnreadId && i > 0 && (
                                   <div style={{
                                     display: "flex", alignItems: "center", gap: 8,
-                                    margin: "6px 0", fontFamily: MONO, fontSize: 9,
+                                    margin: "6px 0", fontFamily: MONO, fontSize: "0.5625rem",
                                     letterSpacing: "0.14em", color: C.accent,
                                   }}>
                                     <div style={{ flex: 1, height: 1, background: C.accent, opacity: 0.4 }} />
@@ -1461,16 +1461,16 @@ export function TradingCircles({
                                 )}
                                 <div style={{ padding: "10px 0", display: "flex", justifyContent: isMe ? "flex-end" : "flex-start", gap: "10px", alignItems: "flex-end" }}>
                                   {!isMe && (
-                                    <div style={{ width: "28px", height: "28px", borderRadius: "50%", background: C.panel, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: MONO, fontSize: "10px", color: C.muted, flexShrink: 0, border: `1px solid ${C.border}` }}>
+                                    <div style={{ width: "28px", height: "28px", borderRadius: "50%", background: C.panel, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: MONO, fontSize: "0.625rem", color: C.muted, flexShrink: 0, border: `1px solid ${C.border}` }}>
                                       {(msg.sender_name || "?")[0].toUpperCase()}
                                     </div>
                                   )}
                                   <div style={{ maxWidth: "75%" }}>
-                                    {!isMe && <div onClick={() => openProfile && msg.sender_handle && openProfile(msg.sender_handle)} style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.08em", marginBottom: "4px", cursor: openProfile && msg.sender_handle ? "pointer" : "default" }}>{msg.sender_name}{msg.sender_handle ? ` @${stripHandlePrefix(msg.sender_handle)}` : ""}</div>}
-                                    <div style={{ background: isMe ? C.text : C.panel, color: isMe ? C.bg : C.text, borderRadius: isMe ? "16px 16px 4px 16px" : "16px 16px 16px 4px", padding: "10px 14px", fontFamily: BODY, fontSize: "14px", lineHeight: 1.5, wordBreak: "break-word", border: isMe ? "none" : `1px solid ${C.border}` }}>{msg.text}</div>
-                                    <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, marginTop: "4px", display: "flex", gap: "10px", justifyContent: isMe ? "flex-end" : "flex-start", alignItems: "center" }}>
+                                    {!isMe && <div onClick={() => openProfile && msg.sender_handle && openProfile(msg.sender_handle)} style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.08em", marginBottom: "4px", cursor: openProfile && msg.sender_handle ? "pointer" : "default" }}>{msg.sender_name}{msg.sender_handle ? ` @${stripHandlePrefix(msg.sender_handle)}` : ""}</div>}
+                                    <div style={{ background: isMe ? C.text : C.panel, color: isMe ? C.bg : C.text, borderRadius: isMe ? "16px 16px 4px 16px" : "16px 16px 16px 4px", padding: "10px 14px", fontFamily: BODY, fontSize: "0.875rem", lineHeight: 1.5, wordBreak: "break-word", border: isMe ? "none" : `1px solid ${C.border}` }}>{msg.text}</div>
+                                    <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, marginTop: "4px", display: "flex", gap: "10px", justifyContent: isMe ? "flex-end" : "flex-start", alignItems: "center" }}>
                                       <span>{fmtMsgTime(msg.created_at)}</span>
-                                      {isMe && <button onClick={() => deleteChatMessage(msg.id)} style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "10px", padding: 0, textTransform: "uppercase", letterSpacing: "0.06em" }}>Delete</button>}
+                                      {isMe && <button onClick={() => deleteChatMessage(msg.id)} style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "0.625rem", padding: 0, textTransform: "uppercase", letterSpacing: "0.06em" }}>Delete</button>}
                                     </div>
                                   </div>
                                 </div>
@@ -1486,7 +1486,7 @@ export function TradingCircles({
                     <textarea value={chatInput} onChange={e => setChatInput(e.target.value)}
                       onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendChatMessage(activeCircle.code, myId); } }}
                       placeholder="Message the circle…" rows={2}
-                      style={{ ...inp, flex: 1, resize: "none", lineHeight: 1.5, fontFamily: BODY, fontSize: "14px" }} />
+                      style={{ ...inp, flex: 1, resize: "none", lineHeight: 1.5, fontFamily: BODY, fontSize: "0.875rem" }} />
                     <button onClick={() => sendChatMessage(activeCircle.code, myId)}
                       disabled={!chatInput.trim() || chatSending || !myId}
                       style={{ ...pillPrimary(!!chatInput.trim() && !chatSending), width: "auto", padding: "10px 18px", opacity: chatSending ? 0.6 : 1, flexShrink: 0 }}>
@@ -1510,10 +1510,10 @@ export function TradingCircles({
                     </div>
                   )}
                   {membersLoading && members.length > 0 && (
-                    <div style={{ padding: "8px 0 0", fontFamily: MONO, fontSize: "10px", color: C.muted }}>Refreshing…</div>
+                    <div style={{ padding: "8px 0 0", fontFamily: MONO, fontSize: "0.625rem", color: C.muted }}>Refreshing…</div>
                   )}
                   {members.length === 0 && !membersLoading ? (
-                    <div style={{ padding: "28px 0", fontFamily: BODY, fontSize: "13px", color: C.muted, fontStyle: "italic" }}>
+                    <div style={{ padding: "28px 0", fontFamily: BODY, fontSize: "0.8125rem", color: C.muted, fontStyle: "italic" }}>
                       No members found. Members appear here after they open the app.
                     </div>
                   ) : (members as (CircleMember & { alias?: string; isOwner?: boolean; handle?: string })[]).map((m, idx) => {
@@ -1524,25 +1524,25 @@ export function TradingCircles({
                     const onProfileClick = canViewProfile ? () => openProfile!(m.handle!) : undefined;
                     return (
                       <div key={m.code || idx} style={{ display: "flex", alignItems: "center", gap: "14px", padding: "14px 0", borderBottom: `1px solid ${C.border}` }}>
-                        <div onClick={onProfileClick} style={{ width: "40px", height: "40px", borderRadius: "50%", background: C.panel, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: DISPLAY, fontSize: "18px", flexShrink: 0, border: `1px solid ${C.border}`, cursor: canViewProfile ? "pointer" : "default" }}>
+                        <div onClick={onProfileClick} style={{ width: "40px", height: "40px", borderRadius: "50%", background: C.panel, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: DISPLAY, fontSize: "1.125rem", flexShrink: 0, border: `1px solid ${C.border}`, cursor: canViewProfile ? "pointer" : "default" }}>
                           {m.avatar?.startsWith("http")
                             ? <img src={m.avatar} style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />
-                            : <span style={{ fontFamily: DISPLAY, fontSize: "14px", fontWeight: 600 }}>{(m.name || "?").slice(0, 2).toUpperCase()}</span>
+                            : <span style={{ fontFamily: DISPLAY, fontSize: "0.875rem", fontWeight: 600 }}>{(m.name || "?").slice(0, 2).toUpperCase()}</span>
                           }
                         </div>
                         <div onClick={onProfileClick} style={{ flex: 1, minWidth: 0, cursor: canViewProfile ? "pointer" : "default" }}>
                           <div style={{ display: "flex", alignItems: "baseline", gap: "8px" }}>
-                            <span style={{ fontFamily: DISPLAY, fontSize: "16px", fontWeight: 500, color: C.text, letterSpacing: "-0.01em" }}>{m.name || "Trader"}</span>
-                            {isMe && <span style={{ fontFamily: MONO, fontSize: "10px", color: C.green, letterSpacing: "0.12em" }}>· YOU</span>}
-                            {(m.code === activeCircle.createdBy || m.isOwner) ? <span style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em" }}>OWNER</span> : null}
+                            <span style={{ fontFamily: DISPLAY, fontSize: "1rem", fontWeight: 500, color: C.text, letterSpacing: "-0.01em" }}>{m.name || "Trader"}</span>
+                            {isMe && <span style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.green, letterSpacing: "0.12em" }}>· YOU</span>}
+                            {(m.code === activeCircle.createdBy || m.isOwner) ? <span style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.1em" }}>OWNER</span> : null}
                           </div>
-                          {m.handle && <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.04em", marginTop: "2px" }}>@{stripHandlePrefix(m.handle)}</div>}
-                          {!m.handle && m.alias && <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.06em", marginTop: "2px" }}>{m.alias}</div>}
-                          {lbEntry && <div style={{ fontFamily: MONO, fontSize: "10px", color: lbEntry.totalPnL >= 0 ? C.green : C.red, letterSpacing: "0.06em", marginTop: "2px" }}>{lbEntry.totalPnL >= 0 ? "+" : ""}{lbEntry.totalPnL.toFixed(1)}R · {Number(lbEntry.winRate ?? 0).toFixed(0)}% WR</div>}
+                          {m.handle && <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.04em", marginTop: "2px" }}>@{stripHandlePrefix(m.handle)}</div>}
+                          {!m.handle && m.alias && <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.06em", marginTop: "2px" }}>{m.alias}</div>}
+                          {lbEntry && <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: lbEntry.totalPnL >= 0 ? C.green : C.red, letterSpacing: "0.06em", marginTop: "2px" }}>{lbEntry.totalPnL >= 0 ? "+" : ""}{lbEntry.totalPnL.toFixed(1)}R · {Number(lbEntry.winRate ?? 0).toFixed(0)}% WR</div>}
                         </div>
                         {!isMe && (
                           <button onClick={(e) => { e.stopPropagation(); if (isFollowing) { unfollowUser(m.code); } else { followUser(m.code); } }}
-                            style={{ background: isFollowing ? "transparent" : C.text, color: isFollowing ? C.muted : C.bg, border: `1px solid ${isFollowing ? C.border2 : C.text}`, borderRadius: "999px", padding: "6px 14px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase" as const, flexShrink: 0 }}>
+                            style={{ background: isFollowing ? "transparent" : C.text, color: isFollowing ? C.muted : C.bg, border: `1px solid ${isFollowing ? C.border2 : C.text}`, borderRadius: "999px", padding: "6px 14px", cursor: "pointer", fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.1em", textTransform: "uppercase" as const, flexShrink: 0 }}>
                             {isFollowing ? "✓" : "+Follow"}
                           </button>
                         )}
@@ -1577,25 +1577,25 @@ export function TradingCircles({
                     style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 13px", background: C.panel, border: `1px solid ${C.border}`, borderRadius: 9, cursor: "pointer", marginBottom: 4, width: "100%" }}
                   >
                     <div style={{ textAlign: "left" }}>
-                      <div style={{ fontFamily: DISPLAY, fontSize: 13, fontWeight: 600, color: C.text }}>Start New Challenge</div>
-                      <div style={{ fontFamily: MONO, fontSize: 10, color: C.muted, marginTop: 2, letterSpacing: "0.08em", textTransform: "uppercase" }}>Pro · Owner Only</div>
+                      <div style={{ fontFamily: DISPLAY, fontSize: "0.8125rem", fontWeight: 600, color: C.text }}>Start New Challenge</div>
+                      <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, marginTop: 2, letterSpacing: "0.08em", textTransform: "uppercase" }}>Pro · Owner Only</div>
                     </div>
-                    <div style={{ color: C.muted, fontSize: 14 }}>→</div>
+                    <div style={{ color: C.muted, fontSize: "0.875rem" }}>→</div>
                   </button>
                 )}
 
                 {activeChallenge && (
                   <>
-                    <div style={{ fontFamily: MONO, fontSize: 9, fontWeight: 700, letterSpacing: "0.12em", color: C.muted, textTransform: "uppercase", padding: "4px 0 6px" }}>Active</div>
+                    <div style={{ fontFamily: MONO, fontSize: "0.5625rem", fontWeight: 700, letterSpacing: "0.12em", color: C.muted, textTransform: "uppercase", padding: "4px 0 6px" }}>Active</div>
                     <div style={{ background: C.panel, border: `1px solid ${C.border2}`, borderTop: `1.5px solid ${C.text2}`, borderRadius: 10, padding: "13px 15px", display: "flex", alignItems: "center", gap: 14 }}>
-                      <div style={{ fontFamily: MONO, fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", color: C.text2, writingMode: "vertical-lr", transform: "rotate(180deg)", flexShrink: 0, textTransform: "uppercase" }}>Live</div>
+                      <div style={{ fontFamily: MONO, fontSize: "0.5625rem", fontWeight: 700, letterSpacing: "0.1em", color: C.text2, writingMode: "vertical-lr", transform: "rotate(180deg)", flexShrink: 0, textTransform: "uppercase" }}>Live</div>
                       <div style={{ width: 1, height: 36, background: C.border2, flexShrink: 0 }} />
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontFamily: DISPLAY, fontSize: 14, fontWeight: 700, color: C.text2 }}>{activeChallenge.title}</div>
-                        <div style={{ fontFamily: MONO, fontSize: 11, color: C.muted, marginTop: 1 }}>In progress</div>
+                        <div style={{ fontFamily: DISPLAY, fontSize: "0.875rem", fontWeight: 700, color: C.text2 }}>{activeChallenge.title}</div>
+                        <div style={{ fontFamily: MONO, fontSize: "0.6875rem", color: C.muted, marginTop: 1 }}>In progress</div>
                         <div style={{ display: "flex", gap: 8, marginTop: 5 }}>
-                          <div style={{ fontFamily: MONO, fontSize: 10, color: C.muted }}>{activeChallenge.metric.toUpperCase()}</div>
-                          <div style={{ fontFamily: MONO, fontSize: 10, color: C.muted, flexShrink: 0 }}>{formatCountdown(activeChallenge.endsAt)}</div>
+                          <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted }}>{activeChallenge.metric.toUpperCase()}</div>
+                          <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, flexShrink: 0 }}>{formatCountdown(activeChallenge.endsAt)}</div>
                         </div>
                       </div>
                     </div>
@@ -1604,19 +1604,19 @@ export function TradingCircles({
 
                 {trophies.length > 0 && (
                   <>
-                    <div style={{ fontFamily: MONO, fontSize: 9, fontWeight: 700, letterSpacing: "0.12em", color: C.muted, textTransform: "uppercase", padding: "8px 0 6px" }}>Past Challenges</div>
+                    <div style={{ fontFamily: MONO, fontSize: "0.5625rem", fontWeight: 700, letterSpacing: "0.12em", color: C.muted, textTransform: "uppercase", padding: "8px 0 6px" }}>Past Challenges</div>
                     {trophies.map(r => (
                       <div key={r.id} style={{ background: C.panel, border: `1px solid ${C.border}`, borderTop: `1.5px solid ${TROPHY_GOLD}`, borderRadius: 10, padding: "13px 15px", display: "flex", alignItems: "center", gap: 14 }}>
-                        <div style={{ fontFamily: MONO, fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", color: TROPHY_GOLD, writingMode: "vertical-lr", transform: "rotate(180deg)", flexShrink: 0, textTransform: "uppercase" }}>1st</div>
+                        <div style={{ fontFamily: MONO, fontSize: "0.5625rem", fontWeight: 700, letterSpacing: "0.1em", color: TROPHY_GOLD, writingMode: "vertical-lr", transform: "rotate(180deg)", flexShrink: 0, textTransform: "uppercase" }}>1st</div>
                         <div style={{ width: 1, height: 36, background: C.border2, flexShrink: 0 }} />
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontFamily: DISPLAY, fontSize: 14, fontWeight: 700, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          <div style={{ fontFamily: DISPLAY, fontSize: "0.875rem", fontWeight: 700, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                             {r.winnerHandle ? `@${r.winnerHandle}` : r.winnerName}
                           </div>
-                          <div style={{ fontFamily: MONO, fontSize: 13, fontWeight: 700, color: C.text2, marginTop: 1 }}>{formatTrophyValue(r)}</div>
+                          <div style={{ fontFamily: MONO, fontSize: "0.8125rem", fontWeight: 700, color: C.text2, marginTop: 1 }}>{formatTrophyValue(r)}</div>
                           <div style={{ display: "flex", gap: 8, marginTop: 5 }}>
-                            <div style={{ fontFamily: MONO, fontSize: 10, color: C.muted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.challenge?.title ?? ""}</div>
-                            <div style={{ fontFamily: MONO, fontSize: 10, color: C.muted, flexShrink: 0 }}>{new Date(r.snapshotAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</div>
+                            <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.challenge?.title ?? ""}</div>
+                            <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, flexShrink: 0 }}>{new Date(r.snapshotAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</div>
                           </div>
                         </div>
                       </div>
@@ -1625,7 +1625,7 @@ export function TradingCircles({
                 )}
 
                 {!trophiesLoading && trophies.length === 0 && !activeChallenge && (
-                  <div style={{ fontFamily: BODY, fontSize: 13, color: C.muted, textAlign: "center", padding: "32px 0" }}>No challenges yet</div>
+                  <div style={{ fontFamily: BODY, fontSize: "0.8125rem", color: C.muted, textAlign: "center", padding: "32px 0" }}>No challenges yet</div>
                 )}
               </div>
             )}
@@ -1633,9 +1633,9 @@ export function TradingCircles({
 
           {/* Invite strip */}
           {!isCompCircle && <section style={{ borderTop: `1px solid ${C.border}`, paddingTop: "22px" }}>
-            <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.14em", marginBottom: "12px" }}>INVITE TO CIRCLE</div>
+            <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.14em", marginBottom: "12px" }}>INVITE TO CIRCLE</div>
             <div style={{ display: "flex", gap: "8px", alignItems: "center", marginBottom: "12px" }}>
-              <div style={{ flex: 1, borderBottom: `1px solid ${C.border2}`, padding: "12px 0", fontFamily: MONO, fontSize: "16px", color: C.text, letterSpacing: "0.14em" }}>{activeCircle.code}</div>
+              <div style={{ flex: 1, borderBottom: `1px solid ${C.border2}`, padding: "12px 0", fontFamily: MONO, fontSize: "1rem", color: C.text, letterSpacing: "0.14em" }}>{activeCircle.code}</div>
               <button onClick={() => { navigator.clipboard?.writeText(activeCircle.code); showToast("Code copied"); }}
                 style={{ ...pillGhost, padding: "8px 16px" }}>CODE</button>
               <button onClick={() => { navigator.clipboard?.writeText(`https://kodatrade.co.uk/?join=${activeCircle.code}`); showToast("Link copied"); }}
@@ -1643,7 +1643,7 @@ export function TradingCircles({
               <button onClick={() => shareInviteLink(activeCircle)}
                 style={{ ...pillPrimary(true), width: "auto", padding: "8px 16px" }}>SHARE</button>
             </div>
-            <div style={{ fontFamily: BODY, fontSize: "12px", color: C.muted, lineHeight: 1.5 }}>
+            <div style={{ fontFamily: BODY, fontSize: "0.75rem", color: C.muted, lineHeight: 1.5 }}>
               LINK copies a join URL · SHARE sends a ready-made invite.
             </div>
           </section>}
@@ -1656,14 +1656,14 @@ export function TradingCircles({
                 onChange={e => setComposeText(e.target.value)}
                 onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendFeedMessage(); } }}
                 placeholder="Message the circle…"
-                style={{ flex: 1, background: C.panel, border: `1px solid ${C.border2}`, borderRadius: 999, padding: "9px 15px", fontSize: 13, color: C.text, outline: "none", fontFamily: BODY }}
+                style={{ flex: 1, background: C.panel, border: `1px solid ${C.border2}`, borderRadius: 999, padding: "9px 15px", fontSize: "0.8125rem", color: C.text, outline: "none", fontFamily: BODY }}
               />
               <button
                 onClick={sendFeedMessage}
                 disabled={!composeText.trim() || composeSending}
                 style={{ width: 36, height: 36, borderRadius: "50%", background: C.text, border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, opacity: (!composeText.trim() || composeSending) ? 0.4 : 1 }}
               >
-                <span style={{ fontSize: 14, color: C.bg }}>→</span>
+                <span style={{ fontSize: "0.875rem", color: C.bg }}>→</span>
               </button>
             </div>
           )}
@@ -1679,22 +1679,22 @@ export function TradingCircles({
             onClick={e => e.stopPropagation()}
             style={{ width: "100%", maxWidth: 420, background: C.panel, borderRadius: "16px 16px 0 0", padding: "22px 18px 30px", border: `1px solid ${C.border2}`, borderBottom: "none", animation: "kRise 0.32s ease-out" }}
           >
-            <div style={{ fontFamily: DISPLAY, fontSize: 18, fontWeight: 600, color: C.text, marginBottom: 8, letterSpacing: "-0.01em" }}>
+            <div style={{ fontFamily: DISPLAY, fontSize: "1.125rem", fontWeight: 600, color: C.text, marginBottom: 8, letterSpacing: "-0.01em" }}>
               Leave “{activeCircle.name}”?
             </div>
-            <div style={{ fontFamily: BODY, fontSize: 13, color: C.text2, lineHeight: 1.55, marginBottom: 22 }}>
+            <div style={{ fontFamily: BODY, fontSize: "0.8125rem", color: C.text2, lineHeight: 1.55, marginBottom: 22 }}>
               You can rejoin anytime with the code <span style={{ fontFamily: MONO, color: C.text }}>{activeCircle.code}</span>.
             </div>
             <div style={{ display: "flex", gap: 10 }}>
               <button
                 onClick={() => setShowLeaveSheet(false)}
-                style={{ flex: 1, padding: "12px 0", borderRadius: 999, background: "transparent", color: C.text, border: `1px solid ${C.border2}`, fontFamily: MONO, fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer" }}
+                style={{ flex: 1, padding: "12px 0", borderRadius: 999, background: "transparent", color: C.text, border: `1px solid ${C.border2}`, fontFamily: MONO, fontSize: "0.6875rem", letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer" }}
               >
                 Cancel
               </button>
               <button
                 onClick={() => { leaveCircle(activeCircle.code); setShowLeaveSheet(false); }}
-                style={{ flex: 1, padding: "12px 0", borderRadius: 999, background: C.red, color: "#fff", border: "none", fontFamily: MONO, fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer", fontWeight: 600 }}
+                style={{ flex: 1, padding: "12px 0", borderRadius: 999, background: C.red, color: "#fff", border: "none", fontFamily: MONO, fontSize: "0.6875rem", letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer", fontWeight: 600 }}
               >
                 Leave
               </button>
@@ -1716,7 +1716,7 @@ export function TradingCircles({
 
             {/* Title */}
             <div style={{ marginBottom: 14 }}>
-              <div style={{ fontFamily: MONO, fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", color: C.muted, marginBottom: 6, textTransform: "uppercase" }}>Title</div>
+              <div style={{ fontFamily: MONO, fontSize: "0.5625rem", fontWeight: 700, letterSpacing: "0.1em", color: C.muted, marginBottom: 6, textTransform: "uppercase" }}>Title</div>
               <input
                 placeholder="e.g. Best R This Week"
                 value={challengeForm.title}
@@ -1727,7 +1727,7 @@ export function TradingCircles({
 
             {/* Metric */}
             <div style={{ marginBottom: 14 }}>
-              <div style={{ fontFamily: MONO, fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", color: C.muted, marginBottom: 6, textTransform: "uppercase" }}>Metric</div>
+              <div style={{ fontFamily: MONO, fontSize: "0.5625rem", fontWeight: 700, letterSpacing: "0.1em", color: C.muted, marginBottom: 6, textTransform: "uppercase" }}>Metric</div>
               <select
                 value={challengeForm.metric}
                 onChange={e => setChallengeForm(f => ({ ...f, metric: e.target.value as CircleChallenge["metric"] }))}
@@ -1740,7 +1740,7 @@ export function TradingCircles({
                 <option value="discipline">Discipline</option>
               </select>
               {challengeForm.metric === "discipline" && (
-                <div style={{ fontFamily: BODY, fontSize: 11.5, color: C.muted, marginTop: 6, lineHeight: 1.45 }}>
+                <div style={{ fontFamily: BODY, fontSize: "0.71875rem", color: C.muted, marginTop: 6, lineHeight: 1.45 }}>
                   Ranks members with at least 3 tagged trades in the last 7 days.
                 </div>
               )}
@@ -1748,13 +1748,13 @@ export function TradingCircles({
 
             {/* Duration */}
             <div style={{ marginBottom: 22 }}>
-              <div style={{ fontFamily: MONO, fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", color: C.muted, marginBottom: 8, textTransform: "uppercase" }}>Duration</div>
+              <div style={{ fontFamily: MONO, fontSize: "0.5625rem", fontWeight: 700, letterSpacing: "0.1em", color: C.muted, marginBottom: 8, textTransform: "uppercase" }}>Duration</div>
               <div style={{ display: "flex", gap: 6 }}>
                 {(["3","7","14","30"] as const).map(d => (
                   <button
                     key={d}
                     onClick={() => setChallengeForm(f => ({ ...f, duration: d }))}
-                    style={{ flex: 1, padding: "8px 0", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer", border: `1px solid ${challengeForm.duration === d ? C.text : C.border}`, background: challengeForm.duration === d ? C.text : "transparent", color: challengeForm.duration === d ? C.bg : C.muted, fontFamily: MONO }}
+                    style={{ flex: 1, padding: "8px 0", borderRadius: 8, fontSize: "0.75rem", fontWeight: 600, cursor: "pointer", border: `1px solid ${challengeForm.duration === d ? C.text : C.border}`, background: challengeForm.duration === d ? C.text : "transparent", color: challengeForm.duration === d ? C.bg : C.muted, fontFamily: MONO }}
                   >
                     {d}d
                   </button>
@@ -1765,7 +1765,7 @@ export function TradingCircles({
             <button
               onClick={createChallengeFromForm}
               disabled={!challengeForm.title.trim() || challengeCreating}
-              style={{ width: "100%", padding: "13px", background: C.text, border: "none", borderRadius: 10, color: C.bg, fontSize: 13, fontWeight: 600, cursor: "pointer", opacity: (!challengeForm.title.trim() || challengeCreating) ? 0.4 : 1, fontFamily: MONO }}
+              style={{ width: "100%", padding: "13px", background: C.text, border: "none", borderRadius: 10, color: C.bg, fontSize: "0.8125rem", fontWeight: 600, cursor: "pointer", opacity: (!challengeForm.title.trim() || challengeCreating) ? 0.4 : 1, fontFamily: MONO }}
             >
               {challengeCreating ? "Starting…" : "Start Challenge"}
             </button>

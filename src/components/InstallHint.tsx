@@ -117,7 +117,7 @@ export function InstallHint() {
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{
           fontFamily: "'Geist Mono', monospace",
-          fontSize: "9px",
+          fontSize: "0.5625rem",
           letterSpacing: "0.18em",
           textTransform: "uppercase" as const,
           color: "oklch(0.84 0.14 175)",
@@ -134,7 +134,7 @@ export function InstallHint() {
           Install for push + offline
         </div>
         {ios ? (
-          <div style={{ fontSize: "13px", lineHeight: 1.45, color: "#F2F2EE" }}>
+          <div style={{ fontSize: "0.8125rem", lineHeight: 1.45, color: "#F2F2EE" }}>
             Tap{" "}
             <span style={{
               display: "inline-flex", alignItems: "center", justifyContent: "center",
@@ -153,7 +153,7 @@ export function InstallHint() {
           </div>
         ) : (
           <>
-            <div style={{ fontSize: "13px", lineHeight: 1.45, color: "#F2F2EE", marginBottom: 10 }}>
+            <div style={{ fontSize: "0.8125rem", lineHeight: 1.45, color: "#F2F2EE", marginBottom: 10 }}>
               Install Kōda for push notifications + offline access.
             </div>
             <button
@@ -167,7 +167,7 @@ export function InstallHint() {
                 border: "none",
                 borderRadius: 999,
                 padding: "8px 14px",
-                fontSize: 12,
+                fontSize: "0.75rem",
                 fontWeight: 600,
                 fontFamily: "'Geist', -apple-system, sans-serif",
                 cursor: "pointer",
@@ -187,7 +187,7 @@ export function InstallHint() {
           color: "#65655F",
           cursor: "pointer",
           fontFamily: "'Geist Mono', monospace",
-          fontSize: "16px",
+          fontSize: "1rem",
           lineHeight: 1,
           padding: "4px 6px",
           marginRight: "-4px",

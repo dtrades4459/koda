@@ -51,7 +51,7 @@ export class ErrorBoundary extends Component<Props, State> {
           {/* Wordmark */}
           <div style={{
             fontFamily: DISPLAY,
-            fontSize: "17px",
+            fontSize: "1.0625rem",
             fontWeight: 700,
             letterSpacing: "-0.01em",
             color: C.text,
@@ -63,7 +63,7 @@ export class ErrorBoundary extends Component<Props, State> {
           {/* Error kicker */}
           <div style={{
             fontFamily: MONO,
-            fontSize: "11px",
+            fontSize: "0.6875rem",
             color: C.red,
             letterSpacing: "0.08em",
             textTransform: "uppercase",
@@ -73,7 +73,7 @@ export class ErrorBoundary extends Component<Props, State> {
           </div>
 
           <p style={{
-            fontSize: "15px",
+            fontSize: "0.9375rem",
             color: C.text2,
             lineHeight: 1.65,
             marginBottom: "28px",
@@ -87,7 +87,7 @@ export class ErrorBoundary extends Component<Props, State> {
             <summary style={{
               cursor: "pointer",
               fontFamily: MONO,
-              fontSize: "11px",
+              fontSize: "0.6875rem",
               color: C.muted,
               letterSpacing: "0.06em",
               textTransform: "uppercase",
@@ -101,7 +101,7 @@ export class ErrorBoundary extends Component<Props, State> {
               border: `1px solid ${C.border2}`,
               borderRadius: "6px",
               fontFamily: MONO,
-              fontSize: "11px",
+              fontSize: "0.6875rem",
               color: C.muted,
               whiteSpace: "pre-wrap",
               wordBreak: "break-all",
@@ -121,7 +121,7 @@ export class ErrorBoundary extends Component<Props, State> {
               border: "none",
               borderRadius: "999px",
               padding: "14px 28px",
-              fontSize: "13px",
+              fontSize: "0.8125rem",
               fontWeight: 500,
               cursor: "pointer",
               fontFamily: BODY,

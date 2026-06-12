@@ -73,13 +73,13 @@ export function InAppBrowserBanner() {
     }}>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{
-          fontFamily: MONO, fontSize: 10, color: "#A6A6A2",
+          fontFamily: MONO, fontSize: "0.625rem", color: "#A6A6A2",
           letterSpacing: "0.10em", textTransform: "uppercase",
           marginBottom: 4,
         }}>
           {browserName ? `${browserName} browser` : "In-app browser"} · sign-in won't work here
         </div>
-        <div style={{ fontSize: 13, lineHeight: 1.45 }}>
+        <div style={{ fontSize: "0.8125rem", lineHeight: 1.45 }}>
           Tap <strong>⋮</strong> (top-right) → <strong>"Open in Browser"</strong> for the full Kōda experience.
         </div>
         <div style={{ marginTop: 8, display: "flex", gap: 8 }}>
@@ -91,7 +91,7 @@ export function InAppBrowserBanner() {
               color: "#F2F2EE",
               borderRadius: 999,
               padding: "6px 12px",
-              fontSize: 12,
+              fontSize: "0.75rem",
               fontFamily: BODY,
               cursor: "pointer",
             }}
@@ -106,7 +106,7 @@ export function InAppBrowserBanner() {
         style={{
           background: "none", border: "none",
           color: "#65655F", cursor: "pointer",
-          fontSize: 20, padding: "0 4px", lineHeight: 1,
+          fontSize: "1.25rem", padding: "0 4px", lineHeight: 1,
           flexShrink: 0,
         }}
       >×</button>

@@ -103,11 +103,11 @@ export function FriendsFeed({
         {/* Header — hidden on Ideas tab; IdeasScreen renders its own header */}
         {tab !== "ideas" && (
         <div style={{ marginBottom: "4px" }}>
-          <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.16em", textTransform: "uppercase" as const, marginBottom: "6px" }}>
+          <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.16em", textTransform: "uppercase" as const, marginBottom: "6px" }}>
             Friends · Live
           </div>
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px" }}>
-            <div style={{ fontFamily: DISPLAY, fontSize: "26px", fontWeight: 500, color: C.text, letterSpacing: "-0.02em", lineHeight: 1.1 }}>
+            <div style={{ fontFamily: DISPLAY, fontSize: "1.625rem", fontWeight: 500, color: C.text, letterSpacing: "-0.02em", lineHeight: 1.1 }}>
               What your <span style={{ fontWeight: 600 }}>network</span> is trading
             </div>
             <div style={{ display: "flex", gap: "8px", alignItems: "center", flexShrink: 0, marginTop: "4px" }}>
@@ -123,7 +123,7 @@ export function FriendsFeed({
                   color: showAddFriend ? C.bg : C.text,
                   border: `1px solid ${C.border2}`,
                   borderRadius: "999px", padding: "6px 14px", cursor: "pointer",
-                  fontFamily: MONO, fontSize: "10px", letterSpacing: "0.08em",
+                  fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.08em",
                   textTransform: "uppercase" as const,
                 }}>
                 {showAddFriend ? "Close" : "+ Follow"}
@@ -143,15 +143,15 @@ export function FriendsFeed({
             backdropFilter: "blur(20px) saturate(140%)",
           }}>
             <div>
-              <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.16em", marginBottom: "3px", textTransform: "uppercase" as const }}>
+              <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.16em", marginBottom: "3px", textTransform: "uppercase" as const }}>
                 YOUR HANDLE
               </div>
-              <div style={{ fontFamily: MONO, fontSize: "14px", color: C.text, letterSpacing: "0.04em" }}>
+              <div style={{ fontFamily: MONO, fontSize: "0.875rem", color: C.text, letterSpacing: "0.04em" }}>
                 @{profile?.handle || "—"}
               </div>
             </div>
             <div>
-              <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.16em", marginBottom: "8px", textTransform: "uppercase" as const }}>
+              <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.16em", marginBottom: "8px", textTransform: "uppercase" as const }}>
                 FOLLOW BY USERNAME
               </div>
               <div style={{ display: "flex", gap: "8px" }}>
@@ -172,7 +172,7 @@ export function FriendsFeed({
               </div>
               {followHandleMsg && (
                 <div style={{
-                  fontFamily: BODY, fontSize: "12px", marginTop: "8px",
+                  fontFamily: BODY, fontSize: "0.75rem", marginTop: "8px",
                   color: followHandleMsg.includes("not found") || followHandleMsg.includes("That's you") ? C.red : C.green,
                 }}>
                   {followHandleMsg}
@@ -189,25 +189,25 @@ export function FriendsFeed({
               <div style={{ padding: "48px 20px", textAlign: "center" }}>
                 {followingCount === 0 ? (
                   <>
-                    <div style={{ fontSize: "32px", marginBottom: "14px" }}>&#128101;</div>
-                    <div style={{ fontFamily: DISPLAY, fontSize: "18px", fontWeight: 500, color: C.text, marginBottom: "6px", letterSpacing: "-0.01em" }}>
+                    <div style={{ fontSize: "2rem", marginBottom: "14px" }}>&#128101;</div>
+                    <div style={{ fontFamily: DISPLAY, fontSize: "1.125rem", fontWeight: 500, color: C.text, marginBottom: "6px", letterSpacing: "-0.01em" }}>
                       Follow traders to get started
                     </div>
-                    <div style={{ fontFamily: BODY, fontSize: "13px", color: C.muted, lineHeight: 1.6, maxWidth: "260px", margin: "0 auto 20px" }}>
+                    <div style={{ fontFamily: BODY, fontSize: "0.8125rem", color: C.muted, lineHeight: 1.6, maxWidth: "260px", margin: "0 auto 20px" }}>
                       Their trades and stats appear here in real time.
                     </div>
                     <button onClick={() => setShowAddFriend(true)}
-                      style={{ background: C.text, color: C.bg, border: "none", borderRadius: "999px", padding: "10px 22px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase" as const }}>
+                      style={{ background: C.text, color: C.bg, border: "none", borderRadius: "999px", padding: "10px 22px", cursor: "pointer", fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.1em", textTransform: "uppercase" as const }}>
                       + Follow someone
                     </button>
                   </>
                 ) : (
                   <>
-                    <div style={{ fontSize: "28px", marginBottom: "12px" }}>&#128237;</div>
-                    <div style={{ fontFamily: DISPLAY, fontSize: "17px", fontWeight: 500, color: C.muted, marginBottom: "6px" }}>
+                    <div style={{ fontSize: "1.75rem", marginBottom: "12px" }}>&#128237;</div>
+                    <div style={{ fontFamily: DISPLAY, fontSize: "1.0625rem", fontWeight: 500, color: C.muted, marginBottom: "6px" }}>
                       Feed is empty
                     </div>
-                    <div style={{ fontFamily: BODY, fontSize: "13px", color: C.muted, lineHeight: 1.6 }}>
+                    <div style={{ fontFamily: BODY, fontSize: "0.8125rem", color: C.muted, lineHeight: 1.6 }}>
                       The traders you follow haven&apos;t published recently.
                     </div>
                   </>
@@ -232,7 +232,7 @@ export function FriendsFeed({
                           <AvatarCircle name={profile?.name} avatar={profile?.avatar} size={48} C={C} />
                         </div>
                       </div>
-                      <div style={{ fontFamily: MONO, fontSize: "10px", color: live, marginTop: "5px", fontWeight: 600, letterSpacing: "0.06em" }}>
+                      <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: live, marginTop: "5px", fontWeight: 600, letterSpacing: "0.06em" }}>
                         Live
                       </div>
                     </div>
@@ -257,7 +257,7 @@ export function FriendsFeed({
                               <AvatarCircle name={f.name} avatar={f.avatar} size={48} C={C} />
                             </div>
                           </div>
-                          <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, marginTop: "5px", maxWidth: "56px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, marginTop: "5px", maxWidth: "56px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                             {f.handle ? f.handle.replace(/^@/, "") : (f.name || "").split(" ")[0] || code.slice(0, 6)}
                           </div>
                         </div>
@@ -288,7 +288,7 @@ export function FriendsFeed({
                               width: "36px", height: "36px", borderRadius: "999px",
                               background: `linear-gradient(135deg, ${orb1}, ${orb2})`,
                               display: "flex", alignItems: "center", justifyContent: "center",
-                              color: "#fff", fontFamily: DISPLAY, fontWeight: 600, fontSize: "11px",
+                              color: "#fff", fontFamily: DISPLAY, fontWeight: 600, fontSize: "0.6875rem",
                               flexShrink: 0, overflow: "hidden",
                             }}>
                             {item.authorAvatar && (item.authorAvatar.startsWith("data:") || item.authorAvatar.startsWith("http"))
@@ -297,10 +297,10 @@ export function FriendsFeed({
                             }
                           </div>
                           <div style={{ flex: 1 }}>
-                            <div style={{ fontFamily: DISPLAY, fontSize: "13px", fontWeight: 600, color: C.text }}>
+                            <div style={{ fontFamily: DISPLAY, fontSize: "0.8125rem", fontWeight: 600, color: C.text }}>
                               {item.authorName ?? "Trader"}
                             </div>
-                            <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, marginTop: "1px" }}>
+                            <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, marginTop: "1px" }}>
                               {item.authorHandle ? `@${item.authorHandle}` : "@trader"} · {item.date}
                             </div>
                           </div>
@@ -321,20 +321,20 @@ export function FriendsFeed({
                               : "rgba(128,128,128,0.08)",
                             color: outcomeClr,
                             display: "flex", alignItems: "center", justifyContent: "center",
-                            fontFamily: MONO, fontWeight: 600, fontSize: "12px",
+                            fontFamily: MONO, fontWeight: 600, fontSize: "0.75rem",
                             border: `1px solid ${C.border2}`,
                           }}>
                             {(item.pair ?? "—").slice(0, 3).toUpperCase()}
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                              <span style={{ fontFamily: DISPLAY, fontSize: "14px", fontWeight: 600, color: C.text }}>
+                              <span style={{ fontFamily: DISPLAY, fontSize: "0.875rem", fontWeight: 600, color: C.text }}>
                                 {item.pair ?? "—"}
                               </span>
                               {side && (
                                 <span style={{
                                   padding: "1px 6px", borderRadius: "4px",
-                                  fontSize: "9px", letterSpacing: "0.10em",
+                                  fontSize: "0.5625rem", letterSpacing: "0.10em",
                                   fontFamily: MONO, fontWeight: 700,
                                   background: side === "LONG"
                                     ? `color-mix(in oklch, ${C.green} 14%, transparent)`
@@ -344,7 +344,7 @@ export function FriendsFeed({
                               )}
                             </div>
                             {item.strategy && (
-                              <div style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, marginTop: "3px" }}>
+                              <div style={{ fontFamily: MONO, fontSize: "0.6875rem", color: C.muted, marginTop: "3px" }}>
                                 {item.strategy}
                               </div>
                             )}
@@ -366,11 +366,11 @@ export function FriendsFeed({
                                   : null;
                               return (
                                 <>
-                                  <div style={{ fontFamily: MONO, fontSize: "14px", fontWeight: 600, color: outcomeClr, fontVariantNumeric: "tabular-nums" }}>
+                                  <div style={{ fontFamily: MONO, fontSize: "0.875rem", fontWeight: 600, color: outcomeClr, fontVariantNumeric: "tabular-nums" }}>
                                     {primary}
                                   </div>
                                   {secondary && (
-                                    <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, marginTop: "2px" }}>
+                                    <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, marginTop: "2px" }}>
                                       {secondary}
                                     </div>
                                   )}
@@ -381,7 +381,7 @@ export function FriendsFeed({
                         </div>
 
                         {item.notes && (
-                          <div style={{ marginTop: "10px", fontFamily: BODY, fontSize: "13px", color: C.text, lineHeight: 1.45 }}>
+                          <div style={{ marginTop: "10px", fontFamily: BODY, fontSize: "0.8125rem", color: C.text, lineHeight: 1.45 }}>
                             {item.notes.slice(0, 200)}{item.notes.length > 200 ? "…" : ""}
                           </div>
                         )}
@@ -422,7 +422,7 @@ export function FriendsFeed({
                                   padding: "4px 9px", borderRadius: "999px",
                                   background: C.accentSoft ?? "rgba(100,150,255,0.1)",
                                   border: `1px solid ${C.border2}`,
-                                  fontFamily: MONO, fontSize: "10px", fontWeight: 600,
+                                  fontFamily: MONO, fontSize: "0.625rem", fontWeight: 600,
                                   color: iMine ? C.accent : C.muted,
                                   letterSpacing: "0.08em", cursor: "pointer",
                                 }}>
@@ -452,7 +452,7 @@ export function FriendsFeed({
                                     width: "28px", height: "28px", borderRadius: "999px",
                                     background: cardBg, border: `1px solid ${C.border}`,
                                     display: "flex", alignItems: "center", justifyContent: "center",
-                                    fontSize: "12px", cursor: "pointer",
+                                    fontSize: "0.75rem", cursor: "pointer",
                                   }}>
                                   {REACTION_EMOJI[rx]}
                                 </button>
@@ -509,15 +509,15 @@ export function FriendsFeed({
           <div style={{ marginTop: "20px" }}>
             {followingCount === 0 && followerCount === 0 ? (
               <div style={{ padding: "48px 20px", textAlign: "center" }}>
-                <div style={{ fontSize: "28px", marginBottom: "12px" }}>&#128269;</div>
-                <div style={{ fontFamily: DISPLAY, fontSize: "20px", fontWeight: 500, color: C.text, marginBottom: "8px" }}>
+                <div style={{ fontSize: "1.75rem", marginBottom: "12px" }}>&#128269;</div>
+                <div style={{ fontFamily: DISPLAY, fontSize: "1.25rem", fontWeight: 500, color: C.text, marginBottom: "8px" }}>
                   No one in your corner yet.
                 </div>
-                <div style={{ fontFamily: BODY, fontSize: "14px", color: C.text2, lineHeight: 1.55, marginBottom: "20px", maxWidth: 300, margin: "0 auto 20px" }}>
+                <div style={{ fontFamily: BODY, fontSize: "0.875rem", color: C.text2, lineHeight: 1.55, marginBottom: "20px", maxWidth: 300, margin: "0 auto 20px" }}>
                   Trading goes better when someone else can see your numbers. Follow a handle, share yours, build the room.
                 </div>
                 <button onClick={() => setShowAddFriend(true)}
-                  style={{ background: C.text, color: C.bg, border: "none", borderRadius: "999px", padding: "11px 22px", cursor: "pointer", fontFamily: BODY, fontSize: "13px", fontWeight: 600 }}>
+                  style={{ background: C.text, color: C.bg, border: "none", borderRadius: "999px", padding: "11px 22px", cursor: "pointer", fontFamily: BODY, fontSize: "0.8125rem", fontWeight: 600 }}>
                   Follow someone
                 </button>
               </div>
@@ -525,7 +525,7 @@ export function FriendsFeed({
               <div>
                 {followingCount > 0 && (
                   <div style={{ marginBottom: "24px" }}>
-                    <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.16em", textTransform: "uppercase" as const, marginBottom: "12px" }}>
+                    <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.16em", textTransform: "uppercase" as const, marginBottom: "12px" }}>
                       Following · {followingCount}
                     </div>
                     <div style={{ borderRadius: "22px", overflow: "hidden", border: `1px solid ${C.border}`, background: C.panel }}>
@@ -546,20 +546,20 @@ export function FriendsFeed({
                               <AvatarCircle name={f.name} avatar={f.avatar} size={36} C={C} />
                               <div>
                                 <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                                  <span style={{ fontFamily: DISPLAY, fontSize: "13px", fontWeight: 600, color: C.text }}>{f.name || code}</span>
+                                  <span style={{ fontFamily: DISPLAY, fontSize: "0.8125rem", fontWeight: 600, color: C.text }}>{f.name || code}</span>
                                   {followsBack && (
-                                    <span style={{ fontFamily: MONO, fontSize: "8px", color: C.green, letterSpacing: "0.08em", border: `1px solid ${C.green}44`, borderRadius: "4px", padding: "1px 5px" }}>
+                                    <span style={{ fontFamily: MONO, fontSize: "0.5rem", color: C.green, letterSpacing: "0.08em", border: `1px solid ${C.green}44`, borderRadius: "4px", padding: "1px 5px" }}>
                                       MUTUAL
                                     </span>
                                   )}
                                 </div>
-                                <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, marginTop: "2px" }}>
+                                <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, marginTop: "2px" }}>
                                   {f.handle ? `@${f.handle}` : code.slice(0, 12)}
                                 </div>
                               </div>
                             </div>
                             <button onClick={() => unfollowUser(code)}
-                              style={{ background: "none", border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "5px 12px", color: C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.06em" }}>
+                              style={{ background: "none", border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "5px 12px", color: C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.06em" }}>
                               Unfollow
                             </button>
                           </div>
@@ -570,7 +570,7 @@ export function FriendsFeed({
                 )}
                 {followerCount > 0 && (
                   <div>
-                    <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.16em", textTransform: "uppercase" as const, marginBottom: "12px" }}>
+                    <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.16em", textTransform: "uppercase" as const, marginBottom: "12px" }}>
                       Followers · {followerCount}
                     </div>
                     <div style={{ borderRadius: "22px", overflow: "hidden", border: `1px solid ${C.border}`, background: C.panel }}>
@@ -583,21 +583,21 @@ export function FriendsFeed({
                               style={{ cursor: openProfile && f.handle ? "pointer" : "default", display: "flex", alignItems: "center", gap: "10px", flex: 1 }}>
                               <AvatarCircle name={f.name} avatar={f.avatar} size={36} C={C} />
                               <div>
-                                <div style={{ fontFamily: DISPLAY, fontSize: "13px", fontWeight: 600, color: C.text }}>
+                                <div style={{ fontFamily: DISPLAY, fontSize: "0.8125rem", fontWeight: 600, color: C.text }}>
                                   {f.name || f.code}
                                 </div>
-                                <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, marginTop: "2px" }}>
+                                <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, marginTop: "2px" }}>
                                   {f.handle ? `@${f.handle}` : f.code?.slice(0, 12)}
                                 </div>
                               </div>
                             </div>
                             {iFollow ? (
-                              <span style={{ fontFamily: MONO, fontSize: "10px", color: C.green, letterSpacing: "0.08em" }}>
+                              <span style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.green, letterSpacing: "0.08em" }}>
                                 MUTUAL
                               </span>
                             ) : (
                               <button onClick={() => followUser(f.code, f.name, f.handle)}
-                                style={{ background: C.text, color: C.bg, border: "none", borderRadius: "999px", padding: "6px 14px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.06em" }}>
+                                style={{ background: C.text, color: C.bg, border: "none", borderRadius: "999px", padding: "6px 14px", cursor: "pointer", fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.06em" }}>
                                 Follow back
                               </button>
                             )}

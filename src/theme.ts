@@ -132,7 +132,7 @@ export function makeStyles(C: Theme) {
   const sel: React.CSSProperties = { ...inp, cursor: "pointer" };
 
   const lbl: React.CSSProperties = {
-    fontSize: "12px",
+    fontSize: "0.75rem",
     color: C.muted,
     letterSpacing: "0.05em",
     marginBottom: "6px",
@@ -147,7 +147,7 @@ export function makeStyles(C: Theme) {
     border: enabled ? "none" : `1px solid ${C.border2}`,
     borderRadius: "999px",
     padding: "14px 20px",
-    fontSize: "13px",
+    fontSize: "0.8125rem",
     letterSpacing: "0.02em",
     cursor: enabled ? "pointer" : "not-allowed",
     fontFamily: BODY,
@@ -162,7 +162,7 @@ export function makeStyles(C: Theme) {
     borderRadius: "999px",
     padding: "12px 18px",
     minHeight: "44px",
-    fontSize: "13px",
+    fontSize: "0.8125rem",
     letterSpacing: "0.01em",
     cursor: "pointer",
     fontFamily: BODY,

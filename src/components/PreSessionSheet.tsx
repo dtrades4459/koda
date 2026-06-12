@@ -57,7 +57,7 @@ export function PreSessionSheet({
           background: C.live, boxShadow: `0 0 10px ${C.live}`,
         }} />
         <span style={{
-          fontFamily: MONO, fontSize: 10, letterSpacing: "0.18em",
+          fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.18em",
           textTransform: "uppercase", color: C.live,
         }}>
           Pre-session check
@@ -70,7 +70,7 @@ export function PreSessionSheet({
       }}>
         Ready to trade?
       </div>
-      <div style={{ fontFamily: BODY, fontSize: 13, color: C.text2, marginBottom: 14 }}>
+      <div style={{ fontFamily: BODY, fontSize: "0.8125rem", color: C.text2, marginBottom: 14 }}>
         {today} — your limits for today:
       </div>
       <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 6, marginBottom: 16 }}>
@@ -79,8 +79,8 @@ export function PreSessionSheet({
             display: "flex", justifyContent: "space-between", alignItems: "center",
             padding: "10px 0", borderBottom: `1px solid ${C.border}`,
           }}>
-            <span style={{ fontFamily: BODY, fontSize: 13, color: C.text2 }}>{r.label}</span>
-            <span style={{ fontFamily: MONO, fontSize: 13, color: C.text, fontWeight: 600 }}>
+            <span style={{ fontFamily: BODY, fontSize: "0.8125rem", color: C.text2 }}>{r.label}</span>
+            <span style={{ fontFamily: MONO, fontSize: "0.8125rem", color: C.text, fontWeight: 600 }}>
               {r.value}
             </span>
           </div>
@@ -92,7 +92,7 @@ export function PreSessionSheet({
           style={{
             background: C.live, color: "#0A0A0E", border: "none",
             borderRadius: 999, padding: "12px 20px",
-            fontWeight: 600, fontSize: 12, fontFamily: BODY,
+            fontWeight: 600, fontSize: "0.75rem", fontFamily: BODY,
             cursor: "pointer", letterSpacing: "0.02em",
             flex: isMobile ? undefined : 1.5,
             width: isMobile ? "100%" : undefined,
@@ -107,7 +107,7 @@ export function PreSessionSheet({
             background: "transparent", color: C.text2,
             border: `1px solid ${C.border2}`, borderRadius: 999,
             padding: "12px 20px",
-            fontSize: 11, fontFamily: MONO,
+            fontSize: "0.6875rem", fontFamily: MONO,
             cursor: "pointer", letterSpacing: "0.06em", textTransform: "uppercase",
             flex: isMobile ? undefined : 1,
             width: isMobile ? "100%" : undefined,

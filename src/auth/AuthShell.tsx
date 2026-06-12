@@ -41,14 +41,14 @@ export function AuthShell({
       <div style={{ position: "relative", zIndex: 2, width: "100%", maxWidth: 420, display: "flex", flexDirection: "column", alignItems: "stretch" }}>
         <div style={{ marginBottom: 22, display: "flex", justifyContent: "center", alignItems: "center", gap: 9 }}>
           <KodaMark size={22} color={C.text} />
-          <span style={{ fontFamily: BODY, fontWeight: 600, fontSize: 15, letterSpacing: "0.22em", color: C.text }}>
+          <span style={{ fontFamily: BODY, fontWeight: 600, fontSize: "0.9375rem", letterSpacing: "0.22em", color: C.text }}>
             Kōda
           </span>
         </div>
         <Card C={C} glass pad={24} style={{ borderRadius: 24 }}>
           <Kicker C={C} color={C.live}>{kicker}</Kicker>
           <div style={{
-            fontFamily: DISPLAY, fontSize: 27, fontWeight: 600,
+            fontFamily: DISPLAY, fontSize: "1.6875rem", fontWeight: 600,
             letterSpacing: "-0.03em", lineHeight: 1.08, marginTop: 14, color: C.text,
           }}>
             {title}{" "}
@@ -57,7 +57,7 @@ export function AuthShell({
             )}
           </div>
           {sub && (
-            <div style={{ fontSize: 13.5, color: C.text2, marginTop: 12, lineHeight: 1.5 }}>
+            <div style={{ fontSize: "0.84375rem", color: C.text2, marginTop: 12, lineHeight: 1.5 }}>
               {sub}
             </div>
           )}
@@ -67,7 +67,7 @@ export function AuthShell({
         </Card>
         {foot && (
           <div style={{
-            textAlign: "center", marginTop: 20, fontSize: 12.5, color: C.text2, fontFamily: BODY,
+            textAlign: "center", marginTop: 20, fontSize: "0.78125rem", color: C.text2, fontFamily: BODY,
           }}>
             {foot}
           </div>
@@ -82,7 +82,7 @@ export function OrSplit() {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 12, color: C.muted }}>
       <div style={{ flex: 1, height: 1, background: C.border2 }} />
-      <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.16em" }}>OR</span>
+      <span style={{ fontFamily: MONO, fontSize: "0.5625rem", letterSpacing: "0.16em" }}>OR</span>
       <div style={{ flex: 1, height: 1, background: C.border2 }} />
     </div>
   );
@@ -146,7 +146,7 @@ export function AuthField({
   return (
     <div>
       <div style={{
-        fontFamily: MONO, fontSize: 9.5, letterSpacing: "0.16em",
+        fontFamily: MONO, fontSize: "0.59375rem", letterSpacing: "0.16em",
         textTransform: "uppercase", color: error ? C.red : C.muted, marginBottom: 8,
       }}>
         {label}
@@ -184,7 +184,7 @@ export function AuthField({
         {trailing}
       </div>
       {(hint || error) && (
-        <div style={{ fontSize: 11.5, color: error ? C.red : C.muted, marginTop: 7, lineHeight: 1.4, fontFamily: BODY }}>
+        <div style={{ fontSize: "0.71875rem", color: error ? C.red : C.muted, marginTop: 7, lineHeight: 1.4, fontFamily: BODY }}>
           {error || hint}
         </div>
       )}
@@ -215,7 +215,7 @@ export function PillField({
       }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{
-            fontFamily: MONO, fontSize: 9, letterSpacing: "0.16em",
+            fontFamily: MONO, fontSize: "0.5625rem", letterSpacing: "0.16em",
             color: error ? C.red : C.muted, textTransform: "uppercase", marginBottom: 2,
           }}>
             {label}
@@ -228,13 +228,13 @@ export function PillField({
               onChange={(e) => onChange(e.target.value)}
               style={{
                 width: "100%", background: "transparent", border: "none", outline: "none",
-                fontFamily: mono ? MONO : BODY, fontSize: 14, color: C.text, fontWeight: 500,
+                fontFamily: mono ? MONO : BODY, fontSize: "0.875rem", color: C.text, fontWeight: 500,
                 letterSpacing: mono ? "0.04em" : 0, padding: 0,
               }}
             />
           ) : (
             <div style={{
-              fontFamily: mono ? MONO : BODY, fontSize: 14,
+              fontFamily: mono ? MONO : BODY, fontSize: "0.875rem",
               color: value ? C.text : C.muted, fontWeight: 500,
               letterSpacing: mono ? "0.04em" : 0,
             }}>
@@ -245,7 +245,7 @@ export function PillField({
         {action}
       </div>
       {error && (
-        <div style={{ fontSize: 11.5, color: C.red, marginTop: 7, lineHeight: 1.4, fontFamily: BODY }}>
+        <div style={{ fontSize: "0.71875rem", color: C.red, marginTop: 7, lineHeight: 1.4, fontFamily: BODY }}>
           {error}
         </div>
       )}
@@ -281,11 +281,11 @@ export function OAuthRow({
       <div style={{
         width: 20, height: 20, borderRadius: 5, background: C.text,
         display: "flex", alignItems: "center", justifyContent: "center",
-        color: C.bg, fontFamily: BODY, fontWeight: 700, fontSize: 12,
+        color: C.bg, fontFamily: BODY, fontWeight: 700, fontSize: "0.75rem",
       }}>
         {glyph}
       </div>
-      <div style={{ flex: 1, fontSize: 14, color: C.text, fontWeight: 500, fontFamily: BODY }}>
+      <div style={{ flex: 1, fontSize: "0.875rem", color: C.text, fontWeight: 500, fontFamily: BODY }}>
         {label}
       </div>
       <svg width={16} height={16} viewBox="0 0 16 16" fill="none">

@@ -54,7 +54,7 @@ function SegBtn({ active, label, color, border2, onClick }: {
       background: active ? `color-mix(in oklch, ${color} 16%, transparent)` : "transparent",
       border: active ? `1px solid ${color}` : `1px solid ${border2}`,
       color: active ? color : "inherit",
-      fontSize: 12, fontWeight: 600, fontFamily: BODY, letterSpacing: "0.02em",
+      fontSize: "0.75rem", fontWeight: 600, fontFamily: BODY, letterSpacing: "0.02em",
       cursor: "pointer", transition: "all 0.15s",
     }}>{label}</button>
   );
@@ -89,12 +89,12 @@ export function LogTradeScreen({
     background: C.panel ?? "#131317", color: C.text ?? "#e2e8f0",
     border: `1px solid ${C.border2 ?? "#2a2a3e"}`,
     borderRadius: 12, padding: "11px 14px",
-    fontFamily: MONO, fontSize: 13, width: "100%",
+    fontFamily: MONO, fontSize: "0.8125rem", width: "100%",
     WebkitAppearance: "none" as const,
     outline: "none", cursor: "pointer",
   };
   const lbl: React.CSSProperties = {
-    fontSize: 11, color: C.muted, letterSpacing: "0.06em",
+    fontSize: "0.6875rem", color: C.muted, letterSpacing: "0.06em",
     marginBottom: 4, display: "block", fontFamily: MONO, textTransform: "uppercase",
   };
 
@@ -104,40 +104,40 @@ export function LogTradeScreen({
       {/* ── Pre-trade friction banners ── */}
       {killSwitchTripped && (
         <div role="alert" style={{ borderRadius: 14, padding: "12px 16px", background: `color-mix(in oklch, ${C.red} 10%, transparent)`, border: `1px solid color-mix(in oklch, ${C.red} 40%, transparent)` }}>
-          <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.1em", color: C.red, textTransform: "uppercase" as const, marginBottom: 2 }}>Kill switch active</div>
-          <div style={{ fontFamily: BODY, fontSize: 13, color: C.text2, lineHeight: 1.5 }}>
+          <div style={{ fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.1em", color: C.red, textTransform: "uppercase" as const, marginBottom: 2 }}>Kill switch active</div>
+          <div style={{ fontFamily: BODY, fontSize: "0.8125rem", color: C.text2, lineHeight: 1.5 }}>
             You've hit your daily loss limit of {maxDailyLoss}R ({todayPnl.toFixed(2)}R today). Step away and review. Override in Settings if this is a data error.
           </div>
         </div>
       )}
       {atTradeLimit && (
         <div role="alert" style={{ borderRadius: 14, padding: "12px 16px", background: `color-mix(in oklch, ${C.red} 10%, transparent)`, border: `1px solid color-mix(in oklch, ${C.red} 40%, transparent)` }}>
-          <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.1em", color: C.red, textTransform: "uppercase" as const, marginBottom: 2 }}>Trade limit reached</div>
-          <div style={{ fontFamily: BODY, fontSize: 13, color: C.text2, lineHeight: 1.5 }}>
+          <div style={{ fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.1em", color: C.red, textTransform: "uppercase" as const, marginBottom: 2 }}>Trade limit reached</div>
+          <div style={{ fontFamily: BODY, fontSize: "0.8125rem", color: C.text2, lineHeight: 1.5 }}>
             You've hit your daily limit of {maxTradesPerDay} trade{maxTradesPerDay !== 1 ? "s" : ""}. Adding another is a plan deviation.
           </div>
         </div>
       )}
       {!atTradeLimit && nearTradeLimit && (
         <div role="alert" style={{ borderRadius: 14, padding: "12px 16px", background: `color-mix(in oklch, ${C.warn} 10%, transparent)`, border: `1px solid color-mix(in oklch, ${C.warn} 35%, transparent)` }}>
-          <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.1em", color: C.warn, textTransform: "uppercase" as const, marginBottom: 2 }}>Last trade of the day</div>
-          <div style={{ fontFamily: BODY, fontSize: 13, color: C.text2, lineHeight: 1.5 }}>
+          <div style={{ fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.1em", color: C.warn, textTransform: "uppercase" as const, marginBottom: 2 }}>Last trade of the day</div>
+          <div style={{ fontFamily: BODY, fontSize: "0.8125rem", color: C.text2, lineHeight: 1.5 }}>
             This will be trade {todayTradeCount + 1} of {maxTradesPerDay}. Make it count.
           </div>
         </div>
       )}
       {lossStreak >= 2 && (
         <div role="alert" style={{ borderRadius: 14, padding: "12px 16px", background: `color-mix(in oklch, ${C.warn} 10%, transparent)`, border: `1px solid color-mix(in oklch, ${C.warn} 35%, transparent)` }}>
-          <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.1em", color: C.warn, textTransform: "uppercase" as const, marginBottom: 2 }}>{lossStreak} consecutive losses</div>
-          <div style={{ fontFamily: BODY, fontSize: 13, color: C.text2, lineHeight: 1.5 }}>
+          <div style={{ fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.1em", color: C.warn, textTransform: "uppercase" as const, marginBottom: 2 }}>{lossStreak} consecutive losses</div>
+          <div style={{ fontFamily: BODY, fontSize: "0.8125rem", color: C.text2, lineHeight: 1.5 }}>
             Are you in the right headspace? Make sure you're trading your plan, not your emotions.
           </div>
         </div>
       )}
       {nearDailyLoss && (
         <div role="alert" style={{ borderRadius: 14, padding: "12px 16px", background: `color-mix(in oklch, ${C.red} 10%, transparent)`, border: `1px solid color-mix(in oklch, ${C.red} 40%, transparent)` }}>
-          <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.1em", color: C.red, textTransform: "uppercase" as const, marginBottom: 2 }}>Approaching daily loss limit</div>
-          <div style={{ fontFamily: BODY, fontSize: 13, color: C.text2, lineHeight: 1.5 }}>
+          <div style={{ fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.1em", color: C.red, textTransform: "uppercase" as const, marginBottom: 2 }}>Approaching daily loss limit</div>
+          <div style={{ fontFamily: BODY, fontSize: "0.8125rem", color: C.text2, lineHeight: 1.5 }}>
             Today: {todayPnl.toFixed(2)}R of -{maxDailyLoss}R limit. One bad trade could hit your stop.
           </div>
         </div>
@@ -221,11 +221,11 @@ export function LogTradeScreen({
                 const n = parseFloat(f.pnl as string);
                 return { ...f, pnl: isNaN(n) ? "-" : String(-n) };
               })}
-              style={{ background: "transparent", border: `1px solid ${T.border}`, borderRadius: 6, color: T.muted, fontFamily: MONO, fontSize: 11, fontWeight: 700, padding: "2px 7px", cursor: "pointer", letterSpacing: "0.04em" }}
+              style={{ background: "transparent", border: `1px solid ${T.border}`, borderRadius: 6, color: T.muted, fontFamily: MONO, fontSize: "0.6875rem", fontWeight: 700, padding: "2px 7px", cursor: "pointer", letterSpacing: "0.04em" }}
             >+/−</button>
           </div>
           <input type="text" inputMode="decimal" name="pnl" value={form.pnl} onChange={handleChange} placeholder="2.5"
-            style={{ ...inp, fontFamily: DISPLAY, fontSize: 28, fontWeight: 600, letterSpacing: "-0.02em", borderBottom: "none", padding: "8px 0 0" }} />
+            style={{ ...inp, fontFamily: DISPLAY, fontSize: "1.75rem", fontWeight: 600, letterSpacing: "-0.02em", borderBottom: "none", padding: "8px 0 0" }} />
         </Card>
         <Card C={T} pad={16}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -236,11 +236,11 @@ export function LogTradeScreen({
                 const n = parseFloat(f.pnlDollar as string);
                 return { ...f, pnlDollar: isNaN(n) ? "-" : String(-n) };
               })}
-              style={{ background: "transparent", border: `1px solid ${T.border}`, borderRadius: 6, color: T.muted, fontFamily: MONO, fontSize: 11, fontWeight: 700, padding: "2px 7px", cursor: "pointer", letterSpacing: "0.04em" }}
+              style={{ background: "transparent", border: `1px solid ${T.border}`, borderRadius: 6, color: T.muted, fontFamily: MONO, fontSize: "0.6875rem", fontWeight: 700, padding: "2px 7px", cursor: "pointer", letterSpacing: "0.04em" }}
             >+/−</button>
           </div>
           <input data-testid="trade-pnl-dollar" type="text" inputMode="decimal" name="pnlDollar" value={form.pnlDollar} onChange={handleChange} placeholder="485"
-            style={{ ...inp, fontFamily: DISPLAY, fontSize: 28, fontWeight: 600, letterSpacing: "-0.02em", fontVariantNumeric: "tabular-nums", borderBottom: "none", padding: "8px 0 0" }} />
+            style={{ ...inp, fontFamily: DISPLAY, fontSize: "1.75rem", fontWeight: 600, letterSpacing: "-0.02em", fontVariantNumeric: "tabular-nums", borderBottom: "none", padding: "8px 0 0" }} />
         </Card>
       </div>
 
@@ -285,8 +285,8 @@ export function LogTradeScreen({
         </div>
         {form.rr && (
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginTop: 14, paddingTop: 14, borderTop: `1px solid ${C.border}` }}>
-            <span style={{ fontFamily: MONO, fontSize: 10, color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase" }}>Calculated R:R</span>
-            <span style={{ fontFamily: DISPLAY, fontSize: 22, color: C.text, fontWeight: 500, letterSpacing: "-0.02em" }}>{form.rr}R</span>
+            <span style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase" }}>Calculated R:R</span>
+            <span style={{ fontFamily: DISPLAY, fontSize: "1.375rem", color: C.text, fontWeight: 500, letterSpacing: "-0.02em" }}>{form.rr}R</span>
           </div>
         )}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginTop: 14 }}>
@@ -313,7 +313,7 @@ export function LogTradeScreen({
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
           <Kicker C={T}>Discipline check</Kicker>
           {form.ruleAdherence !== null && form.ruleAdherence !== undefined && (
-            <span style={{ fontFamily: MONO, fontSize: 11, color: form.ruleAdherence ? C.green : C.red }}>
+            <span style={{ fontFamily: MONO, fontSize: "0.6875rem", color: form.ruleAdherence ? C.green : C.red }}>
               {form.ruleAdherence ? "Rules followed ✓" : "Rules broken ✗"}
             </span>
           )}
@@ -378,12 +378,12 @@ export function LogTradeScreen({
         <Card C={T} pad={16}>
           <Kicker C={T}>MAE (R)</Kicker>
           <input name="mae" type="number" inputMode="decimal" step="0.01" value={form.mae || ""} onChange={handleChange} placeholder="0.8"
-            style={{ ...inp, fontFamily: DISPLAY, fontSize: 22, fontWeight: 500, borderBottom: "none", padding: "6px 0 0" }} />
+            style={{ ...inp, fontFamily: DISPLAY, fontSize: "1.375rem", fontWeight: 500, borderBottom: "none", padding: "6px 0 0" }} />
         </Card>
         <Card C={T} pad={16}>
           <Kicker C={T}>MFE (R)</Kicker>
           <input name="mfe" type="number" inputMode="decimal" step="0.01" value={form.mfe || ""} onChange={handleChange} placeholder="3.2"
-            style={{ ...inp, fontFamily: DISPLAY, fontSize: 22, fontWeight: 500, borderBottom: "none", padding: "6px 0 0" }} />
+            style={{ ...inp, fontFamily: DISPLAY, fontSize: "1.375rem", fontWeight: 500, borderBottom: "none", padding: "6px 0 0" }} />
         </Card>
       </div>
 
@@ -407,7 +407,7 @@ export function LogTradeScreen({
             <button onClick={() => removeScreenshot(null)}
               style={{ position: "absolute", top: 8, right: 8, background: C.bg,
                 border: `1px solid ${C.border2}`, borderRadius: 999, color: C.text,
-                padding: "4px 10px", cursor: "pointer", fontSize: 10, fontFamily: MONO, letterSpacing: "0.08em" }}>
+                padding: "4px 10px", cursor: "pointer", fontSize: "0.625rem", fontFamily: MONO, letterSpacing: "0.08em" }}>
               REMOVE
             </button>
           </div>
@@ -415,7 +415,7 @@ export function LogTradeScreen({
           <label htmlFor="ssUpload" style={{
             display: "flex", alignItems: "center", justifyContent: "center",
             border: `1px dashed ${C.border2}`, borderRadius: 14, padding: 20,
-            cursor: "pointer", color: C.muted, fontSize: 12, fontFamily: MONO,
+            cursor: "pointer", color: C.muted, fontSize: "0.75rem", fontFamily: MONO,
             letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 8,
           }}>
             Upload screenshot
@@ -433,7 +433,7 @@ export function LogTradeScreen({
           background: enabled ? C.text : (C as any).panel2 ?? C.panel,
           color: enabled ? C.bg : C.muted,
           border: "none", borderRadius: 14,
-          padding: "5px 6px 5px 20px", fontSize: 14, fontWeight: 600,
+          padding: "5px 6px 5px 20px", fontSize: "0.875rem", fontWeight: 600,
           cursor: enabled ? "pointer" : "not-allowed", width: "100%",
           fontFamily: BODY, marginTop: 4, opacity: enabled ? 1 : 0.6,
           transition: "opacity 0.2s",
@@ -457,7 +457,7 @@ export function LogTradeScreen({
           style={{
             background: "transparent", border: `1px solid ${C.border2}`, borderRadius: 999,
             padding: "12px 20px", color: C.muted, cursor: "pointer",
-            fontFamily: MONO, fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase",
+            fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.1em", textTransform: "uppercase",
             width: "100%", textAlign: "center",
           }}>CANCEL EDIT</button>
       )}

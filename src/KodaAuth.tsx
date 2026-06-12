@@ -24,7 +24,7 @@ function OAuthBtn({ label, provider, onClick }: {
       display: "flex", alignItems: "center", gap: 12,
       padding: "11px 14px", borderRadius: 14,
       background: "transparent", border: `1px solid ${C.border2}`,
-      fontFamily: BODY, fontSize: 13, fontWeight: 500, color: C.text,
+      fontFamily: BODY, fontSize: "0.8125rem", fontWeight: 500, color: C.text,
       cursor: onClick ? "pointer" : "default",
       transition: "opacity 0.15s",
     }}>
@@ -160,15 +160,15 @@ function AuthForm({ onSuccess, initialError = "", onModeChange, modeRequest }: {
   if (mode === "reset-sent") {
     return (
       <div style={{ position: "relative", zIndex: 1 }}>
-        <div style={{ fontFamily: MONO, fontSize: 10, color: C.green, letterSpacing: "0.10em", textTransform: "uppercase", marginBottom: 16 }}>
+        <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.green, letterSpacing: "0.10em", textTransform: "uppercase", marginBottom: 16 }}>
           Check your recovery email
         </div>
-        <p style={{ fontSize: 14, color: C.text2, lineHeight: 1.65, marginBottom: 20, fontFamily: BODY }}>
+        <p style={{ fontSize: "0.875rem", color: C.text2, lineHeight: 1.65, marginBottom: 20, fontFamily: BODY }}>
           If you added a recovery email at signup, your reset link is on its way. Check your inbox and spam folder.
         </p>
         <button onClick={() => { setMode("signin"); setUsername(""); setError(""); }} style={{
           background: "transparent", color: C.text, border: `1px solid ${C.border2}`,
-          borderRadius: 999, padding: "12px 20px", fontSize: 13, fontFamily: BODY,
+          borderRadius: 999, padding: "12px 20px", fontSize: "0.8125rem", fontFamily: BODY,
           cursor: "pointer", width: "100%",
         }}>Back to sign in</button>
       </div>
@@ -179,16 +179,16 @@ function AuthForm({ onSuccess, initialError = "", onModeChange, modeRequest }: {
   if (mode === "new-password") {
     return (
       <div style={{ position: "relative", zIndex: 1 }}>
-        <div style={{ fontFamily: MONO, fontSize: 10, color: C.muted, letterSpacing: "0.10em", textTransform: "uppercase", marginBottom: 20 }}>
+        <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.10em", textTransform: "uppercase", marginBottom: 20 }}>
           Set new password
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <FloatingInput C={C} label="New password" placeholder="min. 6 characters" value={newPassword}
             onChange={v => setNewPassword(v)} type="password" />
-          {error && <div style={{ fontSize: 13, color: C.red, fontFamily: BODY }}>{error}</div>}
+          {error && <div style={{ fontSize: "0.8125rem", color: C.red, fontFamily: BODY }}>{error}</div>}
           <button onClick={handleNewPassword} disabled={loading} style={{
             background: C.text, color: C.bg, border: "none", borderRadius: 999,
-            padding: "14px 20px", fontSize: 13, fontFamily: BODY, cursor: "pointer", width: "100%",
+            padding: "14px 20px", fontSize: "0.8125rem", fontFamily: BODY, cursor: "pointer", width: "100%",
             opacity: loading ? 0.6 : 1,
           }}>{loading ? "…" : "Update password →"}</button>
         </div>
@@ -200,20 +200,20 @@ function AuthForm({ onSuccess, initialError = "", onModeChange, modeRequest }: {
   if (mode === "reset") {
     return (
       <div style={{ position: "relative", zIndex: 1 }}>
-        <div style={{ fontFamily: MONO, fontSize: 10, color: C.muted, letterSpacing: "0.10em", textTransform: "uppercase", marginBottom: 20 }}>
+        <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.10em", textTransform: "uppercase", marginBottom: 20 }}>
           Reset password
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <FloatingInput C={C} label="Username" placeholder="yourname" value={username}
             onChange={v => setUsername(v.toLowerCase())} />
-          {error && <div style={{ fontSize: 13, color: C.red, fontFamily: BODY }}>{error}</div>}
+          {error && <div style={{ fontSize: "0.8125rem", color: C.red, fontFamily: BODY }}>{error}</div>}
           <button onClick={handleReset} disabled={loading} style={{
             background: C.text, color: C.bg, border: "none", borderRadius: 999,
-            padding: "14px 20px", fontSize: 13, fontFamily: BODY, cursor: "pointer", width: "100%",
+            padding: "14px 20px", fontSize: "0.8125rem", fontFamily: BODY, cursor: "pointer", width: "100%",
             opacity: loading ? 0.6 : 1,
           }}>{loading ? "…" : "Send reset link →"}</button>
           <button onClick={() => { setMode("signin"); setError(""); }} style={{
-            background: "none", border: "none", color: C.muted, fontSize: 12,
+            background: "none", border: "none", color: C.muted, fontSize: "0.75rem",
             cursor: "pointer", fontFamily: BODY, textAlign: "left", padding: 0,
           }}>← Back to sign in</button>
         </div>
@@ -232,7 +232,7 @@ function AuthForm({ onSuccess, initialError = "", onModeChange, modeRequest }: {
       {/* OR divider */}
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 18 }}>
         <div style={{ flex: 1, height: 1, background: C.border2 }} />
-        <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.16em", color: C.muted }}>OR</span>
+        <span style={{ fontFamily: MONO, fontSize: "0.5625rem", letterSpacing: "0.16em", color: C.muted }}>OR</span>
         <div style={{ flex: 1, height: 1, background: C.border2 }} />
       </div>
 
@@ -245,7 +245,7 @@ function AuthForm({ onSuccess, initialError = "", onModeChange, modeRequest }: {
               color: mode === m ? C.text : C.muted,
               borderBottom: mode === m ? `1px solid ${C.text}` : "1px solid transparent",
               paddingBottom: 4, cursor: "pointer",
-              fontFamily: MONO, fontSize: 11, letterSpacing: "0.06em", textTransform: "uppercase",
+              fontFamily: MONO, fontSize: "0.6875rem", letterSpacing: "0.06em", textTransform: "uppercase",
             }}>
             {m === "signin" ? "Sign in" : "Sign up"}
           </button>
@@ -261,12 +261,12 @@ function AuthForm({ onSuccess, initialError = "", onModeChange, modeRequest }: {
           <FloatingInput C={C} label="Password" value={password} placeholder={mode === "signup" ? "min. 6 characters" : "••••••••"}
             onChange={v => setPassword(v)} type="password" />
 
-          {error && <div style={{ fontSize: 13, color: C.red, marginTop: 4, fontFamily: BODY }}>{error}</div>}
-          {msg   && <div style={{ fontSize: 13, color: C.green, marginTop: 4, fontFamily: BODY }}>{msg}</div>}
+          {error && <div style={{ fontSize: "0.8125rem", color: C.red, marginTop: 4, fontFamily: BODY }}>{error}</div>}
+          {msg   && <div style={{ fontSize: "0.8125rem", color: C.green, marginTop: 4, fontFamily: BODY }}>{msg}</div>}
 
           <button type="submit" data-testid="auth-submit" disabled={loading} style={{
             background: C.text, color: C.bg, border: "none", borderRadius: 999,
-            padding: "14px 20px", fontSize: 13, fontWeight: 500, fontFamily: BODY,
+            padding: "14px 20px", fontSize: "0.8125rem", fontWeight: 500, fontFamily: BODY,
             cursor: "pointer", width: "100%", marginTop: 8,
             opacity: loading ? 0.6 : 1, transition: "opacity 0.15s, transform 0.15s",
           }}>
@@ -277,7 +277,7 @@ function AuthForm({ onSuccess, initialError = "", onModeChange, modeRequest }: {
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               <FloatingInput C={C} label="Recovery email (optional)" value={recoveryEmail}
                 placeholder="you@example.com" onChange={v => setRecoveryEmail(v)} />
-              <div style={{ fontSize: 11, color: C.muted, marginTop: 2, fontFamily: BODY, lineHeight: 1.5 }}>
+              <div style={{ fontSize: "0.6875rem", color: C.muted, marginTop: 2, fontFamily: BODY, lineHeight: 1.5 }}>
                 Add this now — it's the only way to recover your account if you forget your password.
               </div>
             </div>
@@ -285,7 +285,7 @@ function AuthForm({ onSuccess, initialError = "", onModeChange, modeRequest }: {
 
           {mode === "signin" && (
             <button type="button" onClick={() => { setMode("reset"); setError(""); }} style={{
-              background: "none", border: "none", color: C.muted, fontSize: 12,
+              background: "none", border: "none", color: C.muted, fontSize: "0.75rem",
               cursor: "pointer", fontFamily: BODY, textAlign: "left", padding: 0, marginTop: 2,
             }}>Forgot password?</button>
           )}
@@ -429,7 +429,7 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
         <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16 }}>
           <a href="/" style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <KodaMark size={26} color={C.text} />
-            <span style={{ fontFamily: BODY, fontSize: 15, fontWeight: 600, letterSpacing: "0.20em", color: C.text, lineHeight: 1 }}>Kōda</span>
+            <span style={{ fontFamily: BODY, fontSize: "0.9375rem", fontWeight: 600, letterSpacing: "0.20em", color: C.text, lineHeight: 1 }}>Kōda</span>
           </a>
           <nav className="koda-mast-nav" style={{ alignItems: "center" }}>
             {[
@@ -439,7 +439,7 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
               ["FAQ", "/faq.html"],
             ].map(([label, href]) => (
               <a key={label} href={href} style={{
-                fontFamily: BODY, fontSize: 13, color: C.text2,
+                fontFamily: BODY, fontSize: "0.8125rem", color: C.text2,
                 fontWeight: 500, letterSpacing: "0.01em",
               }}>{label}</a>
             ))}
@@ -447,10 +447,10 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
             <button onClick={handleSignIn} type="button" style={{
               background: "none", border: "none", padding: 0,
-              fontFamily: BODY, fontSize: 13, color: C.text, fontWeight: 500,
+              fontFamily: BODY, fontSize: "0.8125rem", color: C.text, fontWeight: 500,
               letterSpacing: "0.01em", cursor: "pointer",
             }}>Sign in</button>
-            <span style={{ fontFamily: MONO, fontSize: 10, color: C.muted, letterSpacing: "0.08em" }}>BETA / 2026</span>
+            <span style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.08em" }}>BETA / 2026</span>
           </div>
         </header>
 
@@ -469,9 +469,9 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
               <span style={{
                 width: 22, height: 22, borderRadius: 999, background: C.live,
                 display: "flex", alignItems: "center", justifyContent: "center",
-                fontFamily: MONO, fontSize: 9, fontWeight: 700, color: "#0A0A0A",
+                fontFamily: MONO, fontSize: "0.5625rem", fontWeight: 700, color: "#0A0A0A",
               }}>v1</span>
-              <span style={{ fontFamily: MONO, fontSize: 11, color: C.text, letterSpacing: "0.04em" }}>
+              <span style={{ fontFamily: MONO, fontSize: "0.6875rem", color: C.text, letterSpacing: "0.04em" }}>
                 <span style={{ color: C.live, fontWeight: 600 }}>CSV import live</span> · Tradovate auto-sync coming
               </span>
             </div>
@@ -501,7 +501,7 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
                 display: "flex", alignItems: "center", gap: 10,
                 padding: "8px 8px 8px 22px", borderRadius: 999,
                 background: C.text, color: C.bg, border: "none",
-                fontFamily: BODY, fontSize: 14, fontWeight: 600, cursor: "pointer",
+                fontFamily: BODY, fontSize: "0.875rem", fontWeight: 600, cursor: "pointer",
                 transition: "opacity 0.15s, transform 0.15s",
               }}>
                 Get started free
@@ -517,7 +517,7 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
               <button type="button" onClick={handleSeeAction} style={{
                 padding: "12px 22px", borderRadius: 999, background: "transparent",
                 color: C.text, border: `1px solid ${C.border2}`,
-                fontFamily: BODY, fontSize: 14, fontWeight: 500, cursor: "pointer",
+                fontFamily: BODY, fontSize: "0.875rem", fontWeight: 500, cursor: "pointer",
                 transition: "opacity 0.15s, transform 0.15s",
               }}>See what&apos;s included</button>
             </div>
@@ -537,9 +537,9 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
                     width: 26, height: 26, borderRadius: 999,
                     background: C.accentSoft, border: `1px solid ${C.border2}`,
                     display: "flex", alignItems: "center", justifyContent: "center",
-                    color: C.accent, fontFamily: MONO, fontSize: 9, fontWeight: 600,
+                    color: C.accent, fontFamily: MONO, fontSize: "0.5625rem", fontWeight: 600,
                   }}>{code}</div>
-                  <span style={{ fontFamily: BODY, fontSize: 12, color: C.text2 }}>{label}</span>
+                  <span style={{ fontFamily: BODY, fontSize: "0.75rem", color: C.text2 }}>{label}</span>
                 </div>
               ))}
             </div>
@@ -570,7 +570,7 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
               gap: 9, justifyContent: "center", marginBottom: 26,
             }}>
               <KodaMark size={24} color={C.text} />
-              <span style={{ fontFamily: DISPLAY, fontWeight: 600, fontSize: 14, letterSpacing: "0.22em", color: C.text }}>Kōda</span>
+              <span style={{ fontFamily: DISPLAY, fontWeight: 600, fontSize: "0.875rem", letterSpacing: "0.22em", color: C.text }}>Kōda</span>
             </div>
 
             {/* Kicker */}
@@ -581,7 +581,7 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
             {/* Editorial heading with italic accent */}
             <div style={{ position: "relative", zIndex: 1, textAlign: "center", marginBottom: 8 }}>
               <h2 style={{
-                fontFamily: DISPLAY, fontSize: 32, fontWeight: 600,
+                fontFamily: DISPLAY, fontSize: "2rem", fontWeight: 600,
                 letterSpacing: "-0.03em", color: C.text, margin: 0, lineHeight: 1.05,
               }}>
                 {authMode === "signin"
@@ -590,14 +590,14 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
               </h2>
             </div>
             <div style={{ position: "relative", zIndex: 1, textAlign: "center", marginBottom: 22 }}>
-              <span style={{ fontFamily: BODY, fontSize: 13, color: C.text2 }}>
+              <span style={{ fontFamily: BODY, fontSize: "0.8125rem", color: C.text2 }}>
                 {authMode === "signin" ? "Pick up where you left off." : "Free forever. No card to start."}
               </span>
             </div>
 
             {oauthError && (
               <div style={{
-                position: "relative", zIndex: 1, fontFamily: BODY, fontSize: 13, color: C.red,
+                position: "relative", zIndex: 1, fontFamily: BODY, fontSize: "0.8125rem", color: C.red,
                 marginBottom: 16, padding: "12px 16px",
                 background: "rgba(255,80,60,0.06)", borderRadius: 8,
                 border: "1px solid rgba(255,80,60,0.15)",
@@ -635,13 +635,13 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
               <div key={p.n} style={{ display: "flex", alignItems: "center", gap: "clamp(18px, 3vw, 36px)" }}>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
                   <span style={{
-                    fontFamily: MONO, fontWeight: 500, fontSize: 11,
+                    fontFamily: MONO, fontWeight: 500, fontSize: "0.6875rem",
                     letterSpacing: "0.18em",
                     color: p.accent ? C.live : C.muted,
                   }}>{p.n}</span>
                   <span style={{
                     fontFamily: BODY, fontStyle: "italic",
-                    fontWeight: p.accent ? 500 : 400, fontSize: 18,
+                    fontWeight: p.accent ? 500 : 400, fontSize: "1.125rem",
                     color: p.accent ? C.live : C.dim,
                   }}>{p.w}</span>
                 </div>
@@ -680,17 +680,17 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
                 <>
                   <div style={{
                     display: "inline-flex", alignSelf: "flex-start",
-                    fontFamily: MONO, fontSize: 9, fontWeight: 600,
+                    fontFamily: MONO, fontSize: "0.5625rem", fontWeight: 600,
                     letterSpacing: "0.16em", textTransform: "uppercase",
                     color: f.accent ? C.live : C.muted,
                     padding: "3px 8px", borderRadius: 999,
                     background: f.accent ? `color-mix(in oklch, ${C.live} 12%, transparent)` : "transparent",
                     border: f.accent ? `1px solid color-mix(in oklch, ${C.live} 28%, transparent)` : `1px solid ${C.border2}`,
                   }}>{f.tag}</div>
-                  <div style={{ fontFamily: DISPLAY, fontSize: 18, fontWeight: 600, letterSpacing: "-0.01em", color: C.text }}>{f.title}</div>
-                  <div style={{ fontSize: 14, color: C.text2, lineHeight: 1.55 }}>{f.body}</div>
+                  <div style={{ fontFamily: DISPLAY, fontSize: "1.125rem", fontWeight: 600, letterSpacing: "-0.01em", color: C.text }}>{f.title}</div>
+                  <div style={{ fontSize: "0.875rem", color: C.text2, lineHeight: 1.55 }}>{f.body}</div>
                   {f.href && (
-                    <span style={{ fontFamily: BODY, fontSize: 12, color: C.live, marginTop: 4, display: "inline-flex", alignItems: "center", gap: 4 }}>Learn more →</span>
+                    <span style={{ fontFamily: BODY, fontSize: "0.75rem", color: C.live, marginTop: 4, display: "inline-flex", alignItems: "center", gap: 4 }}>Learn more →</span>
                   )}
                 </>
               );
@@ -714,13 +714,13 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
             ].map((s) => (
               <div key={s.n} className="koda-strat-item">
                 <div style={{ display: "flex", alignItems: "baseline", gap: 14, marginBottom: 10 }}>
-                  <span style={{ fontFamily: MONO, fontSize: 10, color: C.muted, letterSpacing: "0.08em" }}>{s.n}</span>
+                  <span style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.08em" }}>{s.n}</span>
                   <span style={{ flex: 1, height: 1, background: C.border }} />
                 </div>
                 <h3 style={{ fontFamily: DISPLAY, fontSize: "clamp(20px, 2.2vw, 26px)", fontWeight: 500, letterSpacing: "-0.02em", lineHeight: 1.1, color: C.text, marginBottom: 10 }}>
                   {s.name}
                 </h3>
-                <p style={{ fontSize: 14, color: C.text2, lineHeight: 1.6, fontWeight: 400, maxWidth: "46ch" }}>{s.desc}</p>
+                <p style={{ fontSize: "0.875rem", color: C.text2, lineHeight: 1.6, fontWeight: 400, maxWidth: "46ch" }}>{s.desc}</p>
               </div>
             ))}
           </div>
@@ -743,12 +743,12 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
               display: "flex", flexDirection: "column", gap: 18,
             }}>
               <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12 }}>
-                <div style={{ fontFamily: DISPLAY, fontSize: 22, fontWeight: 600, color: C.text }}>Free</div>
-                <div style={{ fontFamily: MONO, fontSize: 11, color: C.muted, letterSpacing: "0.08em", textTransform: "uppercase" }}>Forever</div>
+                <div style={{ fontFamily: DISPLAY, fontSize: "1.375rem", fontWeight: 600, color: C.text }}>Free</div>
+                <div style={{ fontFamily: MONO, fontSize: "0.6875rem", color: C.muted, letterSpacing: "0.08em", textTransform: "uppercase" }}>Forever</div>
               </div>
               <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                <span style={{ fontFamily: DISPLAY, fontSize: 44, fontWeight: 600, color: C.text, letterSpacing: "-0.02em" }}>£0</span>
-                <span style={{ fontFamily: BODY, fontSize: 14, color: C.text2 }}>/ month</span>
+                <span style={{ fontFamily: DISPLAY, fontSize: "2.75rem", fontWeight: 600, color: C.text, letterSpacing: "-0.02em" }}>£0</span>
+                <span style={{ fontFamily: BODY, fontSize: "0.875rem", color: C.text2 }}>/ month</span>
               </div>
               <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 10 }}>
                 {[
@@ -761,7 +761,7 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
                   "Kōda global Circle + 2 Circles (join or create)",
                   "iOS + Android (PWA)",
                 ].map((item) => (
-                  <li key={item} style={{ fontFamily: BODY, fontSize: 14, color: C.text2, display: "flex", alignItems: "flex-start", gap: 10 }}>
+                  <li key={item} style={{ fontFamily: BODY, fontSize: "0.875rem", color: C.text2, display: "flex", alignItems: "flex-start", gap: 10 }}>
                     <svg width="14" height="14" viewBox="0 0 14 14" style={{ marginTop: 4, flexShrink: 0 }}>
                       <path d="M2 7l3.5 3.5L12 3.5" stroke={C.live} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
                     </svg>
@@ -771,7 +771,7 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
               </ul>
               <button type="button" onClick={handleStarted} style={{
                 background: C.text, color: C.bg, border: "none", borderRadius: 999,
-                padding: "13px 20px", fontSize: 13, fontFamily: BODY, fontWeight: 600,
+                padding: "13px 20px", fontSize: "0.8125rem", fontFamily: BODY, fontWeight: 600,
                 cursor: "pointer", width: "100%", marginTop: 6,
                 transition: "opacity 0.15s, transform 0.15s",
               }}>Start free →</button>
@@ -793,22 +793,22 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
               }} />
               <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, position: "relative", zIndex: 1 }}>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
-                  <div style={{ fontFamily: DISPLAY, fontSize: 22, fontWeight: 600, color: C.text }}>Pro</div>
+                  <div style={{ fontFamily: DISPLAY, fontSize: "1.375rem", fontWeight: 600, color: C.text }}>Pro</div>
                   <span style={{
-                    fontFamily: MONO, fontSize: 9, fontWeight: 600,
+                    fontFamily: MONO, fontSize: "0.5625rem", fontWeight: 600,
                     letterSpacing: "0.16em", textTransform: "uppercase",
                     color: C.accent, padding: "3px 8px", borderRadius: 999,
                     background: C.accentSoft,
                     border: `1px solid color-mix(in oklch, ${C.accent} 36%, transparent)`,
                   }}>Recommended</span>
                 </div>
-                <div style={{ fontFamily: MONO, fontSize: 11, color: C.muted, letterSpacing: "0.08em", textTransform: "uppercase" }}>Pay monthly</div>
+                <div style={{ fontFamily: MONO, fontSize: "0.6875rem", color: C.muted, letterSpacing: "0.08em", textTransform: "uppercase" }}>Pay monthly</div>
               </div>
               <div style={{ display: "flex", alignItems: "baseline", gap: 8, position: "relative", zIndex: 1 }}>
-                <span style={{ fontFamily: DISPLAY, fontSize: 44, fontWeight: 600, color: C.text, letterSpacing: "-0.02em" }}>£24.99</span>
-                <span style={{ fontFamily: BODY, fontSize: 14, color: C.text2 }}>/ month</span>
+                <span style={{ fontFamily: DISPLAY, fontSize: "2.75rem", fontWeight: 600, color: C.text, letterSpacing: "-0.02em" }}>£24.99</span>
+                <span style={{ fontFamily: BODY, fontSize: "0.875rem", color: C.text2 }}>/ month</span>
               </div>
-              <div style={{ fontFamily: BODY, fontSize: 12, color: C.muted, marginTop: -8, position: "relative", zIndex: 1 }}>
+              <div style={{ fontFamily: BODY, fontSize: "0.75rem", color: C.muted, marginTop: -8, position: "relative", zIndex: 1 }}>
                 Or <span style={{ color: C.text2, fontWeight: 600 }}>£199 / year</span> &mdash; equivalent to £16.58 / month, save £100.
               </div>
               <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 10, position: "relative", zIndex: 1 }}>
@@ -819,7 +819,7 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
                   "Custom strategy slots",
                   "Weekly digest emails",
                 ].map((item) => (
-                  <li key={item} style={{ fontFamily: BODY, fontSize: 14, color: C.text2, display: "flex", alignItems: "flex-start", gap: 10 }}>
+                  <li key={item} style={{ fontFamily: BODY, fontSize: "0.875rem", color: C.text2, display: "flex", alignItems: "flex-start", gap: 10 }}>
                     <svg width="14" height="14" viewBox="0 0 14 14" style={{ marginTop: 4, flexShrink: 0 }}>
                       <path d="M2 7l3.5 3.5L12 3.5" stroke={C.accent} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
                     </svg>
@@ -830,7 +830,7 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
               <button type="button" onClick={handleStarted} style={{
                 background: "transparent", color: C.text,
                 border: `1px solid ${C.border2}`, borderRadius: 999,
-                padding: "13px 20px", fontSize: 13, fontFamily: BODY, fontWeight: 600,
+                padding: "13px 20px", fontSize: "0.8125rem", fontFamily: BODY, fontWeight: 600,
                 cursor: "pointer", width: "100%", marginTop: 6, position: "relative", zIndex: 1,
                 transition: "opacity 0.15s, transform 0.15s",
               }}>Start free, upgrade anytime →</button>
@@ -856,7 +856,7 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
               The honest question is which one your <span style={{ fontStyle: "italic", color: C.live }}>actual</span> losses come from.
             </div>
             <span style={{
-              fontFamily: BODY, fontSize: 14, fontWeight: 600,
+              fontFamily: BODY, fontSize: "0.875rem", fontWeight: 600,
               color: C.live, display: "inline-flex", alignItems: "center", gap: 6,
             }}>Read the full comparison →</span>
           </a>
@@ -873,17 +873,17 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
             }}>
               Hi, I&apos;m Dylon. I built Kōda because I needed it.
             </p>
-            <p style={{ fontSize: 15, color: C.text2, lineHeight: 1.7, marginBottom: 14 }}>
+            <p style={{ fontSize: "0.9375rem", color: C.text2, lineHeight: 1.7, marginBottom: 14 }}>
               I journal on my phone between sessions and I&apos;ve blown a Topstep eval
               to a revenge trade. The intervention exists because of that day.
               Circles exist because I journal better when someone else is watching.
             </p>
-            <p style={{ fontSize: 15, color: C.text2, lineHeight: 1.7 }}>
+            <p style={{ fontSize: "0.9375rem", color: C.text2, lineHeight: 1.7 }}>
               I want this to be a journal that respects your time and tells you the
               truth &mdash; not one that gamifies your losses.
             </p>
             <div style={{
-              marginTop: 18, fontFamily: MONO, fontSize: 11,
+              marginTop: 18, fontFamily: MONO, fontSize: "0.6875rem",
               color: C.muted, letterSpacing: "0.10em", textTransform: "uppercase",
             }}>&mdash; DYLON &middot; KŌDA</div>
           </div>
@@ -910,7 +910,7 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
             display: "inline-flex", alignItems: "center", gap: 12,
             padding: "10px 10px 10px 26px", borderRadius: 999,
             background: C.text, color: C.bg, border: "none",
-            fontFamily: BODY, fontSize: 15, fontWeight: 600, cursor: "pointer",
+            fontFamily: BODY, fontSize: "0.9375rem", fontWeight: 600, cursor: "pointer",
             transition: "opacity 0.15s, transform 0.15s",
           }}>
             Start your free journal
@@ -933,11 +933,11 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <KodaMark size={20} color={C.text2} />
-            <span style={{ fontFamily: BODY, fontWeight: 600, fontSize: 13, letterSpacing: "0.18em", color: C.text2 }}>KŌDA</span>
+            <span style={{ fontFamily: BODY, fontWeight: 600, fontSize: "0.8125rem", letterSpacing: "0.18em", color: C.text2 }}>KŌDA</span>
           </div>
           <nav style={{
             display: "flex", flexWrap: "wrap", gap: "12px 22px",
-            fontFamily: BODY, fontSize: 13, color: C.text2,
+            fontFamily: BODY, fontSize: "0.8125rem", color: C.text2,
           }}>
             {[
               ["Intervention", "/in-session-intervention.html"],
@@ -956,7 +956,7 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
             display: "flex", justifyContent: "space-between", alignItems: "center",
             flexWrap: "wrap", gap: 12, paddingTop: 18,
             borderTop: `1px solid ${C.border}`,
-            fontFamily: MONO, fontSize: 10, color: C.dim, letterSpacing: "0.08em",
+            fontFamily: MONO, fontSize: "0.625rem", color: C.dim, letterSpacing: "0.08em",
           }}>
             <span>©2026 KŌDA · KEEP THE EDGE YOU EARNED</span>
             <span>v1.0 · <span style={{ color: C.live }}>● LIVE</span></span>

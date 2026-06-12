@@ -83,10 +83,10 @@ export function UnfollowConfirmModal({
         <div style={{ display: "flex", justifyContent: "center" }}>
           <AvatarCircle name={displayName || handle} size={56} C={C} />
         </div>
-        <div style={{ fontFamily: DISPLAY, fontSize: 19, fontWeight: 600, color: C.text, marginTop: 16 }}>
+        <div style={{ fontFamily: DISPLAY, fontSize: "1.1875rem", fontWeight: 600, color: C.text, marginTop: 16 }}>
           Unfollow @{handle}?
         </div>
-        <div style={{ fontSize: 13, color: C.text2, marginTop: 10, lineHeight: 1.5, fontFamily: BODY }}>
+        <div style={{ fontSize: "0.8125rem", color: C.text2, marginTop: 10, lineHeight: 1.5, fontFamily: BODY }}>
           Their trades will stop showing in your feed.
         </div>
         <div style={{ display: "flex", gap: 10, marginTop: 22 }}>
@@ -95,7 +95,7 @@ export function UnfollowConfirmModal({
             style={{
               flex: 1, padding: "13px 20px", borderRadius: 999,
               background: "transparent", color: C.text, border: `1px solid ${C.border2}`,
-              fontFamily: BODY, fontSize: 14, fontWeight: 600, cursor: "pointer",
+              fontFamily: BODY, fontSize: "0.875rem", fontWeight: 600, cursor: "pointer",
             }}
           >
             Cancel
@@ -105,7 +105,7 @@ export function UnfollowConfirmModal({
             style={{
               flex: 1, padding: "13px 20px", borderRadius: 999,
               background: C.text, color: C.bg, border: "none",
-              fontFamily: BODY, fontSize: 14, fontWeight: 600, cursor: "pointer",
+              fontFamily: BODY, fontSize: "0.875rem", fontWeight: 600, cursor: "pointer",
             }}
           >
             Unfollow
@@ -148,10 +148,10 @@ export function FollowersScreen({
         }}>
           <AvatarCircle name={latest.displayName || latest.handle} avatar={latest.avatar} size={40} C={C} />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 13.5, color: C.text, fontFamily: BODY }}>
+            <div style={{ fontSize: "0.84375rem", color: C.text, fontFamily: BODY }}>
               <b>@{latest.handle}</b> started following you
             </div>
-            <div style={{ fontSize: 11.5, color: C.text2, marginTop: 2, fontFamily: BODY }}>
+            <div style={{ fontSize: "0.71875rem", color: C.text2, marginTop: 2, fontFamily: BODY }}>
               {latest.mutuals ? `${latest.mutuals} mutual${latest.mutuals === 1 ? "" : "s"}` : "First follower"}
               {latest.followsYou && " · follows you"}
             </div>
@@ -171,8 +171,8 @@ export function FollowersScreen({
           >
             <AvatarCircle name={f.displayName || f.handle} avatar={f.avatar} size={34} C={C} />
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13.5, color: C.text, fontFamily: BODY }}>@{f.handle}</div>
-              <div style={{ fontFamily: MONO, fontSize: 9.5, color: C.muted, marginTop: 2, textTransform: "uppercase" }}>
+              <div style={{ fontSize: "0.84375rem", color: C.text, fontFamily: BODY }}>@{f.handle}</div>
+              <div style={{ fontFamily: MONO, fontSize: "0.59375rem", color: C.muted, marginTop: 2, textTransform: "uppercase" }}>
                 {f.mutuals ? `${f.mutuals} MUTUAL` : f.followsYou ? "FOLLOWS YOU" : "NEW FOLLOWER"}
               </div>
             </div>
@@ -221,7 +221,7 @@ export function DiscoverTradersScreen({
             <div style={{ display: "flex", justifyContent: "center" }}>
               <AvatarCircle name={p.displayName || p.handle} avatar={p.avatar} size={52} C={C} />
             </div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: C.text, marginTop: 10, fontFamily: BODY }}>
+            <div style={{ fontSize: "0.875rem", fontWeight: 600, color: C.text, marginTop: 10, fontFamily: BODY }}>
               @{p.handle}
             </div>
             <div style={{ display: "flex", justifyContent: "center", margin: "8px 0 12px", alignItems: "center" }}>
@@ -238,7 +238,7 @@ export function DiscoverTradersScreen({
                 ))}
               </div>
               <span style={{
-                fontFamily: MONO, fontSize: 9.5, color: C.muted,
+                fontFamily: MONO, fontSize: "0.59375rem", color: C.muted,
                 marginLeft: 6, alignSelf: "center",
               }}>
                 {p.mutualCount} MUTUAL
@@ -249,7 +249,7 @@ export function DiscoverTradersScreen({
               style={{
                 width: "100%", padding: "8px 14px", borderRadius: 999,
                 background: C.live, color: "#0A0A0A", border: "none",
-                fontFamily: BODY, fontSize: 12, fontWeight: 600, cursor: "pointer",
+                fontFamily: BODY, fontSize: "0.75rem", fontWeight: 600, cursor: "pointer",
               }}
             >
               Follow
@@ -269,8 +269,8 @@ export function DiscoverTradersScreen({
           >
             <AvatarCircle name={t.displayName || t.handle} avatar={t.avatar} size={34} C={C} />
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13.5, color: C.text, fontFamily: BODY }}>@{t.handle}</div>
-              <div style={{ fontFamily: MONO, fontSize: 9.5, color: C.muted, marginTop: 2, textTransform: "uppercase" }}>
+              <div style={{ fontSize: "0.84375rem", color: C.text, fontFamily: BODY }}>@{t.handle}</div>
+              <div style={{ fontFamily: MONO, fontSize: "0.59375rem", color: C.muted, marginTop: 2, textTransform: "uppercase" }}>
                 VIA {t.via}
               </div>
             </div>
@@ -324,11 +324,11 @@ export function ProfileQRScreen({
           </svg>
         </button>
         <AvatarCircle name={displayName || handle} size={64} C={C} />
-        <div style={{ fontFamily: DISPLAY, fontSize: 20, fontWeight: 600, color: C.text, marginTop: 14 }}>
+        <div style={{ fontFamily: DISPLAY, fontSize: "1.25rem", fontWeight: 600, color: C.text, marginTop: 14 }}>
           @{handle}
         </div>
         {focus && (
-          <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.1em", color: C.muted, marginTop: 4, textTransform: "uppercase" }}>
+          <div style={{ fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.1em", color: C.muted, marginTop: 4, textTransform: "uppercase" }}>
             {focus}
           </div>
         )}
@@ -354,7 +354,7 @@ export function ProfileQRScreen({
             </div>
           )}
         </div>
-        <div style={{ fontSize: 13, color: C.text2, textAlign: "center", fontFamily: BODY }}>
+        <div style={{ fontSize: "0.8125rem", color: C.text2, textAlign: "center", fontFamily: BODY }}>
           Scan to follow me on Kōda
         </div>
         <div style={{ display: "flex", gap: 10, marginTop: 22, width: "100%", maxWidth: 360 }}>
@@ -363,7 +363,7 @@ export function ProfileQRScreen({
             style={{
               flex: 1, padding: "13px 20px", borderRadius: 999,
               background: C.live, color: "#0A0A0A", border: "none",
-              fontFamily: BODY, fontSize: 14, fontWeight: 600, cursor: "pointer",
+              fontFamily: BODY, fontSize: "0.875rem", fontWeight: 600, cursor: "pointer",
             }}
           >
             Share
@@ -373,7 +373,7 @@ export function ProfileQRScreen({
             style={{
               flex: 1, padding: "13px 20px", borderRadius: 999,
               background: "transparent", color: C.text, border: `1px solid ${C.border2}`,
-              fontFamily: BODY, fontSize: 14, fontWeight: 600, cursor: "pointer",
+              fontFamily: BODY, fontSize: "0.875rem", fontWeight: 600, cursor: "pointer",
             }}
           >
             Save image

@@ -98,7 +98,7 @@ export default function NotificationsDrawer({ open, onClose, draftCount, onOpenI
             border: "none",
             color: C.muted,
             cursor: "pointer",
-            fontSize: 18,
+            fontSize: "1.125rem",
             lineHeight: 1,
             padding: 4,
           }}
@@ -109,10 +109,10 @@ export default function NotificationsDrawer({ open, onClose, draftCount, onOpenI
 
       {total === 0 ? (
         <div style={{ textAlign: "center", padding: "28px 12px" }}>
-          <div style={{ fontFamily: BODY, fontSize: 13, color: C.text, lineHeight: 1.5, marginBottom: 6 }}>
+          <div style={{ fontFamily: BODY, fontSize: "0.8125rem", color: C.text, lineHeight: 1.5, marginBottom: 6 }}>
             You're all caught up.
           </div>
-          <div style={{ fontFamily: MONO, fontSize: 10, color: C.muted, letterSpacing: "0.06em", lineHeight: 1.5 }}>
+          <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.06em", lineHeight: 1.5 }}>
             New broker syncs, follows, and circle activity will appear here.
           </div>
         </div>
@@ -124,15 +124,15 @@ export default function NotificationsDrawer({ open, onClose, draftCount, onOpenI
               background: `color-mix(in oklch, ${C.accent ?? "#60a5fa"} 8%, ${C.panel})`,
               border: `1px solid color-mix(in oklch, ${C.accent ?? "#60a5fa"} 25%, transparent)`,
             }}>
-              <div style={{ fontFamily: MONO, fontSize: 9, color: C.accent ?? "#60a5fa", letterSpacing: "0.14em", fontWeight: 700, textTransform: "uppercase", marginBottom: 5 }}>
+              <div style={{ fontFamily: MONO, fontSize: "0.5625rem", color: C.accent ?? "#60a5fa", letterSpacing: "0.14em", fontWeight: 700, textTransform: "uppercase", marginBottom: 5 }}>
                 Kōda Team
               </div>
-              <div style={{ fontFamily: BODY, fontSize: 13, color: C.text, lineHeight: 1.55, marginBottom: 10 }}>
+              <div style={{ fontFamily: BODY, fontSize: "0.8125rem", color: C.text, lineHeight: 1.55, marginBottom: 10 }}>
                 We've fixed the issue where some user details didn't automatically save — this is now sorted for all new users. If you're an existing user, just head to your profile tab to update your details such as your name and handle. Thanks, Kōda Team
               </div>
               <button onClick={dismissProfileFix} style={{
                 background: C.accent ?? "#60a5fa", color: "#0A0A0A", border: "none",
-                borderRadius: 999, padding: "7px 14px", fontFamily: MONO, fontSize: 10,
+                borderRadius: 999, padding: "7px 14px", fontFamily: MONO, fontSize: "0.625rem",
                 letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: 700, cursor: "pointer",
               }}>
                 Got it
@@ -197,7 +197,7 @@ function NotificationCard({
       <div
         style={{
           fontFamily: MONO,
-          fontSize: 9,
+          fontSize: "0.5625rem",
           color: accent,
           letterSpacing: "0.14em",
           fontWeight: 700,
@@ -210,7 +210,7 @@ function NotificationCard({
       <div
         style={{
           fontFamily: DISPLAY,
-          fontSize: 15,
+          fontSize: "0.9375rem",
           color: C.text,
           fontWeight: 500,
           marginBottom: 4,
@@ -222,7 +222,7 @@ function NotificationCard({
       <div
         style={{
           fontFamily: BODY,
-          fontSize: 12,
+          fontSize: "0.75rem",
           color: C.text2 ?? C.muted,
           lineHeight: 1.45,
           marginBottom: 10,
@@ -239,7 +239,7 @@ function NotificationCard({
           borderRadius: 999,
           padding: "7px 14px",
           fontFamily: MONO,
-          fontSize: 10,
+          fontSize: "0.625rem",
           letterSpacing: "0.12em",
           textTransform: "uppercase",
           fontWeight: 700,

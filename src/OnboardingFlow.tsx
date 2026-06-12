@@ -79,22 +79,22 @@ export function TourOverlay({ C, onDone }: { C: any; onDone: () => void }) {
             <div key={i} style={{ width: i === step ? "20px" : "6px", height: "6px", borderRadius: "3px", background: i === step ? C.text : C.border2, transition: "all 0.2s ease" }} />
           ))}
         </div>
-        <div style={{ width: "52px", height: "52px", borderRadius: "14px", background: C.panel, border: `1px solid ${C.border2}`, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "18px", fontFamily: "system-ui, sans-serif", fontSize: "22px" }}>
+        <div style={{ width: "52px", height: "52px", borderRadius: "14px", background: C.panel, border: `1px solid ${C.border2}`, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "18px", fontFamily: "system-ui, sans-serif", fontSize: "1.375rem" }}>
           {current.icon}
         </div>
-        <div style={{ fontFamily: DISPLAY, fontSize: "22px", fontWeight: 500, color: C.text, letterSpacing: "-0.02em", marginBottom: "10px" }}>
+        <div style={{ fontFamily: DISPLAY, fontSize: "1.375rem", fontWeight: 500, color: C.text, letterSpacing: "-0.02em", marginBottom: "10px" }}>
           {current.title}
         </div>
-        <div style={{ fontFamily: BODY, fontSize: "14px", color: C.muted, lineHeight: 1.6, marginBottom: "32px" }}>
+        <div style={{ fontFamily: BODY, fontSize: "0.875rem", color: C.muted, lineHeight: 1.6, marginBottom: "32px" }}>
           {current.body}
         </div>
         <div style={{ display: "flex", gap: "10px" }}>
           <button onClick={finish}
-            style={{ flex: 1, padding: "13px", background: "transparent", border: `1px solid ${C.border2}`, borderRadius: "10px", color: C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "11px", letterSpacing: "0.12em", textTransform: "uppercase" }}>
+            style={{ flex: 1, padding: "13px", background: "transparent", border: `1px solid ${C.border2}`, borderRadius: "10px", color: C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "0.6875rem", letterSpacing: "0.12em", textTransform: "uppercase" }}>
             Skip
           </button>
           <button onClick={() => isLast ? finish() : setStep(s => s + 1)}
-            style={{ flex: 2, padding: "13px", background: C.text, border: "none", borderRadius: "10px", color: C.bg, cursor: "pointer", fontFamily: MONO, fontSize: "11px", letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: 500 }}>
+            style={{ flex: 2, padding: "13px", background: C.text, border: "none", borderRadius: "10px", color: C.bg, cursor: "pointer", fontFamily: MONO, fontSize: "0.6875rem", letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: 500 }}>
             {isLast ? "Let's go →" : "Next →"}
           </button>
         </div>
@@ -155,7 +155,7 @@ export function OnboardingFlow({ C, onComplete }: {
   const pillPrimary = (active: boolean): React.CSSProperties => ({
     background: active ? C.text : C.border2, color: active ? C.bg : C.muted,
     border: "none", borderRadius: "999px", padding: "16px 32px",
-    fontSize: "14px", fontWeight: 500, cursor: active ? "pointer" : "default",
+    fontSize: "0.875rem", fontWeight: 500, cursor: active ? "pointer" : "default",
     fontFamily: BODY, letterSpacing: "0.01em",
     width: "100%", transition: "background 0.15s", minHeight: "44px",
     display: "flex", alignItems: "center", justifyContent: "center",
@@ -163,17 +163,17 @@ export function OnboardingFlow({ C, onComplete }: {
 
   const MonoLbl = ({ children, optional }: { children: string; optional?: boolean }) => (
     <label style={{
-      fontFamily: MONO, fontSize: "10px", color: C.muted,
+      fontFamily: MONO, fontSize: "0.625rem", color: C.muted,
       letterSpacing: "0.14em", textTransform: "uppercase" as const,
       display: "block", marginBottom: "8px",
     }}>
-      {children}{optional && <span style={{ color: C.dim, fontSize: "9px", marginLeft: "6px" }}>optional</span>}
+      {children}{optional && <span style={{ color: C.dim, fontSize: "0.5625rem", marginLeft: "6px" }}>optional</span>}
     </label>
   );
 
   const StepBadge = ({ n }: { n: number }) => (
     <div style={{
-      fontFamily: MONO, fontSize: "10px", color: C.muted,
+      fontFamily: MONO, fontSize: "0.625rem", color: C.muted,
       letterSpacing: "0.16em", textTransform: "uppercase" as const, marginBottom: "16px",
     }}>
       — Step {n} of {ONBOARDING_STEPS.length}
@@ -201,7 +201,7 @@ export function OnboardingFlow({ C, onComplete }: {
 
         <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "48px" }}>
           <KodaMarkFilled size={28} bg={C.panel} />
-          <span style={{ fontFamily: DISPLAY, fontSize: "17px", fontWeight: 700, letterSpacing: "-0.02em", color: C.text, lineHeight: 1 }}>Kōda</span>
+          <span style={{ fontFamily: DISPLAY, fontSize: "1.0625rem", fontWeight: 700, letterSpacing: "-0.02em", color: C.text, lineHeight: 1 }}>Kōda</span>
         </div>
 
         <div style={{ display: "flex", gap: "6px", marginBottom: "44px" }}>
@@ -218,7 +218,7 @@ export function OnboardingFlow({ C, onComplete }: {
           <div style={{ animation: "rise 0.3s ease" }}>
             <StepBadge n={1} />
             <Heading line1="Let's set up" line2="your profile." />
-            <p style={{ fontSize: "14px", color: C.muted, lineHeight: 1.7, marginBottom: "28px" }}>
+            <p style={{ fontSize: "0.875rem", color: C.muted, lineHeight: 1.7, marginBottom: "28px" }}>
               This is how other traders see you on leaderboards and in circles.
             </p>
 
@@ -230,7 +230,7 @@ export function OnboardingFlow({ C, onComplete }: {
                     width: "44px", height: "44px", borderRadius: "50%",
                     border: `1.5px solid ${avatar === e ? C.text : C.border}`,
                     background: avatar === e ? C.panel : "transparent",
-                    cursor: "pointer", fontSize: "20px",
+                    cursor: "pointer", fontSize: "1.25rem",
                     display: "flex", alignItems: "center", justifyContent: "center",
                     transition: "border-color 0.15s, background 0.15s",
                   }}>{e}</button>
@@ -246,7 +246,7 @@ export function OnboardingFlow({ C, onComplete }: {
                   placeholder="e.g. Dylon" style={inp} autoFocus
                   onKeyDown={e => { if (e.key === "Enter" && name.trim()) goNext(); }}
                 />
-                {nameErr && <div style={{ fontSize: "12px", color: C.red, marginTop: "6px" }}>{nameErr}</div>}
+                {nameErr && <div style={{ fontSize: "0.75rem", color: C.red, marginTop: "6px" }}>{nameErr}</div>}
               </div>
               <div>
                 <MonoLbl optional>Handle</MonoLbl>
@@ -268,7 +268,7 @@ export function OnboardingFlow({ C, onComplete }: {
           <div style={{ animation: "rise 0.3s ease" }}>
             <StepBadge n={2} />
             <Heading line1="What do you" line2="trade?" />
-            <p style={{ fontSize: "14px", color: C.muted, lineHeight: 1.7, marginBottom: "28px" }}>
+            <p style={{ fontSize: "0.875rem", color: C.muted, lineHeight: 1.7, marginBottom: "28px" }}>
               Pick all that apply. This helps Kōda show the right stats and circles.
             </p>
 
@@ -285,11 +285,11 @@ export function OnboardingFlow({ C, onComplete }: {
                       background: active ? C.text : "transparent",
                       color: active ? C.bg : C.text2,
                       border: `1px solid ${active ? C.text : C.border2}`,
-                      fontFamily: MONO, fontSize: "11px", fontWeight: 500,
+                      fontFamily: MONO, fontSize: "0.6875rem", fontWeight: 500,
                       cursor: "pointer", letterSpacing: "0.06em",
                       transition: "background 0.15s, color 0.15s",
                     }}>
-                    {inst.code} <span style={{ opacity: 0.6, fontSize: "10px" }}>{inst.label}</span>
+                    {inst.code} <span style={{ opacity: 0.6, fontSize: "0.625rem" }}>{inst.label}</span>
                   </button>
                 );
               })}
@@ -305,7 +305,7 @@ export function OnboardingFlow({ C, onComplete }: {
           <div style={{ animation: "rise 0.3s ease" }}>
             <StepBadge n={3} />
             <Heading line1="What's your" line2="trading style?" />
-            <p style={{ fontSize: "14px", color: C.muted, lineHeight: 1.7, marginBottom: "28px" }}>
+            <p style={{ fontSize: "0.875rem", color: C.muted, lineHeight: 1.7, marginBottom: "28px" }}>
               Choose the approach that best fits how you trade.
             </p>
 
@@ -331,10 +331,10 @@ export function OnboardingFlow({ C, onComplete }: {
                       transition: "background 0.15s, border-color 0.15s",
                     }}>
                     <div>
-                      <div style={{ fontFamily: BODY, fontSize: "14px", fontWeight: 500, color: C.text }}>
+                      <div style={{ fontFamily: BODY, fontSize: "0.875rem", fontWeight: 500, color: C.text }}>
                         {s.label}
                       </div>
-                      <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, marginTop: "2px", letterSpacing: "0.04em" }}>
+                      <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, marginTop: "2px", letterSpacing: "0.04em" }}>
                         {s.desc}
                       </div>
                     </div>
@@ -356,7 +356,7 @@ export function OnboardingFlow({ C, onComplete }: {
           <div style={{ animation: "rise 0.3s ease" }}>
             <StepBadge n={4} />
             <Heading line1="Stay in" line2="the loop." />
-            <p style={{ fontSize: "14px", color: C.muted, lineHeight: 1.7, marginBottom: "20px" }}>
+            <p style={{ fontSize: "0.875rem", color: C.muted, lineHeight: 1.7, marginBottom: "20px" }}>
               Get a push when your circle posts a trade, when a challenge ends, and when your in-session intervention cooldown lifts.
             </p>
 
@@ -366,7 +366,7 @@ export function OnboardingFlow({ C, onComplete }: {
               marginBottom: "20px",
             }}>
               <div style={{
-                fontFamily: MONO, fontSize: "10px", letterSpacing: "0.16em",
+                fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.16em",
                 textTransform: "uppercase" as const, color: C.muted, marginBottom: "10px",
               }}>What we send</div>
               <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -376,7 +376,7 @@ export function OnboardingFlow({ C, onComplete }: {
                   "Daily digest of your edge",
                   "Cooldown lifted — you can log again",
                 ].map(t => (
-                  <li key={t} style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "13px", color: C.text }}>
+                  <li key={t} style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "0.8125rem", color: C.text }}>
                     <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: (C as any).live ?? C.green, flexShrink: 0 }} />
                     <span>{t}</span>
                   </li>
@@ -390,7 +390,7 @@ export function OnboardingFlow({ C, onComplete }: {
                 background: pushMsg.kind === "ok" ? "rgba(34,197,94,0.08)" : "rgba(239,68,68,0.08)",
                 border: `1px solid ${pushMsg.kind === "ok" ? "rgba(34,197,94,0.24)" : "rgba(239,68,68,0.24)"}`,
                 color: pushMsg.kind === "ok" ? "#22c55e" : "#ef4444",
-                fontFamily: MONO, fontSize: "11px", marginBottom: "16px", lineHeight: 1.5,
+                fontFamily: MONO, fontSize: "0.6875rem", marginBottom: "16px", lineHeight: 1.5,
               }}>
                 {pushMsg.text}
               </div>
@@ -428,7 +428,7 @@ export function OnboardingFlow({ C, onComplete }: {
                   background: "transparent", color: C.text2,
                   border: `1px solid ${C.border2}`, borderRadius: "999px",
                   padding: "14px 32px", minHeight: "44px",
-                  fontFamily: BODY, fontSize: "14px", fontWeight: 500,
+                  fontFamily: BODY, fontSize: "0.875rem", fontWeight: 500,
                   letterSpacing: "0.01em", cursor: "pointer", width: "100%",
                 }}
               >
@@ -448,7 +448,7 @@ export function OnboardingFlow({ C, onComplete }: {
               You're in,<br />
               <span style={{ fontStyle: "italic", fontWeight: 500, color: C.text2 }}>{name || "trader"}.</span>
             </h1>
-            <p style={{ fontSize: "15px", color: C.text2, lineHeight: 1.65, marginBottom: "20px" }}>
+            <p style={{ fontSize: "0.9375rem", color: C.text2, lineHeight: 1.65, marginBottom: "20px" }}>
               Open Kōda tomorrow BEFORE your first trade of the day. We'll watch your session and tell you when to stop.
             </p>
 
@@ -457,10 +457,10 @@ export function OnboardingFlow({ C, onComplete }: {
               background: C.panel, borderRadius: 12,
               borderLeft: `3px solid ${C.live}`,
             }}>
-              <p style={{ fontSize: "13px", color: C.text2, lineHeight: 1.6, margin: 0 }}>
+              <p style={{ fontSize: "0.8125rem", color: C.text2, lineHeight: 1.6, margin: 0 }}>
                 Hi, I'm Dylon. I built Kōda because I needed it — same journals you've tried, same Sunday reviews, same Monday mistakes. The thing that actually moved the needle for me was being interrupted mid-decision. That's the wedge here.
               </p>
-              <p style={{ fontSize: "12px", color: C.muted, marginTop: 10, marginBottom: 0, fontFamily: BODY }}>
+              <p style={{ fontSize: "0.75rem", color: C.muted, marginTop: 10, marginBottom: 0, fontFamily: BODY }}>
                 — Dylon · @dylontrades
               </p>
             </div>
@@ -472,18 +472,18 @@ export function OnboardingFlow({ C, onComplete }: {
             }}>
               {avatar && (
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.12em", textTransform: "uppercase" as const }}>Avatar</span>
-                  <span style={{ fontSize: "22px" }}>{avatar}</span>
+                  <span style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.12em", textTransform: "uppercase" as const }}>Avatar</span>
+                  <span style={{ fontSize: "1.375rem" }}>{avatar}</span>
                 </div>
               )}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                <span style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.12em", textTransform: "uppercase" as const }}>Name</span>
-                <span style={{ fontFamily: BODY, fontSize: "14px", color: C.text }}>{name}</span>
+                <span style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.12em", textTransform: "uppercase" as const }}>Name</span>
+                <span style={{ fontFamily: BODY, fontSize: "0.875rem", color: C.text }}>{name}</span>
               </div>
               {handle && handle !== "@" && (
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                  <span style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.12em", textTransform: "uppercase" as const }}>Handle</span>
-                  <span style={{ fontFamily: BODY, fontSize: "14px", color: C.text }}>{handle}</span>
+                  <span style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.12em", textTransform: "uppercase" as const }}>Handle</span>
+                  <span style={{ fontFamily: BODY, fontSize: "0.875rem", color: C.text }}>{handle}</span>
                 </div>
               )}
             </div>
@@ -497,7 +497,7 @@ export function OnboardingFlow({ C, onComplete }: {
         {step !== "welcome" && (
           <button onClick={goBack} style={{
             background: "none", border: "none", color: C.muted,
-            cursor: "pointer", fontSize: "12px", fontFamily: MONO,
+            cursor: "pointer", fontSize: "0.75rem", fontFamily: MONO,
             letterSpacing: "0.1em", textTransform: "uppercase",
             marginTop: "20px", padding: "8px 0",
           }}>

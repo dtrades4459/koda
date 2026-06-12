@@ -79,7 +79,7 @@ export function Segmented<T extends string>({
               background: on ? tone : "transparent",
               color: on ? "#0A0A0A" : C.text2,
               border: "none", cursor: "pointer",
-              fontFamily: BODY, fontSize: 12, fontWeight: 600,
+              fontFamily: BODY, fontSize: "0.75rem", fontWeight: 600,
               transition: "background 0.15s, color 0.15s",
             }}
           >
@@ -123,8 +123,8 @@ export function EditTradeScreen({
       <Card C={C} pad={18}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
-            <div style={{ fontFamily: DISPLAY, fontSize: 22, fontWeight: 600, color: C.text }}>{symbol}</div>
-            <div style={{ fontFamily: MONO, fontSize: 10, color: C.muted, marginTop: 2 }}>{date}</div>
+            <div style={{ fontFamily: DISPLAY, fontSize: "1.375rem", fontWeight: 600, color: C.text }}>{symbol}</div>
+            <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, marginTop: 2 }}>{date}</div>
           </div>
           <Segmented
             C={C}
@@ -152,8 +152,8 @@ export function EditTradeScreen({
                 background: netColor === C.green ? C.greenSoft : C.redSoft,
                 border: `1px solid color-mix(in oklch, ${netColor} 30%, transparent)`,
               }}>
-                <div style={{ fontFamily: MONO, fontSize: 9, color: C.muted }}>NET</div>
-                <div style={{ fontFamily: DISPLAY, fontSize: 20, fontWeight: 600, color: netColor }}>
+                <div style={{ fontFamily: MONO, fontSize: "0.5625rem", color: C.muted }}>NET</div>
+                <div style={{ fontFamily: DISPLAY, fontSize: "1.25rem", fontWeight: 600, color: netColor }}>
                   {net}
                 </div>
               </div>
@@ -163,8 +163,8 @@ export function EditTradeScreen({
                 flex: 1, padding: "14px 16px", borderRadius: 12,
                 background: C.panel, border: `1px solid ${C.line}`,
               }}>
-                <div style={{ fontFamily: MONO, fontSize: 9, color: C.muted }}>R</div>
-                <div style={{ fontFamily: DISPLAY, fontSize: 20, fontWeight: 600, color: C.text }}>
+                <div style={{ fontFamily: MONO, fontSize: "0.5625rem", color: C.muted }}>R</div>
+                <div style={{ fontFamily: DISPLAY, fontSize: "1.25rem", fontWeight: 600, color: C.text }}>
                   {rMultiple}
                 </div>
               </div>
@@ -185,7 +185,7 @@ export function EditTradeScreen({
             flex: 1, padding: "13px 20px", borderRadius: 999,
             background: "transparent", color: C.text,
             border: `1px solid ${C.border2}`,
-            fontFamily: BODY, fontSize: 14, fontWeight: 600,
+            fontFamily: BODY, fontSize: "0.875rem", fontWeight: 600,
             cursor: dirty ? "pointer" : "not-allowed", opacity: dirty ? 1 : 0.5,
           }}
         >
@@ -198,7 +198,7 @@ export function EditTradeScreen({
             flex: 1.6, padding: "13px 20px", borderRadius: 999,
             background: dirty ? C.live : C.panel,
             color: dirty ? "#0A0A0A" : C.text2,
-            border: "none", fontFamily: BODY, fontSize: 14, fontWeight: 600,
+            border: "none", fontFamily: BODY, fontSize: "0.875rem", fontWeight: 600,
             cursor: dirty ? "pointer" : "not-allowed",
           }}
         >
@@ -219,7 +219,7 @@ function FieldInline({
   return (
     <div style={{ flex: 1 }}>
       <div style={{
-        fontFamily: MONO, fontSize: 9.5, letterSpacing: "0.16em",
+        fontFamily: MONO, fontSize: "0.59375rem", letterSpacing: "0.16em",
         color: C.muted, textTransform: "uppercase", marginBottom: 8,
       }}>
         {label}
@@ -280,10 +280,10 @@ export function DeleteTradeModal({
         }}>
           <IconTrash c={C.red} s={24} />
         </div>
-        <div style={{ fontFamily: DISPLAY, fontSize: 21, fontWeight: 600, color: C.text }}>
+        <div style={{ fontFamily: DISPLAY, fontSize: "1.3125rem", fontWeight: 600, color: C.text }}>
           Delete this trade?
         </div>
-        <div style={{ fontSize: 13.5, color: C.text2, marginTop: 10, lineHeight: 1.55, fontFamily: BODY }}>
+        <div style={{ fontSize: "0.84375rem", color: C.text2, marginTop: 10, lineHeight: 1.55, fontFamily: BODY }}>
           Your <span style={{ color: C.text }}>{summary}</span> and its screenshots will be permanently removed from your stats.
         </div>
         <div style={{ display: "flex", gap: 10, marginTop: 22 }}>
@@ -292,7 +292,7 @@ export function DeleteTradeModal({
             style={{
               flex: 1, padding: "13px 20px", borderRadius: 999,
               background: "transparent", color: C.text, border: `1px solid ${C.border2}`,
-              fontFamily: BODY, fontSize: 14, fontWeight: 600, cursor: "pointer",
+              fontFamily: BODY, fontSize: "0.875rem", fontWeight: 600, cursor: "pointer",
             }}
           >
             Cancel
@@ -302,7 +302,7 @@ export function DeleteTradeModal({
             style={{
               flex: 1, padding: "13px 20px", borderRadius: 999,
               background: C.red, color: "#fff", border: "none",
-              fontFamily: BODY, fontSize: 14, fontWeight: 600, cursor: "pointer",
+              fontFamily: BODY, fontSize: "0.875rem", fontWeight: 600, cursor: "pointer",
             }}
           >
             Delete
@@ -359,7 +359,7 @@ export function ScreenshotsScreen({
             {s.label && (
               <div style={{
                 position: "absolute", bottom: 6, left: 8,
-                fontFamily: MONO, fontSize: 9, color: C.text2,
+                fontFamily: MONO, fontSize: "0.5625rem", color: C.text2,
               }}>
                 {s.label}
               </div>
@@ -377,7 +377,7 @@ export function ScreenshotsScreen({
             }}
           >
             <IconPlus c={C.live} s={22} />
-            <span style={{ fontSize: 11, fontFamily: BODY }}>Add</span>
+            <span style={{ fontSize: "0.6875rem", fontFamily: BODY }}>Add</span>
           </button>
         )}
       </div>
@@ -388,7 +388,7 @@ export function ScreenshotsScreen({
             flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
             padding: "13px 18px", borderRadius: 999, background: "transparent",
             color: C.text, border: `1px solid ${C.border2}`,
-            fontFamily: BODY, fontSize: 13, fontWeight: 600, cursor: "pointer",
+            fontFamily: BODY, fontSize: "0.8125rem", fontWeight: 600, cursor: "pointer",
           }}
         >
           <IconGrid c={C.text} s={16} /> Library
@@ -399,7 +399,7 @@ export function ScreenshotsScreen({
             flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
             padding: "13px 18px", borderRadius: 999, background: "transparent",
             color: C.text, border: `1px solid ${C.border2}`,
-            fontFamily: BODY, fontSize: 13, fontWeight: 600, cursor: "pointer",
+            fontFamily: BODY, fontSize: "0.8125rem", fontWeight: 600, cursor: "pointer",
           }}
         >
           📋 Paste
@@ -409,7 +409,7 @@ export function ScreenshotsScreen({
         marginTop: 14, padding: "12px 14px", borderRadius: 10,
         background: C.accentSoft,
         border: `1px solid color-mix(in oklch, ${C.accent} 30%, transparent)`,
-        fontSize: 12, color: C.text, fontFamily: BODY,
+        fontSize: "0.75rem", color: C.text, fontFamily: BODY,
       }}>
         Tip: copy a chart and tap Paste, or drag images straight in on desktop.
       </div>
@@ -421,7 +421,7 @@ export function ScreenshotsScreen({
             padding: "13px 22px", borderRadius: 999,
             background: screenshots.length === 0 ? C.panel : C.live,
             color: screenshots.length === 0 ? C.muted : "#0A0A0A",
-            border: "none", fontFamily: BODY, fontSize: 14, fontWeight: 600,
+            border: "none", fontFamily: BODY, fontSize: "0.875rem", fontWeight: 600,
             width: "100%", cursor: screenshots.length === 0 ? "not-allowed" : "pointer",
           }}
         >
@@ -486,7 +486,7 @@ export function ShareToCircleSheet({
           width: 38, height: 4, borderRadius: 99, background: C.line3,
           margin: "0 auto 18px",
         }} />
-        <div style={{ fontFamily: DISPLAY, fontSize: 19, fontWeight: 600, color: C.text }}>
+        <div style={{ fontFamily: DISPLAY, fontSize: "1.1875rem", fontWeight: 600, color: C.text }}>
           Share to a Circle
         </div>
         <Card C={C} pad={14} style={{ marginTop: 16, background: C.surfaceHi }}>
@@ -499,11 +499,11 @@ export function ShareToCircleSheet({
               <IconGrid c={trade.side === "long" ? C.green : C.red} s={18} />
             </div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 14, fontWeight: 600, color: C.text, fontFamily: BODY }}>
+              <div style={{ fontSize: "0.875rem", fontWeight: 600, color: C.text, fontFamily: BODY }}>
                 {trade.symbol} {trade.side} · {trade.rMultiple}
               </div>
               {trade.setup && (
-                <div style={{ fontFamily: MONO, fontSize: 10, color: C.muted, marginTop: 2 }}>
+                <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, marginTop: 2 }}>
                   {trade.setup.toUpperCase()}
                 </div>
               )}
@@ -525,8 +525,8 @@ export function ShareToCircleSheet({
             >
               <AvatarCircle name={c.name} avatar={c.avatar} size={34} C={C} />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 14, color: C.text, fontFamily: BODY }}>{c.name}</div>
-                <div style={{ fontFamily: MONO, fontSize: 10, color: C.muted, marginTop: 2 }}>
+                <div style={{ fontSize: "0.875rem", color: C.text, fontFamily: BODY }}>{c.name}</div>
+                <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, marginTop: 2 }}>
                   {c.memberCount.toLocaleString()} MEMBERS
                 </div>
               </div>
@@ -549,7 +549,7 @@ export function ShareToCircleSheet({
               padding: "13px 22px", borderRadius: 999,
               background: picked.size === 0 ? C.panel : C.live,
               color: picked.size === 0 ? C.muted : "#0A0A0A",
-              border: "none", fontFamily: BODY, fontSize: 14, fontWeight: 600,
+              border: "none", fontFamily: BODY, fontSize: "0.875rem", fontWeight: 600,
               width: "100%", cursor: picked.size === 0 ? "not-allowed" : "pointer",
             }}
           >
@@ -609,7 +609,7 @@ export function MistakeTagSheet({
         <div style={{ width: 38, height: 4, borderRadius: 99, background: C.line3, margin: "0 auto 18px" }} />
         <Kicker C={C} color={C.red}>Mistake tag</Kicker>
         <div style={{
-          fontFamily: DISPLAY, fontSize: 20, fontWeight: 600, color: C.text, marginTop: 10,
+          fontFamily: DISPLAY, fontSize: "1.25rem", fontWeight: 600, color: C.text, marginTop: 10,
         }}>
           What went wrong?
         </div>
@@ -628,7 +628,7 @@ export function MistakeTagSheet({
                   border: on
                     ? `1px solid color-mix(in oklch, ${tag === "None" ? C.text : C.red} 40%, transparent)`
                     : `1px solid ${C.border2}`,
-                  fontFamily: BODY, fontSize: 13, fontWeight: 500, cursor: "pointer",
+                  fontFamily: BODY, fontSize: "0.8125rem", fontWeight: 500, cursor: "pointer",
                   whiteSpace: "nowrap",
                 }}
               >
@@ -643,7 +643,7 @@ export function MistakeTagSheet({
             style={{
               padding: "13px 22px", borderRadius: 999,
               background: C.live, color: "#0A0A0A", border: "none",
-              fontFamily: BODY, fontSize: 14, fontWeight: 600,
+              fontFamily: BODY, fontSize: "0.875rem", fontWeight: 600,
               width: "100%", cursor: "pointer",
             }}
           >
@@ -707,15 +707,15 @@ export function TradeDetailScreen({
         }} />
         <div style={{ position: "relative", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
           <div>
-            <div style={{ fontFamily: DISPLAY, fontSize: 24, fontWeight: 600, color: C.text }}>
+            <div style={{ fontFamily: DISPLAY, fontSize: "1.5rem", fontWeight: 600, color: C.text }}>
               {symbol} · {side === "long" ? "Long" : "Short"}
             </div>
-            <div style={{ fontFamily: MONO, fontSize: 10, color: C.muted, marginTop: 3 }}>
+            <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, marginTop: 3 }}>
               {date.toUpperCase()}{setup ? ` · ${setup.toUpperCase()}` : ""}
             </div>
           </div>
           <div style={{
-            fontFamily: DISPLAY, fontSize: 24, fontWeight: 600,
+            fontFamily: DISPLAY, fontSize: "1.5rem", fontWeight: 600,
             color: rMultiple.startsWith("+") ? C.green : C.red,
           }}>
             {rMultiple}
@@ -738,7 +738,7 @@ export function TradeDetailScreen({
               padding: "7px 12px", borderRadius: 999,
               background: r.mine ? C.liveSoft : C.surface,
               border: `1px solid ${r.mine ? `color-mix(in oklch, ${C.live} 30%, transparent)` : C.border2}`,
-              fontSize: 13, color: C.text, fontFamily: BODY,
+              fontSize: "0.8125rem", color: C.text, fontFamily: BODY,
             }}
           >
             {r.emoji} {r.count}
@@ -767,7 +767,7 @@ export function TradeDetailScreen({
         >
           <AvatarCircle name={c.handle} size={30} C={C} />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 12.5, color: C.text, fontFamily: BODY }}>
+            <div style={{ fontSize: "0.78125rem", color: C.text, fontFamily: BODY }}>
               <b>@{c.handle}</b> <span style={{ color: C.text2 }}>{c.body}</span>
             </div>
           </div>
@@ -790,7 +790,7 @@ export function TradeDetailScreen({
           placeholder="Add a comment…"
           style={{
             flex: 1, background: "transparent", border: "none", outline: "none",
-            fontFamily: BODY, fontSize: 13, color: C.text, padding: 0,
+            fontFamily: BODY, fontSize: "0.8125rem", color: C.text, padding: 0,
           }}
         />
         <button
@@ -855,14 +855,14 @@ export function ReviewInboxBulkScreen({
           }}>
             <IconCheck c="#0A0A0B" s={14} sw={2.4} />
           </div>
-          <span style={{ flex: 1, fontSize: 13, color: C.text, fontFamily: BODY }}>
+          <span style={{ flex: 1, fontSize: "0.8125rem", color: C.text, fontFamily: BODY }}>
             {selected.size} selected
           </span>
           <button
             onClick={() => { onPublish?.(Array.from(selected)); setSelected(new Set()); }}
             style={{
               background: "transparent", border: "none",
-              fontFamily: MONO, fontSize: 10, color: C.live, letterSpacing: "0.08em",
+              fontFamily: MONO, fontSize: "0.625rem", color: C.live, letterSpacing: "0.08em",
               cursor: "pointer", padding: 6,
             }}
           >
@@ -872,7 +872,7 @@ export function ReviewInboxBulkScreen({
             onClick={() => { onSkip?.(Array.from(selected)); setSelected(new Set()); }}
             style={{
               background: "transparent", border: "none",
-              fontFamily: MONO, fontSize: 10, color: C.muted, letterSpacing: "0.08em",
+              fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.08em",
               cursor: "pointer", padding: 6,
             }}
           >
@@ -910,11 +910,11 @@ export function ReviewInboxBulkScreen({
               }} />
             )}
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 14, fontWeight: 600, color: C.text, fontFamily: BODY }}>
+              <div style={{ fontSize: "0.875rem", fontWeight: 600, color: C.text, fontFamily: BODY }}>
                 {item.symbol}{" "}
                 <span style={{ color: item.tone === "green" ? C.green : C.red }}>{item.r}</span>
               </div>
-              <div style={{ fontFamily: MONO, fontSize: 9.5, color: C.muted, marginTop: 2 }}>
+              <div style={{ fontFamily: MONO, fontSize: "0.59375rem", color: C.muted, marginTop: 2 }}>
                 {item.date}
               </div>
             </div>
@@ -958,28 +958,28 @@ export function CsvDedupStep({
   return (
     <SettingsSub C={C} title="Import · review" onBack={onBack}>
       <div style={{
-        fontFamily: MONO, fontSize: 9.5, letterSpacing: "0.14em",
+        fontFamily: MONO, fontSize: "0.59375rem", letterSpacing: "0.14em",
         color: C.muted, textTransform: "uppercase",
       }}>
         Step 4 of 6 · Dedup
       </div>
       <div style={{
-        fontFamily: DISPLAY, fontSize: 20, fontWeight: 600,
+        fontFamily: DISPLAY, fontSize: "1.25rem", fontWeight: 600,
         color: C.text, margin: "10px 0 4px",
       }}>
         {conflicts.length} possible duplicate{conflicts.length === 1 ? "" : "s"}
       </div>
-      <div style={{ fontSize: 12.5, color: C.text2, marginBottom: 16, lineHeight: 1.5, fontFamily: BODY }}>
+      <div style={{ fontSize: "0.78125rem", color: C.text2, marginBottom: 16, lineHeight: 1.5, fontFamily: BODY }}>
         These rows match trades already in your journal. Choose what to keep.
       </div>
       {conflicts.map(c => (
         <Card C={C} pad={14} key={c.id} style={{ marginBottom: 10 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
-              <div style={{ fontSize: 13.5, fontWeight: 600, color: C.text, fontFamily: BODY }}>
+              <div style={{ fontSize: "0.84375rem", fontWeight: 600, color: C.text, fontFamily: BODY }}>
                 {c.label}
               </div>
-              <div style={{ fontFamily: MONO, fontSize: 10, color: C.muted, marginTop: 3 }}>
+              <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, marginTop: 3 }}>
                 {c.detail}
               </div>
             </div>
@@ -994,7 +994,7 @@ export function CsvDedupStep({
                   onClick={() => onUpdate?.(c.id, o.id)}
                   style={{
                     flex: 1, padding: "8px 4px", borderRadius: 8,
-                    fontSize: 11, fontWeight: 500,
+                    fontSize: "0.6875rem", fontWeight: 500,
                     background: on ? C.text : "transparent",
                     color: on ? C.bg : C.text2,
                     border: `1px solid ${on ? "transparent" : C.border2}`,
@@ -1015,7 +1015,7 @@ export function CsvDedupStep({
           display: "flex", gap: 10, alignItems: "center", marginTop: 6,
         }}>
           <IconAlert c={C.red} s={16} />
-          <span style={{ fontSize: 12, color: C.text, fontFamily: BODY }}>
+          <span style={{ fontSize: "0.75rem", color: C.text, fontFamily: BODY }}>
             {skippedCount} row{skippedCount === 1 ? "" : "s"} skipped — invalid data.
           </span>
         </div>
@@ -1026,7 +1026,7 @@ export function CsvDedupStep({
           style={{
             padding: "13px 22px", borderRadius: 999,
             background: C.live, color: "#0A0A0A", border: "none",
-            fontFamily: BODY, fontSize: 14, fontWeight: 600,
+            fontFamily: BODY, fontSize: "0.875rem", fontWeight: 600,
             width: "100%", cursor: "pointer",
           }}
         >
@@ -1077,15 +1077,15 @@ export function TradeActionsScreen({
         }} />
         <div style={{ position: "relative", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
-            <div style={{ fontFamily: DISPLAY, fontSize: 18, fontWeight: 600, color: C.text }}>
+            <div style={{ fontFamily: DISPLAY, fontSize: "1.125rem", fontWeight: 600, color: C.text }}>
               {symbol} · {side === "long" ? "Long" : "Short"}
             </div>
-            <div style={{ fontFamily: MONO, fontSize: 9.5, color: C.muted, marginTop: 3 }}>
+            <div style={{ fontFamily: MONO, fontSize: "0.59375rem", color: C.muted, marginTop: 3 }}>
               {date.toUpperCase()}
             </div>
           </div>
           <div style={{
-            fontFamily: DISPLAY, fontSize: 18, fontWeight: 600,
+            fontFamily: DISPLAY, fontSize: "1.125rem", fontWeight: 600,
             color: rMultiple.startsWith("+") ? C.green : C.red,
           }}>
             {rMultiple}
@@ -1109,10 +1109,10 @@ export function TradeActionsScreen({
             >
               <ActionIcon icon={row.icon} c={tone} />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 14, color: C.text, fontFamily: BODY }}>{row.title}</div>
+                <div style={{ fontSize: "0.875rem", color: C.text, fontFamily: BODY }}>{row.title}</div>
                 {row.detail && (
                   <div style={{
-                    fontFamily: MONO, fontSize: 9.5, color: C.muted, marginTop: 2,
+                    fontFamily: MONO, fontSize: "0.59375rem", color: C.muted, marginTop: 2,
                   }}>
                     {row.detail.toUpperCase()}
                   </div>

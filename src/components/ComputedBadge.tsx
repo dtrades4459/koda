@@ -20,7 +20,7 @@ export function ComputedBadge({ C, style }: Props) {
         border: `1px solid color-mix(in oklch, ${C.accent} 25%, transparent)`,
         background: `color-mix(in oklch, ${C.accent} 8%, transparent)`,
         fontFamily: MONO,
-        fontSize: "9px",
+        fontSize: "0.5625rem",
         letterSpacing: "0.14em",
         textTransform: "uppercase",
         color: C.accent,

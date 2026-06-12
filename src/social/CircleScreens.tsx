@@ -129,7 +129,7 @@ export function CircleCreateScreen({
         <div style={{ position: "relative" }}>
           <Kicker C={C} color={C.live}>New circle</Kicker>
           <div style={{
-            fontFamily: DISPLAY, fontSize: 21, fontWeight: 600,
+            fontFamily: DISPLAY, fontSize: "1.3125rem", fontWeight: 600,
             letterSpacing: "-0.02em", color: C.text, marginTop: 10,
           }}>
             Build your room.
@@ -172,8 +172,8 @@ export function CircleCreateScreen({
                 cursor: "pointer", fontFamily: BODY,
               }}
             >
-              <div style={{ fontSize: 14, fontWeight: 600, color: C.text }}>{opt.title}</div>
-              <div style={{ fontSize: 11.5, color: C.text2, marginTop: 3 }}>{opt.body}</div>
+              <div style={{ fontSize: "0.875rem", fontWeight: 600, color: C.text }}>{opt.title}</div>
+              <div style={{ fontSize: "0.71875rem", color: C.text2, marginTop: 3 }}>{opt.body}</div>
             </button>
           );
         })}
@@ -194,7 +194,7 @@ export function CircleCreateScreen({
                 border: on
                   ? `1px solid color-mix(in oklch, ${C.accent} 40%, transparent)`
                   : `1px solid ${C.border2}`,
-                fontFamily: BODY, fontSize: 13, fontWeight: 500, cursor: "pointer",
+                fontFamily: BODY, fontSize: "0.8125rem", fontWeight: 500, cursor: "pointer",
               }}
             >
               {tag}
@@ -211,7 +211,7 @@ export function CircleCreateScreen({
             padding: "13px 22px", borderRadius: 999,
             background: valid ? C.live : C.panel,
             color: valid ? "#0A0A0A" : C.text2,
-            border: "none", fontFamily: BODY, fontSize: 14, fontWeight: 600,
+            border: "none", fontFamily: BODY, fontSize: "0.875rem", fontWeight: 600,
             width: "100%", cursor: valid ? "pointer" : "not-allowed",
           }}
         >
@@ -245,7 +245,7 @@ export function CircleJoinScreen({
   const showError = !!errorCode && code === errorCode;
   return (
     <SettingsSub C={C} title="Join a Circle" onBack={onBack}>
-      <div style={{ fontSize: 13.5, color: C.text2, lineHeight: 1.55, marginBottom: 8, fontFamily: BODY }}>
+      <div style={{ fontSize: "0.84375rem", color: C.text2, lineHeight: 1.55, marginBottom: 8, fontFamily: BODY }}>
         Enter the invite code a circle owner shared with you.
       </div>
       <SectionLabel C={C}>Invite code</SectionLabel>
@@ -260,13 +260,13 @@ export function CircleJoinScreen({
           placeholder="ENTER-CODE"
           style={{
             flex: 1, background: "transparent", border: "none", outline: "none",
-            fontFamily: MONO, fontSize: 18, color: C.text, letterSpacing: "0.06em",
+            fontFamily: MONO, fontSize: "1.125rem", color: C.text, letterSpacing: "0.06em",
             padding: 0,
           }}
         />
       </div>
       {showError && (
-        <div style={{ fontSize: 11.5, color: C.red, marginTop: 7, lineHeight: 1.4, fontFamily: BODY }}>
+        <div style={{ fontSize: "0.71875rem", color: C.red, marginTop: 7, lineHeight: 1.4, fontFamily: BODY }}>
           That code is invalid or expired.
         </div>
       )}
@@ -278,7 +278,7 @@ export function CircleJoinScreen({
             padding: "13px 22px", borderRadius: 999,
             background: "transparent", color: valid ? C.text : C.text2,
             border: `1px solid ${C.border2}`,
-            fontFamily: BODY, fontSize: 14, fontWeight: 600,
+            fontFamily: BODY, fontSize: "0.875rem", fontWeight: 600,
             width: "100%", cursor: valid ? "pointer" : "not-allowed", opacity: valid ? 1 : 0.5,
           }}
         >
@@ -293,8 +293,8 @@ export function CircleJoinScreen({
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 <AvatarCircle name={c.name} avatar={c.avatar} size={36} C={C} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13.5, color: C.text, fontFamily: BODY }}>{c.name}</div>
-                  <div style={{ fontFamily: MONO, fontSize: 10, color: C.muted, marginTop: 2 }}>
+                  <div style={{ fontSize: "0.84375rem", color: C.text, fontFamily: BODY }}>{c.name}</div>
+                  <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, marginTop: 2 }}>
                     {c.privacy.toUpperCase()} · {c.memberCount.toLocaleString()} MEMBERS
                   </div>
                 </div>
@@ -304,7 +304,7 @@ export function CircleJoinScreen({
                     padding: "8px 16px", borderRadius: 999,
                     background: "transparent", color: C.text,
                     border: `1px solid ${C.border2}`,
-                    fontFamily: BODY, fontSize: 12, fontWeight: 600, cursor: "pointer",
+                    fontFamily: BODY, fontSize: "0.75rem", fontWeight: 600, cursor: "pointer",
                   }}
                 >
                   Join
@@ -362,8 +362,8 @@ export function CircleOwnerControlsScreen({
             <IconGrid c={C.green} s={20} />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: DISPLAY, fontSize: 17, fontWeight: 600, color: C.text }}>{circleName}</div>
-            <div style={{ fontFamily: MONO, fontSize: 10, color: C.muted, marginTop: 3 }}>
+            <div style={{ fontFamily: DISPLAY, fontSize: "1.0625rem", fontWeight: 600, color: C.text }}>{circleName}</div>
+            <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, marginTop: 3 }}>
               {memberCount.toLocaleString()} MEMBERS · CODE {code}
             </div>
           </div>
@@ -383,9 +383,9 @@ export function CircleOwnerControlsScreen({
             }}
           >
             <OwnerIcon icon={row.icon} c={C[row.toneKey]} />
-            <span style={{ flex: 1, fontSize: 14, color: C.text, fontFamily: BODY }}>{row.label}</span>
+            <span style={{ flex: 1, fontSize: "0.875rem", color: C.text, fontFamily: BODY }}>{row.label}</span>
             {row.detail && (
-              <span style={{ fontFamily: MONO, fontSize: 11, color: row.highlight ? C.red : C.muted }}>
+              <span style={{ fontFamily: MONO, fontSize: "0.6875rem", color: row.highlight ? C.red : C.muted }}>
                 {row.detail}
               </span>
             )}
@@ -400,7 +400,7 @@ export function CircleOwnerControlsScreen({
           width: "100%", padding: "13px 22px", borderRadius: 999,
           background: "transparent", color: C.red,
           border: `1px solid color-mix(in oklch, ${C.red} 30%, transparent)`,
-          fontFamily: BODY, fontSize: 14, fontWeight: 600, cursor: "pointer",
+          fontFamily: BODY, fontSize: "0.875rem", fontWeight: 600, cursor: "pointer",
         }}
       >
         Delete circle
@@ -431,8 +431,8 @@ export function MemberDetailSheet({
       <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
         <AvatarCircle name={displayName} size={56} C={C} />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontFamily: DISPLAY, fontSize: 19, fontWeight: 600, color: C.text }}>{displayName}</div>
-          <div style={{ fontFamily: MONO, fontSize: 10, color: C.muted, marginTop: 3 }}>
+          <div style={{ fontFamily: DISPLAY, fontSize: "1.1875rem", fontWeight: 600, color: C.text }}>{displayName}</div>
+          <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, marginTop: 3 }}>
             @{handle} · JOINED {joinedDate.toUpperCase()}
           </div>
         </div>
@@ -448,10 +448,10 @@ export function MemberDetailSheet({
             flex: 1, padding: 12, borderRadius: 12, textAlign: "center",
             background: C.surfaceHi, border: `1px solid ${C.line}`,
           }}>
-            <div style={{ fontFamily: MONO, fontSize: 9, color: C.muted, textTransform: "uppercase" }}>
+            <div style={{ fontFamily: MONO, fontSize: "0.5625rem", color: C.muted, textTransform: "uppercase" }}>
               {s.label}
             </div>
-            <div style={{ fontFamily: DISPLAY, fontSize: 18, fontWeight: 600, color: C.text, marginTop: 4 }}>
+            <div style={{ fontFamily: DISPLAY, fontSize: "1.125rem", fontWeight: 600, color: C.text, marginTop: 4 }}>
               {s.value}
             </div>
           </div>
@@ -464,7 +464,7 @@ export function MemberDetailSheet({
             style={{
               padding: "13px 22px", borderRadius: 999, background: "transparent", color: C.text,
               border: `1px solid ${C.border2}`,
-              fontFamily: BODY, fontSize: 14, fontWeight: 600, cursor: "pointer",
+              fontFamily: BODY, fontSize: "0.875rem", fontWeight: 600, cursor: "pointer",
             }}
           >
             Make moderator
@@ -478,7 +478,7 @@ export function MemberDetailSheet({
                 flex: 1, padding: "13px 22px", borderRadius: 999,
                 background: "transparent", color: C.warn,
                 border: `1px solid color-mix(in oklch, ${C.warn} 30%, transparent)`,
-                fontFamily: BODY, fontSize: 14, fontWeight: 600, cursor: "pointer",
+                fontFamily: BODY, fontSize: "0.875rem", fontWeight: 600, cursor: "pointer",
               }}
             >
               Kick
@@ -489,7 +489,7 @@ export function MemberDetailSheet({
                 flex: 1, padding: "13px 22px", borderRadius: 999,
                 background: "transparent", color: C.red,
                 border: `1px solid color-mix(in oklch, ${C.red} 30%, transparent)`,
-                fontFamily: BODY, fontSize: 14, fontWeight: 600, cursor: "pointer",
+                fontFamily: BODY, fontSize: "0.875rem", fontWeight: 600, cursor: "pointer",
               }}
             >
               Ban
@@ -545,9 +545,9 @@ export function CircleLeaderboardScreen({
             {r.rank}
           </span>
           <AvatarCircle name={r.handle} size={32} C={C} />
-          <span style={{ flex: 1, fontSize: 14, color: C.text, fontFamily: BODY }}>@{r.handle}</span>
+          <span style={{ flex: 1, fontSize: "0.875rem", color: C.text, fontFamily: BODY }}>@{r.handle}</span>
           <span style={{
-            fontFamily: DISPLAY, fontSize: 15, fontWeight: 600,
+            fontFamily: DISPLAY, fontSize: "0.9375rem", fontWeight: 600,
             color: r.tone === "red" ? C.red : C.green,
           }}>
             {r.value}
@@ -575,7 +575,7 @@ export function CircleLeaderboardScreen({
             position: "absolute", inset: 0,
             display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10,
           }}>
-            <div style={{ fontSize: 13, color: C.text2, textAlign: "center", fontFamily: BODY }}>
+            <div style={{ fontSize: "0.8125rem", color: C.text2, textAlign: "center", fontFamily: BODY }}>
               See the full leaderboard
             </div>
             <button
@@ -583,7 +583,7 @@ export function CircleLeaderboardScreen({
               style={{
                 padding: "10px 16px", borderRadius: 999, background: C.live,
                 color: "#0A0A0A", border: "none",
-                fontFamily: BODY, fontSize: 13, fontWeight: 600, cursor: "pointer",
+                fontFamily: BODY, fontSize: "0.8125rem", fontWeight: 600, cursor: "pointer",
               }}
             >
               Upgrade to Pro
@@ -625,7 +625,7 @@ export function ChallengeCreateScreen({
         <div style={{ position: "relative" }}>
           <Kicker C={C} color={C.live}>Circle challenge</Kicker>
           <div style={{
-            fontFamily: DISPLAY, fontSize: 20, fontWeight: 600, color: C.text, marginTop: 10,
+            fontFamily: DISPLAY, fontSize: "1.25rem", fontWeight: 600, color: C.text, marginTop: 10,
           }}>
             Compete on the metric that matters.
           </div>
@@ -661,7 +661,7 @@ export function ChallengeCreateScreen({
                 border: on
                   ? `1px solid color-mix(in oklch, ${C.accent} 40%, transparent)`
                   : `1px solid ${C.border2}`,
-                fontFamily: BODY, fontSize: 13, fontWeight: 500, cursor: "pointer",
+                fontFamily: BODY, fontSize: "0.8125rem", fontWeight: 500, cursor: "pointer",
               }}
             >
               {w}
@@ -684,7 +684,7 @@ export function ChallengeCreateScreen({
                 border: on
                   ? `1px solid color-mix(in oklch, ${C.live} 40%, transparent)`
                   : `1px solid ${C.border2}`,
-                fontFamily: BODY, fontSize: 13, fontWeight: 500, cursor: "pointer",
+                fontFamily: BODY, fontSize: "0.8125rem", fontWeight: 500, cursor: "pointer",
               }}
             >
               {d}
@@ -700,7 +700,7 @@ export function ChallengeCreateScreen({
             padding: "13px 22px", borderRadius: 999,
             background: valid ? C.live : C.panel,
             color: valid ? "#0A0A0A" : C.text2,
-            border: "none", fontFamily: BODY, fontSize: 14, fontWeight: 600,
+            border: "none", fontFamily: BODY, fontSize: "0.875rem", fontWeight: 600,
             width: "100%", cursor: valid ? "pointer" : "not-allowed",
           }}
         >
@@ -742,14 +742,14 @@ export function ChallengeLiveScreen({
         <div style={{ position: "relative" }}>
           <Kicker C={C} color={C.live}>{winCondition.toLowerCase()}</Kicker>
           <div style={{
-            fontFamily: DISPLAY, fontSize: 22, fontWeight: 600,
+            fontFamily: DISPLAY, fontSize: "1.375rem", fontWeight: 600,
             letterSpacing: "-0.02em", color: C.text, marginTop: 10,
           }}>
             {name}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 14 }}>
             <IconClock c={C.warn} s={16} />
-            <span style={{ fontFamily: MONO, fontSize: 12, color: C.warn }}>
+            <span style={{ fontFamily: MONO, fontSize: "0.75rem", color: C.warn }}>
               {timeLeft.toUpperCase()} LEFT
             </span>
           </div>
@@ -767,11 +767,11 @@ export function ChallengeLiveScreen({
           }}
         >
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-            <span style={{ fontSize: 13.5, color: C.text, fontFamily: BODY }}>
+            <span style={{ fontSize: "0.84375rem", color: C.text, fontFamily: BODY }}>
               {i + 1}. @{s.handle}
             </span>
             <span style={{
-              fontFamily: DISPLAY, fontSize: 14, fontWeight: 600,
+              fontFamily: DISPLAY, fontSize: "0.875rem", fontWeight: 600,
               color: s.value.startsWith("-") ? C.red : C.green,
             }}>
               {s.value}
@@ -828,21 +828,21 @@ export function ChallengeWinScreen({
           animation: "kRise 0.6s cubic-bezier(.2,.8,.2,1)",
         }}>
           <span style={{
-            fontFamily: DISPLAY, fontSize: 42, fontWeight: 700, color: "#0A0A0B",
+            fontFamily: DISPLAY, fontSize: "2.625rem", fontWeight: 700, color: "#0A0A0B",
           }}>
             {rank}
           </span>
         </div>
         <Kicker C={C} color={C.live}>{challengeName} · complete</Kicker>
         <div style={{
-          fontFamily: DISPLAY, fontSize: 30, fontWeight: 600,
+          fontFamily: DISPLAY, fontSize: "1.875rem", fontWeight: 600,
           letterSpacing: "-0.03em", color: C.text, marginTop: 14, lineHeight: 1.05,
         }}>
           You won the<br />
           <span style={{ fontStyle: "italic", color: C.live }}>challenge.</span>
         </div>
         <div style={{
-          fontSize: 14, color: C.text2, marginTop: 14, lineHeight: 1.55,
+          fontSize: "0.875rem", color: C.text2, marginTop: 14, lineHeight: 1.55,
           maxWidth: "36ch", fontFamily: BODY,
         }}>
           {body}
@@ -853,7 +853,7 @@ export function ChallengeWinScreen({
             style={{
               flex: 1, padding: "13px 20px", borderRadius: 999,
               background: C.live, color: "#0A0A0A", border: "none",
-              fontFamily: BODY, fontSize: 14, fontWeight: 600, cursor: "pointer",
+              fontFamily: BODY, fontSize: "0.875rem", fontWeight: 600, cursor: "pointer",
             }}
           >
             Share win
@@ -863,7 +863,7 @@ export function ChallengeWinScreen({
             style={{
               flex: 1, padding: "13px 20px", borderRadius: 999,
               background: "transparent", color: C.text, border: `1px solid ${C.border2}`,
-              fontFamily: BODY, fontSize: 14, fontWeight: 600, cursor: "pointer",
+              fontFamily: BODY, fontSize: "0.875rem", fontWeight: 600, cursor: "pointer",
             }}
           >
             View board
@@ -920,9 +920,9 @@ export function ChatThreadScreen({
           <IconBack c={C.text} />
         </button>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 15, fontWeight: 600, color: C.text, fontFamily: BODY }}>{circleName}</div>
+          <div style={{ fontSize: "0.9375rem", fontWeight: 600, color: C.text, fontFamily: BODY }}>{circleName}</div>
           {onlineCount !== undefined && (
-            <div style={{ fontFamily: MONO, fontSize: 9.5, color: C.live, marginTop: 2 }}>
+            <div style={{ fontFamily: MONO, fontSize: "0.59375rem", color: C.live, marginTop: 2 }}>
               ● {onlineCount} ONLINE
             </div>
           )}
@@ -941,7 +941,7 @@ export function ChatThreadScreen({
           }}>
             {!m.isMe && (
               <div style={{
-                fontFamily: MONO, fontSize: 9, color: C.muted, margin: "0 0 4px 8px",
+                fontFamily: MONO, fontSize: "0.5625rem", color: C.muted, margin: "0 0 4px 8px",
               }}>
                 @{m.handle}
               </div>
@@ -951,7 +951,7 @@ export function ChatThreadScreen({
               borderRadius: m.isMe ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
               background: m.isMe ? C.live : C.surface,
               color: m.isMe ? "#0A0A0B" : C.text,
-              fontSize: 13.5, lineHeight: 1.4, fontFamily: BODY,
+              fontSize: "0.84375rem", lineHeight: 1.4, fontFamily: BODY,
               border: m.isMe ? "none" : `1px solid ${C.line}`,
             }}>
               {m.body}
@@ -964,7 +964,7 @@ export function ChatThreadScreen({
                     style={{
                       padding: "2px 7px", borderRadius: 99,
                       background: C.surfaceHi, border: `1px solid ${C.line}`,
-                      fontSize: 11,
+                      fontSize: "0.6875rem",
                     }}
                   >
                     {r.emoji} {r.count}
@@ -994,7 +994,7 @@ export function ChatThreadScreen({
                       display: "flex", alignItems: "center", gap: 10,
                       padding: "9px 10px", borderRadius: 8, width: "100%",
                       color: opt.danger ? C.red : C.text,
-                      fontSize: 13, fontFamily: BODY,
+                      fontSize: "0.8125rem", fontFamily: BODY,
                       background: "transparent", border: "none", cursor: "pointer", textAlign: "left",
                     }}
                   >
@@ -1038,7 +1038,7 @@ export function ChatThreadScreen({
             placeholder="Message…"
             style={{
               flex: 1, background: "transparent", border: "none", outline: "none",
-              fontFamily: BODY, fontSize: 13, color: C.text, padding: 0,
+              fontFamily: BODY, fontSize: "0.8125rem", color: C.text, padding: 0,
             }}
           />
           <button
@@ -1094,8 +1094,8 @@ export function MentionAutocomplete({
             >
               <AvatarCircle name={u.displayName} avatar={u.avatar} size={28} C={C} />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, color: C.text, fontFamily: BODY }}>@{u.handle}</div>
-                <div style={{ fontFamily: MONO, fontSize: 9.5, color: C.muted, textTransform: "uppercase" }}>
+                <div style={{ fontSize: "0.8125rem", color: C.text, fontFamily: BODY }}>@{u.handle}</div>
+                <div style={{ fontFamily: MONO, fontSize: "0.59375rem", color: C.muted, textTransform: "uppercase" }}>
                   {u.displayName}
                 </div>
               </div>
@@ -1129,7 +1129,7 @@ export function ReportContentSheet({
   return (
     <BottomSheet C={C} onClose={onCancel}>
       <Kicker C={C} color={C.red}>Report</Kicker>
-      <div style={{ fontFamily: DISPLAY, fontSize: 20, fontWeight: 600, color: C.text, marginTop: 10 }}>
+      <div style={{ fontFamily: DISPLAY, fontSize: "1.25rem", fontWeight: 600, color: C.text, marginTop: 10 }}>
         Why are you reporting this?
       </div>
       <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
@@ -1147,7 +1147,7 @@ export function ReportContentSheet({
                 width: "100%", cursor: "pointer", textAlign: "left",
               }}
             >
-              <span style={{ flex: 1, fontSize: 14, color: C.text, fontFamily: BODY }}>{r}</span>
+              <span style={{ flex: 1, fontSize: "0.875rem", color: C.text, fontFamily: BODY }}>{r}</span>
               <div style={{
                 width: 20, height: 20, borderRadius: 999,
                 border: `1.5px solid ${on ? C.accent : C.border2}`,
@@ -1165,7 +1165,7 @@ export function ReportContentSheet({
             padding: "13px 22px", borderRadius: 999,
             background: picked ? C.red : C.panel,
             color: picked ? "#fff" : C.text2,
-            border: "none", fontFamily: BODY, fontSize: 14, fontWeight: 600,
+            border: "none", fontFamily: BODY, fontSize: "0.875rem", fontWeight: 600,
             width: "100%", cursor: picked ? "pointer" : "not-allowed",
           }}
         >
@@ -1191,12 +1191,12 @@ export function BlockedUsersScreen({
 }) {
   return (
     <SettingsSub C={C} title="Blocked users" onBack={onBack}>
-      <div style={{ fontSize: 13, color: C.text2, lineHeight: 1.55, marginBottom: 14, fontFamily: BODY }}>
+      <div style={{ fontSize: "0.8125rem", color: C.text2, lineHeight: 1.55, marginBottom: 14, fontFamily: BODY }}>
         Blocked traders can't follow you, message you, or see your posts.
       </div>
       {users.length === 0 ? (
         <Card C={C} pad={20} style={{ textAlign: "center" }}>
-          <div style={{ fontSize: 14, color: C.text2, fontFamily: BODY }}>
+          <div style={{ fontSize: "0.875rem", color: C.text2, fontFamily: BODY }}>
             You haven't blocked anyone.
           </div>
         </Card>
@@ -1212,8 +1212,8 @@ export function BlockedUsersScreen({
             >
               <AvatarCircle name={u.handle} avatar={u.avatar} size={34} C={C} />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13.5, color: C.text, fontFamily: BODY }}>@{u.handle}</div>
-                <div style={{ fontFamily: MONO, fontSize: 9.5, color: C.muted, marginTop: 2, textTransform: "uppercase" }}>
+                <div style={{ fontSize: "0.84375rem", color: C.text, fontFamily: BODY }}>@{u.handle}</div>
+                <div style={{ fontFamily: MONO, fontSize: "0.59375rem", color: C.muted, marginTop: 2, textTransform: "uppercase" }}>
                   {u.blockedDate}
                 </div>
               </div>
@@ -1223,7 +1223,7 @@ export function BlockedUsersScreen({
                   padding: "8px 14px", borderRadius: 999,
                   background: "transparent", color: C.text,
                   border: `1px solid ${C.border2}`,
-                  fontFamily: BODY, fontSize: 12, fontWeight: 600, cursor: "pointer",
+                  fontFamily: BODY, fontSize: "0.75rem", fontWeight: 600, cursor: "pointer",
                 }}
               >
                 Unblock
@@ -1253,7 +1253,7 @@ export function InviteLinkSheet({
   return (
     <BottomSheet C={C} onClose={onCancel}>
       <Kicker C={C} color={C.live}>Invite link</Kicker>
-      <div style={{ fontFamily: DISPLAY, fontSize: 20, fontWeight: 600, color: C.text, marginTop: 10 }}>
+      <div style={{ fontFamily: DISPLAY, fontSize: "1.25rem", fontWeight: 600, color: C.text, marginTop: 10 }}>
         Invite to {circleName}
       </div>
       <div style={{
@@ -1262,7 +1262,7 @@ export function InviteLinkSheet({
         background: C.surfaceHi, border: `1px solid ${C.border2}`,
       }}>
         <span style={{
-          flex: 1, fontFamily: MONO, fontSize: 12, color: C.text, letterSpacing: "0.02em",
+          flex: 1, fontFamily: MONO, fontSize: "0.75rem", color: C.text, letterSpacing: "0.02em",
           overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis",
         }}>
           {link}
@@ -1272,7 +1272,7 @@ export function InviteLinkSheet({
           style={{
             padding: "8px 14px", borderRadius: 999,
             background: C.live, color: "#0A0A0A", border: "none",
-            fontFamily: BODY, fontSize: 12, fontWeight: 600, cursor: "pointer",
+            fontFamily: BODY, fontSize: "0.75rem", fontWeight: 600, cursor: "pointer",
           }}
         >
           {copied ? "Copied" : "Copy"}
@@ -1285,7 +1285,7 @@ export function InviteLinkSheet({
             flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
             padding: "13px 18px", borderRadius: 999,
             background: "transparent", color: C.text, border: `1px solid ${C.border2}`,
-            fontFamily: BODY, fontSize: 13, fontWeight: 600, cursor: "pointer",
+            fontFamily: BODY, fontSize: "0.8125rem", fontWeight: 600, cursor: "pointer",
           }}
         >
           <IconShare c={C.text} s={16} /> Share
@@ -1296,13 +1296,13 @@ export function InviteLinkSheet({
             flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
             padding: "13px 18px", borderRadius: 999,
             background: "transparent", color: C.text, border: `1px solid ${C.border2}`,
-            fontFamily: BODY, fontSize: 13, fontWeight: 600, cursor: "pointer",
+            fontFamily: BODY, fontSize: "0.8125rem", fontWeight: 600, cursor: "pointer",
           }}
         >
           <IconQR c={C.text} s={16} /> QR code
         </button>
       </div>
-      <div style={{ marginTop: 16, fontSize: 11.5, color: C.muted, textAlign: "center", fontFamily: BODY }}>
+      <div style={{ marginTop: 16, fontSize: "0.71875rem", color: C.muted, textAlign: "center", fontFamily: BODY }}>
         Anyone with this link can request to join. Reset anytime.
       </div>
     </BottomSheet>
@@ -1348,10 +1348,10 @@ export function LeaveCircleModal({
         }}>
           <IconGrid c={C.warn} s={24} />
         </div>
-        <div style={{ fontFamily: DISPLAY, fontSize: 20, fontWeight: 600, color: C.text }}>
+        <div style={{ fontFamily: DISPLAY, fontSize: "1.25rem", fontWeight: 600, color: C.text }}>
           Leave {circleName}?
         </div>
-        <div style={{ fontSize: 13, color: C.text2, marginTop: 10, lineHeight: 1.5, fontFamily: BODY }}>
+        <div style={{ fontSize: "0.8125rem", color: C.text2, marginTop: 10, lineHeight: 1.5, fontFamily: BODY }}>
           You'll stop seeing its chat and leaderboard. You can rejoin with the code anytime.
         </div>
         <div style={{ display: "flex", gap: 10, marginTop: 22 }}>
@@ -1360,7 +1360,7 @@ export function LeaveCircleModal({
             style={{
               flex: 1, padding: "13px 20px", borderRadius: 999,
               background: "transparent", color: C.text, border: `1px solid ${C.border2}`,
-              fontFamily: BODY, fontSize: 14, fontWeight: 600, cursor: "pointer",
+              fontFamily: BODY, fontSize: "0.875rem", fontWeight: 600, cursor: "pointer",
             }}
           >
             Cancel
@@ -1370,7 +1370,7 @@ export function LeaveCircleModal({
             style={{
               flex: 1, padding: "13px 20px", borderRadius: 999,
               background: C.text, color: C.bg, border: "none",
-              fontFamily: BODY, fontSize: 14, fontWeight: 600, cursor: "pointer",
+              fontFamily: BODY, fontSize: "0.875rem", fontWeight: 600, cursor: "pointer",
             }}
           >
             Leave

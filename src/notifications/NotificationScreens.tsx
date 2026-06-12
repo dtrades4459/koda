@@ -101,13 +101,13 @@ export function NotificationInbox({
     <div style={{ minHeight: "100dvh", background: C.bg, color: C.text, padding: "22px 22px 60px", maxWidth: 600, margin: "0 auto", boxSizing: "border-box" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
         <KodaMark size={20} color={C.text} />
-        <span style={{ fontFamily: BODY, fontWeight: 600, fontSize: 14, letterSpacing: "0.22em", color: C.text }}>
+        <span style={{ fontFamily: BODY, fontWeight: 600, fontSize: "0.875rem", letterSpacing: "0.22em", color: C.text }}>
           Kōda
         </span>
       </div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", margin: "20px 0 14px" }}>
         <div style={{
-          fontFamily: DISPLAY, fontSize: 26, fontWeight: 600,
+          fontFamily: DISPLAY, fontSize: "1.625rem", fontWeight: 600,
           letterSpacing: "-0.03em", color: C.text,
         }}>
           {title}
@@ -116,7 +116,7 @@ export function NotificationInbox({
           onClick={onMarkAllRead}
           style={{
             background: "transparent", border: "none",
-            fontFamily: MONO, fontSize: 10, letterSpacing: "0.08em", color: C.live,
+            fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.08em", color: C.live,
             cursor: "pointer", padding: 4,
           }}
         >
@@ -148,7 +148,7 @@ export function NotificationInbox({
                 {r.aggregate !== undefined && r.aggregate > 1 && (
                   <span style={{
                     position: "absolute", top: -3, right: -3,
-                    fontFamily: MONO, fontSize: 8, padding: "1px 4px",
+                    fontFamily: MONO, fontSize: "0.5rem", padding: "1px 4px",
                     borderRadius: 99, background: c, color: "#0A0A0B", fontWeight: 700,
                   }}>
                     +{r.aggregate}
@@ -156,14 +156,14 @@ export function NotificationInbox({
                 )}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, color: C.text, lineHeight: 1.4, fontFamily: BODY }}>
+                <div style={{ fontSize: "0.8125rem", color: C.text, lineHeight: 1.4, fontFamily: BODY }}>
                   {r.body}
                 </div>
               </div>
               <div style={{
                 display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 5,
               }}>
-                <span style={{ fontFamily: MONO, fontSize: 9.5, color: C.muted }}>{r.timestamp}</span>
+                <span style={{ fontFamily: MONO, fontSize: "0.59375rem", color: C.muted }}>{r.timestamp}</span>
                 {r.unread && (
                   <span style={{
                     width: 7, height: 7, borderRadius: "50%", background: C.live,
@@ -195,13 +195,13 @@ function LockScreen({ C, children }: { C: Theme; children: React.ReactNode }) {
         alignItems: "center", paddingTop: 96,
       }}>
         <div style={{
-          fontFamily: MONO, fontSize: 12, letterSpacing: "0.1em",
+          fontFamily: MONO, fontSize: "0.75rem", letterSpacing: "0.1em",
           color: "rgba(255,255,255,0.7)",
         }}>
           Wednesday, June 4
         </div>
         <div style={{
-          fontFamily: DISPLAY, fontSize: 76, fontWeight: 600,
+          fontFamily: DISPLAY, fontSize: "4.75rem", fontWeight: 600,
           letterSpacing: "-0.04em", color: "#fff", lineHeight: 1, marginTop: 2,
         }}>
           9:41
@@ -250,16 +250,16 @@ export function PushPreviewIOS({ C }: { C: Theme }) {
       <NotifGlassCard>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
           <AppChip />
-          <span style={{ fontSize: 12, fontWeight: 600, color: "#fff", flex: 1 }}>KŌDA</span>
-          <span style={{ fontFamily: MONO, fontSize: 10, color: "rgba(255,255,255,0.55)" }}>now</span>
+          <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "#fff", flex: 1 }}>KŌDA</span>
+          <span style={{ fontFamily: MONO, fontSize: "0.625rem", color: "rgba(255,255,255,0.55)" }}>now</span>
         </div>
         <div style={{ display: "flex", gap: 12 }}>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 14, fontWeight: 600, color: "#fff" }}>
+            <div style={{ fontSize: "0.875rem", fontWeight: 600, color: "#fff" }}>
               Weekly recap is ready
             </div>
             <div style={{
-              fontSize: 13, color: "rgba(255,255,255,0.75)", marginTop: 3, lineHeight: 1.4,
+              fontSize: "0.8125rem", color: "rgba(255,255,255,0.75)", marginTop: 3, lineHeight: 1.4,
             }}>
               +18.4R this week · 92% rule adherence. Your best setup: ICT silver bullet.
             </div>
@@ -277,11 +277,11 @@ export function PushPreviewIOS({ C }: { C: Theme }) {
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <AppChip />
           <div style={{ flex: 1 }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: "#fff" }}>
+            <span style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#fff" }}>
               @marcus reacted 🔥 to your trade
             </span>
           </div>
-          <span style={{ fontFamily: MONO, fontSize: 10, color: "rgba(255,255,255,0.55)" }}>2m</span>
+          <span style={{ fontFamily: MONO, fontSize: "0.625rem", color: "rgba(255,255,255,0.55)" }}>2m</span>
         </div>
       </NotifGlassCard>
     </LockScreen>
@@ -295,16 +295,16 @@ export function PushPreviewAndroid({ C }: { C: Theme }) {
         <div style={{ padding: "12px 14px 0" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
             <AppChip />
-            <span style={{ fontSize: 12, color: "rgba(255,255,255,0.7)", flex: 1 }}>
+            <span style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.7)", flex: 1 }}>
               Kōda · Milestone
             </span>
             <IconChevD c="rgba(255,255,255,0.5)" s={16} />
           </div>
-          <div style={{ fontSize: 14, fontWeight: 600, color: "#fff" }}>
+          <div style={{ fontSize: "0.875rem", fontWeight: 600, color: "#fff" }}>
             🔥 30-day discipline streak
           </div>
           <div style={{
-            fontSize: 13, color: "rgba(255,255,255,0.72)", marginTop: 3, lineHeight: 1.4,
+            fontSize: "0.8125rem", color: "rgba(255,255,255,0.72)", marginTop: 3, lineHeight: 1.4,
           }}>
             30 days, every rule logged. Tap to share your card.
           </div>
@@ -315,7 +315,7 @@ export function PushPreviewAndroid({ C }: { C: Theme }) {
           display: "flex", alignItems: "center", justifyContent: "center",
         }}>
           <span style={{
-            fontFamily: DISPLAY, fontSize: 44, fontWeight: 700,
+            fontFamily: DISPLAY, fontSize: "2.75rem", fontWeight: 700,
             color: "#0A0A0B", letterSpacing: "-0.04em",
           }}>
             30
@@ -327,7 +327,7 @@ export function PushPreviewAndroid({ C }: { C: Theme }) {
               key={a}
               style={{
                 flex: 1, textAlign: "center", padding: "12px 0",
-                fontSize: 13, fontWeight: 600,
+                fontSize: "0.8125rem", fontWeight: 600,
                 color: i ? "rgba(255,255,255,0.6)" : C.live,
                 borderLeft: i ? "1px solid rgba(255,255,255,0.1)" : "none",
               }}
@@ -354,17 +354,17 @@ export function NotificationKindGrid({ C }: { C: Theme }) {
     }}>
       <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
         <KodaMark size={20} color={C.text} />
-        <span style={{ fontFamily: BODY, fontWeight: 600, fontSize: 14, letterSpacing: "0.22em", color: C.text }}>
+        <span style={{ fontFamily: BODY, fontWeight: 600, fontSize: "0.875rem", letterSpacing: "0.22em", color: C.text }}>
           Kōda
         </span>
       </div>
       <div style={{
-        fontFamily: DISPLAY, fontSize: 22, fontWeight: 600,
+        fontFamily: DISPLAY, fontSize: "1.375rem", fontWeight: 600,
         letterSpacing: "-0.02em", color: C.text, margin: "18px 0 6px",
       }}>
         14 notification kinds
       </div>
-      <div style={{ fontSize: 12.5, color: C.text2, marginBottom: 16, lineHeight: 1.5, fontFamily: BODY }}>
+      <div style={{ fontSize: "0.78125rem", color: C.text2, marginBottom: 16, lineHeight: 1.5, fontFamily: BODY }}>
         Each kind = a glyph + tint + copy template (see Microcopy).
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
@@ -386,7 +386,7 @@ export function NotificationKindGrid({ C }: { C: Theme }) {
               }}>
                 <KindIcon icon={meta.icon} c={c} s={16} />
               </div>
-              <span style={{ fontSize: 12, color: C.text, fontWeight: 500, fontFamily: BODY }}>
+              <span style={{ fontSize: "0.75rem", color: C.text, fontWeight: 500, fontFamily: BODY }}>
                 {meta.label}
               </span>
             </div>
@@ -442,13 +442,13 @@ export function PermissionPrimerSheet({
             <IconBell c={C.live} s={24} />
           </div>
           <div style={{
-            fontFamily: DISPLAY, fontSize: 21, fontWeight: 600,
+            fontFamily: DISPLAY, fontSize: "1.3125rem", fontWeight: 600,
             letterSpacing: "-0.02em", color: C.text,
           }}>
             Never miss a tilt moment
           </div>
           <div style={{
-            fontSize: 13.5, color: C.text2, marginTop: 10, lineHeight: 1.55, fontFamily: BODY,
+            fontSize: "0.84375rem", color: C.text2, marginTop: 10, lineHeight: 1.55, fontFamily: BODY,
           }}>
             Get a nudge when you're over-trading, when sync finishes, and when your weekly recap lands. You choose which.
           </div>
@@ -460,7 +460,7 @@ export function PermissionPrimerSheet({
               style={{
                 padding: "13px 22px", borderRadius: 999,
                 background: C.live, color: "#0A0A0A", border: "none",
-                fontFamily: BODY, fontSize: 14, fontWeight: 600, cursor: "pointer", width: "100%",
+                fontFamily: BODY, fontSize: "0.875rem", fontWeight: 600, cursor: "pointer", width: "100%",
               }}
             >
               Turn on notifications
@@ -470,7 +470,7 @@ export function PermissionPrimerSheet({
               style={{
                 padding: "13px 22px", borderRadius: 999,
                 background: "transparent", color: C.text, border: `1px solid ${C.border2}`,
-                fontFamily: BODY, fontSize: 14, fontWeight: 600, cursor: "pointer", width: "100%",
+                fontFamily: BODY, fontSize: "0.875rem", fontWeight: 600, cursor: "pointer", width: "100%",
               }}
             >
               Maybe later
@@ -524,12 +524,12 @@ export function PermissionBlockedScreen({
         <IconBell c={C.warn} s={24} />
       </div>
       <div style={{
-        fontFamily: DISPLAY, fontSize: 22, fontWeight: 600,
+        fontFamily: DISPLAY, fontSize: "1.375rem", fontWeight: 600,
         letterSpacing: "-0.02em", color: C.text, lineHeight: 1.1,
       }}>
         Notifications are blocked
       </div>
-      <div style={{ fontSize: 13.5, color: C.text2, marginTop: 12, lineHeight: 1.55, fontFamily: BODY }}>
+      <div style={{ fontSize: "0.84375rem", color: C.text2, marginTop: 12, lineHeight: 1.55, fontFamily: BODY }}>
         You'll need to re-enable them in your browser. Here's how on{" "}
         <span style={{ color: C.text }}>{browser}</span>:
       </div>
@@ -546,11 +546,11 @@ export function PermissionBlockedScreen({
               width: 24, height: 24, borderRadius: 999,
               background: C.surfaceHi, border: `1px solid ${C.border2}`,
               display: "flex", alignItems: "center", justifyContent: "center",
-              fontFamily: MONO, fontSize: 11, color: C.text, flexShrink: 0,
+              fontFamily: MONO, fontSize: "0.6875rem", color: C.text, flexShrink: 0,
             }}>
               {i + 1}
             </div>
-            <span style={{ fontSize: 13, color: C.text, paddingTop: 3, fontFamily: BODY }}>{s}</span>
+            <span style={{ fontSize: "0.8125rem", color: C.text, paddingTop: 3, fontFamily: BODY }}>{s}</span>
           </div>
         ))}
       </Card>
@@ -560,7 +560,7 @@ export function PermissionBlockedScreen({
           style={{
             padding: "13px 22px", borderRadius: 999,
             background: "transparent", color: C.text, border: `1px solid ${C.border2}`,
-            fontFamily: BODY, fontSize: 14, fontWeight: 600,
+            fontFamily: BODY, fontSize: "0.875rem", fontWeight: 600,
             width: "100%", cursor: "pointer",
           }}
         >

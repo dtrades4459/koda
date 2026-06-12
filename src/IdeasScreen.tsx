@@ -128,8 +128,8 @@ export function IdeasScreen({ myUid, recentTrades, C, inp, pillPrimary, isDeskto
     <div data-testid="ideas-screen" style={containerStyle}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
         <div>
-          <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.16em", textTransform: "uppercase" as const, marginBottom: "4px" }}>Public · Chronological</div>
-          <div style={{ fontFamily: DISPLAY, fontSize: "22px", fontWeight: 500, color: C.text, letterSpacing: "-0.02em" }}>Ideas</div>
+          <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.16em", textTransform: "uppercase" as const, marginBottom: "4px" }}>Public · Chronological</div>
+          <div style={{ fontFamily: DISPLAY, fontSize: "1.375rem", fontWeight: 500, color: C.text, letterSpacing: "-0.02em" }}>Ideas</div>
         </div>
         <button onClick={() => load(0, false)} disabled={loading}
           style={{ background: "none", border: `1px solid ${C.border2 ?? C.border}`, borderRadius: "999px", width: "32px", height: "32px", color: C.muted, cursor: "pointer" }}>
@@ -165,9 +165,9 @@ export function IdeasScreen({ myUid, recentTrades, C, inp, pillPrimary, isDeskto
         </div>
       ) : ideas.length === 0 ? (
         <div style={{ padding: "48px 20px", textAlign: "center" }}>
-          <div style={{ fontSize: "32px", marginBottom: "14px" }}>💡</div>
-          <div style={{ fontFamily: DISPLAY, fontSize: "18px", fontWeight: 500, color: C.text, marginBottom: "8px" }}>Nothing posted yet today.</div>
-          <div style={{ fontFamily: BODY, fontSize: "14px", color: C.text2, maxWidth: 280, margin: "0 auto", lineHeight: 1.55 }}>Drop a setup before the open or a breakdown after the close. Either earns the spot.</div>
+          <div style={{ fontSize: "2rem", marginBottom: "14px" }}>💡</div>
+          <div style={{ fontFamily: DISPLAY, fontSize: "1.125rem", fontWeight: 500, color: C.text, marginBottom: "8px" }}>Nothing posted yet today.</div>
+          <div style={{ fontFamily: BODY, fontSize: "0.875rem", color: C.text2, maxWidth: 280, margin: "0 auto", lineHeight: 1.55 }}>Drop a setup before the open or a breakdown after the close. Either earns the spot.</div>
         </div>
       ) : (
         <>
@@ -186,14 +186,14 @@ export function IdeasScreen({ myUid, recentTrades, C, inp, pillPrimary, isDeskto
             <button onClick={() => load(page + 1, true)} disabled={loading}
               style={{ display: "block", margin: "16px auto", padding: "10px 22px",
                 background: "transparent", border: `1px solid ${C.border2 ?? C.border}`, borderRadius: "999px",
-                fontFamily: MONO, fontSize: "11px", color: C.muted, cursor: "pointer" }}>
+                fontFamily: MONO, fontSize: "0.6875rem", color: C.muted, cursor: "pointer" }}>
               {loading ? "…" : "Load more"}
             </button>
           )}
         </>
       )}
 
-      {error && <div style={{ padding: "10px 14px", color: C.red ?? "#f87171", fontFamily: BODY, fontSize: "12px" }}>{error}</div>}
+      {error && <div style={{ padding: "10px 14px", color: C.red ?? "#f87171", fontFamily: BODY, fontSize: "0.75rem" }}>{error}</div>}
 
       <button
         data-testid="idea-fab-new"
@@ -208,7 +208,7 @@ export function IdeasScreen({ myUid, recentTrades, C, inp, pillPrimary, isDeskto
           zIndex: 50,
           background: C.text, color: C.bg, border: "none", borderRadius: "999px",
           padding: "14px 20px", minHeight: "48px", cursor: "pointer",
-          fontFamily: MONO, fontSize: "11px", letterSpacing: "0.12em", textTransform: "uppercase" as const,
+          fontFamily: MONO, fontSize: "0.6875rem", letterSpacing: "0.12em", textTransform: "uppercase" as const,
           boxShadow: "0 4px 16px rgba(0,0,0,0.28)",
         }}>
         + New Idea

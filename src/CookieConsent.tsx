@@ -114,7 +114,7 @@ export function CookieConsent() {
     >
       <Kicker C={C} color={C.live}>Cookies</Kicker>
       <p style={{
-        margin: "8px 0 0", fontSize: 13.5, lineHeight: 1.55, color: C.text2,
+        margin: "8px 0 0", fontSize: "0.84375rem", lineHeight: 1.55, color: C.text2,
       }}>
         We use cookies to make Kōda work, measure what helps traders, and improve the product.
         Essential cookies are always on.{" "}
@@ -131,7 +131,7 @@ export function CookieConsent() {
           onClick={() => setStage("prefs")}
           style={{
             background: "transparent", color: C.text2, border: "none",
-            fontFamily: MONO, fontSize: 11, letterSpacing: "0.08em", cursor: "pointer",
+            fontFamily: MONO, fontSize: "0.6875rem", letterSpacing: "0.08em", cursor: "pointer",
             padding: "10px 12px", textTransform: "uppercase",
           }}
         >
@@ -143,7 +143,7 @@ export function CookieConsent() {
             minHeight: 44, padding: "11px 18px", borderRadius: 999,
             background: "transparent", color: C.text,
             border: `1px solid ${C.border2}`,
-            fontFamily: BODY, fontSize: 13, fontWeight: 500, cursor: "pointer",
+            fontFamily: BODY, fontSize: "0.8125rem", fontWeight: 500, cursor: "pointer",
           }}
         >
           Reject all
@@ -153,7 +153,7 @@ export function CookieConsent() {
           style={{
             minHeight: 44, padding: "11px 22px", borderRadius: 999,
             background: C.live, color: "#0A0A0A", border: "none",
-            fontFamily: BODY, fontSize: 13, fontWeight: 600, cursor: "pointer",
+            fontFamily: BODY, fontSize: "0.8125rem", fontWeight: 600, cursor: "pointer",
           }}
         >
           Accept all
@@ -203,7 +203,7 @@ function CookiePreferencesModal({
       >
         <Kicker C={C} color={C.live}>Cookie preferences</Kicker>
         <div style={{
-          fontFamily: DISPLAY, fontSize: 22, fontWeight: 600, color: C.text,
+          fontFamily: DISPLAY, fontSize: "1.375rem", fontWeight: 600, color: C.text,
           letterSpacing: "-0.02em", marginTop: 10,
         }}>
           Choose what's on.
@@ -236,7 +236,7 @@ function CookiePreferencesModal({
             onClick={onRejectAll}
             style={{
               background: "transparent", color: C.text2, border: "none",
-              fontFamily: MONO, fontSize: 11, letterSpacing: "0.08em",
+              fontFamily: MONO, fontSize: "0.6875rem", letterSpacing: "0.08em",
               cursor: "pointer", padding: "10px 12px", textTransform: "uppercase",
             }}
           >
@@ -248,7 +248,7 @@ function CookiePreferencesModal({
               style={{
                 padding: "11px 18px", borderRadius: 999,
                 background: "transparent", color: C.text, border: `1px solid ${C.border2}`,
-                fontFamily: BODY, fontSize: 13, fontWeight: 500, cursor: "pointer",
+                fontFamily: BODY, fontSize: "0.8125rem", fontWeight: 500, cursor: "pointer",
               }}
             >
               Accept all
@@ -258,7 +258,7 @@ function CookiePreferencesModal({
               style={{
                 padding: "11px 22px", borderRadius: 999,
                 background: C.live, color: "#0A0A0A", border: "none",
-                fontFamily: BODY, fontSize: 13, fontWeight: 600, cursor: "pointer",
+                fontFamily: BODY, fontSize: "0.8125rem", fontWeight: 600, cursor: "pointer",
               }}
             >
               Save preferences
@@ -283,10 +283,10 @@ function PrefRow({
       background: C.surface, border: `1px solid ${C.line}`,
     }}>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 14, fontWeight: 600, color: C.text, fontFamily: BODY }}>
+        <div style={{ fontSize: "0.875rem", fontWeight: 600, color: C.text, fontFamily: BODY }}>
           {label}
         </div>
-        <div style={{ fontSize: 12, color: C.text2, marginTop: 4, lineHeight: 1.5, fontFamily: BODY }}>
+        <div style={{ fontSize: "0.75rem", color: C.text2, marginTop: 4, lineHeight: 1.5, fontFamily: BODY }}>
           {body}
         </div>
       </div>

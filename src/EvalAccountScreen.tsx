@@ -57,10 +57,10 @@ function MetricRow({
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "6px" }}>
-        <span style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase" }}>{label}</span>
+        <span style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase" }}>{label}</span>
         <div style={{ textAlign: "right" }}>
-          <span style={{ fontFamily: MONO, fontSize: "12px", fontWeight: 600, color: warn ? barColor(p, 100, C) : C.text }}>{value}</span>
-          <span style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, marginLeft: "6px" }}>{sub}</span>
+          <span style={{ fontFamily: MONO, fontSize: "0.75rem", fontWeight: 600, color: warn ? barColor(p, 100, C) : C.text }}>{value}</span>
+          <span style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, marginLeft: "6px" }}>{sub}</span>
         </div>
       </div>
       <ProgressBar pct={p} color={color} warn={warn} C={C} />
@@ -71,9 +71,9 @@ function MetricRow({
 function StatCard({ label, value, sub, C }: { label: string; value: string; sub?: string; C: Props["C"] }) {
   return (
     <div style={{ background: C.panel2, borderRadius: "14px", padding: "14px 16px", flex: 1, minWidth: 0 }}>
-      <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "6px" }}>{label}</div>
-      <div style={{ fontFamily: DISPLAY, fontSize: "20px", fontWeight: 700, color: C.text, lineHeight: 1 }}>{value}</div>
-      {sub && <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, marginTop: "4px" }}>{sub}</div>}
+      <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "6px" }}>{label}</div>
+      <div style={{ fontFamily: DISPLAY, fontSize: "1.25rem", fontWeight: 700, color: C.text, lineHeight: 1 }}>{value}</div>
+      {sub && <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, marginTop: "4px" }}>{sub}</div>}
     </div>
   );
 }
@@ -147,12 +147,12 @@ export default function EvalAccountScreen({ profile, trades, C, onEditTargets }:
   if (!bal && !target && !dailyLim && !maxDD) {
     return (
       <div style={{ padding: "32px 20px", textAlign: "center" }}>
-        <div style={{ fontFamily: MONO, fontSize: "12px", color: C.muted, marginBottom: "16px" }}>
+        <div style={{ fontFamily: MONO, fontSize: "0.75rem", color: C.muted, marginBottom: "16px" }}>
           No eval targets configured yet.
         </div>
         <button
           onClick={onEditTargets}
-          style={{ background: C.text, color: C.bg, border: "none", borderRadius: "999px", padding: "10px 22px", fontFamily: MONO, fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer" }}
+          style={{ background: C.text, color: C.bg, border: "none", borderRadius: "999px", padding: "10px 22px", fontFamily: MONO, fontSize: "0.6875rem", letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer" }}
         >
           Set up eval account
         </button>
@@ -171,14 +171,14 @@ export default function EvalAccountScreen({ profile, trades, C, onEditTargets }:
           <div>
             <Kicker C={C}>Eval Account</Kicker>
             {bal > 0 && (
-              <div style={{ fontFamily: DISPLAY, fontSize: 44, fontWeight: 600, letterSpacing: "-0.03em", color: C.text, lineHeight: 1 }}>
+              <div style={{ fontFamily: DISPLAY, fontSize: "2.75rem", fontWeight: 600, letterSpacing: "-0.03em", color: C.text, lineHeight: 1 }}>
                 ${bal.toLocaleString()}
               </div>
             )}
           </div>
           {/* Status badge */}
           <div style={{ background: sc.bg, borderRadius: "999px", padding: "5px 12px" }}>
-            <span style={{ fontFamily: MONO, fontSize: "10px", fontWeight: 700, letterSpacing: "0.16em", color: sc.color }}>{sc.label}</span>
+            <span style={{ fontFamily: MONO, fontSize: "0.625rem", fontWeight: 700, letterSpacing: "0.16em", color: sc.color }}>{sc.label}</span>
           </div>
         </div>
 
@@ -220,7 +220,7 @@ export default function EvalAccountScreen({ profile, trades, C, onEditTargets }:
 
         <button
           onClick={onEditTargets}
-          style={{ marginTop: "16px", background: "transparent", border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "6px 14px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.12em", color: C.muted, textTransform: "uppercase" }}
+          style={{ marginTop: "16px", background: "transparent", border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "6px 14px", cursor: "pointer", fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.12em", color: C.muted, textTransform: "uppercase" }}
         >
           Edit targets
         </button>
@@ -239,11 +239,11 @@ export default function EvalAccountScreen({ profile, trades, C, onEditTargets }:
         <div style={{ display: "flex", gap: "8px" }}>
           <div style={{ flex: 1, background: C.panel, border: `1px solid ${C.border}`, borderRadius: "16px", padding: "14px 16px" }}>
             <Kicker C={C}>Best day</Kicker>
-            <div style={{ fontFamily: DISPLAY, fontSize: "18px", fontWeight: 700, color: C.green }}>{fmt$(stats.bestDay)}</div>
+            <div style={{ fontFamily: DISPLAY, fontSize: "1.125rem", fontWeight: 700, color: C.green }}>{fmt$(stats.bestDay)}</div>
           </div>
           <div style={{ flex: 1, background: C.panel, border: `1px solid ${C.border}`, borderRadius: "16px", padding: "14px 16px" }}>
             <Kicker C={C}>Worst day</Kicker>
-            <div style={{ fontFamily: DISPLAY, fontSize: "18px", fontWeight: 700, color: C.red }}>{fmt$(stats.worstDay)}</div>
+            <div style={{ fontFamily: DISPLAY, fontSize: "1.125rem", fontWeight: 700, color: C.red }}>{fmt$(stats.worstDay)}</div>
           </div>
         </div>
       )}
@@ -251,10 +251,10 @@ export default function EvalAccountScreen({ profile, trades, C, onEditTargets }:
       {/* ── Rules checklist ── */}
       {(ddPct > 75 || dailyPct > 75) && (
         <div style={{ background: `color-mix(in oklch, ${C.red} 12%, transparent)`, border: `1px solid color-mix(in oklch, ${C.red} 25%, transparent)`, borderRadius: "16px", padding: "14px 16px" }}>
-          <div style={{ fontFamily: MONO, fontSize: "10px", fontWeight: 600, color: C.red, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "6px" }}>
+          <div style={{ fontFamily: MONO, fontSize: "0.625rem", fontWeight: 600, color: C.red, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "6px" }}>
             {dailyPct >= 100 ? "Daily loss limit hit — stop trading today" : ddPct >= 100 ? "Max drawdown hit — eval failed" : "Approaching a limit"}
           </div>
-          <div style={{ fontFamily: BODY, fontSize: "12px", color: C.text2 ?? C.muted }}>
+          <div style={{ fontFamily: BODY, fontSize: "0.75rem", color: C.text2 ?? C.muted }}>
             {dailyPct >= 100
               ? "You've reached your daily loss limit. Close any open positions and resume tomorrow."
               : ddPct >= 100
@@ -276,14 +276,14 @@ export default function EvalAccountScreen({ profile, trades, C, onEditTargets }:
             return (
               <div key={t.id} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "11px 16px", borderTop: `1px solid ${C.border}` }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontFamily: DISPLAY, fontSize: "13px", fontWeight: 600, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.pair}</div>
-                  <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, marginTop: "2px" }}>{t.date}{t.session ? ` · ${t.session}` : ""}</div>
+                  <div style={{ fontFamily: DISPLAY, fontSize: "0.8125rem", fontWeight: 600, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.pair}</div>
+                  <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, marginTop: "2px" }}>{t.date}{t.session ? ` · ${t.session}` : ""}</div>
                 </div>
                 <div style={{ textAlign: "right", flexShrink: 0 }}>
-                  <div style={{ fontFamily: MONO, fontSize: "12px", fontWeight: 600, color: pnlNum >= 0 ? C.green : C.red }}>
+                  <div style={{ fontFamily: MONO, fontSize: "0.75rem", fontWeight: 600, color: pnlNum >= 0 ? C.green : C.red }}>
                     {pnlNum >= 0 ? "+" : ""}{pnlNum !== 0 ? `$${Math.abs(pnlNum).toFixed(0)}` : "—"}
                   </div>
-                  <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, marginTop: "2px" }}>
+                  <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, marginTop: "2px" }}>
                     {rNum !== 0 ? `${rNum >= 0 ? "+" : ""}${rNum.toFixed(2)}R` : ""}
                   </div>
                 </div>

@@ -238,7 +238,7 @@ export function NewsScreen({ C }: Props) {
                 background: active ? C.text : C.panel,
                 color:      active ? C.bg   : C.muted,
                 fontFamily: MONO,
-                fontSize: 10,
+                fontSize: "0.625rem",
                 fontWeight: 600,
                 letterSpacing: "0.05em",
                 cursor: "pointer",
@@ -266,7 +266,7 @@ export function NewsScreen({ C }: Props) {
             background: C.panel,
             color: usdOnly ? C.text : C.muted,
             fontFamily: MONO,
-            fontSize: 9,
+            fontSize: "0.5625rem",
             letterSpacing: "0.08em",
             fontWeight: 600,
             cursor: "pointer",
@@ -294,7 +294,7 @@ export function NewsScreen({ C }: Props) {
                 background: C.panel,
                 color: active ? C.text : C.muted,
                 fontFamily: MONO,
-                fontSize: 9,
+                fontSize: "0.5625rem",
                 letterSpacing: "0.08em",
                 fontWeight: 600,
                 cursor: "pointer",
@@ -319,12 +319,12 @@ export function NewsScreen({ C }: Props) {
             gap: 8,
           }}
         >
-          <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.1em", color: C.muted }}>
+          <span style={{ fontFamily: MONO, fontSize: "0.5625rem", letterSpacing: "0.1em", color: C.muted }}>
             ECONOMIC CALENDAR
           </span>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {calendar && staleHours(calendar.fetchedAt) > 24 && (
-              <span style={{ fontFamily: MONO, fontSize: 9, color: C.warn }}>
+              <span style={{ fontFamily: MONO, fontSize: "0.5625rem", color: C.warn }}>
                 {Math.round(staleHours(calendar.fetchedAt))}h ago
               </span>
             )}
@@ -342,7 +342,7 @@ export function NewsScreen({ C }: Props) {
                   background: C.panel,
                   color: C.text,
                   fontFamily: MONO,
-                  fontSize: 9,
+                  fontSize: "0.5625rem",
                   letterSpacing: "0.08em",
                   fontWeight: 600,
                   cursor: "pointer",
@@ -358,7 +358,7 @@ export function NewsScreen({ C }: Props) {
                   position: "absolute",
                   right: 8,
                   pointerEvents: "none",
-                  fontSize: 8,
+                  fontSize: "0.5rem",
                   color: C.muted,
                 }}
               >
@@ -375,7 +375,7 @@ export function NewsScreen({ C }: Props) {
               borderRadius: 8,
               background: C.panel,
               color: C.muted,
-              fontSize: 12,
+              fontSize: "0.75rem",
               textAlign: "center",
             }}
           >
@@ -391,7 +391,7 @@ export function NewsScreen({ C }: Props) {
                   <div
                     style={{
                       fontFamily: MONO,
-                      fontSize: 9,
+                      fontSize: "0.5625rem",
                       letterSpacing: "0.12em",
                       color: C.muted,
                       padding: "4px 0 2px",
@@ -426,12 +426,12 @@ export function NewsScreen({ C }: Props) {
                         cursor: hasDetails ? "pointer" : "default",
                       }}
                     >
-                      <div style={{ display: "flex", justifyContent: "space-between", gap: 8, fontSize: 11, alignItems: "baseline" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", gap: 8, fontSize: "0.6875rem", alignItems: "baseline" }}>
                         <span style={{ flex: 1, minWidth: 0, display: "inline-flex", alignItems: "baseline", gap: 6 }}>
                           <span
                             style={{
                               fontFamily: MONO,
-                              fontSize: 9,
+                              fontSize: "0.5625rem",
                               color: C.muted,
                               letterSpacing: "0.05em",
                               flexShrink: 0,
@@ -444,7 +444,7 @@ export function NewsScreen({ C }: Props) {
                         <span style={{ display: "inline-flex", alignItems: "baseline", gap: 6, flexShrink: 0 }}>
                           <span style={{ fontFamily: MONO, color: C.muted }}>{formatTime(ev.time, tzIana)}</span>
                           {hasDetails && (
-                            <span aria-hidden style={{ fontSize: 9, color: C.muted, width: 9, textAlign: "center" }}>
+                            <span aria-hidden style={{ fontSize: "0.5625rem", color: C.muted, width: 9, textAlign: "center" }}>
                               {isExpanded ? "▴" : "▾"}
                             </span>
                           )}
@@ -460,14 +460,14 @@ export function NewsScreen({ C }: Props) {
                             gridTemplateColumns: "auto 1fr",
                             columnGap: 12,
                             rowGap: 4,
-                            fontSize: 10,
+                            fontSize: "0.625rem",
                           }}
                         >
-                          <span style={{ fontFamily: MONO, fontSize: 9, color: C.muted, letterSpacing: "0.08em" }}>FORECAST</span>
+                          <span style={{ fontFamily: MONO, fontSize: "0.5625rem", color: C.muted, letterSpacing: "0.08em" }}>FORECAST</span>
                           <span style={{ fontFamily: MONO, color: C.text }}>{ev.forecast ?? "—"}</span>
-                          <span style={{ fontFamily: MONO, fontSize: 9, color: C.muted, letterSpacing: "0.08em" }}>PREVIOUS</span>
+                          <span style={{ fontFamily: MONO, fontSize: "0.5625rem", color: C.muted, letterSpacing: "0.08em" }}>PREVIOUS</span>
                           <span style={{ fontFamily: MONO, color: C.text }}>{ev.previous ?? "—"}</span>
-                          <span style={{ fontFamily: MONO, fontSize: 9, color: C.muted, letterSpacing: "0.08em" }}>ACTUAL</span>
+                          <span style={{ fontFamily: MONO, fontSize: "0.5625rem", color: C.muted, letterSpacing: "0.08em" }}>ACTUAL</span>
                           <span style={{ fontFamily: MONO, color: ev.actual ? C.text : C.muted }}>{ev.actual ?? "—"}</span>
                         </div>
                       )}
@@ -490,11 +490,11 @@ export function NewsScreen({ C }: Props) {
             marginBottom: 8,
           }}
         >
-          <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.1em", color: C.muted }}>
+          <span style={{ fontFamily: MONO, fontSize: "0.5625rem", letterSpacing: "0.1em", color: C.muted }}>
             HEADLINES
           </span>
           {headlines && staleHours(headlines.fetchedAt) > 24 && (
-            <span style={{ fontFamily: MONO, fontSize: 9, color: C.warn }}>
+            <span style={{ fontFamily: MONO, fontSize: "0.5625rem", color: C.warn }}>
               Last updated {Math.round(staleHours(headlines.fetchedAt))}h ago
             </span>
           )}
@@ -507,7 +507,7 @@ export function NewsScreen({ C }: Props) {
               borderRadius: 8,
               background: C.panel,
               color: C.muted,
-              fontSize: 12,
+              fontSize: "0.75rem",
               textAlign: "center",
             }}
           >
@@ -531,8 +531,8 @@ export function NewsScreen({ C }: Props) {
                   textDecoration: "none",
                 }}
               >
-                <div style={{ fontSize: 11, lineHeight: 1.3 }}>{a.title}</div>
-                <div style={{ fontSize: 9, color: C.muted, marginTop: 3 }}>
+                <div style={{ fontSize: "0.6875rem", lineHeight: 1.3 }}>{a.title}</div>
+                <div style={{ fontSize: "0.5625rem", color: C.muted, marginTop: 3 }}>
                   {a.source} · {relativeAgo(a.publishedAt)}
                 </div>
               </a>

@@ -74,7 +74,7 @@ export function HomeNewsWidget({ C, onOpenNews }: Props) {
           borderRadius: 12,
           color: C.muted,
           fontFamily: MONO,
-          fontSize: 12,
+          fontSize: "0.75rem",
           textAlign: "center",
         }}
       >
@@ -110,13 +110,13 @@ export function HomeNewsWidget({ C, onOpenNews }: Props) {
           marginBottom: 6,
         }}
       >
-        <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.1em", color: C.muted }}>
+        <span style={{ fontFamily: MONO, fontSize: "0.5625rem", letterSpacing: "0.1em", color: C.muted }}>
           NEXT HIGH/MED EVENT
         </span>
         <span
           style={{
             fontFamily: MONO,
-            fontSize: 9,
+            fontSize: "0.5625rem",
             letterSpacing: "0.08em",
             color: heroColor,
           }}
@@ -124,12 +124,12 @@ export function HomeNewsWidget({ C, onOpenNews }: Props) {
           ● {hero.impact.toUpperCase()}
         </span>
       </div>
-      <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 6 }}>{hero.title}</div>
+      <div style={{ fontSize: "1.0625rem", fontWeight: 700, marginBottom: 6 }}>{hero.title}</div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-        <span style={{ fontFamily: MONO, fontSize: 22, letterSpacing: "-0.02em" }}>
+        <span style={{ fontFamily: MONO, fontSize: "1.375rem", letterSpacing: "-0.02em" }}>
           {formatCountdown(countdownMs)}
         </span>
-        <span style={{ fontSize: 11, color: C.muted }}>
+        <span style={{ fontSize: "0.6875rem", color: C.muted }}>
           {formatLocalDayTime(hero.time)}
         </span>
       </div>

@@ -35,7 +35,7 @@ export function IdeaCard({ idea, expanded = false, C, onLike, onExpand, onOpenCh
     background: `color-mix(in srgb, ${col} 18%, transparent)`,
     color: col,
     fontFamily: MONO,
-    fontSize: "10px",
+    fontSize: "0.625rem",
     fontWeight: 600,
     padding: "2px 8px",
     borderRadius: "4px",
@@ -65,11 +65,11 @@ export function IdeaCard({ idea, expanded = false, C, onLike, onExpand, onOpenCh
         <AvatarCircle name={idea.authorName || idea.authorHandle || "?"} avatar={idea.authorAvatar ?? ""} size={32} C={C} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-            <span style={{ fontFamily: MONO, fontSize: "12px", color: C.text, fontWeight: 600 }}>@{idea.authorHandle || "trader"}</span>
+            <span style={{ fontFamily: MONO, fontSize: "0.75rem", color: C.text, fontWeight: 600 }}>@{idea.authorHandle || "trader"}</span>
             <span style={pillBg(typeCol)}>{idea.type === "pre" ? "PRE" : "POST"}</span>
-            <span style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, marginLeft: "auto" }}>{timeAgo(idea.createdAt)}</span>
+            <span style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, marginLeft: "auto" }}>{timeAgo(idea.createdAt)}</span>
           </div>
-          <div style={{ fontFamily: DISPLAY, fontSize: expanded ? "18px" : "14px", fontWeight: 600, color: C.text, marginTop: "4px", lineHeight: 1.25,
+          <div style={{ fontFamily: DISPLAY, fontSize: expanded ? "1.125rem" : "0.875rem", fontWeight: 600, color: C.text, marginTop: "4px", lineHeight: 1.25,
             ...(expanded ? {} : { display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical" as const, overflow: "hidden" }) }}>
             {idea.title}
           </div>
@@ -90,7 +90,7 @@ export function IdeaCard({ idea, expanded = false, C, onLike, onExpand, onOpenCh
 
       {/* Body */}
       <div style={{
-        fontFamily: BODY, fontSize: "13px", color: C.text2 ?? C.muted, lineHeight: 1.55, marginBottom: "10px",
+        fontFamily: BODY, fontSize: "0.8125rem", color: C.text2 ?? C.muted, lineHeight: 1.55, marginBottom: "10px",
         ...(expanded ? {} : { display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const, overflow: "hidden" }),
         whiteSpace: expanded ? "pre-wrap" : undefined,
       }}>
@@ -119,7 +119,7 @@ export function IdeaCard({ idea, expanded = false, C, onLike, onExpand, onOpenCh
       {hasPrices && (
         <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", padding: "8px 10px",
           background: `color-mix(in srgb, ${C.text} 4%, transparent)`, borderRadius: "8px", marginBottom: "8px",
-          fontFamily: MONO, fontSize: "11px", color: C.muted }}>
+          fontFamily: MONO, fontSize: "0.6875rem", color: C.muted }}>
           {idea.entryPrice  && <span>Entry <strong style={{ color: C.text }}>{idea.entryPrice}</strong></span>}
           {idea.stopPrice   && <span>Stop <strong style={{ color: C.red ?? "#f87171" }}>{idea.stopPrice}</strong></span>}
           {idea.targetPrice && <span>Target <strong style={{ color: C.green ?? "#34d399" }}>{idea.targetPrice}</strong></span>}
@@ -134,14 +134,14 @@ export function IdeaCard({ idea, expanded = false, C, onLike, onExpand, onOpenCh
           style={{
             background: "none", border: "none", cursor: "pointer",
             display: "flex", alignItems: "center", gap: "6px",
-            fontFamily: MONO, fontSize: "12px",
+            fontFamily: MONO, fontSize: "0.75rem",
             color: idea.likedByMe ? (C.red ?? "#f87171") : C.muted,
           }}
         >
-          <span style={{ fontSize: "14px" }}>{idea.likedByMe ? "♥" : "♡"}</span>
+          <span style={{ fontSize: "0.875rem" }}>{idea.likedByMe ? "♥" : "♡"}</span>
           <span>{idea.likeCount}</span>
         </button>
-        {!expanded && <span style={{ fontFamily: MONO, fontSize: "10px", color: C.muted }}>Tap to expand →</span>}
+        {!expanded && <span style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted }}>Tap to expand →</span>}
       </div>
     </div>
   );

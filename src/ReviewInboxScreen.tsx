@@ -211,17 +211,17 @@ export function ReviewInboxScreen({ userId, trades, saveTrades, onCountChange, C
 
         {/* Header */}
         <div style={{ marginBottom: "24px" }}>
-          <div style={{ fontFamily: MONO, fontSize: "10px", letterSpacing: "0.16em", textTransform: "uppercase" as const, color: C.muted, marginBottom: "6px" }}>
+          <div style={{ fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.16em", textTransform: "uppercase" as const, color: C.muted, marginBottom: "6px" }}>
             Sync · Review Inbox
           </div>
-          <div style={{ fontFamily: DISPLAY, fontSize: "24px", fontWeight: 500, color: C.text, letterSpacing: "-0.02em", lineHeight: 1.15 }}>
+          <div style={{ fontFamily: DISPLAY, fontSize: "1.5rem", fontWeight: 500, color: C.text, letterSpacing: "-0.02em", lineHeight: 1.15 }}>
             {loading
               ? "Loading…"
               : drafts.length === 0
               ? "All caught up"
               : `${drafts.length} trade${drafts.length !== 1 ? "s" : ""} to review`}
           </div>
-          <div style={{ fontSize: "13px", color: C.muted, marginTop: "6px", lineHeight: 1.5, fontFamily: BODY }}>
+          <div style={{ fontSize: "0.8125rem", color: C.muted, marginTop: "6px", lineHeight: 1.5, fontFamily: BODY }}>
             {drafts.length === 0 && !loading
               ? "Auto-synced trades will appear here for you to publish to your journal."
               : "Auto-synced from your broker. Publish trades you want in your journal, skip the rest."}
@@ -239,7 +239,7 @@ export function ReviewInboxScreen({ userId, trades, saveTrades, onCountChange, C
                 width: "100%", padding: "14px 22px", borderRadius: "999px",
                 background: C.green ?? "oklch(0.78 0.18 152)", color: "#0A0A0A",
                 border: "none", cursor: globalBusy ? "not-allowed" : "pointer",
-                fontFamily: MONO, fontSize: "11px", fontWeight: 700, letterSpacing: "0.1em",
+                fontFamily: MONO, fontSize: "0.6875rem", fontWeight: 700, letterSpacing: "0.1em",
                 textTransform: "uppercase" as const,
                 opacity: globalBusy ? 0.55 : 1,
               }}>
@@ -309,7 +309,7 @@ export function ReviewInboxScreen({ userId, trades, saveTrades, onCountChange, C
                       : "rgba(128,128,128,0.08)",
                     color: outClr,
                     display: "flex", alignItems: "center", justifyContent: "center",
-                    fontFamily: MONO, fontWeight: 600, fontSize: "11px",
+                    fontFamily: MONO, fontWeight: 600, fontSize: "0.6875rem",
                     border: `1px solid ${C.border2}`,
                   }}>
                     {row.pair.slice(0, 3).toUpperCase()}
@@ -318,19 +318,19 @@ export function ReviewInboxScreen({ userId, trades, saveTrades, onCountChange, C
                   {/* Meta */}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "3px" }}>
-                      <span style={{ fontFamily: DISPLAY, fontSize: "14px", fontWeight: 600, color: C.text }}>{row.pair}</span>
+                      <span style={{ fontFamily: DISPLAY, fontSize: "0.875rem", fontWeight: 600, color: C.text }}>{row.pair}</span>
                       {/* DRAFT pill */}
                       <div style={{
                         padding: "2px 8px", borderRadius: 999,
                         background: `color-mix(in oklch, ${mintColor} 12%, transparent)`,
                         border: `1px solid color-mix(in oklch, ${mintColor} 25%, transparent)`,
-                        fontFamily: MONO, fontSize: 9, letterSpacing: "0.10em",
+                        fontFamily: MONO, fontSize: "0.5625rem", letterSpacing: "0.10em",
                         color: mintColor, textTransform: "uppercase" as const,
                         flexShrink: 0,
                       }}>DRAFT</div>
                       {side && (
                         <span style={{
-                          padding: "1px 6px", borderRadius: "4px", fontSize: "9px",
+                          padding: "1px 6px", borderRadius: "4px", fontSize: "0.5625rem",
                           letterSpacing: "0.10em", fontFamily: MONO, fontWeight: 700,
                           background: side === "LONG"
                             ? `color-mix(in oklch, ${C.green} 14%, transparent)`
@@ -339,14 +339,14 @@ export function ReviewInboxScreen({ userId, trades, saveTrades, onCountChange, C
                         }}>{side}</span>
                       )}
                       <span style={{
-                        fontFamily: MONO, fontSize: "8px", letterSpacing: "0.08em",
+                        fontFamily: MONO, fontSize: "0.5rem", letterSpacing: "0.08em",
                         color: C.muted, background: cardBg,
                         padding: "1px 5px", borderRadius: "4px",
                       }}>
                         {row.broker ?? "broker"}
                       </span>
                     </div>
-                    <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted }}>
+                    <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted }}>
                       {row.date}
                       {row.entry_price != null && <span style={{ marginLeft: "8px" }}>@ {row.entry_price}</span>}
                       {row.strategy && <span style={{ marginLeft: "8px" }}>· {row.strategy}</span>}
@@ -355,10 +355,10 @@ export function ReviewInboxScreen({ userId, trades, saveTrades, onCountChange, C
 
                   {/* P&L */}
                   <div style={{ textAlign: "right", flexShrink: 0 }}>
-                    <div style={{ fontFamily: MONO, fontSize: "16px", fontWeight: 700, color: outClr, fontVariantNumeric: "tabular-nums" }}>
+                    <div style={{ fontFamily: MONO, fontSize: "1rem", fontWeight: 700, color: outClr, fontVariantNumeric: "tabular-nums" }}>
                       {pnlPos ? "+" : ""}{pnl.toFixed(2)}
                     </div>
-                    <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, marginTop: "2px", textTransform: "uppercase" as const, letterSpacing: "0.06em" }}>
+                    <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, marginTop: "2px", textTransform: "uppercase" as const, letterSpacing: "0.06em" }}>
                       {row.outcome}
                     </div>
                   </div>
@@ -366,7 +366,7 @@ export function ReviewInboxScreen({ userId, trades, saveTrades, onCountChange, C
 
                 {/* Notes */}
                 {row.notes && (
-                  <div style={{ fontFamily: BODY, fontSize: "12px", color: C.muted, lineHeight: 1.45, padding: "0 2px" }}>
+                  <div style={{ fontFamily: BODY, fontSize: "0.75rem", color: C.muted, lineHeight: 1.45, padding: "0 2px" }}>
                     {row.notes}
                   </div>
                 )}
@@ -376,13 +376,13 @@ export function ReviewInboxScreen({ userId, trades, saveTrades, onCountChange, C
                   <button
                     onClick={() => publishOne(row)}
                     disabled={disabled}
-                    style={{ background: C.text, color: C.bg, border: "none", borderRadius: "999px", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase" as const, cursor: disabled ? "not-allowed" : "pointer", padding: "8px 16px", fontWeight: 600, opacity: disabled ? 0.5 : 1 }}>
+                    style={{ background: C.text, color: C.bg, border: "none", borderRadius: "999px", fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.1em", textTransform: "uppercase" as const, cursor: disabled ? "not-allowed" : "pointer", padding: "8px 16px", fontWeight: 600, opacity: disabled ? 0.5 : 1 }}>
                     {busy ? "…" : "Publish"}
                   </button>
                   <button
                     onClick={() => skipOne(row)}
                     disabled={disabled}
-                    style={{ background: "transparent", color: C.muted, border: `1px solid ${C.border2}`, borderRadius: "999px", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase" as const, cursor: disabled ? "not-allowed" : "pointer", padding: "8px 16px", fontWeight: 600, opacity: disabled ? 0.5 : 1 }}>
+                    style={{ background: "transparent", color: C.muted, border: `1px solid ${C.border2}`, borderRadius: "999px", fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.1em", textTransform: "uppercase" as const, cursor: disabled ? "not-allowed" : "pointer", padding: "8px 16px", fontWeight: 600, opacity: disabled ? 0.5 : 1 }}>
                     Skip
                   </button>
                 </div>

@@ -117,7 +117,7 @@ export default function WeeklyReportCard({ trades, C, userHandle }: Props) {
           C={C}
         />
         <Card C={C} pad={32}>
-          <div style={{ textAlign: "center", color: C.muted, fontFamily: BODY, fontSize: 14, lineHeight: 1.5 }}>
+          <div style={{ textAlign: "center", color: C.muted, fontFamily: BODY, fontSize: "0.875rem", lineHeight: 1.5 }}>
             No trades this week.
             {!isCurrentWeek && (
               <div style={{ marginTop: 12 }}>
@@ -231,7 +231,7 @@ export default function WeeklyReportCard({ trades, C, userHandle }: Props) {
         <Card C={C} pad={18}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 8 }}>
             <Kicker C={C}>Discipline</Kicker>
-            <span style={{ fontFamily: MONO, fontSize: 10, color: C.muted, letterSpacing: "0.06em" }}>
+            <span style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.06em" }}>
               {recap.taggedCount} tagged
             </span>
           </div>
@@ -239,14 +239,14 @@ export default function WeeklyReportCard({ trades, C, userHandle }: Props) {
             <span
               style={{
                 fontFamily: DISPLAY,
-                fontSize: 28,
+                fontSize: "1.75rem",
                 fontWeight: 600,
                 color: recap.ruleAdherencePct >= 70 ? C.green : recap.ruleAdherencePct >= 50 ? (C.accent ?? C.text) : C.red,
                 letterSpacing: "-0.02em",
               }}>
               {recap.ruleAdherencePct}%
             </span>
-            <span style={{ fontFamily: BODY, fontSize: 13, color: C.muted }}>rules followed</span>
+            <span style={{ fontFamily: BODY, fontSize: "0.8125rem", color: C.muted }}>rules followed</span>
           </div>
           <div style={{ height: 4, borderRadius: 2, background: C.border2, marginTop: 10, overflow: "hidden" }}>
             <div
@@ -268,7 +268,7 @@ export default function WeeklyReportCard({ trades, C, userHandle }: Props) {
         }}>
           <Kicker C={C}>Share card</Kicker>
           <span style={{
-            fontFamily: MONO, fontSize: 9, color: C.muted, letterSpacing: "0.08em", textTransform: "uppercase",
+            fontFamily: MONO, fontSize: "0.5625rem", color: C.muted, letterSpacing: "0.08em", textTransform: "uppercase",
           }}>
             1080 × 1080 · IG
           </span>
@@ -295,7 +295,7 @@ export default function WeeklyReportCard({ trades, C, userHandle }: Props) {
           </div>
         </div>
         <div style={{
-          fontFamily: MONO, fontSize: 9, color: C.muted, textAlign: "center",
+          fontFamily: MONO, fontSize: "0.5625rem", color: C.muted, textAlign: "center",
           letterSpacing: "0.08em", marginTop: 10, textTransform: "uppercase",
         }}>
           Long-press / right-click the card to save as image
@@ -319,7 +319,7 @@ export default function WeeklyReportCard({ trades, C, userHandle }: Props) {
           border: "none",
           cursor: "pointer",
           fontFamily: MONO,
-          fontSize: 11,
+          fontSize: "0.6875rem",
           fontWeight: 700,
           letterSpacing: "0.1em",
           textTransform: "uppercase",
@@ -327,7 +327,7 @@ export default function WeeklyReportCard({ trades, C, userHandle }: Props) {
         {copied ? "Copied ✓" : "Share recap as text"}
       </button>
 
-      <div style={{ fontFamily: MONO, fontSize: 9, color: C.muted, textAlign: "center", letterSpacing: "0.1em", marginTop: -6 }}>
+      <div style={{ fontFamily: MONO, fontSize: "0.5625rem", color: C.muted, textAlign: "center", letterSpacing: "0.1em", marginTop: -6 }}>
         {copied ? "Summary copied to clipboard" : "Copies a text summary"}
       </div>
 
@@ -354,10 +354,10 @@ function WeekHeader({
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
       <div>
         <Kicker C={C}>Weekly Recap</Kicker>
-        <div style={{ fontFamily: DISPLAY, fontSize: 18, fontWeight: 500, color: C.text, letterSpacing: "-0.01em", marginTop: 4 }}>
+        <div style={{ fontFamily: DISPLAY, fontSize: "1.125rem", fontWeight: 500, color: C.text, letterSpacing: "-0.01em", marginTop: 4 }}>
           {fmtDateShort(recap.weekStart)} – {fmtDateShort(recap.weekEnd)}
           {isCurrentWeek && (
-            <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.12em", color: C.muted, marginLeft: 8, textTransform: "uppercase" }}>
+            <span style={{ fontFamily: MONO, fontSize: "0.5625rem", letterSpacing: "0.12em", color: C.muted, marginLeft: 8, textTransform: "uppercase" }}>
               This week
             </span>
           )}
@@ -366,7 +366,7 @@ function WeekHeader({
       <div style={{ display: "flex", gap: 6 }}>
         <button onClick={onPrev} style={arrowBtn(C)} aria-label="Previous week">‹</button>
         {!isCurrentWeek && (
-          <button onClick={onThisWeek} style={{ ...arrowBtn(C), width: "auto", padding: "0 12px", fontSize: 10, fontFamily: MONO, letterSpacing: "0.08em" }}>
+          <button onClick={onThisWeek} style={{ ...arrowBtn(C), width: "auto", padding: "0 12px", fontSize: "0.625rem", fontFamily: MONO, letterSpacing: "0.08em" }}>
             Today
           </button>
         )}
@@ -384,21 +384,21 @@ function Stat({
 }) {
   return (
     <div>
-      <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: C.muted, marginBottom: 4 }}>
+      <div style={{ fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.1em", textTransform: "uppercase", color: C.muted, marginBottom: 4 }}>
         {label}
       </div>
       <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-        <span style={{ fontFamily: DISPLAY, fontSize: 26, fontWeight: 600, color: valueColor, letterSpacing: "-0.02em", fontVariantNumeric: "tabular-nums" }}>
+        <span style={{ fontFamily: DISPLAY, fontSize: "1.625rem", fontWeight: 600, color: valueColor, letterSpacing: "-0.02em", fontVariantNumeric: "tabular-nums" }}>
           {value}
         </span>
         {delta !== undefined && (
-          <span style={{ fontFamily: MONO, fontSize: 11, color: deltaPos ? C.green : C.red }}>
+          <span style={{ fontFamily: MONO, fontSize: "0.6875rem", color: deltaPos ? C.green : C.red }}>
             {deltaPos ? "↑" : "↓"} {delta}
           </span>
         )}
       </div>
       {sub && (
-        <div style={{ fontFamily: MONO, fontSize: 10, color: C.muted, marginTop: 3, letterSpacing: "0.04em" }}>
+        <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, marginTop: 3, letterSpacing: "0.04em" }}>
           {sub}
         </div>
       )}
@@ -410,12 +410,12 @@ function SetupRow({ label, name, netR, pos, C }: { label: string; name: string; 
   return (
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "2px 0" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <span style={{ fontFamily: MONO, fontSize: 9, color: pos ? C.green : C.red, letterSpacing: "0.1em", textTransform: "uppercase", minWidth: 38 }}>
+        <span style={{ fontFamily: MONO, fontSize: "0.5625rem", color: pos ? C.green : C.red, letterSpacing: "0.1em", textTransform: "uppercase", minWidth: 38 }}>
           {label}
         </span>
-        <span style={{ fontFamily: BODY, fontSize: 14, color: C.text }}>{name}</span>
+        <span style={{ fontFamily: BODY, fontSize: "0.875rem", color: C.text }}>{name}</span>
       </div>
-      <span style={{ fontFamily: MONO, fontSize: 13, color: pos ? C.green : C.red, fontVariantNumeric: "tabular-nums" }}>
+      <span style={{ fontFamily: MONO, fontSize: "0.8125rem", color: pos ? C.green : C.red, fontVariantNumeric: "tabular-nums" }}>
         {fmtR(netR)}
       </span>
     </div>
@@ -428,14 +428,14 @@ function DayRow({ label, dayLabel, date, netDollar, pos, C }: {
   return (
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "2px 0" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <span style={{ fontFamily: MONO, fontSize: 9, color: pos ? C.green : C.red, letterSpacing: "0.1em", textTransform: "uppercase", minWidth: 38 }}>
+        <span style={{ fontFamily: MONO, fontSize: "0.5625rem", color: pos ? C.green : C.red, letterSpacing: "0.1em", textTransform: "uppercase", minWidth: 38 }}>
           {label}
         </span>
-        <span style={{ fontFamily: BODY, fontSize: 14, color: C.text }}>
-          {dayLabel} <span style={{ color: C.muted, fontSize: 12 }}>{fmtDateShort(date)}</span>
+        <span style={{ fontFamily: BODY, fontSize: "0.875rem", color: C.text }}>
+          {dayLabel} <span style={{ color: C.muted, fontSize: "0.75rem" }}>{fmtDateShort(date)}</span>
         </span>
       </div>
-      <span style={{ fontFamily: MONO, fontSize: 13, color: pos ? C.green : C.red, fontVariantNumeric: "tabular-nums" }}>
+      <span style={{ fontFamily: MONO, fontSize: "0.8125rem", color: pos ? C.green : C.red, fontVariantNumeric: "tabular-nums" }}>
         {fmtDollar(netDollar)}
       </span>
     </div>
@@ -453,7 +453,7 @@ function arrowBtn(C: Theme): React.CSSProperties {
     background: "transparent",
     color: C.text,
     cursor: "pointer",
-    fontSize: 18,
+    fontSize: "1.125rem",
     fontFamily: BODY,
     display: "flex",
     alignItems: "center",
@@ -470,7 +470,7 @@ function pillBtn(C: Theme): React.CSSProperties {
     borderRadius: 999,
     padding: "10px 22px",
     fontFamily: MONO,
-    fontSize: 11,
+    fontSize: "0.6875rem",
     fontWeight: 600,
     letterSpacing: "0.1em",
     textTransform: "uppercase" as const,

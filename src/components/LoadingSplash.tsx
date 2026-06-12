@@ -20,7 +20,7 @@ export function LoadingSplash() {
       </div>
       {/* Wordmark */}
       <div style={{ display: "flex", alignItems: "baseline", gap: "8px" }}>
-        <span style={{ fontFamily: DISPLAY, fontWeight: 600, fontSize: "18px", letterSpacing: "0.22em", color: DARK.text }}>Kōda</span>
+        <span style={{ fontFamily: DISPLAY, fontWeight: 600, fontSize: "1.125rem", letterSpacing: "0.22em", color: DARK.text }}>Kōda</span>
       </div>
       {/* Breathing dots */}
       <div style={{ display: "flex", gap: "6px" }}>

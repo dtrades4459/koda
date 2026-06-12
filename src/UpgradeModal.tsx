@@ -84,7 +84,7 @@ export function UpgradeModal({ C, userId, userEmail, stripeCustomerId, onCustome
         {/* Ghost "PRO" word */}
         <div style={{
           position: "absolute", bottom: -20, right: -10, pointerEvents: "none", zIndex: 0,
-          fontFamily: DISPLAY, fontWeight: 700, fontSize: "120px", lineHeight: 0.85, letterSpacing: "-0.05em",
+          fontFamily: DISPLAY, fontWeight: 700, fontSize: "7.5rem", lineHeight: 0.85, letterSpacing: "-0.05em",
           background: "linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.01))",
           WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent",
           WebkitTextStroke: "1px rgba(255,255,255,0.05)",
@@ -97,42 +97,42 @@ export function UpgradeModal({ C, userId, userEmail, stripeCustomerId, onCustome
             display: "inline-flex", alignItems: "center", gap: "5px",
             background: liveSoft, color: live,
             borderRadius: "6px", padding: "3px 10px",
-            fontFamily: MONO, fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase",
+            fontFamily: MONO, fontSize: "0.625rem", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase",
           }}>
             <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: live, boxShadow: `0 0 6px ${live}` }}/>
             KŌDA OS · PRO
           </div>
 
           {/* Headline */}
-          <div style={{ marginTop: "12px", fontFamily: DISPLAY, fontSize: "24px", fontWeight: 600, color: C.text ?? "#F2F2EE", lineHeight: 1.15, letterSpacing: "-0.02em" }}>
+          <div style={{ marginTop: "12px", fontFamily: DISPLAY, fontSize: "1.5rem", fontWeight: 600, color: C.text ?? "#F2F2EE", lineHeight: 1.15, letterSpacing: "-0.02em" }}>
             Trade with<br/>a real <span style={{ fontStyle: "italic", color: live }}>edge.</span>
           </div>
-          <div style={{ marginTop: "6px", fontFamily: BODY, fontSize: "13px", color: C.muted ?? "#65655F", lineHeight: 1.5 }}>
+          <div style={{ marginTop: "6px", fontFamily: BODY, fontSize: "0.8125rem", color: C.muted ?? "#65655F", lineHeight: 1.5 }}>
                     Everything you need, in one place.
           </div>
         </div>
 
         {/* Price */}
         <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "baseline", gap: "6px" }}>
-          <span style={{ fontFamily: DISPLAY, fontSize: "42px", fontWeight: 700, color: C.text ?? "#F2F2EE", lineHeight: 1, letterSpacing: "-0.03em" }}>£24.99</span>
-          <span style={{ fontFamily: MONO, fontSize: "12px", color: C.muted ?? "#65655F" }}>/mo · cancel any time</span>
+          <span style={{ fontFamily: DISPLAY, fontSize: "2.625rem", fontWeight: 700, color: C.text ?? "#F2F2EE", lineHeight: 1, letterSpacing: "-0.03em" }}>£24.99</span>
+          <span style={{ fontFamily: MONO, fontSize: "0.75rem", color: C.muted ?? "#65655F" }}>/mo · cancel any time</span>
         </div>
 
         {/* Features */}
         <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", gap: "10px" }}>
           {FEATURES.map(f => (
             <div key={f.text} style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
-              <span style={{ width: "18px", flexShrink: 0, fontSize: f.mono ? "12px" : "15px", fontFamily: f.mono ? MONO : "system-ui", textAlign: "center", lineHeight: "20px", color: live }}>
+              <span style={{ width: "18px", flexShrink: 0, fontSize: f.mono ? "0.75rem" : "0.9375rem", fontFamily: f.mono ? MONO : "system-ui", textAlign: "center", lineHeight: "20px", color: live }}>
                 {f.icon}
               </span>
-              <span style={{ fontFamily: BODY, fontSize: "13px", color: C.text2 ?? "#A6A6A2", lineHeight: 1.4 }}>{f.text}</span>
+              <span style={{ fontFamily: BODY, fontSize: "0.8125rem", color: C.text2 ?? "#A6A6A2", lineHeight: 1.4 }}>{f.text}</span>
             </div>
           ))}
         </div>
 
         {/* Error */}
         {error && (
-          <div style={{ position: "relative", zIndex: 1, background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: "10px", padding: "10px 12px", fontFamily: MONO, fontSize: "11px", color: "#ef4444" }}>
+          <div style={{ position: "relative", zIndex: 1, background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: "10px", padding: "10px 12px", fontFamily: MONO, fontSize: "0.6875rem", color: "#ef4444" }}>
             {error}
           </div>
         )}
@@ -146,7 +146,7 @@ export function UpgradeModal({ C, userId, userEmail, stripeCustomerId, onCustome
               display: "flex", alignItems: "center", justifyContent: "space-between",
               background: loading ? C.muted : live,
               color: "#0A0A0A", border: "none", borderRadius: "14px",
-              padding: "5px 6px 5px 20px", fontSize: "14px", fontWeight: 600,
+              padding: "5px 6px 5px 20px", fontSize: "0.875rem", fontWeight: 600,
               cursor: loading ? "default" : "pointer", width: "100%",
               fontFamily: BODY, opacity: loading ? 0.7 : 1, transition: "opacity 0.2s",
             }}
@@ -163,7 +163,7 @@ export function UpgradeModal({ C, userId, userEmail, stripeCustomerId, onCustome
           {!mandatory && (
             <button
               onClick={onClose}
-              style={{ background: "none", border: "none", color: C.muted ?? "#65655F", cursor: "pointer", fontFamily: MONO, fontSize: "11px", letterSpacing: "0.08em", textTransform: "uppercase", textAlign: "center", padding: "6px" }}
+              style={{ background: "none", border: "none", color: C.muted ?? "#65655F", cursor: "pointer", fontFamily: MONO, fontSize: "0.6875rem", letterSpacing: "0.08em", textTransform: "uppercase", textAlign: "center", padding: "6px" }}
             >
               Maybe later
             </button>

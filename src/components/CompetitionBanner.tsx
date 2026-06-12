@@ -35,7 +35,7 @@ export function CompetitionBanner({ C, isMobile, onJoin }: CompetitionBannerProp
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
         <div style={{ flex: 1 }}>
           <div style={{
-            fontFamily: MONO, fontSize: 10, color: C.live,
+            fontFamily: MONO, fontSize: "0.625rem", color: C.live,
             letterSpacing: "0.16em", textTransform: "uppercase" as const,
             fontWeight: 700, marginBottom: 10,
           }}>
@@ -49,7 +49,7 @@ export function CompetitionBanner({ C, isMobile, onJoin }: CompetitionBannerProp
             Trade your eval.<br />Win the leaderboard.
           </div>
           <div style={{
-            fontFamily: BODY, fontSize: 13, color: C.text2,
+            fontFamily: BODY, fontSize: "0.8125rem", color: C.text2,
             lineHeight: 1.5, marginBottom: 14,
           }}>
             30-day R-multiple competition. Free to enter.
@@ -60,7 +60,7 @@ export function CompetitionBanner({ C, isMobile, onJoin }: CompetitionBannerProp
             style={{
               background: C.live, color: "#0A0A0A", border: "none",
               borderRadius: 999, padding: "11px 22px",
-              fontFamily: BODY, fontSize: 13, fontWeight: 600,
+              fontFamily: BODY, fontSize: "0.8125rem", fontWeight: 600,
               cursor: joining ? "default" : "pointer",
               opacity: joining ? 0.7 : 1,
             }}
@@ -73,7 +73,7 @@ export function CompetitionBanner({ C, isMobile, onJoin }: CompetitionBannerProp
           aria-label="Dismiss"
           style={{
             background: "none", border: "none", color: C.muted,
-            cursor: "pointer", fontSize: 20, padding: "0 0 0 8px",
+            cursor: "pointer", fontSize: "1.25rem", padding: "0 0 0 8px",
             lineHeight: 1, flexShrink: 0,
           }}
         >

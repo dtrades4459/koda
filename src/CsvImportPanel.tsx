@@ -684,17 +684,17 @@ export function CsvImportPanel({ existingTrades, onImport, onClose, allStrategyN
     return (
       <div style={{ border: `1px solid ${C.border2}`, borderRadius: "14px", padding: "24px", background: C.panel, display: "flex", flexDirection: "column", gap: "20px", marginBottom: "20px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, letterSpacing: "0.12em", textTransform: "uppercase" }}>Import preview</div>
-          <button onClick={cancelReveal} style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "14px" }}>x</button>
+          <div style={{ fontFamily: MONO, fontSize: "0.6875rem", color: C.muted, letterSpacing: "0.12em", textTransform: "uppercase" }}>Import preview</div>
+          <button onClick={cancelReveal} style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "0.875rem" }}>x</button>
         </div>
 
         <div style={{ textAlign: "center" }}>
-          <div style={{ fontFamily: MONO, fontSize: "28px", fontWeight: 700, color: C.text, letterSpacing: "-0.02em" }}>{s.tradeCount}</div>
-          <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase", marginTop: "2px" }}>trades ready to import</div>
+          <div style={{ fontFamily: MONO, fontSize: "1.75rem", fontWeight: 700, color: C.text, letterSpacing: "-0.02em" }}>{s.tradeCount}</div>
+          <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase", marginTop: "2px" }}>trades ready to import</div>
         </div>
 
         {grossNet === "gross" && (
-          <div style={{ background: C.warn + "22", border: `1px solid ${C.warn}44`, borderRadius: "8px", padding: "10px 14px", fontFamily: BODY, fontSize: "12px", color: C.warn }}>
+          <div style={{ background: C.warn + "22", border: `1px solid ${C.warn}44`, borderRadius: "8px", padding: "10px 14px", fontFamily: BODY, fontSize: "0.75rem", color: C.warn }}>
             P&L is marked as <strong>gross</strong> — figures shown here are pre-commission. Review pnlDollar after import.
           </div>
         )}
@@ -708,8 +708,8 @@ export function CsvImportPanel({ existingTrades, onImport, onClose, allStrategyN
               { label: "Avg R:R",        value: fmtR(s.avgRR),         color: C.text },
             ].map(({ label, value, color }) => (
               <div key={label} style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: "10px", padding: "14px 16px" }}>
-                <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "6px" }}>{label}</div>
-                <div style={{ fontFamily: MONO, fontSize: "20px", fontWeight: 700, color, letterSpacing: "-0.01em" }}>{value}</div>
+                <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "6px" }}>{label}</div>
+                <div style={{ fontFamily: MONO, fontSize: "1.25rem", fontWeight: 700, color, letterSpacing: "-0.01em" }}>{value}</div>
               </div>
             ))}
           </div>
@@ -718,25 +718,25 @@ export function CsvImportPanel({ existingTrades, onImport, onClose, allStrategyN
         {s.best !== null && (
           <div style={{ display: "flex", gap: "10px" }}>
             <div style={{ flex: 1, background: C.bg, border: `1px solid ${C.border}`, borderRadius: "10px", padding: "12px 14px" }}>
-              <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "4px" }}>Best trade</div>
-              <div style={{ fontFamily: MONO, fontSize: "16px", fontWeight: 700, color: C.green }}>{fmt$(s.best)}</div>
+              <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "4px" }}>Best trade</div>
+              <div style={{ fontFamily: MONO, fontSize: "1rem", fontWeight: 700, color: C.green }}>{fmt$(s.best)}</div>
             </div>
             <div style={{ flex: 1, background: C.bg, border: `1px solid ${C.border}`, borderRadius: "10px", padding: "12px 14px" }}>
-              <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "4px" }}>Worst trade</div>
-              <div style={{ fontFamily: MONO, fontSize: "16px", fontWeight: 700, color: C.red }}>{fmt$(s.worst)}</div>
+              <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "4px" }}>Worst trade</div>
+              <div style={{ fontFamily: MONO, fontSize: "1rem", fontWeight: 700, color: C.red }}>{fmt$(s.worst)}</div>
             </div>
           </div>
         )}
 
         {sessionEntries.length > 0 && (
           <div>
-            <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "8px" }}>
+            <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "8px" }}>
               Session breakdown
               {sessionAutoTagged > 0 && <span style={{ color: C.muted, fontWeight: 400 }}> — {sessionAutoTagged} auto-tagged from timestamp</span>}
             </div>
             <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
               {sessionEntries.map(([sess, count]) => (
-                <div key={sess} style={{ padding: "6px 12px", border: `1px solid ${C.border2}`, borderRadius: "999px", fontFamily: MONO, fontSize: "10px", color: C.text, display: "flex", gap: "6px", alignItems: "center" }}>
+                <div key={sess} style={{ padding: "6px 12px", border: `1px solid ${C.border2}`, borderRadius: "999px", fontFamily: MONO, fontSize: "0.625rem", color: C.text, display: "flex", gap: "6px", alignItems: "center" }}>
                   <span>{sess}</span>
                   <span style={{ color: C.muted }}>{count}</span>
                 </div>
@@ -746,8 +746,8 @@ export function CsvImportPanel({ existingTrades, onImport, onClose, allStrategyN
         )}
 
         <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-          <button onClick={cancelReveal} style={{ background: "transparent", border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "10px 18px", cursor: "pointer", fontFamily: MONO, fontSize: "11px", letterSpacing: "0.08em", textTransform: "uppercase", color: C.muted }}>Go back</button>
-          <button onClick={confirmImport} style={{ background: C.text, color: C.bg, border: "none", borderRadius: "999px", padding: "10px 22px", cursor: "pointer", fontFamily: MONO, fontSize: "11px", letterSpacing: "0.08em", textTransform: "uppercase", fontWeight: 600 }}>
+          <button onClick={cancelReveal} style={{ background: "transparent", border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "10px 18px", cursor: "pointer", fontFamily: MONO, fontSize: "0.6875rem", letterSpacing: "0.08em", textTransform: "uppercase", color: C.muted }}>Go back</button>
+          <button onClick={confirmImport} style={{ background: C.text, color: C.bg, border: "none", borderRadius: "999px", padding: "10px 22px", cursor: "pointer", fontFamily: MONO, fontSize: "0.6875rem", letterSpacing: "0.08em", textTransform: "uppercase", fontWeight: 600 }}>
             Confirm import
           </button>
         </div>
@@ -759,13 +759,13 @@ export function CsvImportPanel({ existingTrades, onImport, onClose, allStrategyN
   return (
     <div style={{ border: `1px solid ${C.border2}`, borderRadius: "14px", padding: "20px", background: C.panel, display: "flex", flexDirection: "column", gap: "18px", marginBottom: "20px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px" }}>
-        <div style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, letterSpacing: "0.12em", textTransform: "uppercase" }}>Import CSV / Excel</div>
-        <button onClick={onClose} style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "14px" }}>x</button>
+        <div style={{ fontFamily: MONO, fontSize: "0.6875rem", color: C.muted, letterSpacing: "0.12em", textTransform: "uppercase" }}>Import CSV / Excel</div>
+        <button onClick={onClose} style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "0.875rem" }}>x</button>
       </div>
 
       {/* ── Step 1: Platform picker (always shown) ─────────────────────────── */}
       <div>
-        <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "10px" }}>
+        <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "10px" }}>
           Step 1 — Select your platform
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: "8px" }}>
@@ -787,7 +787,7 @@ export function CsvImportPanel({ existingTrades, onImport, onClose, allStrategyN
                   color: active ? C.bg : C.text2,
                   cursor: "pointer",
                   fontFamily: MONO,
-                  fontSize: "11px",
+                  fontSize: "0.6875rem",
                   letterSpacing: "0.04em",
                   textAlign: "left",
                   transition: "all 0.12s",
@@ -802,7 +802,7 @@ export function CsvImportPanel({ existingTrades, onImport, onClose, allStrategyN
           <div style={{
             marginTop: "10px", padding: "10px 14px",
             background: C.panel2, borderRadius: "8px",
-            fontFamily: BODY, fontSize: "11px", color: C.muted, lineHeight: 1.5,
+            fontFamily: BODY, fontSize: "0.6875rem", color: C.muted, lineHeight: 1.5,
           }}>
             <span style={{ color: C.text2, fontWeight: 500 }}>Where to export: </span>
             {CSV_PRESETS[activePreset].exportPath}
@@ -812,14 +812,14 @@ export function CsvImportPanel({ existingTrades, onImport, onClose, allStrategyN
 
       {/* ── Step 2: File upload ─────────────────────────────────────────────── */}
       <div>
-        <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "10px" }}>
+        <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "10px" }}>
           Step 2 — Upload the file
         </div>
         <label htmlFor="csv-file" style={{
           display: "block", border: `1px dashed ${parsing ? C.warn : headers.length ? C.green : C.border2}`,
           padding: "20px 16px", borderRadius: "10px", cursor: parsing ? "wait" : "pointer",
           textAlign: "center", color: parsing ? C.warn : headers.length ? C.green : C.muted,
-          fontFamily: MONO, fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase",
+          fontFamily: MONO, fontSize: "0.6875rem", letterSpacing: "0.1em", textTransform: "uppercase",
           opacity: parsing ? 0.8 : 1,
         }}>
           {parsing
@@ -830,7 +830,7 @@ export function CsvImportPanel({ existingTrades, onImport, onClose, allStrategyN
           <input id="csv-file" type="file" accept=".csv,.tsv,.txt,.xlsx,.xls,text/csv,text/plain,text/tab-separated-values,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" onChange={handleFile} disabled={parsing} style={{ display: "none" }} />
         </label>
         {!activePreset && !headers.length && (
-          <div style={{ fontFamily: BODY, fontSize: "11px", color: C.muted, marginTop: "8px", lineHeight: 1.5 }}>
+          <div style={{ fontFamily: BODY, fontSize: "0.6875rem", color: C.muted, marginTop: "8px", lineHeight: 1.5 }}>
             Select your platform above first so columns map automatically.
           </div>
         )}
@@ -839,16 +839,16 @@ export function CsvImportPanel({ existingTrades, onImport, onClose, allStrategyN
       {/* Saved templates */}
       {Object.keys(templates).length > 0 && (
         <div>
-          <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "8px" }}>Saved templates</div>
+          <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "8px" }}>Saved templates</div>
           <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
             {Object.entries(templates).map(([name]) => (
               <div key={name} style={{ display: "flex", alignItems: "center", border: `1px solid ${C.border2}`, borderRadius: "999px", overflow: "hidden" }}>
                 <button onClick={() => applyTemplate(name)}
-                  style={{ padding: "6px 12px 6px 14px", background: "transparent", border: "none", color: C.text, cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.06em" }}>
+                  style={{ padding: "6px 12px 6px 14px", background: "transparent", border: "none", color: C.text, cursor: "pointer", fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.06em" }}>
                   {name}
                 </button>
                 <button onClick={() => handleDeleteTemplate(name)}
-                  style={{ padding: "6px 10px 6px 4px", background: "transparent", border: "none", color: C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "11px", lineHeight: 1 }}>
+                  style={{ padding: "6px 10px 6px 4px", background: "transparent", border: "none", color: C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "0.6875rem", lineHeight: 1 }}>
                   x
                 </button>
               </div>
@@ -857,11 +857,11 @@ export function CsvImportPanel({ existingTrades, onImport, onClose, allStrategyN
         </div>
       )}
 
-      {error && <div style={{ fontFamily: BODY, fontSize: "12px", color: C.red }}>{error}</div>}
+      {error && <div style={{ fontFamily: BODY, fontSize: "0.75rem", color: C.red }}>{error}</div>}
 
       {headers.length > 0 && (
         <>
-          <div style={{ fontFamily: BODY, fontSize: "12px", color: C.muted }}>
+          <div style={{ fontFamily: BODY, fontSize: "0.75rem", color: C.muted }}>
             <span style={{ color: C.text }}>{fileName}</span> — {rows.length} rows detected.
             {activePreset && <span style={{ marginLeft: "8px" }}>Preset: <span style={{ color: C.text }}>{CSV_PRESETS[activePreset]?.label}</span></span>}
           </div>
@@ -874,7 +874,7 @@ export function CsvImportPanel({ existingTrades, onImport, onClose, allStrategyN
               borderRadius: "10px",
               background: !tvSymbol.trim() && rows.length > 0 ? `color-mix(in oklch, ${C.warn} 8%, transparent)` : "transparent",
             }}>
-              <div style={{ fontFamily: MONO, fontSize: "10px", color: !tvSymbol.trim() && rows.length > 0 ? C.warn : C.muted, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "6px" }}>
+              <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: !tvSymbol.trim() && rows.length > 0 ? C.warn : C.muted, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "6px" }}>
                 Instrument <span style={{ color: C.red }}>*</span> {!tvSymbol.trim() && rows.length > 0 && "— required"}
               </div>
               <input
@@ -882,9 +882,9 @@ export function CsvImportPanel({ existingTrades, onImport, onClose, allStrategyN
                 onChange={e => setTvSymbol(e.target.value.toUpperCase())}
                 placeholder="NQ, ES, AAPL, EURUSD..."
                 autoFocus
-                style={{ ...inp, width: "220px", fontSize: "13px" }}
+                style={{ ...inp, width: "220px", fontSize: "0.8125rem" }}
               />
-              <div style={{ fontFamily: BODY, fontSize: "11px", color: C.muted, marginTop: "6px", lineHeight: 1.4 }}>
+              <div style={{ fontFamily: BODY, fontSize: "0.6875rem", color: C.muted, marginTop: "6px", lineHeight: 1.4 }}>
                 Strategy Tester exports don't include the chart symbol — enter the instrument you ran the strategy on (e.g. NQ, ES, AAPL).
               </div>
             </div>
@@ -893,22 +893,22 @@ export function CsvImportPanel({ existingTrades, onImport, onClose, allStrategyN
           {/* Import options: account type + date locale + gross/net */}
           <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
             <div>
-              <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "6px" }}>Account type</div>
+              <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "6px" }}>Account type</div>
               <div style={{ display: "flex", gap: "6px" }}>
                 {(["personal", "funded", "demo"] as const).map(at => (
                   <button key={at} onClick={() => setAccountType(at)}
-                    style={{ padding: "6px 12px", border: `1px solid ${accountType === at ? C.text : C.border2}`, borderRadius: "999px", background: accountType === at ? C.text : "transparent", color: accountType === at ? C.bg : C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                    style={{ padding: "6px 12px", border: `1px solid ${accountType === at ? C.text : C.border2}`, borderRadius: "999px", background: accountType === at ? C.text : "transparent", color: accountType === at ? C.bg : C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.06em", textTransform: "uppercase" }}>
                     {at}
                   </button>
                 ))}
               </div>
             </div>
             <div>
-              <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "6px" }}>Date format</div>
+              <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "6px" }}>Date format</div>
               <div style={{ display: "flex", gap: "6px" }}>
                 {(["us", "eu"] as const).map(loc => (
                   <button key={loc} onClick={() => setDateLocale(loc)}
-                    style={{ padding: "6px 12px", border: `1px solid ${dateLocale === loc ? C.text : C.border2}`, borderRadius: "999px", background: dateLocale === loc ? C.text : "transparent", color: dateLocale === loc ? C.bg : C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                    style={{ padding: "6px 12px", border: `1px solid ${dateLocale === loc ? C.text : C.border2}`, borderRadius: "999px", background: dateLocale === loc ? C.text : "transparent", color: dateLocale === loc ? C.bg : C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.06em", textTransform: "uppercase" }}>
                     {loc === "us" ? "MM/DD" : "DD/MM"}
                   </button>
                 ))}
@@ -916,11 +916,11 @@ export function CsvImportPanel({ existingTrades, onImport, onClose, allStrategyN
             </div>
             {mapping.pnl && (
               <div>
-                <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "6px" }}>P&amp;L column is</div>
+                <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "6px" }}>P&amp;L column is</div>
                 <div style={{ display: "flex", gap: "6px" }}>
                   {(["net", "gross"] as const).map(gn => (
                     <button key={gn} onClick={() => setGrossNet(gn)}
-                      style={{ padding: "6px 12px", border: `1px solid ${grossNet === gn ? C.text : C.border2}`, borderRadius: "999px", background: grossNet === gn ? C.text : "transparent", color: grossNet === gn ? C.bg : C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                      style={{ padding: "6px 12px", border: `1px solid ${grossNet === gn ? C.text : C.border2}`, borderRadius: "999px", background: grossNet === gn ? C.text : "transparent", color: grossNet === gn ? C.bg : C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.06em", textTransform: "uppercase" }}>
                       {gn === "net" ? "Net (after fees)" : "Gross (before fees)"}
                     </button>
                   ))}
@@ -934,7 +934,7 @@ export function CsvImportPanel({ existingTrades, onImport, onClose, allStrategyN
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "10px 14px", marginTop: "8px" }}>
               {fields.map(f => (
                 <div key={f.key}>
-                  <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "2px" }}>
+                  <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "2px" }}>
                     {f.label}{f.required && <span style={{ color: C.red, marginLeft: "4px" }}>*</span>}
                   </div>
                   <select value={mapping[f.key] || ""} onChange={e => setMapping(m => ({ ...m, [f.key]: e.target.value }))} style={sel}>
@@ -958,7 +958,7 @@ export function CsvImportPanel({ existingTrades, onImport, onClose, allStrategyN
           <div>
             <label style={lbl}>Preview (first 5 rows)</label>
             <div style={{ border: `1px solid ${C.border}`, borderRadius: "10px", overflow: "auto", marginTop: "8px" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: MONO, fontSize: "11px" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: MONO, fontSize: "0.6875rem" }}>
                 <thead>
                   <tr style={{ background: C.panel2 }}>
                     {["Date", "Pair", "Bias", "Session", "Outcome", "P&L", "R:R"].map(h => (
@@ -974,7 +974,7 @@ export function CsvImportPanel({ existingTrades, onImport, onClose, allStrategyN
                         <td style={{ padding: "8px 10px", color: C.text,  borderBottom: `1px solid ${C.border}` }}>{t.date}</td>
                         <td style={{ padding: "8px 10px", color: C.text,  borderBottom: `1px solid ${C.border}` }}>{t.pair || "--"}</td>
                         <td style={{ padding: "8px 10px", color: C.text2, borderBottom: `1px solid ${C.border}` }}>{t.bias || "--"}</td>
-                        <td style={{ padding: "8px 10px", color: t.session ? C.text2 : C.muted, borderBottom: `1px solid ${C.border}`, fontSize: "10px" }}>{t.session || "--"}</td>
+                        <td style={{ padding: "8px 10px", color: t.session ? C.text2 : C.muted, borderBottom: `1px solid ${C.border}`, fontSize: "0.625rem" }}>{t.session || "--"}</td>
                         <td style={{ padding: "8px 10px", color: t.outcome === "Win" ? C.green : t.outcome === "Loss" ? C.red : C.text2, borderBottom: `1px solid ${C.border}` }}>{t.outcome || "--"}</td>
                         <td style={{ padding: "8px 10px", color: C.text2, borderBottom: `1px solid ${C.border}` }}>{t.pnl || "--"}</td>
                         <td style={{ padding: "8px 10px", color: C.text2, borderBottom: `1px solid ${C.border}` }}>{t.rr || "--"}</td>
@@ -991,33 +991,33 @@ export function CsvImportPanel({ existingTrades, onImport, onClose, allStrategyN
               const today = new Date().toISOString().split("T")[0];
               const todayCount = previewTrades.filter(t => t.date === today).length;
               return previewTrades.length >= 5 && todayCount === previewTrades.length ? (
-                <div style={{ fontFamily: MONO, fontSize: "10px", color: C.warn, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: "8px" }}>
+                <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.warn, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: "8px" }}>
                   ⚠ All {todayCount} trades show today's date — check that the correct Date column is mapped above.
                 </div>
               ) : null;
             })()}
             {dupCount > 0 && uniquePreview.length > 0 && (
-              <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: "8px" }}>
+              <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: "8px" }}>
                 {dupCount} duplicate{dupCount === 1 ? "" : "s"} will be skipped.
               </div>
             )}
             {dupCount > 0 && uniquePreview.length === 0 && (
-              <div style={{ fontFamily: MONO, fontSize: "10px", color: C.green, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: "8px" }}>
+              <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.green, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: "8px" }}>
                 ✓ All {dupCount} trade{dupCount === 1 ? " is" : "s are"} already in your journal — nothing to import.
               </div>
             )}
             {invalidCount > 0 && (
-              <div style={{ fontFamily: MONO, fontSize: "10px", color: C.warn, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: "6px" }}>
+              <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.warn, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: "6px" }}>
                 {invalidCount} row{invalidCount === 1 ? "" : "s"} skipped — missing symbol or unparseable date.
               </div>
             )}
             {openPositionCount > 0 && (
-              <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: "6px" }}>
+              <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: "6px" }}>
                 {openPositionCount} open position{openPositionCount === 1 ? "" : "s"} skipped — no exit recorded yet.
               </div>
             )}
             {rowsCapped && (
-              <div style={{ fontFamily: MONO, fontSize: "10px", color: C.red, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: "8px" }}>
+              <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.red, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: "8px" }}>
                 ⚠ File has {rows.length.toLocaleString()} rows — only first {MAX_IMPORT_ROWS.toLocaleString()} will be imported. Export a smaller date range to get all trades.
               </div>
             )}
@@ -1030,27 +1030,27 @@ export function CsvImportPanel({ existingTrades, onImport, onClose, allStrategyN
                 <input value={saveTemplateName} onChange={e => setSaveTemplateName(e.target.value)}
                   placeholder="Template name..."
                   onKeyDown={e => { if (e.key === "Enter") handleSaveTemplate(); if (e.key === "Escape") setShowSaveTemplate(false); }}
-                  style={{ ...inp, flex: 1, fontSize: "12px" }} />
+                  style={{ ...inp, flex: 1, fontSize: "0.75rem" }} />
                 <button onClick={handleSaveTemplate} disabled={!saveTemplateName.trim()}
-                  style={{ padding: "8px 14px", border: "none", borderRadius: "999px", background: saveTemplateName.trim() ? C.text : C.border2, color: saveTemplateName.trim() ? C.bg : C.muted, cursor: saveTemplateName.trim() ? "pointer" : "not-allowed", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                  style={{ padding: "8px 14px", border: "none", borderRadius: "999px", background: saveTemplateName.trim() ? C.text : C.border2, color: saveTemplateName.trim() ? C.bg : C.muted, cursor: saveTemplateName.trim() ? "pointer" : "not-allowed", fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.08em", textTransform: "uppercase" }}>
                   Save
                 </button>
                 <button onClick={() => setShowSaveTemplate(false)}
-                  style={{ padding: "8px 14px", border: `1px solid ${C.border2}`, borderRadius: "999px", background: "transparent", color: C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                  style={{ padding: "8px 14px", border: `1px solid ${C.border2}`, borderRadius: "999px", background: "transparent", color: C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.08em", textTransform: "uppercase" }}>
                   Cancel
                 </button>
               </div>
             ) : (
               <button onClick={() => setShowSaveTemplate(true)}
-                style={{ padding: "7px 14px", border: `1px solid ${C.border2}`, borderRadius: "999px", background: "transparent", color: C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                style={{ padding: "7px 14px", border: `1px solid ${C.border2}`, borderRadius: "999px", background: "transparent", color: C.muted, cursor: "pointer", fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.08em", textTransform: "uppercase" }}>
                 + Save as template
               </button>
             )}
           </div>
 
           <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-            <button onClick={onClose} style={{ background: "transparent", border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "10px 18px", cursor: "pointer", fontFamily: MONO, fontSize: "11px", letterSpacing: "0.08em", textTransform: "uppercase", color: C.muted }}>Cancel</button>
-            <button onClick={doImport} disabled={!canImport} style={{ background: canImport ? C.text : C.border2, color: canImport ? C.bg : C.muted, border: "none", borderRadius: "999px", padding: "10px 18px", cursor: canImport ? "pointer" : "not-allowed", fontFamily: MONO, fontSize: "11px", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+            <button onClick={onClose} style={{ background: "transparent", border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "10px 18px", cursor: "pointer", fontFamily: MONO, fontSize: "0.6875rem", letterSpacing: "0.08em", textTransform: "uppercase", color: C.muted }}>Cancel</button>
+            <button onClick={doImport} disabled={!canImport} style={{ background: canImport ? C.text : C.border2, color: canImport ? C.bg : C.muted, border: "none", borderRadius: "999px", padding: "10px 18px", cursor: canImport ? "pointer" : "not-allowed", fontFamily: MONO, fontSize: "0.6875rem", letterSpacing: "0.08em", textTransform: "uppercase" }}>
               Import {uniquePreview.length} trade{uniquePreview.length === 1 ? "" : "s"}
             </button>
           </div>

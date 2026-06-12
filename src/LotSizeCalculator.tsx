@@ -93,19 +93,19 @@ export function LotSizeCalculator({ C, onClose }: LotSizeCalculatorProps) {
     border: `1px solid ${C.border ?? "#333"}`,
     background: C.panel2 ?? "#1A1A20",
     color: C.text ?? "#e2e8f0",
-    fontFamily: BODY, fontSize: 14, boxSizing: "border-box",
+    fontFamily: BODY, fontSize: "0.875rem", boxSizing: "border-box",
     outline: "none",
   };
 
   const lbl: React.CSSProperties = {
-    fontSize: 11, fontFamily: MONO, fontWeight: 600,
+    fontSize: "0.6875rem", fontFamily: MONO, fontWeight: 600,
     letterSpacing: "0.08em", textTransform: "uppercase" as const,
     color: C.muted ?? "#888", marginBottom: 5, display: "block",
   };
 
   const tabBtn = (active: boolean, accent?: string): React.CSSProperties => ({
     flex: 1, padding: "9px 0", border: "none", borderRadius: 9, cursor: "pointer",
-    fontFamily: BODY, fontSize: 13, fontWeight: 600, transition: "background 0.15s",
+    fontFamily: BODY, fontSize: "0.8125rem", fontWeight: 600, transition: "background 0.15s",
     background: active ? (accent ?? C.accent ?? "oklch(0.74 0.16 250)") : (C.panel2 ?? "#1A1A20"),
     color: active ? "#fff" : (C.muted ?? "#888"),
   });
@@ -146,12 +146,12 @@ export function LotSizeCalculator({ C, onClose }: LotSizeCalculatorProps) {
           {/* drag handle pill */}
           <div style={{ position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)", width: 36, height: 4, borderRadius: 999, background: C.border2 ?? "#2a2a3e" }} />
           <div style={{ marginTop: 8 }}>
-            <div style={{ fontFamily: DISPLAY, fontSize: 18, fontWeight: 600, color: C.text ?? "#e2e8f0", letterSpacing: "-0.01em", lineHeight: 1.2 }}>
+            <div style={{ fontFamily: DISPLAY, fontSize: "1.125rem", fontWeight: 600, color: C.text ?? "#e2e8f0", letterSpacing: "-0.01em", lineHeight: 1.2 }}>
               Position Size
             </div>
-            <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.10em", color: C.muted ?? "#888", marginTop: 2, textTransform: "uppercase" }}>Futures Calculator</div>
+            <div style={{ fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.10em", color: C.muted ?? "#888", marginTop: 2, textTransform: "uppercase" }}>Futures Calculator</div>
           </div>
-          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: C.muted ?? "#888", fontSize: 18, padding: "4px 8px", lineHeight: 1 }}>✕</button>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: C.muted ?? "#888", fontSize: "1.125rem", padding: "4px 8px", lineHeight: 1 }}>✕</button>
         </div>
 
         {/* ── Scrollable content ── */}
@@ -181,7 +181,7 @@ export function LotSizeCalculator({ C, onClose }: LotSizeCalculatorProps) {
                 <div key={label} style={{
                   background: "#f59e0b18", color: "#f59e0b",
                   borderRadius: 6, padding: "3px 9px",
-                  fontFamily: MONO, fontSize: 11, fontWeight: 700,
+                  fontFamily: MONO, fontSize: "0.6875rem", fontWeight: 700,
                 }}>
                   {label}: {val}
                 </div>
@@ -234,7 +234,7 @@ export function LotSizeCalculator({ C, onClose }: LotSizeCalculatorProps) {
             <div style={{
               background: "rgba(255,80,60,0.08)", border: "1px solid rgba(255,80,60,0.2)",
               borderRadius: 12, padding: "12px 14px",
-              color: C.red ?? "oklch(0.70 0.21 25)", fontFamily: MONO, fontSize: 13,
+              color: C.red ?? "oklch(0.70 0.21 25)", fontFamily: MONO, fontSize: "0.8125rem",
             }}>
               {calc.error}
             </div>
@@ -252,26 +252,26 @@ export function LotSizeCalculator({ C, onClose }: LotSizeCalculatorProps) {
               {/* Main numbers */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 0, marginBottom: 16 }}>
                 <div style={{ textAlign: "center", borderRight: `1px solid ${C.border ?? "#333"}`, paddingRight: 12 }}>
-                  <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.1em", color: C.muted ?? "#888", marginBottom: 6 }}>CONTRACTS</div>
+                  <div style={{ fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.1em", color: C.muted ?? "#888", marginBottom: 6 }}>CONTRACTS</div>
                   <div style={{
-                    fontSize: 44, fontWeight: 800, fontFamily: DISPLAY, lineHeight: 1,
+                    fontSize: "2.75rem", fontWeight: 800, fontFamily: DISPLAY, lineHeight: 1,
                     color: (calc.contracts ?? 0) > 0 ? (C.accent ?? "oklch(0.74 0.16 250)") : (C.muted ?? "#888"),
                   }}>
                     {calc.contracts}
                   </div>
                   {calc.contracts === 0 && (
-                    <div style={{ fontFamily: MONO, fontSize: 10, color: "#f59e0b", marginTop: 6, lineHeight: 1.4 }}>
+                    <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: "#f59e0b", marginTop: 6, lineHeight: 1.4 }}>
                       Risk too small for 1 contract
                     </div>
                   )}
                 </div>
                 <div style={{ textAlign: "center", paddingLeft: 12 }}>
-                  <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.1em", color: C.muted ?? "#888", marginBottom: 6 }}>RISK</div>
-                  <div style={{ fontSize: 30, fontWeight: 700, fontFamily: DISPLAY, lineHeight: 1, color: C.text ?? "#e2e8f0" }}>
+                  <div style={{ fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.1em", color: C.muted ?? "#888", marginBottom: 6 }}>RISK</div>
+                  <div style={{ fontSize: "1.875rem", fontWeight: 700, fontFamily: DISPLAY, lineHeight: 1, color: C.text ?? "#e2e8f0" }}>
                     ${calc.actualRisk?.toFixed(2) ?? "0.00"}
                   </div>
                   {riskMode === "percent" && balance && (
-                    <div style={{ fontFamily: MONO, fontSize: 10, color: C.muted ?? "#888", marginTop: 6 }}>
+                    <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted ?? "#888", marginTop: 6 }}>
                       of ${parseFloat(balance).toLocaleString()}
                     </div>
                   )}
@@ -289,8 +289,8 @@ export function LotSizeCalculator({ C, onClose }: LotSizeCalculatorProps) {
                   { label: "RISK/CONTRACT", value: `$${calc.riskPerContract?.toFixed(2)}` },
                 ].map(({ label, value }) => (
                   <div key={label} style={{ textAlign: "center" }}>
-                    <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.07em", color: C.muted ?? "#888", marginBottom: 4 }}>{label}</div>
-                    <div style={{ fontFamily: DISPLAY, fontSize: 15, fontWeight: 600, color: C.text ?? "#e2e8f0" }}>{value}</div>
+                    <div style={{ fontFamily: MONO, fontSize: "0.5625rem", letterSpacing: "0.07em", color: C.muted ?? "#888", marginBottom: 4 }}>{label}</div>
+                    <div style={{ fontFamily: DISPLAY, fontSize: "0.9375rem", fontWeight: 600, color: C.text ?? "#e2e8f0" }}>{value}</div>
                   </div>
                 ))}
               </div>
@@ -300,14 +300,14 @@ export function LotSizeCalculator({ C, onClose }: LotSizeCalculatorProps) {
             <div style={{
               background: C.panel2 ?? "#1A1A20", borderRadius: 14,
               padding: "22px 16px", textAlign: "center",
-              color: C.muted ?? "#888", fontFamily: MONO, fontSize: 12, lineHeight: 1.6,
+              color: C.muted ?? "#888", fontFamily: MONO, fontSize: "0.75rem", lineHeight: 1.6,
             }}>
               Enter entry price and stop loss<br />to calculate position size
             </div>
           )}
 
           {/* Disclaimer */}
-          <div style={{ marginTop: 14, textAlign: "center", fontFamily: MONO, fontSize: 10, color: C.muted ?? "#888", opacity: 0.6, lineHeight: 1.5 }}>
+          <div style={{ marginTop: 14, textAlign: "center", fontFamily: MONO, fontSize: "0.625rem", color: C.muted ?? "#888", opacity: 0.6, lineHeight: 1.5 }}>
             For reference only · Not financial advice · Verify with your broker
           </div>
         </div>

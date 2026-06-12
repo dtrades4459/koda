@@ -137,12 +137,12 @@ export function IdeaComposer({
     color: type === id ? C.bg : C.text,
     border: `1px solid ${C.border2 ?? C.border}`,
     borderRadius: "8px", cursor: "pointer",
-    fontFamily: MONO, fontSize: "11px", letterSpacing: "0.08em",
+    fontFamily: MONO, fontSize: "0.6875rem", letterSpacing: "0.08em",
     textTransform: "uppercase" as const,
   });
 
   const labelStyle: CSSProperties = {
-    fontFamily: MONO, fontSize: "10px", color: C.muted,
+    fontFamily: MONO, fontSize: "0.625rem", color: C.muted,
     letterSpacing: "0.16em", textTransform: "uppercase" as const,
     marginBottom: "4px",
   };
@@ -151,8 +151,8 @@ export function IdeaComposer({
     <div data-testid="idea-composer" style={backdropStyle} onClick={onClose}>
       <div style={panelStyle} onClick={e => e.stopPropagation()}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
-          <div style={{ fontFamily: DISPLAY, fontSize: "18px", fontWeight: 600, color: C.text }}>New Idea</div>
-          <button onClick={onClose} aria-label="Close" style={{ background: "none", border: "none", color: C.muted, fontSize: "20px", cursor: "pointer" }}>×</button>
+          <div style={{ fontFamily: DISPLAY, fontSize: "1.125rem", fontWeight: 600, color: C.text }}>New Idea</div>
+          <button onClick={onClose} aria-label="Close" style={{ background: "none", border: "none", color: C.muted, fontSize: "1.25rem", cursor: "pointer" }}>×</button>
         </div>
 
         <div style={{ display: "flex", gap: "6px" }}>
@@ -217,7 +217,7 @@ export function IdeaComposer({
               background: "transparent",
               border: `1px dashed ${C.border2 ?? C.border}`,
               borderRadius: "10px",
-              fontFamily: MONO, fontSize: "11px", color: C.muted, cursor: "pointer",
+              fontFamily: MONO, fontSize: "0.6875rem", color: C.muted, cursor: "pointer",
             }}>
             {chartFile ? `📎 ${chartFile.name}` : "📎 Attach chart"}
           </button>
@@ -243,7 +243,7 @@ export function IdeaComposer({
         )}
 
         {error && (
-          <div style={{ fontFamily: BODY, fontSize: "12px", color: C.red ?? "#f87171" }}>{error}</div>
+          <div style={{ fontFamily: BODY, fontSize: "0.75rem", color: C.red ?? "#f87171" }}>{error}</div>
         )}
 
         <button

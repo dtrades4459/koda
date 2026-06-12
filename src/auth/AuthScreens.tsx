@@ -169,7 +169,7 @@ export function VerifyPendingScreen({
               flex: 1, aspectRatio: "1", maxWidth: 48, borderRadius: 12,
               border: `1px solid ${d ? C.live : C.border2}`,
               background: d ? "rgba(255,255,255,0.03)" : "transparent",
-              fontFamily: MONO, fontSize: 22, color: C.text, textAlign: "center",
+              fontFamily: MONO, fontSize: "1.375rem", color: C.text, textAlign: "center",
               outline: "none", padding: 0,
             }}
           />
@@ -222,7 +222,7 @@ export function OAuthReturnErrorScreen({
         <div style={{
           width: 18, height: 18, borderRadius: 4, background: "#0A0A0A",
           color: C.live, display: "flex", alignItems: "center", justifyContent: "center",
-          fontWeight: 700, fontSize: 11,
+          fontWeight: 700, fontSize: "0.6875rem",
         }}>
           {provider[0]}
         </div>
@@ -267,7 +267,7 @@ export function HandlePickerScreen({
       {taken && (
         <div>
           <div style={{
-            fontFamily: MONO, fontSize: 9, letterSpacing: "0.14em",
+            fontFamily: MONO, fontSize: "0.5625rem", letterSpacing: "0.14em",
             color: C.muted, textTransform: "uppercase", marginBottom: 10,
           }}>
             Available
@@ -282,7 +282,7 @@ export function HandlePickerScreen({
                   padding: "7px 12px", borderRadius: 999,
                   background: C.liveSoft, color: C.live,
                   border: `1px solid color-mix(in oklch, ${C.live} 30%, transparent)`,
-                  fontFamily: MONO, fontSize: 12, letterSpacing: "0.02em",
+                  fontFamily: MONO, fontSize: "0.75rem", letterSpacing: "0.02em",
                   cursor: "pointer",
                 }}
               >
@@ -367,10 +367,10 @@ export function InstallIOSScreen({ onClose }: { onClose?: () => void }) {
         }}>
           <KodaMark size={46} color={C.text} />
         </div>
-        <div style={{ fontFamily: DISPLAY, fontSize: 24, fontWeight: 600, letterSpacing: "-0.02em", color: C.text }}>
+        <div style={{ fontFamily: DISPLAY, fontSize: "1.5rem", fontWeight: 600, letterSpacing: "-0.02em", color: C.text }}>
           Install Kōda
         </div>
-        <div style={{ fontSize: 13.5, color: C.text2, marginTop: 10, lineHeight: 1.55, maxWidth: "30ch", fontFamily: BODY }}>
+        <div style={{ fontSize: "0.84375rem", color: C.text2, marginTop: 10, lineHeight: 1.55, maxWidth: "30ch", fontFamily: BODY }}>
           Add Kōda to your Home Screen for full-screen, offline-ready journaling.
         </div>
       </div>
@@ -387,12 +387,12 @@ export function InstallIOSScreen({ onClose }: { onClose?: () => void }) {
                 <div style={{
                   width: 26, height: 26, borderRadius: 999, background: C.surfaceHi,
                   border: `1px solid ${C.border2}`, display: "flex", alignItems: "center", justifyContent: "center",
-                  fontFamily: MONO, fontSize: 12, color: C.text, flexShrink: 0,
+                  fontFamily: MONO, fontSize: "0.75rem", color: C.text, flexShrink: 0,
                 }}>
                   {n}
                 </div>
                 <div style={{
-                  fontSize: 13.5, color: C.text, fontFamily: BODY,
+                  fontSize: "0.84375rem", color: C.text, fontFamily: BODY,
                   display: "flex", alignItems: "center", gap: 6,
                 }}>
                   {txt}
@@ -448,11 +448,11 @@ export function InstallAndroidScreen({
               <KodaMark size={32} color={C.text} />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontFamily: DISPLAY, fontSize: 17, fontWeight: 600, color: C.text }}>
+              <div style={{ fontFamily: DISPLAY, fontSize: "1.0625rem", fontWeight: 600, color: C.text }}>
                 Install Kōda
               </div>
               <div style={{
-                fontFamily: MONO, fontSize: 10, letterSpacing: "0.06em",
+                fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.06em",
                 color: C.muted, marginTop: 3,
               }}>
                 kodatrade.co.uk
@@ -460,7 +460,7 @@ export function InstallAndroidScreen({
             </div>
           </div>
           <div style={{
-            position: "relative", fontSize: 13, color: C.text2,
+            position: "relative", fontSize: "0.8125rem", color: C.text2,
             marginTop: 16, lineHeight: 1.55, fontFamily: BODY,
           }}>
             Installs as an app — own icon, full screen, push notifications, and offline access to your journal.
@@ -477,7 +477,7 @@ export function InstallAndroidScreen({
         </Card>
         <div style={{
           textAlign: "center", marginTop: 16,
-          fontFamily: MONO, fontSize: 9, letterSpacing: "0.14em", color: C.muted,
+          fontFamily: MONO, fontSize: "0.5625rem", letterSpacing: "0.14em", color: C.muted,
         }}>
           ANDROID · CHROME — NATIVE INSTALL PROMPT
         </div>
@@ -551,13 +551,13 @@ export function FirstSessionSurveyScreen({
       <div style={{ position: "relative", zIndex: 2, maxWidth: 420, margin: "0 auto" }}>
         <div style={{ marginBottom: 20, display: "flex", alignItems: "center", gap: 9 }}>
           <KodaMark size={20} color={C.text} />
-          <span style={{ fontFamily: BODY, fontWeight: 600, fontSize: 14, letterSpacing: "0.22em", color: C.text }}>
+          <span style={{ fontFamily: BODY, fontWeight: 600, fontSize: "0.875rem", letterSpacing: "0.22em", color: C.text }}>
             Kōda
           </span>
         </div>
         <Kicker C={C} color={C.live}>{cur.kicker}</Kicker>
         <div style={{
-          fontFamily: DISPLAY, fontSize: 25, fontWeight: 600,
+          fontFamily: DISPLAY, fontSize: "1.5625rem", fontWeight: 600,
           letterSpacing: "-0.03em", lineHeight: 1.1, marginTop: 14, color: C.text,
         }}>
           {cur.title}
@@ -581,9 +581,9 @@ export function FirstSessionSurveyScreen({
                 }}
               >
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 15, fontWeight: 600, color: C.text }}>{opt.a}</div>
+                  <div style={{ fontSize: "0.9375rem", fontWeight: 600, color: C.text }}>{opt.a}</div>
                   <div style={{
-                    fontFamily: MONO, fontSize: 10, letterSpacing: "0.06em",
+                    fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.06em",
                     color: C.muted, marginTop: 4,
                   }}>
                     {opt.b}
@@ -783,7 +783,7 @@ export function SignUpFormScreen({
         trailing={
           <span
             onClick={() => setShow(!show)}
-            style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.12em", color: C.live, cursor: "pointer" }}
+            style={{ fontFamily: MONO, fontSize: "0.5625rem", letterSpacing: "0.12em", color: C.live, cursor: "pointer" }}
           >
             {show ? "HIDE" : "SHOW"}
           </span>
@@ -796,7 +796,7 @@ export function SignUpFormScreen({
           background: C.redSoft, border: `1px solid color-mix(in oklch, ${C.red} 30%, transparent)`,
         }}>
           <IconAlert c={C.red} s={16} />
-          <span style={{ fontSize: 12, color: C.red, fontFamily: BODY }}>{error}</span>
+          <span style={{ fontSize: "0.75rem", color: C.red, fontFamily: BODY }}>{error}</span>
         </div>
       )}
       {!error && errCount > 0 && (
@@ -806,7 +806,7 @@ export function SignUpFormScreen({
           background: C.redSoft, border: `1px solid color-mix(in oklch, ${C.red} 30%, transparent)`,
         }}>
           <IconAlert c={C.red} s={16} />
-          <span style={{ fontSize: 12, color: C.red, fontFamily: BODY }}>
+          <span style={{ fontSize: "0.75rem", color: C.red, fontFamily: BODY }}>
             Fix {errCount} field{errCount > 1 ? "s" : ""} to continue.
           </span>
         </div>
@@ -824,7 +824,7 @@ export function SignUpFormScreen({
         <>
           <div style={{ display: "flex", alignItems: "center", gap: 12, color: C.muted }}>
             <div style={{ flex: 1, height: 1, background: C.border2 }} />
-            <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.16em" }}>OR</span>
+            <span style={{ fontFamily: MONO, fontSize: "0.5625rem", letterSpacing: "0.16em" }}>OR</span>
             <div style={{ flex: 1, height: 1, background: C.border2 }} />
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -840,9 +840,9 @@ export function SignUpFormScreen({
               <div style={{
                 width: 20, height: 20, borderRadius: 5, background: C.text,
                 display: "flex", alignItems: "center", justifyContent: "center",
-                color: C.bg, fontWeight: 700, fontSize: 12,
+                color: C.bg, fontWeight: 700, fontSize: "0.75rem",
               }}>G</div>
-              <span style={{ flex: 1, fontSize: 14, color: C.text, fontWeight: 500, textAlign: "left" }}>
+              <span style={{ flex: 1, fontSize: "0.875rem", color: C.text, fontWeight: 500, textAlign: "left" }}>
                 Continue with Google
               </span>
               <svg width={16} height={16} viewBox="0 0 16 16" fill="none">
@@ -852,7 +852,7 @@ export function SignUpFormScreen({
           </div>
         </>
       )}
-      <div style={{ fontSize: 11, color: C.muted, textAlign: "center", lineHeight: 1.5, fontFamily: BODY }}>
+      <div style={{ fontSize: "0.6875rem", color: C.muted, textAlign: "center", lineHeight: 1.5, fontFamily: BODY }}>
         By continuing you agree to our{" "}
         <a href="/terms.html" style={{ color: C.text2 }}>Terms</a> &{" "}
         <a href="/privacy.html" style={{ color: C.text2 }}>Privacy</a>.

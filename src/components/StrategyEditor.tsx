@@ -23,7 +23,7 @@ export function StrategyEditor({ draft, setDraft, onSave, onCancel, isEdit, C, i
   const canSave = !!(draft.name || "").trim();
   return (
     <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: "16px", padding: "20px 16px", display: "flex", flexDirection: "column", gap: "20px" }}>
-      <div style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, letterSpacing: "0.12em", textTransform: "uppercase" }}>
+      <div style={{ fontFamily: MONO, fontSize: "0.6875rem", color: C.muted, letterSpacing: "0.12em", textTransform: "uppercase" }}>
         {isEdit ? "Edit Strategy" : "New Strategy"}
       </div>
 
@@ -58,12 +58,12 @@ export function StrategyEditor({ draft, setDraft, onSave, onCancel, isEdit, C, i
         {(draft.setups || []).length > 0 && (
           <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "10px" }}>
             {(draft.setups || []).map((s: string, i: number) => (
-              <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: "5px", background: C.panel2 ?? C.bg, border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "4px 10px 4px 12px", fontFamily: MONO, fontSize: "10px", color: C.text2 ?? C.muted, letterSpacing: "0.06em" }}>
+              <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: "5px", background: C.panel2 ?? C.bg, border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "4px 10px 4px 12px", fontFamily: MONO, fontSize: "0.625rem", color: C.text2 ?? C.muted, letterSpacing: "0.06em" }}>
                 {s}
                 <button
                   aria-label={`Remove setup ${s}`}
                   onClick={() => setDraft((d) => ({ ...d, setups: d.setups.filter((_: string, j: number) => j !== i) }))}
-                  style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, padding: 0, fontSize: "13px", lineHeight: 1, display: "flex", alignItems: "center" }}>
+                  style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, padding: 0, fontSize: "0.8125rem", lineHeight: 1, display: "flex", alignItems: "center" }}>
                   ×
                 </button>
               </span>
@@ -87,7 +87,7 @@ export function StrategyEditor({ draft, setDraft, onSave, onCancel, isEdit, C, i
           {newSetup.trim() && (
             <button
               onClick={() => { setDraft((d) => ({ ...d, setups: [...(d.setups || []), newSetup.trim()] })); setNewSetup(""); }}
-              style={{ background: C.text, color: C.bg, border: "none", borderRadius: "999px", padding: "8px 14px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.08em", textTransform: "uppercase", flexShrink: 0 }}>
+              style={{ background: C.text, color: C.bg, border: "none", borderRadius: "999px", padding: "8px 14px", cursor: "pointer", fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.08em", textTransform: "uppercase", flexShrink: 0 }}>
               Add
             </button>
           )}
@@ -99,12 +99,12 @@ export function StrategyEditor({ draft, setDraft, onSave, onCancel, isEdit, C, i
         <button
           onClick={onSave}
           disabled={!canSave}
-          style={{ flex: 1, background: canSave ? C.text : "transparent", color: canSave ? C.bg : C.muted, border: canSave ? "none" : `1px solid ${C.border2}`, borderRadius: "999px", padding: "13px 20px", fontSize: "13px", cursor: canSave ? "pointer" : "not-allowed", fontFamily: BODY, letterSpacing: "0.02em", transition: "opacity 0.15s" }}>
+          style={{ flex: 1, background: canSave ? C.text : "transparent", color: canSave ? C.bg : C.muted, border: canSave ? "none" : `1px solid ${C.border2}`, borderRadius: "999px", padding: "13px 20px", fontSize: "0.8125rem", cursor: canSave ? "pointer" : "not-allowed", fontFamily: BODY, letterSpacing: "0.02em", transition: "opacity 0.15s" }}>
           {isEdit ? "Save Changes" : "Add Strategy"}
         </button>
         <button
           onClick={onCancel}
-          style={{ background: "transparent", color: C.muted, border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "13px 18px", fontSize: "12px", cursor: "pointer", fontFamily: MONO, letterSpacing: "0.06em", textTransform: "uppercase", flexShrink: 0 }}>
+          style={{ background: "transparent", color: C.muted, border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "13px 18px", fontSize: "0.75rem", cursor: "pointer", fontFamily: MONO, letterSpacing: "0.06em", textTransform: "uppercase", flexShrink: 0 }}>
           Cancel
         </button>
       </div>

@@ -198,7 +198,7 @@ export function CommandPalette({
             }}
           />
           <kbd style={{
-            fontFamily: MONO, fontSize: 10, padding: "3px 7px", borderRadius: 6,
+            fontFamily: MONO, fontSize: "0.625rem", padding: "3px 7px", borderRadius: 6,
             background: C.surfaceHi, color: C.muted, border: `1px solid ${C.line2}`,
             letterSpacing: "0.06em",
           }}>
@@ -214,7 +214,7 @@ export function CommandPalette({
           {filtered.length === 0 ? (
             <div style={{
               padding: "40px 20px", textAlign: "center",
-              fontFamily: BODY, fontSize: 13, color: C.muted,
+              fontFamily: BODY, fontSize: "0.8125rem", color: C.muted,
             }}>
               No commands match "{query}"
             </div>
@@ -222,7 +222,7 @@ export function CommandPalette({
             Object.entries(grouped).map(([group, items]) => (
               <div key={group}>
                 <div style={{
-                  fontFamily: MONO, fontSize: 9, letterSpacing: "0.14em",
+                  fontFamily: MONO, fontSize: "0.5625rem", letterSpacing: "0.14em",
                   color: C.muted, textTransform: "uppercase",
                   padding: "12px 14px 6px",
                 }}>
@@ -248,20 +248,20 @@ export function CommandPalette({
                         </span>
                       )}
                       <span style={{
-                        flex: 1, fontFamily: BODY, fontSize: 14, color: C.text,
+                        flex: 1, fontFamily: BODY, fontSize: "0.875rem", color: C.text,
                       }}>
                         {cmd.label}
                       </span>
                       {cmd.hint && (
                         <span style={{
-                          fontFamily: BODY, fontSize: 12, color: C.text2,
+                          fontFamily: BODY, fontSize: "0.75rem", color: C.text2,
                         }}>
                           {cmd.hint}
                         </span>
                       )}
                       {cmd.shortcut && (
                         <kbd style={{
-                          fontFamily: MONO, fontSize: 10, padding: "3px 7px",
+                          fontFamily: MONO, fontSize: "0.625rem", padding: "3px 7px",
                           borderRadius: 6, background: C.surfaceHi, color: C.muted,
                           border: `1px solid ${C.line2}`, letterSpacing: "0.06em",
                         }}>
@@ -283,7 +283,7 @@ export function CommandPalette({
           background: C.surfaceHi,
         }}>
           <div style={{
-            display: "flex", gap: 14, fontFamily: MONO, fontSize: 9,
+            display: "flex", gap: 14, fontFamily: MONO, fontSize: "0.5625rem",
             color: C.muted, letterSpacing: "0.06em", textTransform: "uppercase",
           }}>
             <span>↑↓ navigate</span>
@@ -291,7 +291,7 @@ export function CommandPalette({
             <span>esc close</span>
           </div>
           <span style={{
-            fontFamily: MONO, fontSize: 9, color: C.muted, letterSpacing: "0.06em",
+            fontFamily: MONO, fontSize: "0.5625rem", color: C.muted, letterSpacing: "0.06em",
           }}>
             {META}+K
           </span>
@@ -342,13 +342,13 @@ export function KeyboardShortcutsOverlay({
         }}>
           <div>
             <div style={{
-              fontFamily: MONO, fontSize: 10, letterSpacing: "0.14em",
+              fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.14em",
               color: C.muted, textTransform: "uppercase",
             }}>
               Keyboard
             </div>
             <div style={{
-              fontFamily: DISPLAY, fontSize: 22, fontWeight: 600,
+              fontFamily: DISPLAY, fontSize: "1.375rem", fontWeight: 600,
               letterSpacing: "-0.02em", color: C.text, marginTop: 4,
             }}>
               Shortcuts
@@ -376,7 +376,7 @@ export function KeyboardShortcutsOverlay({
           {groups.map(g => (
             <div key={g.group} style={{ padding: 12 }}>
               <div style={{
-                fontFamily: MONO, fontSize: 9, letterSpacing: "0.14em",
+                fontFamily: MONO, fontSize: "0.5625rem", letterSpacing: "0.14em",
                 color: C.muted, textTransform: "uppercase", marginBottom: 8,
               }}>
                 {g.group}
@@ -389,7 +389,7 @@ export function KeyboardShortcutsOverlay({
                     padding: "10px 8px", borderBottom: `1px solid ${C.line}`,
                   }}
                 >
-                  <span style={{ fontFamily: BODY, fontSize: 13, color: C.text }}>
+                  <span style={{ fontFamily: BODY, fontSize: "0.8125rem", color: C.text }}>
                     {item.label}
                   </span>
                   <span style={{ display: "flex", gap: 4 }}>
@@ -397,7 +397,7 @@ export function KeyboardShortcutsOverlay({
                       <kbd
                         key={i}
                         style={{
-                          fontFamily: MONO, fontSize: 10,
+                          fontFamily: MONO, fontSize: "0.625rem",
                           padding: "3px 8px", borderRadius: 6,
                           background: C.surfaceHi, color: C.text,
                           border: `1px solid ${C.line2}`,

@@ -60,7 +60,7 @@ export function ReportQueueScreen({
                 border: on
                   ? `1px solid color-mix(in oklch, ${C.accent} 40%, transparent)`
                   : `1px solid ${C.border2}`,
-                fontFamily: BODY, fontSize: 13, fontWeight: 500, cursor: "pointer",
+                fontFamily: BODY, fontSize: "0.8125rem", fontWeight: 500, cursor: "pointer",
                 textTransform: "capitalize", whiteSpace: "nowrap",
               }}
             >
@@ -71,7 +71,7 @@ export function ReportQueueScreen({
       </div>
       {filtered.length === 0 ? (
         <Card C={C} pad={24} style={{ textAlign: "center" }}>
-          <div style={{ fontFamily: BODY, fontSize: 14, color: C.text2 }}>
+          <div style={{ fontFamily: BODY, fontSize: "0.875rem", color: C.text2 }}>
             No {activeFilter} reports.
           </div>
         </Card>
@@ -87,12 +87,12 @@ export function ReportQueueScreen({
             >
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <MonoTag C={C} tone="red">{r.reason}</MonoTag>
-                <span style={{ fontFamily: MONO, fontSize: 9.5, color: C.muted, marginLeft: "auto" }}>
+                <span style={{ fontFamily: MONO, fontSize: "0.59375rem", color: C.muted, marginLeft: "auto" }}>
                   {r.reportedAt.toUpperCase()}
                 </span>
               </div>
               <div style={{
-                fontFamily: BODY, fontSize: 13, color: C.text, lineHeight: 1.45,
+                fontFamily: BODY, fontSize: "0.8125rem", color: C.text, lineHeight: 1.45,
                 background: C.surfaceHi, padding: "10px 12px", borderRadius: 10,
                 border: `1px solid ${C.line}`,
               }}>
@@ -100,7 +100,7 @@ export function ReportQueueScreen({
               </div>
               <div style={{
                 display: "flex", alignItems: "center", gap: 8,
-                fontFamily: MONO, fontSize: 10, color: C.muted, letterSpacing: "0.04em",
+                fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.04em",
               }}>
                 REPORTED @{r.reportedUser.toUpperCase()} · BY @{r.reporter.toUpperCase()}
               </div>
@@ -139,18 +139,18 @@ export function ReportDetailScreen({
         border: `1px solid ${C.line}`,
       }}>
         <div style={{
-          fontFamily: MONO, fontSize: 9, letterSpacing: "0.14em",
+          fontFamily: MONO, fontSize: "0.5625rem", letterSpacing: "0.14em",
           color: C.muted, textTransform: "uppercase", marginBottom: 8,
         }}>
           Reported content
         </div>
-        <div style={{ fontFamily: BODY, fontSize: 14, color: C.text, lineHeight: 1.55 }}>
+        <div style={{ fontFamily: BODY, fontSize: "0.875rem", color: C.text, lineHeight: 1.55 }}>
           {report.contentSnippet}
         </div>
         {report.contextLines && report.contextLines.length > 0 && (
           <div style={{
             marginTop: 14, paddingTop: 14, borderTop: `1px solid ${C.line}`,
-            fontFamily: BODY, fontSize: 12.5, color: C.text2, lineHeight: 1.6,
+            fontFamily: BODY, fontSize: "0.78125rem", color: C.text2, lineHeight: 1.6,
           }}>
             {report.contextLines.map((l, i) => (
               <div key={i}>{l}</div>
@@ -163,15 +163,15 @@ export function ReportDetailScreen({
         <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px" }}>
           <AvatarCircle name={report.reportedUser} size={36} C={C} />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 13.5, color: C.text, fontFamily: BODY }}>@{report.reportedUser}</div>
-            <div style={{ fontFamily: MONO, fontSize: 9.5, color: C.muted, marginTop: 2 }}>REPORTED USER</div>
+            <div style={{ fontSize: "0.84375rem", color: C.text, fontFamily: BODY }}>@{report.reportedUser}</div>
+            <div style={{ fontFamily: MONO, fontSize: "0.59375rem", color: C.muted, marginTop: 2 }}>REPORTED USER</div>
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderTop: `1px solid ${C.line}` }}>
           <AvatarCircle name={report.reporter} size={36} C={C} />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 13.5, color: C.text, fontFamily: BODY }}>@{report.reporter}</div>
-            <div style={{ fontFamily: MONO, fontSize: 9.5, color: C.muted, marginTop: 2 }}>REPORTER</div>
+            <div style={{ fontSize: "0.84375rem", color: C.text, fontFamily: BODY }}>@{report.reporter}</div>
+            <div style={{ fontFamily: MONO, fontSize: "0.59375rem", color: C.muted, marginTop: 2 }}>REPORTER</div>
           </div>
         </div>
       </Card>
@@ -183,7 +183,7 @@ export function ReportDetailScreen({
             padding: "13px 18px", borderRadius: 999,
             background: "transparent", color: C.warn,
             border: `1px solid color-mix(in oklch, ${C.warn} 30%, transparent)`,
-            fontFamily: BODY, fontSize: 13.5, fontWeight: 600, cursor: "pointer", width: "100%",
+            fontFamily: BODY, fontSize: "0.84375rem", fontWeight: 600, cursor: "pointer", width: "100%",
             textAlign: "left",
           }}
         >
@@ -197,7 +197,7 @@ export function ReportDetailScreen({
               padding: "13px 16px", borderRadius: 999,
               background: "transparent", color: C.text,
               border: `1px solid ${C.border2}`,
-              fontFamily: BODY, fontSize: 13, cursor: "pointer", minWidth: 110,
+              fontFamily: BODY, fontSize: "0.8125rem", cursor: "pointer", minWidth: 110,
             }}
           >
             <option value={1}>1 day</option>
@@ -210,7 +210,7 @@ export function ReportDetailScreen({
               flex: 1, padding: "13px 18px", borderRadius: 999,
               background: "transparent", color: C.warn,
               border: `1px solid color-mix(in oklch, ${C.warn} 30%, transparent)`,
-              fontFamily: BODY, fontSize: 13.5, fontWeight: 600, cursor: "pointer",
+              fontFamily: BODY, fontSize: "0.84375rem", fontWeight: 600, cursor: "pointer",
             }}
           >
             Suspend
@@ -222,7 +222,7 @@ export function ReportDetailScreen({
             padding: "13px 18px", borderRadius: 999,
             background: "transparent", color: C.red,
             border: `1px solid color-mix(in oklch, ${C.red} 30%, transparent)`,
-            fontFamily: BODY, fontSize: 13.5, fontWeight: 600, cursor: "pointer", width: "100%",
+            fontFamily: BODY, fontSize: "0.84375rem", fontWeight: 600, cursor: "pointer", width: "100%",
             textAlign: "left",
           }}
         >
@@ -233,7 +233,7 @@ export function ReportDetailScreen({
           style={{
             padding: "13px 18px", borderRadius: 999,
             background: C.red, color: "#fff", border: "none",
-            fontFamily: BODY, fontSize: 13.5, fontWeight: 600, cursor: "pointer", width: "100%",
+            fontFamily: BODY, fontSize: "0.84375rem", fontWeight: 600, cursor: "pointer", width: "100%",
             textAlign: "left",
           }}
         >
@@ -245,7 +245,7 @@ export function ReportDetailScreen({
             padding: "13px 18px", borderRadius: 999,
             background: "transparent", color: C.text2,
             border: `1px solid ${C.border2}`,
-            fontFamily: BODY, fontSize: 13.5, fontWeight: 500, cursor: "pointer", width: "100%",
+            fontFamily: BODY, fontSize: "0.84375rem", fontWeight: 500, cursor: "pointer", width: "100%",
             textAlign: "left",
           }}
         >
@@ -324,14 +324,14 @@ export function AuditLogScreen({
         </button>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{
-            fontFamily: DISPLAY, fontSize: 22, fontWeight: 600,
+            fontFamily: DISPLAY, fontSize: "1.375rem", fontWeight: 600,
             letterSpacing: "-0.02em", color: C.text,
           }}>
             Audit log
           </div>
           {userHandle && (
             <div style={{
-              fontFamily: MONO, fontSize: 10, letterSpacing: "0.08em",
+              fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.08em",
               color: C.muted, marginTop: 4,
             }}>
               @{userHandle.toUpperCase()}
@@ -354,7 +354,7 @@ export function AuditLogScreen({
                 border: on
                   ? `1px solid color-mix(in oklch, ${C.accent} 40%, transparent)`
                   : `1px solid ${C.border2}`,
-                fontFamily: MONO, fontSize: 10, letterSpacing: "0.08em",
+                fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.08em",
                 fontWeight: 500, cursor: "pointer", textTransform: "uppercase",
               }}
             >
@@ -365,7 +365,7 @@ export function AuditLogScreen({
       </div>
       <Card C={C} pad={0}>
         {filtered.length === 0 ? (
-          <div style={{ padding: 24, textAlign: "center", fontFamily: BODY, fontSize: 13, color: C.text2 }}>
+          <div style={{ padding: 24, textAlign: "center", fontFamily: BODY, fontSize: "0.8125rem", color: C.text2 }}>
             No entries.
           </div>
         ) : (
@@ -383,10 +383,10 @@ export function AuditLogScreen({
                   width: 6, height: 6, borderRadius: "50%", background: tone, flexShrink: 0,
                 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13.5, color: C.text, fontFamily: BODY }}>{e.action}</div>
+                  <div style={{ fontSize: "0.84375rem", color: C.text, fontFamily: BODY }}>{e.action}</div>
                   {e.detail && (
                     <div style={{
-                      fontFamily: MONO, fontSize: 9.5, color: C.muted,
+                      fontFamily: MONO, fontSize: "0.59375rem", color: C.muted,
                       marginTop: 2, letterSpacing: "0.04em",
                     }}>
                       {e.detail.toUpperCase()}
@@ -395,7 +395,7 @@ export function AuditLogScreen({
                   )}
                 </div>
                 <span style={{
-                  fontFamily: MONO, fontSize: 9.5, color: C.muted, letterSpacing: "0.04em",
+                  fontFamily: MONO, fontSize: "0.59375rem", color: C.muted, letterSpacing: "0.04em",
                 }}>
                   {e.timestamp}
                 </span>

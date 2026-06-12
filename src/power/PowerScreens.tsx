@@ -56,7 +56,7 @@ export function CustomContractEditorScreen({
         </button>
       }
     >
-      <div style={{ fontSize: 13, color: C.text2, marginBottom: 14, lineHeight: 1.5, fontFamily: BODY }}>
+      <div style={{ fontSize: "0.8125rem", color: C.text2, marginBottom: 14, lineHeight: 1.5, fontFamily: BODY }}>
         Tick value + size per contract powers the lot calculator.
       </div>
       {contracts.map(c => (
@@ -72,15 +72,15 @@ export function CustomContractEditorScreen({
               width: 40, height: 40, borderRadius: 10,
               background: C.surfaceHi, border: `1px solid ${C.border2}`,
               display: "flex", alignItems: "center", justifyContent: "center",
-              fontFamily: DISPLAY, fontWeight: 600, fontSize: 13, color: C.text,
+              fontFamily: DISPLAY, fontWeight: 600, fontSize: "0.8125rem", color: C.text,
             }}>
               {c.symbol}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13.5, fontWeight: 600, color: C.text, fontFamily: BODY }}>
+              <div style={{ fontSize: "0.84375rem", fontWeight: 600, color: C.text, fontFamily: BODY }}>
                 {c.name}
               </div>
-              <div style={{ fontFamily: MONO, fontSize: 9.5, color: C.muted, marginTop: 2 }}>
+              <div style={{ fontFamily: MONO, fontSize: "0.59375rem", color: C.muted, marginTop: 2 }}>
                 TICK {c.tickValue} · INC {c.tickIncrement}
               </div>
             </div>
@@ -96,7 +96,7 @@ export function CustomContractEditorScreen({
           background: "transparent", border: `1.5px dashed ${C.line3}`,
           color: C.live, width: "100%", cursor: "pointer",
           display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-          fontFamily: BODY, fontSize: 13.5,
+          fontFamily: BODY, fontSize: "0.84375rem",
         }}
       >
         <IconPlus c={C.live} s={18} /> Add custom contract
@@ -140,7 +140,7 @@ export function EvalAccountCreateScreen({
         <div style={{ position: "relative" }}>
           <Kicker C={C} color={C.live}>Prop firm mode</Kicker>
           <div style={{
-            fontFamily: DISPLAY, fontSize: 20, fontWeight: 600, color: C.text, marginTop: 10,
+            fontFamily: DISPLAY, fontSize: "1.25rem", fontWeight: 600, color: C.text, marginTop: 10,
           }}>
             Track your challenge.
           </div>
@@ -161,7 +161,7 @@ export function EvalAccountCreateScreen({
                 border: on
                   ? `1px solid color-mix(in oklch, ${C.accent} 40%, transparent)`
                   : `1px solid ${C.border2}`,
-                fontFamily: BODY, fontSize: 13, fontWeight: 500, cursor: "pointer",
+                fontFamily: BODY, fontSize: "0.8125rem", fontWeight: 500, cursor: "pointer",
               }}
             >
               {f}
@@ -186,7 +186,7 @@ export function EvalAccountCreateScreen({
             padding: "13px 22px", borderRadius: 999,
             background: valid ? C.live : C.panel,
             color: valid ? "#0A0A0A" : C.text2,
-            border: "none", fontFamily: BODY, fontSize: 14, fontWeight: 600,
+            border: "none", fontFamily: BODY, fontSize: "0.875rem", fontWeight: 600,
             width: "100%", cursor: valid ? "pointer" : "not-allowed",
           }}
         >
@@ -206,7 +206,7 @@ function MoneyField({
   return (
     <div style={{ flex: 1 }}>
       <div style={{
-        fontFamily: MONO, fontSize: 9.5, letterSpacing: "0.16em",
+        fontFamily: MONO, fontSize: "0.59375rem", letterSpacing: "0.16em",
         color: C.muted, textTransform: "uppercase", marginBottom: 8,
       }}>
         {label}
@@ -268,10 +268,10 @@ export function EvalResetPromptModal({
         }}>
           <IconAlert c={C.red} s={26} />
         </div>
-        <div style={{ fontFamily: DISPLAY, fontSize: 21, fontWeight: 600, color: C.text }}>
+        <div style={{ fontFamily: DISPLAY, fontSize: "1.3125rem", fontWeight: 600, color: C.text }}>
           Account breached
         </div>
-        <div style={{ fontSize: 13.5, color: C.text2, marginTop: 10, lineHeight: 1.55, fontFamily: BODY }}>
+        <div style={{ fontSize: "0.84375rem", color: C.text2, marginTop: 10, lineHeight: 1.55, fontFamily: BODY }}>
           You hit the max drawdown on {accountLabel}. Reset to track a fresh challenge — your trade history is kept.
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 22 }}>
@@ -280,7 +280,7 @@ export function EvalResetPromptModal({
             style={{
               padding: "13px 22px", borderRadius: 999,
               background: C.live, color: "#0A0A0A", border: "none",
-              fontFamily: BODY, fontSize: 14, fontWeight: 600, cursor: "pointer", width: "100%",
+              fontFamily: BODY, fontSize: "0.875rem", fontWeight: 600, cursor: "pointer", width: "100%",
             }}
           >
             Reset & start over
@@ -290,7 +290,7 @@ export function EvalResetPromptModal({
             style={{
               padding: "13px 22px", borderRadius: 999,
               background: "transparent", color: C.text, border: `1px solid ${C.border2}`,
-              fontFamily: BODY, fontSize: 14, fontWeight: 600, cursor: "pointer", width: "100%",
+              fontFamily: BODY, fontSize: "0.875rem", fontWeight: 600, cursor: "pointer", width: "100%",
             }}
           >
             Keep as failed
@@ -323,7 +323,7 @@ export function PreTradeChecklistEditorScreen({
       C={C} title="Pre-trade rules" onBack={onBack}
       right={<MonoTag C={C} tone="live">Edit</MonoTag>}
     >
-      <div style={{ fontSize: 13, color: C.text2, marginBottom: 14, lineHeight: 1.5, fontFamily: BODY }}>
+      <div style={{ fontSize: "0.8125rem", color: C.text2, marginBottom: 14, lineHeight: 1.5, fontFamily: BODY }}>
         Drag to reorder. These show before every session.
       </div>
       {rules.map(rule => (
@@ -354,7 +354,7 @@ export function PreTradeChecklistEditorScreen({
             <button
               onClick={() => onEditRule?.(rule.id)}
               style={{
-                flex: 1, fontSize: 14, color: C.text, fontFamily: BODY,
+                flex: 1, fontSize: "0.875rem", color: C.text, fontFamily: BODY,
                 background: "transparent", border: "none", cursor: "pointer", textAlign: "left", padding: 0,
               }}
             >
@@ -390,7 +390,7 @@ export function PreTradeChecklistEditorScreen({
           background: "transparent", border: `1.5px dashed ${C.line3}`,
           color: C.live, width: "100%", cursor: "pointer",
           display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-          fontFamily: BODY, fontSize: 13.5,
+          fontFamily: BODY, fontSize: "0.84375rem",
         }}
       >
         <IconPlus c={C.live} s={16} /> Add rule
@@ -446,17 +446,17 @@ export function ReportCardIGSquare({
               Kōda
             </span>
           </div>
-          <span style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.14em", color: C.muted }}>
+          <span style={{ fontFamily: MONO, fontSize: "0.6875rem", letterSpacing: "0.14em", color: C.muted }}>
             {weekLabel}
           </span>
         </div>
         <GhostWord C={C} word={highlightWord} fontSize={150} bottom={40} right={-20} align="right" isDark />
         <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", position: "relative", zIndex: 1 }}>
-          <div style={{ fontFamily: MONO, fontSize: 12, letterSpacing: "0.16em", color: C.live }}>
+          <div style={{ fontFamily: MONO, fontSize: "0.75rem", letterSpacing: "0.16em", color: C.live }}>
             NET THIS WEEK
           </div>
           <div style={{
-            fontFamily: DISPLAY, fontSize: 96, fontWeight: 700,
+            fontFamily: DISPLAY, fontSize: "6rem", fontWeight: 700,
             letterSpacing: "-0.05em",
             color: net.startsWith("-") ? C.red : C.green,
             lineHeight: 0.9, marginTop: 8,
@@ -471,13 +471,13 @@ export function ReportCardIGSquare({
             ].map(s => (
               <div key={s.label}>
                 <div style={{
-                  fontFamily: MONO, fontSize: 10, letterSpacing: "0.1em",
+                  fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.1em",
                   color: C.muted, textTransform: "uppercase",
                 }}>
                   {s.label}
                 </div>
                 <div style={{
-                  fontFamily: DISPLAY, fontSize: 26, fontWeight: 600,
+                  fontFamily: DISPLAY, fontSize: "1.625rem", fontWeight: 600,
                   color: C.text, marginTop: 4,
                 }}>
                   {s.value}
@@ -487,7 +487,7 @@ export function ReportCardIGSquare({
           </div>
         </div>
         <div style={{
-          fontFamily: MONO, fontSize: 11, letterSpacing: "0.12em",
+          fontFamily: MONO, fontSize: "0.6875rem", letterSpacing: "0.12em",
           color: C.muted, textTransform: "uppercase",
         }}>
           {handle} · KODATRADE.CO.UK
@@ -513,16 +513,16 @@ export function ReportCardXLandscape({
         <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
             <KodaMark size={20} color={C.text} />
-            <span style={{ fontFamily: BODY, fontWeight: 600, fontSize: 14, letterSpacing: "0.22em", color: C.text }}>
+            <span style={{ fontFamily: BODY, fontWeight: 600, fontSize: "0.875rem", letterSpacing: "0.22em", color: C.text }}>
               Kōda
             </span>
           </div>
           <div>
-            <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.16em", color: C.live }}>
+            <div style={{ fontFamily: MONO, fontSize: "0.6875rem", letterSpacing: "0.16em", color: C.live }}>
               NET · {weekLabel}
             </div>
             <div style={{
-              fontFamily: DISPLAY, fontSize: 72, fontWeight: 700,
+              fontFamily: DISPLAY, fontSize: "4.5rem", fontWeight: 700,
               letterSpacing: "-0.05em",
               color: net.startsWith("-") ? C.red : C.green,
               lineHeight: 0.9, marginTop: 6,
@@ -531,7 +531,7 @@ export function ReportCardXLandscape({
             </div>
           </div>
           <div style={{
-            fontFamily: MONO, fontSize: 10, letterSpacing: "0.12em",
+            fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.12em",
             color: C.muted, textTransform: "uppercase",
           }}>
             {handle} · KODATRADE.CO.UK
@@ -549,13 +549,13 @@ export function ReportCardXLandscape({
           ].map(s => (
             <div key={s.label}>
               <div style={{
-                fontFamily: MONO, fontSize: 9, letterSpacing: "0.1em",
+                fontFamily: MONO, fontSize: "0.5625rem", letterSpacing: "0.1em",
                 color: C.muted, textTransform: "uppercase",
               }}>
                 {s.label}
               </div>
               <div style={{
-                fontFamily: DISPLAY, fontSize: 22, fontWeight: 600,
+                fontFamily: DISPLAY, fontSize: "1.375rem", fontWeight: 600,
                 color: C.text, marginTop: 2,
               }}>
                 {s.value}
@@ -592,14 +592,14 @@ export function YearInReviewCard({
               Kōda
             </span>
           </div>
-          <span style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.14em", color: C.muted }}>
+          <span style={{ fontFamily: MONO, fontSize: "0.6875rem", letterSpacing: "0.14em", color: C.muted }}>
             {year}
           </span>
         </div>
         <GhostWord C={C} word={year} fontSize={170} bottom={30} left={-10} isDark />
         <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", position: "relative", zIndex: 1 }}>
           <div style={{
-            fontFamily: DISPLAY, fontSize: 30, fontWeight: 600,
+            fontFamily: DISPLAY, fontSize: "1.875rem", fontWeight: 600,
             letterSpacing: "-0.02em", color: C.text,
           }}>
             Your year,{" "}
@@ -614,13 +614,13 @@ export function YearInReviewCard({
             ].map(s => (
               <div key={s.label}>
                 <div style={{
-                  fontFamily: MONO, fontSize: 10, letterSpacing: "0.1em",
+                  fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.1em",
                   color: C.muted, textTransform: "uppercase",
                 }}>
                   {s.label}
                 </div>
                 <div style={{
-                  fontFamily: DISPLAY, fontSize: 30, fontWeight: 600,
+                  fontFamily: DISPLAY, fontSize: "1.875rem", fontWeight: 600,
                   color: s.positive ? C.green : s.value.startsWith("-") ? C.red : C.text,
                   marginTop: 4, letterSpacing: "-0.03em",
                 }}>
@@ -631,7 +631,7 @@ export function YearInReviewCard({
           </div>
         </div>
         <div style={{
-          fontFamily: MONO, fontSize: 11, letterSpacing: "0.12em",
+          fontFamily: MONO, fontSize: "0.6875rem", letterSpacing: "0.12em",
           color: C.muted, textTransform: "uppercase",
         }}>
           {handle} · KODATRADE.CO.UK

@@ -98,7 +98,7 @@ export function SettingsScreen({
     letterSpacing: "0.01em",
   };
   const lbl: React.CSSProperties = {
-    fontSize: "11px",
+    fontSize: "0.6875rem",
     color: C.muted,
     letterSpacing: "0.06em",
     marginBottom: "4px",
@@ -157,7 +157,7 @@ export function SettingsScreen({
             background: (C as any).live ?? "oklch(0.84 0.14 175)",
             border: `2px solid ${C.panel}`,
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 10, color: "#0A0A0E", fontWeight: 700,
+            fontSize: "0.625rem", color: "#0A0A0E", fontWeight: 700,
           }}>+</span>
         </label>
         {/* The accept list includes HEIC/HEIF so iPhone photo-library uploads
@@ -170,12 +170,12 @@ export function SettingsScreen({
           style={{ position: "absolute", width: 1, height: 1, padding: 0, margin: -1, overflow: "hidden", clip: "rect(0,0,0,0)", whiteSpace: "nowrap", border: 0 }}
         />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontFamily: DISPLAY, fontSize: "15px", fontWeight: 600, color: C.text }}>{profile.name || "—"}</div>
-          <div style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, marginTop: "2px" }}>
+          <div style={{ fontFamily: DISPLAY, fontSize: "0.9375rem", fontWeight: 600, color: C.text }}>{profile.name || "—"}</div>
+          <div style={{ fontFamily: MONO, fontSize: "0.6875rem", color: C.muted, marginTop: "2px" }}>
             {profile.handle || "@—"} · {profile.plan === "pro" || profile.plan === "elite" ? "Pro plan" : "Free plan"}
           </div>
           {(profile.plan === "pro" || profile.plan === "elite") && (
-            <div style={{ marginTop: "6px", display: "inline-flex", padding: "2px 8px", borderRadius: "999px", background: (C as any).liveSoft ?? "rgba(100,220,180,0.08)", color: (C as any).live ?? C.green, fontFamily: MONO, fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", border: `1px solid color-mix(in oklch, ${(C as any).live ?? C.green} 30%, transparent)` }}>{"●"} PRO PLAN</div>
+            <div style={{ marginTop: "6px", display: "inline-flex", padding: "2px 8px", borderRadius: "999px", background: (C as any).liveSoft ?? "rgba(100,220,180,0.08)", color: (C as any).live ?? C.green, fontFamily: MONO, fontSize: "0.625rem", fontWeight: 700, letterSpacing: "0.12em", border: `1px solid color-mix(in oklch, ${(C as any).live ?? C.green} 30%, transparent)` }}>{"●"} PRO PLAN</div>
           )}
           {(profile.plan === "pro" || profile.plan === "elite") && (
             <div style={{ marginTop: 4 }}>
@@ -193,7 +193,7 @@ export function SettingsScreen({
                     setRefreshingPlan(false);
                   }
                 }}
-                style={{ background: "none", border: "none", color: C.muted, cursor: refreshingPlan ? "default" : "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.08em", padding: 0, textDecoration: "underline", opacity: refreshingPlan ? 0.5 : 1 }}
+                style={{ background: "none", border: "none", color: C.muted, cursor: refreshingPlan ? "default" : "pointer", fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.08em", padding: 0, textDecoration: "underline", opacity: refreshingPlan ? 0.5 : 1 }}
               >
                 {refreshingPlan ? "Refreshing…" : "Refresh plan"}
               </button>
@@ -213,8 +213,8 @@ export function SettingsScreen({
             <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M10 10a3 3 0 1 0 0-6a3 3 0 0 0 0 6zM4 17c0-3 3-5 6-5s6 2 6 5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontFamily: DISPLAY, fontSize: "14px", fontWeight: 600, color: C.text }}>Edit profile</div>
-            <div style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, marginTop: "2px" }}>Name, handle, avatar, bio</div>
+            <div style={{ fontFamily: DISPLAY, fontSize: "0.875rem", fontWeight: 600, color: C.text }}>Edit profile</div>
+            <div style={{ fontFamily: MONO, fontSize: "0.6875rem", color: C.muted, marginTop: "2px" }}>Name, handle, avatar, bio</div>
           </div>
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d={editingProfile ? "M3 9l4-4 4 4" : "M5 3l4 4-4 4"} stroke={C.muted} strokeWidth="1.3" strokeLinecap="round"/></svg>
         </div>
@@ -253,7 +253,7 @@ export function SettingsScreen({
             }} style={{
               display: "flex", alignItems: "center", justifyContent: "space-between",
               background: C.text, color: C.bg, border: "none", borderRadius: "14px",
-              padding: "5px 6px 5px 20px", fontSize: "14px", fontWeight: 600,
+              padding: "5px 6px 5px 20px", fontSize: "0.875rem", fontWeight: 600,
               cursor: "pointer", width: "100%", fontFamily: BODY, marginTop: "4px",
             }}>
               <span>Save profile</span>
@@ -270,8 +270,8 @@ export function SettingsScreen({
               <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M10 2v3M10 15v3M3 10h3M14 10h3M5.5 5.5l-2-2M14.5 5.5l2-2M5.5 14.5l-2 2M14.5 14.5l2 2M10 7a3 3 0 1 1 0 6 3 3 0 0 1 0-6z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
             </div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontFamily: DISPLAY, fontSize: "14px", fontWeight: 600, color: C.text }}>Appearance</div>
-              <div style={{ fontFamily: BODY, fontSize: "12px", color: C.muted, marginTop: "2px" }}>
+              <div style={{ fontFamily: DISPLAY, fontSize: "0.875rem", fontWeight: 600, color: C.text }}>Appearance</div>
+              <div style={{ fontFamily: BODY, fontSize: "0.75rem", color: C.muted, marginTop: "2px" }}>
                 {themePref === "system" ? `Following your device (${darkMode ? "dark" : "light"})` : `Always ${themePref}`}
               </div>
             </div>
@@ -290,7 +290,7 @@ export function SettingsScreen({
                     background: active ? C.text : "transparent",
                     color: active ? C.bg : C.text2,
                     border: "none", cursor: "pointer",
-                    fontFamily: BODY, fontSize: "13px", fontWeight: active ? 600 : 500,
+                    fontFamily: BODY, fontSize: "0.8125rem", fontWeight: active ? 600 : 500,
                     transition: "background 0.15s, color 0.15s",
                   }}>
                   {opt === "light" ? "Light" : opt === "dark" ? "Dark" : "System"}
@@ -308,10 +308,10 @@ export function SettingsScreen({
       <div style={{ borderRadius: "22px", background: C.panel, border: `1px solid ${C.border}`, overflow: "hidden", marginBottom: "4px" }}>
         <div style={{ padding: "16px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
           <div>
-            <div style={{ fontFamily: DISPLAY, fontSize: "14px", fontWeight: 600, color: C.text }}>
+            <div style={{ fontFamily: DISPLAY, fontSize: "0.875rem", fontWeight: 600, color: C.text }}>
               {(profile.plan === "pro" || profile.plan === "elite") ? "Pro" : "Free"}
             </div>
-            <div style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, marginTop: "2px" }}>
+            <div style={{ fontFamily: MONO, fontSize: "0.6875rem", color: C.muted, marginTop: "2px" }}>
               {(profile.plan === "pro" || profile.plan === "elite")
                 ? "Full access · manage or cancel anytime"
                 : "Limited features · upgrade for full access"}
@@ -323,7 +323,7 @@ export function SettingsScreen({
               style={{
                 padding: "8px 14px", background: "transparent",
                 border: `1px solid ${C.border2}`, borderRadius: "10px",
-                fontFamily: MONO, fontSize: "11px", color: C.text,
+                fontFamily: MONO, fontSize: "0.6875rem", color: C.text,
                 cursor: "pointer", letterSpacing: "0.06em",
               }}
             >
@@ -336,7 +336,7 @@ export function SettingsScreen({
                 padding: "10px 18px",
                 background: (C as any).live ?? "#4ade80",
                 border: "none", borderRadius: "12px",
-                fontFamily: MONO, fontSize: "11px", fontWeight: 700,
+                fontFamily: MONO, fontSize: "0.6875rem", fontWeight: 700,
                 color: "#0A0A0A", cursor: "pointer",
                 letterSpacing: "0.06em", textTransform: "uppercase" as const,
                 whiteSpace: "nowrap" as const,
@@ -346,7 +346,7 @@ export function SettingsScreen({
             </button>
           )}
         </div>
-        <div style={{ borderTop: `1px solid ${C.border}`, padding: "10px 18px", fontFamily: MONO, fontSize: "10px", color: (C as any).dim ?? C.muted, letterSpacing: "0.04em" }}>
+        <div style={{ borderTop: `1px solid ${C.border}`, padding: "10px 18px", fontFamily: MONO, fontSize: "0.625rem", color: (C as any).dim ?? C.muted, letterSpacing: "0.04em" }}>
           Payments handled securely by Stripe
         </div>
       </div>
@@ -374,8 +374,8 @@ export function SettingsScreen({
             <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M10 3l6 3v4c0 4-2.5 6.5-6 7-3.5-.5-6-3-6-7V6z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontFamily: DISPLAY, fontSize: "14px", fontWeight: 600, color: C.text }}>Public trades</div>
-            <div style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, marginTop: "2px" }}>Visible on your profile</div>
+            <div style={{ fontFamily: DISPLAY, fontSize: "0.875rem", fontWeight: 600, color: C.text }}>Public trades</div>
+            <div style={{ fontFamily: MONO, fontSize: "0.6875rem", color: C.muted, marginTop: "2px" }}>Visible on your profile</div>
           </div>
           <button onClick={() => { const next = !profile.publicTrades; saveProfile({ ...profile, publicTrades: next }); }} style={{ width: "38px", height: "22px", borderRadius: "999px", border: "none", cursor: "pointer", background: profile.publicTrades ? (C as any).live ?? C.green : C.border2, position: "relative", transition: "background 0.2s", flexShrink: 0 }}>
             <div style={{ position: "absolute", top: "2px", left: profile.publicTrades ? "18px" : "2px", width: "18px", height: "18px", borderRadius: "50%", background: "#fff", boxShadow: "0 1px 2px rgba(0,0,0,0.2)", transition: "left 0.2s" }} />
@@ -388,10 +388,10 @@ export function SettingsScreen({
               <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M8 4H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4M12 2h6v6M10 10L18 2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
             </div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontFamily: DISPLAY, fontSize: "14px", fontWeight: 600, color: C.text }}>Share with mentor</div>
-              <div style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, marginTop: "2px" }}>Copy your public profile link</div>
+              <div style={{ fontFamily: DISPLAY, fontSize: "0.875rem", fontWeight: 600, color: C.text }}>Share with mentor</div>
+              <div style={{ fontFamily: MONO, fontSize: "0.6875rem", color: C.muted, marginTop: "2px" }}>Copy your public profile link</div>
             </div>
-            <button onClick={() => { const handle = (profile.handle || "").replace(/^@/, ""); const url = `https://kodatrade.co.uk/@${handle}`; navigator.clipboard?.writeText(url).then(() => showToast("Link copied!")).catch(() => showToast("Link: " + url)); }} style={{ background: "transparent", border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "5px 12px", cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.06em", color: C.muted }}>Copy</button>
+            <button onClick={() => { const handle = (profile.handle || "").replace(/^@/, ""); const url = `https://kodatrade.co.uk/@${handle}`; navigator.clipboard?.writeText(url).then(() => showToast("Link copied!")).catch(() => showToast("Link: " + url)); }} style={{ background: "transparent", border: `1px solid ${C.border2}`, borderRadius: "999px", padding: "5px 12px", cursor: "pointer", fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.06em", color: C.muted }}>Copy</button>
           </div>
         )}
         {/* Prop firm / eval account */}
@@ -401,8 +401,8 @@ export function SettingsScreen({
               <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M3 12l2-2 4 4 8-8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
             </div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontFamily: DISPLAY, fontSize: "14px", fontWeight: 600, color: C.text }}>Prop firm / eval mode</div>
-              <div style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, marginTop: "2px" }}>Track evaluation targets on dashboard</div>
+              <div style={{ fontFamily: DISPLAY, fontSize: "0.875rem", fontWeight: 600, color: C.text }}>Prop firm / eval mode</div>
+              <div style={{ fontFamily: MONO, fontSize: "0.6875rem", color: C.muted, marginTop: "2px" }}>Track evaluation targets on dashboard</div>
             </div>
             <button
               onClick={() => {
@@ -443,13 +443,13 @@ export function SettingsScreen({
 
         {/* Discipline — In-Session Intervention settings */}
         <div style={{ borderBottom: `1px solid ${C.border}`, padding: "14px 16px" }}>
-          <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.16em", textTransform: "uppercase", color: C.muted, marginBottom: 12 }}>
+          <div style={{ fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.16em", textTransform: "uppercase", color: C.muted, marginBottom: 12 }}>
             Discipline
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
             <div>
-              <div style={{ fontFamily: BODY, fontSize: 14, color: C.text }}>In-session intervention</div>
-              <div style={{ fontFamily: MONO, fontSize: 10, color: C.muted, letterSpacing: "0.08em", marginTop: 2 }}>
+              <div style={{ fontFamily: BODY, fontSize: "0.875rem", color: C.text }}>In-session intervention</div>
+              <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.08em", marginTop: 2 }}>
                 Stop you mid-tilt before a bad trade
               </div>
             </div>
@@ -491,7 +491,7 @@ export function SettingsScreen({
               );
             })()}
           </div>
-          <div style={{ fontFamily: MONO, fontSize: 10, color: C.muted, marginBottom: 8, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+          <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, marginBottom: 8, letterSpacing: "0.08em", textTransform: "uppercase" }}>
             Cooldown when cancelled
           </div>
           <div style={{ display: "flex", gap: 6 }}>
@@ -519,7 +519,7 @@ export function SettingsScreen({
                     background: active ? C.live : "transparent",
                     border: `1px solid ${active ? C.live : C.border2}`,
                     color: active ? "#0A0A0E" : C.text2,
-                    borderRadius: 999, fontFamily: MONO, fontSize: 11,
+                    borderRadius: 999, fontFamily: MONO, fontSize: "0.6875rem",
                     letterSpacing: "0.06em", textTransform: "uppercase",
                     cursor: "pointer",
                   }}
@@ -535,8 +535,8 @@ export function SettingsScreen({
         {("serviceWorker" in navigator && "PushManager" in window) && (
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", borderBottom: `1px solid ${C.border}` }}>
             <div>
-              <div style={{ fontFamily: BODY, fontSize: 14, color: C.text }}>Push notifications</div>
-              <div style={{ fontFamily: MONO, fontSize: 10, color: C.muted, letterSpacing: "0.08em", marginTop: 2 }}>New circle activity, AI insights</div>
+              <div style={{ fontFamily: BODY, fontSize: "0.875rem", color: C.text }}>Push notifications</div>
+              <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.08em", marginTop: 2 }}>New circle activity, AI insights</div>
             </div>
             <button
               disabled={pushLoading}
@@ -577,8 +577,8 @@ export function SettingsScreen({
             <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M10 3v10M6 9l4 4 4-4M3 16h14" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontFamily: DISPLAY, fontSize: "14px", fontWeight: 600, color: C.text }}>Data export</div>
-            <div style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, marginTop: "2px" }}>CSV + JSON of all trades</div>
+            <div style={{ fontFamily: DISPLAY, fontSize: "0.875rem", fontWeight: 600, color: C.text }}>Data export</div>
+            <div style={{ fontFamily: MONO, fontSize: "0.6875rem", color: C.muted, marginTop: "2px" }}>CSV + JSON of all trades</div>
           </div>
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke={C.muted} strokeWidth="1.3" strokeLinecap="round"/></svg>
         </div>
@@ -589,13 +589,13 @@ export function SettingsScreen({
               <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M5 5h10v10H5zM8 8l4 4M12 8l-4 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
             </div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontFamily: DISPLAY, fontSize: "14px", fontWeight: 600, color: C.red }}>Delete account</div>
-              <div style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, marginTop: "2px" }}>Permanent · cannot be undone</div>
+              <div style={{ fontFamily: DISPLAY, fontSize: "0.875rem", fontWeight: 600, color: C.red }}>Delete account</div>
+              <div style={{ fontFamily: MONO, fontSize: "0.6875rem", color: C.muted, marginTop: "2px" }}>Permanent · cannot be undone</div>
             </div>
           </div>
           <div style={{ marginTop: "12px", display: "flex", flexDirection: "column", gap: "8px" }}>
-            <input value={deleteConfirm} onChange={e => setDeleteConfirm(e.target.value)} placeholder="Type DELETE to confirm" style={{ padding: "11px 14px", background: "transparent", border: `1px solid ${deleteConfirm.toUpperCase() === "DELETE" ? C.red : C.border2}`, borderRadius: "10px", color: C.text, fontFamily: MONO, fontSize: "12px", letterSpacing: "0.04em", outline: "none" }} />
-            <button onClick={deleteAccount} disabled={deletingAccount || deleteConfirm.toUpperCase() !== "DELETE"} style={{ padding: "11px", border: `1px solid ${deleteConfirm.toUpperCase() === "DELETE" ? C.red : C.border2}`, borderRadius: "10px", background: "transparent", color: deleteConfirm.toUpperCase() === "DELETE" ? C.red : C.muted, cursor: deleteConfirm.toUpperCase() === "DELETE" ? "pointer" : "not-allowed", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", opacity: deletingAccount ? 0.6 : 1, transition: "all 0.2s" }}>
+            <input value={deleteConfirm} onChange={e => setDeleteConfirm(e.target.value)} placeholder="Type DELETE to confirm" style={{ padding: "11px 14px", background: "transparent", border: `1px solid ${deleteConfirm.toUpperCase() === "DELETE" ? C.red : C.border2}`, borderRadius: "10px", color: C.text, fontFamily: MONO, fontSize: "0.75rem", letterSpacing: "0.04em", outline: "none" }} />
+            <button onClick={deleteAccount} disabled={deletingAccount || deleteConfirm.toUpperCase() !== "DELETE"} style={{ padding: "11px", border: `1px solid ${deleteConfirm.toUpperCase() === "DELETE" ? C.red : C.border2}`, borderRadius: "10px", background: "transparent", color: deleteConfirm.toUpperCase() === "DELETE" ? C.red : C.muted, cursor: deleteConfirm.toUpperCase() === "DELETE" ? "pointer" : "not-allowed", fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.1em", textTransform: "uppercase", opacity: deletingAccount ? 0.6 : 1, transition: "all 0.2s" }}>
               {deletingAccount ? "Deleting…" : "Delete My Account"}
             </button>
           </div>
@@ -606,7 +606,7 @@ export function SettingsScreen({
       <div style={{ padding: "24px 18px 0", borderTop: `1px solid ${C.border}`, marginTop: "8px" }}>
         <button
           onClick={onSignOut}
-          style={{ width: "100%", padding: "13px", border: `1px solid ${C.border2}`, borderRadius: "14px", background: "transparent", color: C.text2, cursor: "pointer", fontFamily: MONO, fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase" as const }}
+          style={{ width: "100%", padding: "13px", border: `1px solid ${C.border2}`, borderRadius: "14px", background: "transparent", color: C.text2, cursor: "pointer", fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.1em", textTransform: "uppercase" as const }}
         >
           Sign Out
         </button>
@@ -622,8 +622,8 @@ export function SettingsScreen({
             <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M10 4a6 6 0 1 1 0 12a6 6 0 0 1 0-12zM10 7v4M10 14v.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontFamily: DISPLAY, fontSize: "14px", fontWeight: 600, color: C.text }}>Send feedback</div>
-            <div style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, marginTop: "2px" }}>Direct to founder · 24h reply</div>
+            <div style={{ fontFamily: DISPLAY, fontSize: "0.875rem", fontWeight: 600, color: C.text }}>Send feedback</div>
+            <div style={{ fontFamily: MONO, fontSize: "0.6875rem", color: C.muted, marginTop: "2px" }}>Direct to founder · 24h reply</div>
           </div>
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke={C.muted} strokeWidth="1.3" strokeLinecap="round"/></svg>
         </div>
@@ -632,23 +632,23 @@ export function SettingsScreen({
             <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M10 4l1.5 5h5l-4 3 1.5 5-4-3-4 3 1.5-5-4-3h5z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontFamily: DISPLAY, fontSize: "14px", fontWeight: 600, color: C.text }}>Rate Kōda</div>
-            <div style={{ fontFamily: MONO, fontSize: "11px", color: C.muted, marginTop: "2px" }}>App Store</div>
+            <div style={{ fontFamily: DISPLAY, fontSize: "0.875rem", fontWeight: 600, color: C.text }}>Rate Kōda</div>
+            <div style={{ fontFamily: MONO, fontSize: "0.6875rem", color: C.muted, marginTop: "2px" }}>App Store</div>
           </div>
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke={C.muted} strokeWidth="1.3" strokeLinecap="round"/></svg>
         </div>
       </div>
 
       {/* Footer */}
-      <div style={{ textAlign: "center", padding: "24px 16px 0", fontFamily: MONO, fontSize: 10, color: C.dim, letterSpacing: "0.12em" }}>
+      <div style={{ textAlign: "center", padding: "24px 16px 0", fontFamily: MONO, fontSize: "0.625rem", color: C.dim, letterSpacing: "0.12em" }}>
         KŌDA v1.0 · BUILD {new Date().getFullYear()}.05
       </div>
       <div style={{ display: "flex", gap: 20, justifyContent: "center", padding: "8px 0 32px" }}>
-        <a href="/privacy.html" target="_blank" rel="noopener" style={{ fontFamily: MONO, fontSize: 11, color: C.text2, letterSpacing: "0.08em", textDecoration: "none" }}>Privacy</a>
+        <a href="/privacy.html" target="_blank" rel="noopener" style={{ fontFamily: MONO, fontSize: "0.6875rem", color: C.text2, letterSpacing: "0.08em", textDecoration: "none" }}>Privacy</a>
         <span style={{ color: C.border2 }}>·</span>
-        <a href="/terms.html" target="_blank" rel="noopener" style={{ fontFamily: MONO, fontSize: 11, color: C.text2, letterSpacing: "0.08em", textDecoration: "none" }}>Terms</a>
+        <a href="/terms.html" target="_blank" rel="noopener" style={{ fontFamily: MONO, fontSize: "0.6875rem", color: C.text2, letterSpacing: "0.08em", textDecoration: "none" }}>Terms</a>
         <span style={{ color: C.border2 }}>·</span>
-        <a href="/cookies.html" target="_blank" rel="noopener" style={{ fontFamily: MONO, fontSize: 11, color: C.text2, letterSpacing: "0.08em", textDecoration: "none" }}>Cookies</a>
+        <a href="/cookies.html" target="_blank" rel="noopener" style={{ fontFamily: MONO, fontSize: "0.6875rem", color: C.text2, letterSpacing: "0.08em", textDecoration: "none" }}>Cookies</a>
       </div>
     </div>
   );

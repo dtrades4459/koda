@@ -14,7 +14,7 @@ export function CompShotWarning({ C, date, hasScreenshot }: CompShotWarningProps
   if (hasScreenshot || !date || !isCompetitionJoined() || !isInCompWindow(date)) return null;
   return (
     <div style={{
-      fontFamily: MONO, fontSize: 10, color: C.live,
+      fontFamily: MONO, fontSize: "0.625rem", color: C.live,
       letterSpacing: "0.1em", textTransform: "uppercase" as const,
       lineHeight: 1.6, marginTop: 10,
     }}>

@@ -179,7 +179,7 @@ export function TradeTagger({ trades, strategies, onSave, onDone, C }: TradeTagg
         color: active ? (color ? "#fff" : C.bg) : C.muted,
         cursor: "pointer",
         fontFamily: MONO,
-        fontSize: "10px",
+        fontSize: "0.625rem",
         letterSpacing: "0.06em",
         transition: "all 0.12s",
         whiteSpace: "nowrap",
@@ -209,14 +209,14 @@ export function TradeTagger({ trades, strategies, onSave, onDone, C }: TradeTagg
         display: "flex", justifyContent: "space-between", alignItems: "center",
         padding: "14px 20px", flexShrink: 0,
       }}>
-        <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase" }}>
+        <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase" }}>
           Quick tag &nbsp;
           <span style={{ color: C.text }}>{idx + 1}</span>
           <span style={{ color: C.muted }}>/{total}</span>
         </div>
         <button onClick={handleExit} style={{
           background: "none", border: "none", color: C.muted, cursor: "pointer",
-          fontFamily: MONO, fontSize: "11px", letterSpacing: "0.08em",
+          fontFamily: MONO, fontSize: "0.6875rem", letterSpacing: "0.08em",
           textTransform: "uppercase",
         }}>
           Done ({savedCount} saved)
@@ -241,10 +241,10 @@ export function TradeTagger({ trades, strategies, onSave, onDone, C }: TradeTagg
         {/* Pair + session + date */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px" }}>
           <div>
-            <div style={{ fontFamily: MONO, fontSize: "20px", fontWeight: 700, color: C.text, letterSpacing: "-0.02em" }}>
+            <div style={{ fontFamily: MONO, fontSize: "1.25rem", fontWeight: 700, color: C.text, letterSpacing: "-0.02em" }}>
               {trade.pair || "--"}
             </div>
-            <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, marginTop: "2px", letterSpacing: "0.06em" }}>
+            <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, marginTop: "2px", letterSpacing: "0.06em" }}>
               {trade.date}{trade.session ? ` · ${trade.session}` : ""}
             </div>
           </div>
@@ -253,7 +253,7 @@ export function TradeTagger({ trades, strategies, onSave, onDone, C }: TradeTagg
               padding: "4px 10px", borderRadius: "999px",
               border: `1px solid ${trade.bias === "Bullish" ? C.green : C.red}`,
               color: trade.bias === "Bullish" ? C.green : C.red,
-              fontFamily: MONO, fontSize: "10px", letterSpacing: "0.06em",
+              fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.06em",
             }}>
               {trade.bias === "Bullish" ? "LONG" : trade.bias === "Bearish" ? "SHORT" : trade.bias}
             </div>
@@ -262,7 +262,7 @@ export function TradeTagger({ trades, strategies, onSave, onDone, C }: TradeTagg
 
         {/* P&L */}
         <div style={{
-          fontFamily: MONO, fontSize: "32px", fontWeight: 700,
+          fontFamily: MONO, fontSize: "2rem", fontWeight: 700,
           color: pnlColor, letterSpacing: "-0.02em", marginBottom: "12px",
         }}>
           {fmt$(trade.pnl)}
@@ -272,32 +272,32 @@ export function TradeTagger({ trades, strategies, onSave, onDone, C }: TradeTagg
         <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
           {trade.entryPrice && (
             <div>
-              <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "2px" }}>Entry</div>
-              <div style={{ fontFamily: MONO, fontSize: "13px", color: C.text2 }}>{trade.entryPrice}</div>
+              <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "2px" }}>Entry</div>
+              <div style={{ fontFamily: MONO, fontSize: "0.8125rem", color: C.text2 }}>{trade.entryPrice}</div>
             </div>
           )}
           {trade.slPrice && (
             <div>
-              <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "2px" }}>SL</div>
-              <div style={{ fontFamily: MONO, fontSize: "13px", color: C.red }}>{trade.slPrice}</div>
+              <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "2px" }}>SL</div>
+              <div style={{ fontFamily: MONO, fontSize: "0.8125rem", color: C.red }}>{trade.slPrice}</div>
             </div>
           )}
           {trade.tpPrice && (
             <div>
-              <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "2px" }}>TP</div>
-              <div style={{ fontFamily: MONO, fontSize: "13px", color: C.green }}>{trade.tpPrice}</div>
+              <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "2px" }}>TP</div>
+              <div style={{ fontFamily: MONO, fontSize: "0.8125rem", color: C.green }}>{trade.tpPrice}</div>
             </div>
           )}
           {trade.rr && (
             <div>
-              <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "2px" }}>R:R</div>
-              <div style={{ fontFamily: MONO, fontSize: "13px", color: C.text2 }}>{trade.rr}R</div>
+              <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "2px" }}>R:R</div>
+              <div style={{ fontFamily: MONO, fontSize: "0.8125rem", color: C.text2 }}>{trade.rr}R</div>
             </div>
           )}
         </div>
 
         {/* Swipe hint (mobile only) */}
-        <div style={{ fontFamily: BODY, fontSize: "10px", color: C.border2, marginTop: "12px", textAlign: "center" }}>
+        <div style={{ fontFamily: BODY, fontSize: "0.625rem", color: C.border2, marginTop: "12px", textAlign: "center" }}>
           swipe right to save · swipe left to skip
         </div>
       </div>
@@ -307,7 +307,7 @@ export function TradeTagger({ trades, strategies, onSave, onDone, C }: TradeTagg
 
         {/* Setup */}
         <div>
-          <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "8px" }}>
+          <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "8px" }}>
             Setup
           </div>
           <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
@@ -317,7 +317,7 @@ export function TradeTagger({ trades, strategies, onSave, onDone, C }: TradeTagg
 
         {/* Discipline */}
         <div>
-          <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "8px" }}>
+          <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "8px" }}>
             Discipline
           </div>
           <div style={{ display: "flex", gap: "8px" }}>
@@ -338,7 +338,7 @@ export function TradeTagger({ trades, strategies, onSave, onDone, C }: TradeTagg
 
         {/* Mistake */}
         <div>
-          <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "8px" }}>
+          <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "8px" }}>
             Mistake
           </div>
           <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
@@ -353,7 +353,7 @@ export function TradeTagger({ trades, strategies, onSave, onDone, C }: TradeTagg
 
         {/* Emotions */}
         <div>
-          <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "8px" }}>
+          <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "8px" }}>
             State of mind
           </div>
           <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
@@ -368,7 +368,7 @@ export function TradeTagger({ trades, strategies, onSave, onDone, C }: TradeTagg
 
         {/* Notes */}
         <div>
-          <div style={{ fontFamily: MONO, fontSize: "10px", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "8px" }}>
+          <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "8px" }}>
             Notes
           </div>
           <textarea
@@ -383,7 +383,7 @@ export function TradeTagger({ trades, strategies, onSave, onDone, C }: TradeTagg
               borderRadius: "10px",
               color: C.text,
               fontFamily: BODY,
-              fontSize: "13px",
+              fontSize: "0.8125rem",
               padding: "10px 12px",
               resize: "vertical",
               outline: "none",
@@ -414,7 +414,7 @@ export function TradeTagger({ trades, strategies, onSave, onDone, C }: TradeTagg
             padding: "11px 16px",
             cursor: "pointer",
             fontFamily: MONO,
-            fontSize: "11px",
+            fontSize: "0.6875rem",
             color: C.muted,
             letterSpacing: "0.08em",
             textTransform: "uppercase",
@@ -429,7 +429,7 @@ export function TradeTagger({ trades, strategies, onSave, onDone, C }: TradeTagg
           padding: "11px 20px",
           cursor: "pointer",
           fontFamily: MONO,
-          fontSize: "11px",
+          fontSize: "0.6875rem",
           color: C.muted,
           letterSpacing: "0.08em",
           textTransform: "uppercase",
@@ -449,7 +449,7 @@ export function TradeTagger({ trades, strategies, onSave, onDone, C }: TradeTagg
             padding: "12px 24px",
             cursor: saving ? "not-allowed" : "pointer",
             fontFamily: MONO,
-            fontSize: "12px",
+            fontSize: "0.75rem",
             letterSpacing: "0.1em",
             textTransform: "uppercase",
             fontWeight: 600,

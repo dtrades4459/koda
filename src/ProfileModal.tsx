@@ -97,38 +97,38 @@ export function ProfileModal({ handle, myCode, following, followUser, unfollowUs
         <div style={{ width: 36, height: 4, background: C.border2, borderRadius: 2, margin: "14px auto 20px", position: "relative", zIndex: 2 }} />
 
         {loading ? (
-          <div style={{ padding: "48px 0", textAlign: "center", fontFamily: BODY, fontSize: 13, color: C.muted, fontStyle: "italic" }}>Loading profile…</div>
+          <div style={{ padding: "48px 0", textAlign: "center", fontFamily: BODY, fontSize: "0.8125rem", color: C.muted, fontStyle: "italic" }}>Loading profile…</div>
         ) : !pubProfile ? (
           <div style={{ padding: "48px 0", textAlign: "center" }}>
-            <div style={{ fontFamily: DISPLAY, fontSize: 20, fontStyle: "italic", color: C.text2, fontWeight: 500, marginBottom: 8 }}>Profile not found</div>
-            <div style={{ fontFamily: BODY, fontSize: 13, color: C.muted }}>This trader hasn't published their profile yet.</div>
+            <div style={{ fontFamily: DISPLAY, fontSize: "1.25rem", fontStyle: "italic", color: C.text2, fontWeight: 500, marginBottom: 8 }}>Profile not found</div>
+            <div style={{ fontFamily: BODY, fontSize: "0.8125rem", color: C.muted }}>This trader hasn't published their profile yet.</div>
           </div>
         ) : (<>
           {/* ── Avatar hero (centered) ── */}
           <div style={{ textAlign: "center", position: "relative", zIndex: 2, padding: "4px 0 0" }}>
             {/* Avatar — gradient orb or AvatarCircle */}
-            <div style={{ width: 88, height: 88, borderRadius: 999, margin: "0 auto", background: `linear-gradient(135deg, ${(C as any).orb1 ?? C.accent}, ${(C as any).orb2 ?? C.accent})`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontFamily: DISPLAY, fontWeight: 600, fontSize: 30, boxShadow: `0 0 0 4px ${isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)"}, 0 12px 36px ${(C as any).orb1 ?? C.accent}40`, border: `2px solid ${C.bg}` }}>
+            <div style={{ width: 88, height: 88, borderRadius: 999, margin: "0 auto", background: `linear-gradient(135deg, ${(C as any).orb1 ?? C.accent}, ${(C as any).orb2 ?? C.accent})`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontFamily: DISPLAY, fontWeight: 600, fontSize: "1.875rem", boxShadow: `0 0 0 4px ${isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)"}, 0 12px 36px ${(C as any).orb1 ?? C.accent}40`, border: `2px solid ${C.bg}` }}>
               {pubProfile.avatar && pubProfile.avatar.length <= 8 && !pubProfile.avatar.startsWith("http") && !pubProfile.avatar.startsWith("data:") ? (
-                <span style={{ fontSize: 40 }}>{pubProfile.avatar}</span>
+                <span style={{ fontSize: "2.5rem" }}>{pubProfile.avatar}</span>
               ) : pubProfile.avatar && (pubProfile.avatar.startsWith("http") || pubProfile.avatar.startsWith("data:")) ? (
                 <img src={pubProfile.avatar} alt="" style={{ width: 88, height: 88, borderRadius: 999, objectFit: "cover" }} />
               ) : initials}
             </div>
-            <div style={{ fontFamily: DISPLAY, fontSize: 22, fontWeight: 600, color: C.text, marginTop: 14, letterSpacing: "-0.02em" }}>{pubProfile.name}</div>
-            <div style={{ fontFamily: MONO, fontSize: 12, color: C.text2, marginTop: 4 }}>@{pubProfile.handle?.replace(/^@/, "")}</div>
+            <div style={{ fontFamily: DISPLAY, fontSize: "1.375rem", fontWeight: 600, color: C.text, marginTop: 14, letterSpacing: "-0.02em" }}>{pubProfile.name}</div>
+            <div style={{ fontFamily: MONO, fontSize: "0.75rem", color: C.text2, marginTop: 4 }}>@{pubProfile.handle?.replace(/^@/, "")}</div>
             {pubProfile.bio && (
-              <div style={{ fontFamily: BODY, fontSize: 13, color: C.text2, marginTop: 10, lineHeight: 1.5, maxWidth: 280, marginLeft: "auto", marginRight: "auto" }}>{pubProfile.bio}</div>
+              <div style={{ fontFamily: BODY, fontSize: "0.8125rem", color: C.text2, marginTop: 10, lineHeight: 1.5, maxWidth: 280, marginLeft: "auto", marginRight: "auto" }}>{pubProfile.bio}</div>
             )}
 
             {/* Follow + label */}
             <div style={{ display: "flex", gap: 8, marginTop: 18, justifyContent: "center" }}>
               {!isMe && targetCode && (
                 <button onClick={() => isFollowing ? unfollowUser(targetCode) : followUser(targetCode)}
-                  style={{ display: "flex", alignItems: "center", gap: 8, padding: isFollowing ? "8px 8px 8px 18px" : "10px 20px", borderRadius: 999, background: isFollowing ? C.text : "transparent", color: isFollowing ? C.bg : C.text, border: isFollowing ? "none" : `1px solid ${C.border2}`, cursor: "pointer", fontFamily: BODY, fontSize: 13, fontWeight: 600 }}>
+                  style={{ display: "flex", alignItems: "center", gap: 8, padding: isFollowing ? "8px 8px 8px 18px" : "10px 20px", borderRadius: 999, background: isFollowing ? C.text : "transparent", color: isFollowing ? C.bg : C.text, border: isFollowing ? "none" : `1px solid ${C.border2}`, cursor: "pointer", fontFamily: BODY, fontSize: "0.8125rem", fontWeight: 600 }}>
                   {isFollowing ? (<>Following<span style={{ width: 22, height: 22, borderRadius: 999, background: (C as any).live ?? C.accent, display: "flex", alignItems: "center", justifyContent: "center" }}><svg width="11" height="11" viewBox="0 0 14 14" fill="none"><path d="M3 7l3 3 5-6" stroke="#0A0A0A" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></svg></span></>) : "+ Follow"}
                 </button>
               )}
-              {isMe && <span style={{ fontFamily: MONO, fontSize: 10, color: C.muted, letterSpacing: "0.1em", padding: "10px 0" }}>YOU</span>}
+              {isMe && <span style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.1em", padding: "10px 0" }}>YOU</span>}
             </div>
           </div>
 
@@ -141,9 +141,9 @@ export function ProfileModal({ handle, myCode, following, followUser, unfollowUs
                 { label: "Avg R", value: stats.avgR ? `+${stats.avgR.toFixed(1)}` : "—", sub: "per trade", good: !!stats.avgR && stats.avgR > 0 },
               ].map(s => (
                 <div key={s.label} style={{ borderRadius: 18, padding: 14, background: C.panel, border: `1px solid ${C.border}`, textAlign: "center" }}>
-                  <div style={{ fontFamily: MONO, fontSize: 9, color: C.muted, letterSpacing: "0.16em", textTransform: "uppercase" }}>{s.label}</div>
-                  <div style={{ fontFamily: DISPLAY, fontSize: 22, fontWeight: 600, color: C.text, marginTop: 6, letterSpacing: "-0.02em" }}>{s.value}</div>
-                  <div style={{ fontFamily: MONO, fontSize: 10, color: s.good ? C.green : C.text2, marginTop: 2 }}>{s.sub}</div>
+                  <div style={{ fontFamily: MONO, fontSize: "0.5625rem", color: C.muted, letterSpacing: "0.16em", textTransform: "uppercase" }}>{s.label}</div>
+                  <div style={{ fontFamily: DISPLAY, fontSize: "1.375rem", fontWeight: 600, color: C.text, marginTop: 6, letterSpacing: "-0.02em" }}>{s.value}</div>
+                  <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: s.good ? C.green : C.text2, marginTop: 2 }}>{s.sub}</div>
                 </div>
               ))}
             </div>
@@ -154,8 +154,8 @@ export function ProfileModal({ handle, myCode, following, followUser, unfollowUs
             <div style={{ marginTop: 14, borderRadius: 22, padding: 18, background: C.panel, border: `1px solid ${C.border}`, position: "relative", zIndex: 2 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
                 <div>
-                  <div style={{ fontFamily: MONO, fontSize: 9, color: C.muted, letterSpacing: "0.16em", textTransform: "uppercase" }}>Total P&L</div>
-                  <div style={{ fontFamily: DISPLAY, fontSize: 22, fontWeight: 600, color: stats.totalPnL >= 0 ? C.green : C.red, marginTop: 4, letterSpacing: "-0.02em" }}>{stats.totalPnL >= 0 ? "+" : ""}{stats.totalPnL.toFixed(1)}R</div>
+                  <div style={{ fontFamily: MONO, fontSize: "0.5625rem", color: C.muted, letterSpacing: "0.16em", textTransform: "uppercase" }}>Total P&L</div>
+                  <div style={{ fontFamily: DISPLAY, fontSize: "1.375rem", fontWeight: 600, color: stats.totalPnL >= 0 ? C.green : C.red, marginTop: 4, letterSpacing: "-0.02em" }}>{stats.totalPnL >= 0 ? "+" : ""}{stats.totalPnL.toFixed(1)}R</div>
                 </div>
               </div>
             </div>
@@ -164,10 +164,10 @@ export function ProfileModal({ handle, myCode, following, followUser, unfollowUs
           {/* ── Instruments pills ── */}
           {pubProfile.instruments && pubProfile.instruments.length > 0 && (
             <div style={{ marginTop: 14, borderRadius: 22, padding: 18, background: C.panel, border: `1px solid ${C.border}`, position: "relative", zIndex: 2 }}>
-              <div style={{ fontFamily: MONO, fontSize: 9, color: C.muted, letterSpacing: "0.16em", textTransform: "uppercase" }}>Trades</div>
+              <div style={{ fontFamily: MONO, fontSize: "0.5625rem", color: C.muted, letterSpacing: "0.16em", textTransform: "uppercase" }}>Trades</div>
               <div style={{ display: "flex", gap: 6, marginTop: 12, flexWrap: "wrap" }}>
                 {pubProfile.instruments.map((s: string) => (
-                  <div key={s} style={{ padding: "6px 12px", borderRadius: 999, background: C.accentSoft, border: `1px solid ${C.border2}`, color: C.accent, fontFamily: MONO, fontSize: 11, fontWeight: 600 }}>{s}</div>
+                  <div key={s} style={{ padding: "6px 12px", borderRadius: 999, background: C.accentSoft, border: `1px solid ${C.border2}`, color: C.accent, fontFamily: MONO, fontSize: "0.6875rem", fontWeight: 600 }}>{s}</div>
                 ))}
               </div>
             </div>
@@ -176,17 +176,17 @@ export function ProfileModal({ handle, myCode, following, followUser, unfollowUs
           {/* ── Trades list card ── */}
           {pubProfile.publicTrades && feedTrades.length > 0 && (
             <div style={{ marginTop: 14, borderRadius: 22, padding: 18, background: C.panel, border: `1px solid ${C.border}`, position: "relative", zIndex: 2 }}>
-              <div style={{ fontFamily: MONO, fontSize: 9, color: C.muted, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 12 }}>Recent trades · {feedTrades.length}</div>
+              <div style={{ fontFamily: MONO, fontSize: "0.5625rem", color: C.muted, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 12 }}>Recent trades · {feedTrades.length}</div>
               {feedTrades.slice(0, 25).map((tr, i) => {
                 const pos = parseFloat(tr.pnl) >= 0;
                 return (
                   <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr auto auto", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: i < Math.min(feedTrades.length, 25) - 1 ? `1px solid ${C.border}` : "none" }}>
                     <div>
-                      <div style={{ fontFamily: DISPLAY, fontSize: 14, fontWeight: 600, color: C.text, letterSpacing: "0.02em" }}>{tr.pair || "—"}</div>
-                      <div style={{ fontFamily: MONO, fontSize: 9, color: C.muted, letterSpacing: "0.06em", marginTop: 2 }}>{tr.date}{tr.strategy ? ` · ${tr.strategy}` : ""}</div>
+                      <div style={{ fontFamily: DISPLAY, fontSize: "0.875rem", fontWeight: 600, color: C.text, letterSpacing: "0.02em" }}>{tr.pair || "—"}</div>
+                      <div style={{ fontFamily: MONO, fontSize: "0.5625rem", color: C.muted, letterSpacing: "0.06em", marginTop: 2 }}>{tr.date}{tr.strategy ? ` · ${tr.strategy}` : ""}</div>
                     </div>
-                    {tr.rr && <span style={{ fontFamily: MONO, fontSize: 11, color: C.text2 }}>{tr.rr}R</span>}
-                    {tr.pnl !== undefined && <span style={{ fontFamily: MONO, fontSize: 12, fontWeight: 600, color: pos ? C.green : C.red }}>{pos ? "+" : ""}{tr.pnl}R</span>}
+                    {tr.rr && <span style={{ fontFamily: MONO, fontSize: "0.6875rem", color: C.text2 }}>{tr.rr}R</span>}
+                    {tr.pnl !== undefined && <span style={{ fontFamily: MONO, fontSize: "0.75rem", fontWeight: 600, color: pos ? C.green : C.red }}>{pos ? "+" : ""}{tr.pnl}R</span>}
                   </div>
                 );
               })}
@@ -194,11 +194,11 @@ export function ProfileModal({ handle, myCode, following, followUser, unfollowUs
           )}
 
           {pubProfile.publicTrades && feedTrades.length === 0 && (
-            <div style={{ marginTop: 14, padding: 20, textAlign: "center", fontFamily: BODY, fontSize: 13, color: C.muted, fontStyle: "italic", borderRadius: 22, background: C.panel, border: `1px solid ${C.border}` }}>No published trades yet.</div>
+            <div style={{ marginTop: 14, padding: 20, textAlign: "center", fontFamily: BODY, fontSize: "0.8125rem", color: C.muted, fontStyle: "italic", borderRadius: 22, background: C.panel, border: `1px solid ${C.border}` }}>No published trades yet.</div>
           )}
 
           {!pubProfile.publicTrades && (
-            <div style={{ marginTop: 14, padding: 18, background: C.panel, borderRadius: 22, border: `1px solid ${C.border}`, textAlign: "center", fontFamily: BODY, fontSize: 13, color: C.muted, position: "relative", zIndex: 2 }}>
+            <div style={{ marginTop: 14, padding: 18, background: C.panel, borderRadius: 22, border: `1px solid ${C.border}`, textAlign: "center", fontFamily: BODY, fontSize: "0.8125rem", color: C.muted, position: "relative", zIndex: 2 }}>
               This trader's trades are private.
             </div>
           )}

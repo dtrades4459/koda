@@ -104,7 +104,7 @@ export function InterventionSheet({
           />
           <span
             style={{
-              fontFamily: MONO, fontSize: 10, letterSpacing: "0.18em",
+              fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.18em",
               textTransform: "uppercase", color: accentColor, fontWeight: 500,
             }}
           >
@@ -139,7 +139,7 @@ export function InterventionSheet({
         <div
           style={{
             fontFamily: BODY,
-            fontSize: 13.5,
+            fontSize: "0.84375rem",
             color: C.text2,
             lineHeight: 1.55,
             marginBottom: 22,
@@ -180,7 +180,7 @@ export function InterventionSheet({
                 style={{
                   flex: 1,
                   fontFamily: BODY,
-                  fontSize: 13,
+                  fontSize: "0.8125rem",
                   color: C.text,
                   lineHeight: 1.35,
                 }}
@@ -191,7 +191,7 @@ export function InterventionSheet({
                 <span
                   style={{
                     fontFamily: MONO,
-                    fontSize: 9,
+                    fontSize: "0.5625rem",
                     letterSpacing: "0.14em",
                     textTransform: "uppercase",
                     color: C.red,
@@ -227,7 +227,7 @@ export function InterventionSheet({
               borderRadius: 999,
               padding: "13px 22px",
               fontFamily: BODY,
-              fontSize: 13,
+              fontSize: "0.8125rem",
               fontWeight: 500,
               cursor: "pointer",
               letterSpacing: "0.01em",
@@ -248,7 +248,7 @@ export function InterventionSheet({
               borderRadius: 999,
               padding: "13px 22px",
               fontFamily: BODY,
-              fontSize: 14,
+              fontSize: "0.875rem",
               fontWeight: 600,
               cursor: "pointer",
               letterSpacing: "0.01em",
@@ -271,7 +271,7 @@ export function InterventionSheet({
             background: accentSoft,
             border: `1px solid color-mix(in oklch, ${accentColor} 22%, transparent)`,
             fontFamily: MONO,
-            fontSize: 10,
+            fontSize: "0.625rem",
             letterSpacing: "0.1em",
             color: accentColor,
             textTransform: "uppercase",

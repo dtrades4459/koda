@@ -144,7 +144,7 @@ function EmptyState({ C }: { C: Theme }) {
           No activity yet.
         </div>
         <div style={{
-          fontFamily: MONO, fontSize: 11, color: C.muted,
+          fontFamily: MONO, fontSize: "0.6875rem", color: C.muted,
           lineHeight: 1.65, maxWidth: "30ch", margin: "0 auto",
           letterSpacing: "0.02em",
         }}>
@@ -210,14 +210,14 @@ function NotifRow({ notif, C }: { notif: FeedNotif; C: Theme }) {
           gap: "0 6px", lineHeight: 1.4,
         }}>
           <span style={{
-            fontFamily: BODY, fontSize: 13, fontWeight: 600,
+            fontFamily: BODY, fontSize: "0.8125rem", fontWeight: 600,
             color: C.text, wordBreak: "break-word",
           }}>
             {title}
           </span>
           {body && (
             <span style={{
-              fontFamily: BODY, fontSize: 13, fontWeight: 400,
+              fontFamily: BODY, fontSize: "0.8125rem", fontWeight: 400,
               color: C.text2, wordBreak: "break-word",
             }}>
               {body}
@@ -228,7 +228,7 @@ function NotifRow({ notif, C }: { notif: FeedNotif; C: Theme }) {
 
       {/* Relative timestamp */}
       <span style={{
-        fontFamily: MONO, fontSize: 10, color: C.muted,
+        fontFamily: MONO, fontSize: "0.625rem", color: C.muted,
         letterSpacing: "0.06em", flexShrink: 0,
         marginTop: 2, whiteSpace: "nowrap",
       }}>
@@ -305,7 +305,7 @@ export function NotificationFeed({ C, onMarkRead }: NotificationFeedProps) {
     <div style={{ width: "100%", maxWidth: 600, margin: "0 auto" }}>
       {/* Section kicker */}
       <div style={{
-        fontFamily: MONO, fontSize: 10, letterSpacing: "0.16em",
+        fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.16em",
         textTransform: "uppercase", color: C.muted,
         padding: "0 0 12px",
       }}>
@@ -324,7 +324,7 @@ export function NotificationFeed({ C, onMarkRead }: NotificationFeedProps) {
 
       {/* Error state */}
       {fetchError && (
-        <div style={{ padding: 24, textAlign: "center", color: C.muted, fontFamily: MONO, fontSize: 11 }}>
+        <div style={{ padding: 24, textAlign: "center", color: C.muted, fontFamily: MONO, fontSize: "0.6875rem" }}>
           <div style={{ marginBottom: 8 }}>Couldn&apos;t load activity.</div>
           <button
             type="button"
@@ -335,7 +335,7 @@ export function NotificationFeed({ C, onMarkRead }: NotificationFeedProps) {
               load(alive);
             }}
             style={{
-              fontFamily: MONO, fontSize: 10, letterSpacing: "0.08em",
+              fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.08em",
               color: C.accent, background: "transparent",
               border: `1px solid ${C.accent}`, padding: "6px 12px",
               borderRadius: 999, cursor: "pointer",

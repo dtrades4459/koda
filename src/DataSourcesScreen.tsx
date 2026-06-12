@@ -236,7 +236,7 @@ export function DataSourcesScreen({
     border: "none",
     cursor: "pointer",
     fontFamily: BODY,
-    fontSize: 14,
+    fontSize: "0.875rem",
     fontWeight: 500,
     background:
       variant === "primary" ? C.accent :
@@ -256,7 +256,7 @@ export function DataSourcesScreen({
     background: C.panel2,
     color: C.text,
     fontFamily: BODY,
-    fontSize: 14,
+    fontSize: "0.875rem",
     boxSizing: "border-box",
   };
 
@@ -267,8 +267,8 @@ export function DataSourcesScreen({
       {/* ── HEADER ── */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
         <div>
-          <div style={{ fontFamily: DISPLAY, fontSize: 22, fontWeight: 600, letterSpacing: "-0.02em", color: C.text ?? "#e2e8f0" }}>Data Sources</div>
-          <div style={{ fontSize: 13, color: C.muted ?? "#888", marginTop: 2 }}>
+          <div style={{ fontFamily: DISPLAY, fontSize: "1.375rem", fontWeight: 600, letterSpacing: "-0.02em", color: C.text ?? "#e2e8f0" }}>Data Sources</div>
+          <div style={{ fontSize: "0.8125rem", color: C.muted ?? "#888", marginTop: 2 }}>
             Live sync and CSV imports
           </div>
         </div>
@@ -286,17 +286,17 @@ export function DataSourcesScreen({
             display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
           }}>
             <div style={{
-              fontFamily: MONO, fontSize: 10, fontWeight: 700, letterSpacing: "0.12em",
+              fontFamily: MONO, fontSize: "0.625rem", fontWeight: 700, letterSpacing: "0.12em",
               textTransform: "uppercase", color: C.accent ?? "#7c3aed",
               background: `color-mix(in oklch, ${C.accent ?? "oklch(0.74 0.16 250)"} 12%, transparent)`,
               padding: "4px 10px", borderRadius: 6,
             }}>
               Coming Soon
             </div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: C.text ?? "#e2e8f0", textAlign: "center" }}>
+            <div style={{ fontSize: "0.9375rem", fontWeight: 700, color: C.text ?? "#e2e8f0", textAlign: "center" }}>
               Live Broker Sync
             </div>
-            <div style={{ fontSize: 12, color: C.muted ?? "#888", textAlign: "center", maxWidth: 280, lineHeight: 1.5 }}>
+            <div style={{ fontSize: "0.75rem", color: C.muted ?? "#888", textAlign: "center", maxWidth: 280, lineHeight: 1.5 }}>
               Auto-import trades every 5 minutes from Tradovate and Rithmic. Use CSV import in the meantime.
             </div>
           </div>
@@ -310,7 +310,7 @@ export function DataSourcesScreen({
             <Kicker C={C as any}>Live Connections</Kicker>
             {connections.length > 0 && (
               <button
-                style={{ ...btn("ghost"), fontSize: 11, padding: "4px 10px", fontFamily: MONO }}
+                style={{ ...btn("ghost"), fontSize: "0.6875rem", padding: "4px 10px", fontFamily: MONO }}
                 onClick={handleSyncNow}
                 disabled={syncing}
               >
@@ -328,10 +328,10 @@ export function DataSourcesScreen({
                 padding: "28px 20px",
                 textAlign: "center" as const,
               }}>
-                <div style={{ fontSize: 14, fontWeight: 600, color: C.text ?? "#e2e8f0", marginBottom: 4 }}>
+                <div style={{ fontSize: "0.875rem", fontWeight: 600, color: C.text ?? "#e2e8f0", marginBottom: 4 }}>
                   No accounts connected
                 </div>
-                <div style={{ fontSize: 12, color: C.muted ?? "#888", marginBottom: 16, lineHeight: 1.5 }}>
+                <div style={{ fontSize: "0.75rem", color: C.muted ?? "#888", marginBottom: 16, lineHeight: 1.5 }}>
                   Auto-import trades every 5 minutes from your Tradovate account.
                 </div>
                 <button style={btn("primary")} onClick={() => setShowConnect(true)}>
@@ -351,11 +351,11 @@ export function DataSourcesScreen({
                       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
                         <div style={{ minWidth: 0, flex: 1 }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" as const }}>
-                            <span style={{ fontWeight: 600, color: C.text ?? "#e2e8f0", fontSize: 14 }}>
+                            <span style={{ fontWeight: 600, color: C.text ?? "#e2e8f0", fontSize: "0.875rem" }}>
                               {conn.account_name ?? "Tradovate Account"}
                             </span>
                             <span style={{
-                              fontFamily: MONO, fontSize: 9, padding: "2px 6px", borderRadius: 4,
+                              fontFamily: MONO, fontSize: "0.5625rem", padding: "2px 6px", borderRadius: 4,
                               letterSpacing: "0.08em", textTransform: "uppercase" as const,
                               background: conn.env === "live" ? "rgba(34,197,94,0.15)" : "rgba(234,179,8,0.15)",
                               color: conn.env === "live" ? "#22c55e" : "#eab308",
@@ -363,7 +363,7 @@ export function DataSourcesScreen({
                               {conn.env}
                             </span>
                             <span style={{
-                              fontFamily: MONO, fontSize: 9, padding: "2px 6px", borderRadius: 4,
+                              fontFamily: MONO, fontSize: "0.5625rem", padding: "2px 6px", borderRadius: 4,
                               letterSpacing: "0.08em", textTransform: "uppercase" as const,
                               background: `${statusColor}26`,
                               color: statusColor,
@@ -371,17 +371,17 @@ export function DataSourcesScreen({
                               {conn.sync_status}
                             </span>
                           </div>
-                          <div style={{ fontSize: 11, color: C.muted ?? "#888", fontFamily: MONO }}>
+                          <div style={{ fontSize: "0.6875rem", color: C.muted ?? "#888", fontFamily: MONO }}>
                             Last sync: {fmtDate(conn.last_sync_at)}
                           </div>
                           {conn.sync_error && (
-                            <div style={{ fontSize: 11, color: "#ef4444", marginTop: 6, lineHeight: 1.4 }}>
+                            <div style={{ fontSize: "0.6875rem", color: "#ef4444", marginTop: 6, lineHeight: 1.4 }}>
                               {conn.sync_error}
                             </div>
                           )}
                         </div>
                         <button
-                          style={{ ...btn("ghost"), fontSize: 12, padding: "6px 10px" }}
+                          style={{ ...btn("ghost"), fontSize: "0.75rem", padding: "6px 10px" }}
                           onClick={() => setPendingDisconnect(conn)}
                         >
                           Disconnect
@@ -407,8 +407,8 @@ export function DataSourcesScreen({
       <div style={{ borderRadius: 18, border: `1px solid ${C.border2 ?? "#2a2a3e"}`, background: C.panel ?? "#131317", padding: "16px 18px", marginBottom: 24 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div>
-            <div style={{ fontWeight: 600, color: C.text ?? "#e2e8f0", fontSize: 15 }}>Manual CSV Import</div>
-            <div style={{ fontSize: 12, color: C.muted ?? "#888", marginTop: 2 }}>
+            <div style={{ fontWeight: 600, color: C.text ?? "#e2e8f0", fontSize: "0.9375rem" }}>Manual CSV Import</div>
+            <div style={{ fontSize: "0.75rem", color: C.muted ?? "#888", marginTop: 2 }}>
               Tradovate · Rithmic · NinjaTrader 8 · TopstepX · FTMO/MT5 · TradingView · MT4
             </div>
           </div>
@@ -434,7 +434,7 @@ export function DataSourcesScreen({
               C={C}
               inp={input}
               sel={input}
-              lbl={{ fontSize: 12, fontFamily: MONO, color: C.muted ?? "#888", marginBottom: 4 }}
+              lbl={{ fontSize: "0.75rem", fontFamily: MONO, color: C.muted ?? "#888", marginBottom: 4 }}
             />
           </div>
         )}
@@ -444,7 +444,7 @@ export function DataSourcesScreen({
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
         <div style={{ marginBottom: 0 }}><Kicker C={C as any}>Sync Audit Log</Kicker></div>
         <button
-          style={{ ...btn("ghost"), fontSize: 11, padding: "4px 10px", fontFamily: MONO }}
+          style={{ ...btn("ghost"), fontSize: "0.6875rem", padding: "4px 10px", fontFamily: MONO }}
           onClick={() => setAuditExpanded(v => !v)}
         >
           {auditExpanded ? "▲ Collapse" : "▼ Expand"}
@@ -453,10 +453,10 @@ export function DataSourcesScreen({
 
       {auditExpanded && (
         loadingAudit ? (
-          <div style={{ color: C.muted ?? "#888", fontSize: 13 }}>Loading audit log…</div>
+          <div style={{ color: C.muted ?? "#888", fontSize: "0.8125rem" }}>Loading audit log…</div>
         ) : syncEvents.length === 0 ? (
           <div style={{
-            ...card, color: C.muted ?? "#888", fontSize: 13, textAlign: "center", padding: "20px 16px",
+            ...card, color: C.muted ?? "#888", fontSize: "0.8125rem", textAlign: "center", padding: "20px 16px",
           }}>
             No sync events yet. Connect a broker to see history here.
           </div>
@@ -464,14 +464,14 @@ export function DataSourcesScreen({
           <div style={{ overflowX: "auto", marginBottom: 24 }}>
             <table style={{
               width: "100%", borderCollapse: "collapse",
-              fontSize: 12, fontFamily: MONO, color: C.text ?? "#e2e8f0",
+              fontSize: "0.75rem", fontFamily: MONO, color: C.text ?? "#e2e8f0",
             }}>
               <thead>
                 <tr style={{ borderBottom: `1px solid ${C.border ?? "#333"}` }}>
                   {["Time", "Broker", "Found", "New", "Status"].map(h => (
                     <th key={h} style={{
                       textAlign: "left", padding: "6px 10px",
-                      fontSize: 10, letterSpacing: "0.06em",
+                      fontSize: "0.625rem", letterSpacing: "0.06em",
                       textTransform: "uppercase", color: C.muted ?? "#888",
                       fontWeight: 600,
                     }}>
@@ -524,7 +524,7 @@ export function DataSourcesScreen({
                 })}
               </tbody>
             </table>
-            <div style={{ fontSize: 11, color: C.muted ?? "#888", marginTop: 8, textAlign: "right" }}>
+            <div style={{ fontSize: "0.6875rem", color: C.muted ?? "#888", marginTop: 8, textAlign: "right" }}>
               Showing last {syncEvents.length} events
             </div>
           </div>
@@ -546,10 +546,10 @@ export function DataSourcesScreen({
             borderRadius: "20px 20px 0 0",
             padding: "24px 20px 36px",
           }}>
-            <div style={{ fontWeight: 700, fontSize: 18, color: C.text ?? "#e2e8f0", marginBottom: 4 }}>
+            <div style={{ fontWeight: 700, fontSize: "1.125rem", color: C.text ?? "#e2e8f0", marginBottom: 4 }}>
               Connect Tradovate
             </div>
-            <div style={{ fontSize: 13, color: C.muted ?? "#888", marginBottom: 20 }}>
+            <div style={{ fontSize: "0.8125rem", color: C.muted ?? "#888", marginBottom: 20 }}>
               Your credentials are used once to get a token — never stored in plain text.
             </div>
 
@@ -561,7 +561,7 @@ export function DataSourcesScreen({
                   onClick={() => setConnectEnv(env)}
                   style={{
                     flex: 1, padding: "9px 0", borderRadius: 10, border: "none",
-                    cursor: "pointer", fontFamily: BODY, fontSize: 14, fontWeight: 600,
+                    cursor: "pointer", fontFamily: BODY, fontSize: "0.875rem", fontWeight: 600,
                     background: connectEnv === env ? C.accent : C.panel2,
                     color: connectEnv === env ? "#fff" : C.muted,
                   }}
@@ -573,7 +573,7 @@ export function DataSourcesScreen({
 
             <form onSubmit={handleConnect} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <div>
-                <label style={{ fontSize: 12, fontFamily: MONO, color: C.muted ?? "#888", display: "block", marginBottom: 4 }}>
+                <label style={{ fontSize: "0.75rem", fontFamily: MONO, color: C.muted ?? "#888", display: "block", marginBottom: 4 }}>
                   Tradovate Username
                 </label>
                 <input
@@ -586,7 +586,7 @@ export function DataSourcesScreen({
                 />
               </div>
               <div>
-                <label style={{ fontSize: 12, fontFamily: MONO, color: C.muted ?? "#888", display: "block", marginBottom: 4 }}>
+                <label style={{ fontSize: "0.75rem", fontFamily: MONO, color: C.muted ?? "#888", display: "block", marginBottom: 4 }}>
                   Password
                 </label>
                 <input
@@ -601,7 +601,7 @@ export function DataSourcesScreen({
 
               {connectError && (
                 <div style={{
-                  fontSize: 13, color: "#ef4444", background: "#ef444418",
+                  fontSize: "0.8125rem", color: "#ef4444", background: "#ef444418",
                   borderRadius: 8, padding: "8px 12px", fontFamily: MONO,
                 }}>
                   {connectError}
@@ -643,10 +643,10 @@ export function DataSourcesScreen({
             borderRadius: 18, padding: "24px 20px",
             width: "100%", maxWidth: 380,
           }}>
-            <div style={{ fontWeight: 700, fontSize: 17, color: C.text ?? "#e2e8f0", marginBottom: 8 }}>
+            <div style={{ fontWeight: 700, fontSize: "1.0625rem", color: C.text ?? "#e2e8f0", marginBottom: 8 }}>
               Disconnect account?
             </div>
-            <div style={{ fontSize: 13, color: C.muted ?? "#888", marginBottom: 20, lineHeight: 1.5 }}>
+            <div style={{ fontSize: "0.8125rem", color: C.muted ?? "#888", marginBottom: 20, lineHeight: 1.5 }}>
               Auto-sync will stop. Trades already imported are kept in your journal.
             </div>
             <div style={{ display: "flex", gap: 10 }}>

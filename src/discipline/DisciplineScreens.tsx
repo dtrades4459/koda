@@ -50,7 +50,7 @@ export function DisciplineRing({
           {label}
         </div>
         {sub && (
-          <div style={{ fontFamily: MONO, fontSize: 8.5, color: C.muted, marginTop: 2, letterSpacing: "0.06em" }}>
+          <div style={{ fontFamily: MONO, fontSize: "0.53125rem", color: C.muted, marginTop: 2, letterSpacing: "0.06em" }}>
             {sub}
           </div>
         )}
@@ -118,13 +118,13 @@ export function LiveMonitorScreen({
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
           <KodaMark size={20} color={C.text} />
-          <span style={{ fontFamily: BODY, fontWeight: 600, fontSize: 14, letterSpacing: "0.22em", color: C.text }}>
+          <span style={{ fontFamily: BODY, fontWeight: 600, fontSize: "0.875rem", letterSpacing: "0.22em", color: C.text }}>
             Kōda
           </span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <span style={{ width: 8, height: 8, borderRadius: 99, background: C.live, boxShadow: `0 0 8px ${C.live}` }} />
-          <span style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.1em", color: C.live }}>
+          <span style={{ fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.1em", color: C.live }}>
             LIVE · {sessionDuration}
           </span>
         </div>
@@ -144,7 +144,7 @@ export function LiveMonitorScreen({
               <div style={{ fontFamily: DISPLAY, fontSize: 16, fontWeight: 600, color: C.text }}>
                 {riskLabel}
               </div>
-              <div style={{ fontSize: 12, color: C.text2, marginTop: 4, lineHeight: 1.4, fontFamily: BODY }}>
+              <div style={{ fontSize: "0.75rem", color: C.text2, marginTop: 4, lineHeight: 1.4, fontFamily: BODY }}>
                 {riskDescription}
               </div>
             </div>
@@ -161,8 +161,8 @@ export function LiveMonitorScreen({
             }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-              <span style={{ fontSize: 13.5, color: C.text, fontFamily: BODY }}>{s.label}</span>
-              <span style={{ fontFamily: MONO, fontSize: 10, color: C.muted }}>{s.detail}</span>
+              <span style={{ fontSize: "0.84375rem", color: C.text, fontFamily: BODY }}>{s.label}</span>
+              <span style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted }}>{s.detail}</span>
             </div>
             <ProgressBar C={C} pct={s.pct} tone={s.tone} h={6} />
           </div>
@@ -234,13 +234,13 @@ export function CooldownScreen({
           <DisciplineRing C={C} pct={cfg.pct} size={170} tone={cfg.tone} label={cfg.ringLabel} sub={cfg.ringSub} />
         </div>
         <div style={{
-          fontFamily: DISPLAY, fontSize: 24, fontWeight: 600,
+          fontFamily: DISPLAY, fontSize: "1.5rem", fontWeight: 600,
           letterSpacing: "-0.02em", color: C.text, lineHeight: 1.1,
         }}>
           {cfg.title}
         </div>
         <div style={{
-          fontSize: 13.5, color: C.text2, marginTop: 12, lineHeight: 1.55,
+          fontSize: "0.84375rem", color: C.text2, marginTop: 12, lineHeight: 1.55,
           maxWidth: "34ch", fontFamily: BODY,
         }}>
           {cfg.body}
@@ -252,7 +252,7 @@ export function CooldownScreen({
               style={{
                 width: "100%", padding: "13px 22px", borderRadius: 999,
                 background: "transparent", color: C.text, border: `1px solid ${C.border2}`,
-                fontFamily: BODY, fontSize: 14, fontWeight: 600, cursor: "pointer",
+                fontFamily: BODY, fontSize: "0.875rem", fontWeight: 600, cursor: "pointer",
               }}
             >
               Review today's trades
@@ -263,7 +263,7 @@ export function CooldownScreen({
               style={{
                 width: "100%", padding: "13px 22px", borderRadius: 999,
                 background: "transparent", color: C.text, border: `1px solid ${C.border2}`,
-                fontFamily: BODY, fontSize: 14, fontWeight: 600, cursor: "pointer",
+                fontFamily: BODY, fontSize: "0.875rem", fontWeight: 600, cursor: "pointer",
               }}
             >
               Log how you're feeling
@@ -311,7 +311,7 @@ export function TiltHistoryScreen({
                 border: on
                   ? `1px solid color-mix(in oklch, ${C.accent} 40%, transparent)`
                   : `1px solid ${C.border2}`,
-                fontFamily: BODY, fontSize: 13, fontWeight: 500, cursor: "pointer",
+                fontFamily: BODY, fontSize: "0.8125rem", fontWeight: 500, cursor: "pointer",
               }}
             >
               {f}
@@ -334,10 +334,10 @@ export function TiltHistoryScreen({
               flexShrink: 0,
             }} />
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13.5, fontWeight: 600, color: C.text, fontFamily: BODY }}>
+              <div style={{ fontSize: "0.84375rem", fontWeight: 600, color: C.text, fontFamily: BODY }}>
                 {item.signal}
               </div>
-              <div style={{ fontFamily: MONO, fontSize: 9.5, color: C.muted, marginTop: 3, textTransform: "uppercase" }}>
+              <div style={{ fontFamily: MONO, fontSize: "0.59375rem", color: C.muted, marginTop: 3, textTransform: "uppercase" }}>
                 {item.date} · {item.outcome}
               </div>
             </div>
@@ -387,7 +387,7 @@ export function WeeklyDisciplineReportScreen({
           <div style={{ display: "flex", justifyContent: "center", margin: "16px 0" }}>
             <DisciplineRing C={C} pct={score} size={132} tone={tone} label={String(score)} sub="THIS WEEK" />
           </div>
-          <div style={{ fontSize: 13, color: C.text2, fontFamily: BODY }}>
+          <div style={{ fontSize: "0.8125rem", color: C.text2, fontFamily: BODY }}>
             {deltaFromLastWeek > 0 ? `Up ${deltaFromLastWeek} pts from last week.` :
              deltaFromLastWeek < 0 ? `Down ${Math.abs(deltaFromLastWeek)} pts from last week.` :
              "Same as last week."}
@@ -407,10 +407,10 @@ export function WeeklyDisciplineReportScreen({
               background: C.surface, border: `1px solid ${C.line}`, textAlign: "center",
             }}
           >
-            <div style={{ fontFamily: MONO, fontSize: 9, color: C.muted, textTransform: "uppercase" }}>
+            <div style={{ fontFamily: MONO, fontSize: "0.5625rem", color: C.muted, textTransform: "uppercase" }}>
               {s.label}
             </div>
-            <div style={{ fontFamily: DISPLAY, fontSize: 19, fontWeight: 600, color: C.text, marginTop: 6 }}>
+            <div style={{ fontFamily: DISPLAY, fontSize: "1.1875rem", fontWeight: 600, color: C.text, marginTop: 6 }}>
               {s.value}
             </div>
           </div>
@@ -431,7 +431,7 @@ export function WeeklyDisciplineReportScreen({
                       transition: "height 0.3s",
                     }} />
                   </div>
-                  <span style={{ fontFamily: MONO, fontSize: 9, color: C.muted }}>{d.day}</span>
+                  <span style={{ fontFamily: MONO, fontSize: "0.5625rem", color: C.muted }}>{d.day}</span>
                 </div>
               ))}
             </div>
@@ -483,11 +483,11 @@ export function DisciplineScoreBreakdownScreen({
             }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-              <span style={{ fontSize: 13.5, color: C.text, fontFamily: BODY }}>
+              <span style={{ fontSize: "0.84375rem", color: C.text, fontFamily: BODY }}>
                 {line.label}{" "}
-                <span style={{ fontFamily: MONO, fontSize: 10, color: C.green }}>{line.points}</span>
+                <span style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.green }}>{line.points}</span>
               </span>
-              <span style={{ fontFamily: MONO, fontSize: 10, color: C.muted }}>{line.detail}</span>
+              <span style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted }}>{line.detail}</span>
             </div>
             <ProgressBar C={C} pct={line.pct} tone={line.tone} h={6} />
           </div>
@@ -532,12 +532,12 @@ export function MonthlyReviewScreen({
         <div style={{ position: "relative" }}>
           <Kicker C={C} color={C.live}>{month} · in review</Kicker>
           <div style={{
-            fontFamily: DISPLAY, fontSize: 40, fontWeight: 600,
+            fontFamily: DISPLAY, fontSize: "2.5rem", fontWeight: 600,
             letterSpacing: "-0.04em", color: net.startsWith("+") ? C.green : C.red, marginTop: 12,
           }}>
             {net}
           </div>
-          <div style={{ fontSize: 13, color: C.text2, marginTop: 4, fontFamily: BODY }}>
+          <div style={{ fontSize: "0.8125rem", color: C.text2, marginTop: 4, fontFamily: BODY }}>
             across {tradeCount.toLocaleString()} trades · {winRate} win rate
           </div>
         </div>
@@ -546,10 +546,10 @@ export function MonthlyReviewScreen({
         <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
           {setups.map(s => (
             <Card C={C} pad={16} key={s.label} style={{ flex: 1 }}>
-              <div style={{ fontFamily: MONO, fontSize: 9, color: C.muted, textTransform: "uppercase" }}>
+              <div style={{ fontFamily: MONO, fontSize: "0.5625rem", color: C.muted, textTransform: "uppercase" }}>
                 {s.label}
               </div>
-              <div style={{ fontSize: 15, fontWeight: 600, color: C.text, marginTop: 6, fontFamily: BODY }}>
+              <div style={{ fontSize: "0.9375rem", fontWeight: 600, color: C.text, marginTop: 6, fontFamily: BODY }}>
                 {s.name}
               </div>
               <div style={{
@@ -574,9 +574,9 @@ export function MonthlyReviewScreen({
                 <IconFlag c={C.red} s={18} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13.5, color: C.text, fontFamily: BODY }}>{topMistakeLabel}</div>
+                <div style={{ fontSize: "0.84375rem", color: C.text, fontFamily: BODY }}>{topMistakeLabel}</div>
                 {topMistakeDetail && (
-                  <div style={{ fontFamily: MONO, fontSize: 9.5, color: C.muted, marginTop: 2, textTransform: "uppercase" }}>
+                  <div style={{ fontFamily: MONO, fontSize: "0.59375rem", color: C.muted, marginTop: 2, textTransform: "uppercase" }}>
                     {topMistakeDetail}
                   </div>
                 )}

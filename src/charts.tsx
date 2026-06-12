@@ -75,7 +75,7 @@ export function PnLChart({ trades, C }: ChartProps) {
   const valColor = lastVal >= 0 ? C.green : C.red;
   return (
     <div>
-      <div style={{ fontFamily: "monospace", fontSize: "11px", color: valColor, letterSpacing: "0.04em", marginBottom: "6px" }}>
+      <div style={{ fontFamily: "monospace", fontSize: "0.6875rem", color: valColor, letterSpacing: "0.04em", marginBottom: "6px" }}>
         {valLabel}
       </div>
       <svg width="100%" viewBox={`0 0 ${W} ${H}`}>
@@ -121,7 +121,7 @@ export function WinRateChart({ trades, C }: ChartProps) {
   const stratStats: Record<string, { w: number; total: number }> = {};
   trades.forEach(t => { if (!t.strategy) return; if (!stratStats[t.strategy]) stratStats[t.strategy] = { w: 0, total: 0 }; if (t.outcome === "Win") stratStats[t.strategy].w++; stratStats[t.strategy].total++; });
   const entries = Object.entries(stratStats).filter(([, v]) => v.total >= 1);
-  if (!entries.length) return <div style={{ fontSize: "12px", color: C.muted, padding: "16px 0", fontFamily: BODY }}>Log trades with a strategy to see win rates.</div>;
+  if (!entries.length) return <div style={{ fontSize: "0.75rem", color: C.muted, padding: "16px 0", fontFamily: BODY }}>Log trades with a strategy to see win rates.</div>;
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
       {entries.map(([s, v], idx) => {
@@ -129,11 +129,11 @@ export function WinRateChart({ trades, C }: ChartProps) {
         return (
           <div key={s}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "6px" }}>
-              <span style={{ fontSize: "11px", color: C.text, fontFamily: MONO, letterSpacing: "0.06em" }}>
+              <span style={{ fontSize: "0.6875rem", color: C.text, fontFamily: MONO, letterSpacing: "0.06em" }}>
                 <span style={{ color: C.muted, marginRight: "10px" }}>{String(idx + 1).padStart(2, "0")}</span>
                 {stratCode(s)} <span style={{ color: C.muted, marginLeft: "6px" }}>— {stratShort(s)}</span>
               </span>
-              <span style={{ fontSize: "11px", color: C.text, fontFamily: MONO, letterSpacing: "0.06em" }}>{(wr * 100).toFixed(0)}% <span style={{ color: C.muted }}>({v.total})</span></span>
+              <span style={{ fontSize: "0.6875rem", color: C.text, fontFamily: MONO, letterSpacing: "0.06em" }}>{(wr * 100).toFixed(0)}% <span style={{ color: C.muted }}>({v.total})</span></span>
             </div>
             <div style={{ background: C.border, height: "2px", width: "100%" }}>
               <div style={{ background: C.text, height: "2px", width: `${wr * 100}%`, transition: "width 0.6s ease" }} />
@@ -180,7 +180,7 @@ export function fmtDuration(sec: number): string {
 // ─── TRADE DURATION CHART ─────────────────────────────────────────────────────
 export function TradeDurationChart({ trades, C }: ChartProps) {
   const withDur = trades.map(t => ({ ...t, _dur: parseDurationSec(t.entryTime, t.exitTime) })).filter(t => t._dur !== null);
-  if (!withDur.length) return <div style={{ textAlign:"center", padding:"40px 0", color:C.muted, fontSize:"11px", fontFamily:MONO, letterSpacing:"0.06em" }}>ADD ENTRY + EXIT TIME WHEN LOGGING TRADES TO SEE DURATION ANALYSIS</div>;
+  if (!withDur.length) return <div style={{ textAlign:"center", padding:"40px 0", color:C.muted, fontSize:"0.6875rem", fontFamily:MONO, letterSpacing:"0.06em" }}>ADD ENTRY + EXIT TIME WHEN LOGGING TRADES TO SEE DURATION ANALYSIS</div>;
   const bd = DURATION_BUCKETS.map(b => {
     const bk = withDur.filter(t => t._dur! >= b.min && t._dur! < b.max);
     const w = bk.filter(t => t.outcome === "Win").length;
@@ -191,10 +191,10 @@ export function TradeDurationChart({ trades, C }: ChartProps) {
   const LW = 124;
   const barRow = (label: string, pct: number, val: string, color: string) => (
     <div style={{ display:"flex", alignItems:"center", gap:"8px", marginBottom:"7px" }}>
-      <div style={{ width:`${LW}px`, fontSize:"9px", color:C.muted, fontFamily:MONO, textAlign:"right", flexShrink:0 }}>{label}</div>
+      <div style={{ width:`${LW}px`, fontSize:"0.5625rem", color:C.muted, fontFamily:MONO, textAlign:"right", flexShrink:0 }}>{label}</div>
       <div style={{ flex:1, height:"22px", background:C.panel2, borderRadius:"3px", overflow:"hidden" }}>
         {pct > 0 && <div style={{ height:"100%", width:`${Math.max(pct,5)}%`, background:color, borderRadius:"3px", display:"flex", alignItems:"center", paddingLeft:"6px" }}>
-          <span style={{ fontFamily:MONO, fontSize:"10px", color:"#0C0C0B", fontWeight:700 }}>{val}</span>
+          <span style={{ fontFamily:MONO, fontSize:"0.625rem", color:"#0C0C0B", fontWeight:700 }}>{val}</span>
         </div>}
       </div>
     </div>
@@ -202,11 +202,11 @@ export function TradeDurationChart({ trades, C }: ChartProps) {
   return (
     <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"14px" }}>
       <div style={{ background:C.panel, borderRadius:"10px", padding:"16px 14px" }}>
-        <div style={{ fontFamily:BODY, fontWeight:700, fontSize:"14px", marginBottom:"12px", color:C.text }}>Trade Count</div>
+        <div style={{ fontFamily:BODY, fontWeight:700, fontSize:"0.875rem", marginBottom:"12px", color:C.text }}>Trade Count</div>
         {bd.map(b => barRow(b.label, b.count/mx*100, String(b.count), "#5BC2E7"))}
       </div>
       <div style={{ background:C.panel, borderRadius:"10px", padding:"16px 14px" }}>
-        <div style={{ fontFamily:BODY, fontWeight:700, fontSize:"14px", marginBottom:"12px", color:C.text }}>Win Rate</div>
+        <div style={{ fontFamily:BODY, fontWeight:700, fontSize:"0.875rem", marginBottom:"12px", color:C.text }}>Win Rate</div>
         {bd.map(b => barRow(b.label, b.wr ?? 0, b.wr !== null && b.count > 0 ? String(b.wr) : "", C.green))}
       </div>
     </div>
@@ -224,8 +224,8 @@ export function NetDailyPnLChart({ trades, C, useDollar }: ChartProps & { useDol
   const bW = Math.max(12, Math.min(40, Math.floor(560/days.length)-3));
   return (
     <div style={{ background:C.panel, borderRadius:"10px", padding:"16px 14px" }}>
-      <div style={{ fontFamily:BODY, fontWeight:700, fontSize:"14px", color:C.text, marginBottom:"4px" }}>Net Daily P&L</div>
-      <div style={{ fontSize:"10px", color:C.muted, fontFamily:MONO, marginBottom:"12px", letterSpacing:"0.06em" }}>{useDollar?"DOLLAR":"R-MULTIPLE"} · LAST {days.length} DAYS</div>
+      <div style={{ fontFamily:BODY, fontWeight:700, fontSize:"0.875rem", color:C.text, marginBottom:"4px" }}>Net Daily P&L</div>
+      <div style={{ fontSize:"0.625rem", color:C.muted, fontFamily:MONO, marginBottom:"12px", letterSpacing:"0.06em" }}>{useDollar?"DOLLAR":"R-MULTIPLE"} · LAST {days.length} DAYS</div>
       <div style={{ overflowX:"auto" }}>
         <div style={{ display:"flex", alignItems:"flex-end", gap:"3px", height:"100px", minWidth:`${days.length*(bW+3)}px` }}>
           {vals.map((v,i) => {
@@ -236,7 +236,7 @@ export function NetDailyPnLChart({ trades, C, useDollar }: ChartProps & { useDol
           })}
         </div>
         <div style={{ display:"flex", gap:"3px", marginTop:"4px", minWidth:`${days.length*(bW+3)}px` }}>
-          {days.map((d,i) => <div key={d} style={{ flex:`0 0 ${bW}px`, textAlign:"center", fontSize:"8px", color:C.muted, fontFamily:MONO }}>{i%Math.max(1,Math.floor(days.length/7))===0?d.slice(5):""}</div>)}
+          {days.map((d,i) => <div key={d} style={{ flex:`0 0 ${bW}px`, textAlign:"center", fontSize:"0.5rem", color:C.muted, fontFamily:MONO }}>{i%Math.max(1,Math.floor(days.length/7))===0?d.slice(5):""}</div>)}
         </div>
       </div>
     </div>
@@ -262,10 +262,10 @@ export function DailyCumulativePnLChart({ trades, C, useDollar }: ChartProps & {
   return (
     <div style={{ background:C.panel, borderRadius:"10px", padding:"16px 14px" }}>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", marginBottom:"4px" }}>
-        <div style={{ fontFamily:BODY, fontWeight:700, fontSize:"14px", color:C.text }}>Daily Cumulative PnL</div>
-        <div style={{ fontFamily:MONO, fontSize:"12px", color:pos?C.green:C.red }}>{pos?"+":""}{last.toFixed(2)}{useDollar?"$":"R"}</div>
+        <div style={{ fontFamily:BODY, fontWeight:700, fontSize:"0.875rem", color:C.text }}>Daily Cumulative PnL</div>
+        <div style={{ fontFamily:MONO, fontSize:"0.75rem", color:pos?C.green:C.red }}>{pos?"+":""}{last.toFixed(2)}{useDollar?"$":"R"}</div>
       </div>
-      <div style={{ fontSize:"10px", color:C.muted, fontFamily:MONO, marginBottom:"10px", letterSpacing:"0.06em" }}>{useDollar?"DOLLAR":"R-MULTIPLE"}</div>
+      <div style={{ fontSize:"0.625rem", color:C.muted, fontFamily:MONO, marginBottom:"10px", letterSpacing:"0.06em" }}>{useDollar?"DOLLAR":"R-MULTIPLE"}</div>
       <svg width="100%" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ display:"block", height:"100px" }}>
         <line x1={P} y1={z0} x2={W-P} y2={z0} stroke={C.border2} strokeWidth="1" strokeDasharray="4,3"/>
         <path d={fill} fill={pos?C.green:C.red} fillOpacity="0.12"/>
@@ -301,9 +301,9 @@ export function TradeStatCards({ trades, C }: ChartProps) {
     <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))", gap:"10px" }}>
       {cards.map(c=>(
         <div key={c.label} style={{ background:C.panel, borderRadius:"10px", padding:"16px 14px" }}>
-          <div style={{ fontSize:"10px", color:C.muted, fontFamily:MONO, letterSpacing:"0.06em", textTransform:"uppercase", marginBottom:"8px", lineHeight:1.4 }}>{c.label}</div>
-          <div style={{ fontSize:"24px", fontWeight:700, fontFamily:DISPLAY, color:C.text, letterSpacing:"-0.02em", lineHeight:1 }}>{c.value}</div>
-          {c.sub && <div style={{ fontSize:"9px", color:C.muted, fontFamily:MONO, marginTop:"7px", lineHeight:1.5 }}>{c.sub}</div>}
+          <div style={{ fontSize:"0.625rem", color:C.muted, fontFamily:MONO, letterSpacing:"0.06em", textTransform:"uppercase", marginBottom:"8px", lineHeight:1.4 }}>{c.label}</div>
+          <div style={{ fontSize:"1.5rem", fontWeight:700, fontFamily:DISPLAY, color:C.text, letterSpacing:"-0.02em", lineHeight:1 }}>{c.value}</div>
+          {c.sub && <div style={{ fontSize:"0.5625rem", color:C.muted, fontFamily:MONO, marginTop:"7px", lineHeight:1.5 }}>{c.sub}</div>}
         </div>
       ))}
     </div>
@@ -342,13 +342,13 @@ export function AvgStatsCards({ trades, C }: ChartProps) {
   ];
   return (
     <div>
-      <div style={{ fontSize:"10px", color:C.muted, fontFamily:MONO, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:"12px" }}>Additional Averages</div>
+      <div style={{ fontSize:"0.625rem", color:C.muted, fontFamily:MONO, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:"12px" }}>Additional Averages</div>
       <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))", gap:"10px" }}>
         {cards.map(c=>(
           <div key={c.label} style={{ background:C.panel, borderRadius:"10px", padding:"16px 14px" }}>
-            <div style={{ fontSize:"10px", color:C.muted, fontFamily:MONO, letterSpacing:"0.06em", textTransform:"uppercase", marginBottom:"10px" }}>{c.label}</div>
+            <div style={{ fontSize:"0.625rem", color:C.muted, fontFamily:MONO, letterSpacing:"0.06em", textTransform:"uppercase", marginBottom:"10px" }}>{c.label}</div>
             <div style={{ display:"flex", alignItems:"center", gap:"8px", marginBottom:"10px" }}>
-              <div style={{ fontSize:"26px", fontWeight:700, fontFamily:DISPLAY, color:C.text, letterSpacing:"-0.02em", lineHeight:1 }}>{c.val}</div>
+              <div style={{ fontSize:"1.625rem", fontWeight:700, fontFamily:DISPLAY, color:C.text, letterSpacing:"-0.02em", lineHeight:1 }}>{c.val}</div>
               {c.pct!==null && ring(c.pct, c.col)}
               {c.dir && <div style={{ flex:1, display:"flex", flexDirection:"column", gap:"4px" }}>
                 <div style={{ height:"14px", borderRadius:"3px", overflow:"hidden", background:C.panel2 }}><div style={{ width:`${c.dir.lo}%`, height:"100%", background:C.green }}/></div>
@@ -359,8 +359,8 @@ export function AvgStatsCards({ trades, C }: ChartProps) {
               {c.subs.map(s=>(
                 <div key={s.l} style={{ display:"flex", alignItems:"center", gap:"5px" }}>
                   <div style={{ width:"6px", height:"6px", borderRadius:"50%", background:s.c, flexShrink:0 }}/>
-                  <span style={{ fontSize:"9px", color:C.muted, fontFamily:MONO }}>{s.l}</span>
-                  <span style={{ fontSize:"9px", color:C.text2, fontFamily:MONO, marginLeft:"auto" }}>{s.v}</span>
+                  <span style={{ fontSize:"0.5625rem", color:C.muted, fontFamily:MONO }}>{s.l}</span>
+                  <span style={{ fontSize:"0.5625rem", color:C.text2, fontFamily:MONO, marginLeft:"auto" }}>{s.v}</span>
                 </div>
               ))}
             </div>
@@ -394,14 +394,14 @@ export function DailyInsights({ trades, C, useDollar }: ChartProps & { useDollar
   ].filter((c): c is NonNullable<typeof c> => c !== null);
   return (
     <div>
-      <div style={{ fontSize:"10px", color:C.muted, fontFamily:MONO, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:"12px" }}>Daily Insights</div>
+      <div style={{ fontSize:"0.625rem", color:C.muted, fontFamily:MONO, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:"12px" }}>Daily Insights</div>
       <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))", gap:"10px" }}>
         {cards.map(c=>(
           <div key={c.label} style={{ background:C.panel, borderRadius:"10px", padding:"16px 14px" }}>
-            <div style={{ fontSize:"10px", color:C.muted, fontFamily:MONO, letterSpacing:"0.06em", textTransform:"uppercase", marginBottom:"10px" }}>{c.label}</div>
-            <div style={{ fontSize:"24px", fontWeight:700, fontFamily:DISPLAY, color:c.color, letterSpacing:"-0.02em", lineHeight:1.1, marginBottom:"5px" }}>{c.primary}</div>
-            <div style={{ fontSize:"13px", fontWeight:600, color:C.text, fontFamily:BODY }}>{c.secondary}</div>
-            {c.sub && <div style={{ fontSize:"9px", color:C.muted, fontFamily:MONO, marginTop:"4px" }}>{c.sub}</div>}
+            <div style={{ fontSize:"0.625rem", color:C.muted, fontFamily:MONO, letterSpacing:"0.06em", textTransform:"uppercase", marginBottom:"10px" }}>{c.label}</div>
+            <div style={{ fontSize:"1.5rem", fontWeight:700, fontFamily:DISPLAY, color:c.color, letterSpacing:"-0.02em", lineHeight:1.1, marginBottom:"5px" }}>{c.primary}</div>
+            <div style={{ fontSize:"0.8125rem", fontWeight:600, color:C.text, fontFamily:BODY }}>{c.secondary}</div>
+            {c.sub && <div style={{ fontSize:"0.5625rem", color:C.muted, fontFamily:MONO, marginTop:"4px" }}>{c.sub}</div>}
           </div>
         ))}
       </div>
@@ -449,12 +449,12 @@ export function CalendarView({ trades, C, onDayClick }: ChartProps & { onDayClic
   while (cells.length % 7 !== 0) cells.push(null);
 
   const today = new Date().toISOString().split("T")[0];
-  const navBtn: React.CSSProperties = { background: "none", border: "none", color: C.text, padding: "6px 10px", cursor: "pointer", fontFamily: MONO, fontSize: "14px" };
+  const navBtn: React.CSSProperties = { background: "none", border: "none", color: C.text, padding: "6px 10px", cursor: "pointer", fontFamily: MONO, fontSize: "0.875rem" };
 
   const statTile = (label: string, value: string | number, color?: string) => (
     <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: "10px", padding: "10px 8px", textAlign: "center" as const, flex: 1 }}>
-      <div style={{ fontFamily: MONO, fontSize: "8px", color: C.muted, letterSpacing: "0.12em", textTransform: "uppercase" as const, marginBottom: "4px" }}>{label}</div>
-      <div style={{ fontFamily: MONO, fontSize: "15px", fontWeight: 700, color: color ?? C.text }}>{value}</div>
+      <div style={{ fontFamily: MONO, fontSize: "0.5rem", color: C.muted, letterSpacing: "0.12em", textTransform: "uppercase" as const, marginBottom: "4px" }}>{label}</div>
+      <div style={{ fontFamily: MONO, fontSize: "0.9375rem", fontWeight: 700, color: color ?? C.text }}>{value}</div>
     </div>
   );
 
@@ -474,7 +474,7 @@ export function CalendarView({ trades, C, onDayClick }: ChartProps & { onDayClic
           <div style={{ display: "flex", background: C.panel, borderRadius: "999px", border: `1px solid ${C.border2}`, padding: "2px" }}>
             {(["R", "$"] as const).map(mode => (
               <button key={mode} onClick={() => setShowDollar(mode === "$")}
-                style={{ padding: "4px 12px", borderRadius: "999px", background: (mode === "$") === showDollar ? C.text : "transparent", color: (mode === "$") === showDollar ? C.bg : C.muted, border: "none", cursor: "pointer", fontFamily: MONO, fontSize: "10px", fontWeight: 600, letterSpacing: "0.1em", transition: "all 0.15s" }}>
+                style={{ padding: "4px 12px", borderRadius: "999px", background: (mode === "$") === showDollar ? C.text : "transparent", color: (mode === "$") === showDollar ? C.bg : C.muted, border: "none", cursor: "pointer", fontFamily: MONO, fontSize: "0.625rem", fontWeight: 600, letterSpacing: "0.1em", transition: "all 0.15s" }}>
                 {mode}
               </button>
             ))}
@@ -485,14 +485,14 @@ export function CalendarView({ trades, C, onDayClick }: ChartProps & { onDayClic
       {/* Month nav */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${C.border}`, paddingBottom: "10px" }}>
         <button onClick={() => { if (month === 0) { setMonth(11); setYear(y => y - 1); } else setMonth(m => m - 1); }} style={navBtn}>‹</button>
-        <span style={{ fontSize: "11px", color: C.text, fontFamily: MONO, letterSpacing: "0.12em", textTransform: "uppercase" as const }}>{fmtMonth(year, month)}</span>
+        <span style={{ fontSize: "0.6875rem", color: C.text, fontFamily: MONO, letterSpacing: "0.12em", textTransform: "uppercase" as const }}>{fmtMonth(year, month)}</span>
         <button onClick={() => { if (month === 11) { setMonth(0); setYear(y => y + 1); } else setMonth(m => m + 1); }} style={navBtn}>›</button>
       </div>
 
       {/* Day headers — Monday first */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: "3px" }}>
         {["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"].map((d, i) => (
-          <div key={i} style={{ textAlign: "center" as const, fontSize: "9px", color: i >= 5 ? C.muted : C.text2, padding: "2px 0", fontFamily: MONO, letterSpacing: "0.06em", opacity: i >= 5 ? 0.5 : 1 }}>{d}</div>
+          <div key={i} style={{ textAlign: "center" as const, fontSize: "0.5625rem", color: i >= 5 ? C.muted : C.text2, padding: "2px 0", fontFamily: MONO, letterSpacing: "0.06em", opacity: i >= 5 ? 0.5 : 1 }}>{d}</div>
         ))}
       </div>
 
@@ -537,12 +537,12 @@ export function CalendarView({ trades, C, onDayClick }: ChartProps & { onDayClic
                 padding: "4px 2px",
               }}
             >
-              {isToday && <span style={{ fontFamily: MONO, fontSize: "7px", color: C.green, letterSpacing: "0.1em" }}>TODAY</span>}
-              <span style={{ fontFamily: MONO, fontSize: "10px", color: data ? (isWin ? C.green : isLoss ? C.red : C.muted) : isWeekend ? C.muted : C.text2, opacity: !data ? 0.4 : 1 }}>{d}</span>
+              {isToday && <span style={{ fontFamily: MONO, fontSize: "0.4375rem", color: C.green, letterSpacing: "0.1em" }}>TODAY</span>}
+              <span style={{ fontFamily: MONO, fontSize: "0.625rem", color: data ? (isWin ? C.green : isLoss ? C.red : C.muted) : isWeekend ? C.muted : C.text2, opacity: !data ? 0.4 : 1 }}>{d}</span>
               {data && (
                 <>
-                  <span style={{ fontFamily: MONO, fontSize: "10px", fontWeight: 600, color: isWin ? C.green : C.red, letterSpacing: "0.02em" }}>{displayStr}</span>
-                  <span style={{ fontFamily: MONO, fontSize: "8px", color: C.muted }}>{data.count}t</span>
+                  <span style={{ fontFamily: MONO, fontSize: "0.625rem", fontWeight: 600, color: isWin ? C.green : C.red, letterSpacing: "0.02em" }}>{displayStr}</span>
+                  <span style={{ fontFamily: MONO, fontSize: "0.5rem", color: C.muted }}>{data.count}t</span>
                 </>
               )}
             </div>
@@ -600,12 +600,12 @@ export function DrawdownCurve({ trades, C }: ChartProps) {
       </svg>
       <div style={{ display: "flex", gap: "20px", marginTop: "8px" }}>
         <div>
-          <div style={{ fontFamily: "monospace", fontSize: "9px", color: C.muted, letterSpacing: "0.1em" }}>MAX DRAWDOWN</div>
-          <div style={{ fontFamily: "Georgia, serif", fontSize: "20px", color: "#FF3D00" }}>{minDD.toFixed(1)}%</div>
+          <div style={{ fontFamily: "monospace", fontSize: "0.5625rem", color: C.muted, letterSpacing: "0.1em" }}>MAX DRAWDOWN</div>
+          <div style={{ fontFamily: "Georgia, serif", fontSize: "1.25rem", color: "#FF3D00" }}>{minDD.toFixed(1)}%</div>
         </div>
         <div>
-          <div style={{ fontFamily: "monospace", fontSize: "9px", color: C.muted, letterSpacing: "0.1em" }}>DAYS TRACKED</div>
-          <div style={{ fontFamily: "Georgia, serif", fontSize: "20px", color: C.text }}>{points.length}</div>
+          <div style={{ fontFamily: "monospace", fontSize: "0.5625rem", color: C.muted, letterSpacing: "0.1em" }}>DAYS TRACKED</div>
+          <div style={{ fontFamily: "Georgia, serif", fontSize: "1.25rem", color: C.text }}>{points.length}</div>
         </div>
       </div>
     </div>
@@ -640,23 +640,23 @@ export function SessionHeatmap({ trades, C }: ChartProps) {
   return (
     <div style={{ overflowX: "auto" }}>
       <div style={{ display: "grid", gridTemplateColumns: `80px repeat(${days.length}, 1fr)`, gap: "3px", minWidth: "320px" }}>
-        <div style={{ fontFamily: "monospace", fontSize: "9px", color: C.muted, letterSpacing: "0.08em", alignSelf: "end", paddingBottom: "4px" }} />
+        <div style={{ fontFamily: "monospace", fontSize: "0.5625rem", color: C.muted, letterSpacing: "0.08em", alignSelf: "end", paddingBottom: "4px" }} />
         {days.map(d => (
-          <div key={d} style={{ fontFamily: "monospace", fontSize: "9px", color: C.muted, letterSpacing: "0.1em", textAlign: "center", paddingBottom: "4px" }}>{d.toUpperCase()}</div>
+          <div key={d} style={{ fontFamily: "monospace", fontSize: "0.5625rem", color: C.muted, letterSpacing: "0.1em", textAlign: "center", paddingBottom: "4px" }}>{d.toUpperCase()}</div>
         ))}
         {sessions.map(sess => (
           <>
-            <div key={sess + "label"} style={{ fontFamily: "monospace", fontSize: "9px", color: C.text2, letterSpacing: "0.06em", alignSelf: "center", paddingRight: "8px" }}>{sess.toUpperCase().slice(0, 8)}</div>
+            <div key={sess + "label"} style={{ fontFamily: "monospace", fontSize: "0.5625rem", color: C.text2, letterSpacing: "0.06em", alignSelf: "center", paddingRight: "8px" }}>{sess.toUpperCase().slice(0, 8)}</div>
             {days.map(d => {
               const cell = grid[sess][d];
               return (
                 <div key={sess + d} title={`${sess} ${d}: ${cell.count} trades, ${cell.pnl >= 0 ? "+" : ""}${cell.pnl.toFixed(2)}R`}
                   style={{ background: cellColor(cell.pnl, cell.count), borderRadius: "4px", height: "36px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
                   {cell.count > 0 && <>
-                    <div style={{ fontFamily: "monospace", fontSize: "8px", color: cell.pnl >= 0 ? "#00C96B" : "#FF3D00", fontWeight: 600 }}>
+                    <div style={{ fontFamily: "monospace", fontSize: "0.5rem", color: cell.pnl >= 0 ? "#00C96B" : "#FF3D00", fontWeight: 600 }}>
                       {cell.pnl >= 0 ? "+" : ""}{cell.pnl.toFixed(1)}R
                     </div>
-                    <div style={{ fontFamily: "monospace", fontSize: "7px", color: C.muted }}>{cell.count}t</div>
+                    <div style={{ fontFamily: "monospace", fontSize: "0.4375rem", color: C.muted }}>{cell.count}t</div>
                   </>}
                 </div>
               );
@@ -687,7 +687,7 @@ export function TimeOfDayChart({ trades, C }: ChartProps) {
 
   const active = data.filter(b => b.total > 0);
   if (!active.length) return (
-    <div style={{ textAlign:"center", padding:"40px 0", color:C.muted, fontSize:"12px", fontStyle:"italic" }}>
+    <div style={{ textAlign:"center", padding:"40px 0", color:C.muted, fontSize:"0.75rem", fontStyle:"italic" }}>
       Log trades with an entry time to see time-of-day patterns.
     </div>
   );
@@ -702,7 +702,7 @@ export function TimeOfDayChart({ trades, C }: ChartProps) {
             if (b.total === 0) return (
               <div key={i} style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:"3px" }}>
                 <div style={{ flex:1, background:C.border, borderRadius:"3px", width:"100%", opacity:0.3 }} />
-                <div style={{ fontFamily:"monospace", fontSize:"7px", color:C.muted, letterSpacing:"0.05em" }}>{LABELS[i]}</div>
+                <div style={{ fontFamily:"monospace", fontSize:"0.4375rem", color:C.muted, letterSpacing:"0.05em" }}>{LABELS[i]}</div>
               </div>
             );
             const ht = Math.max(Math.abs(b.pnl) / maxAbs * 64, 6);
@@ -714,7 +714,7 @@ export function TimeOfDayChart({ trades, C }: ChartProps) {
                 <div style={{ flex:1, width:"100%", display:"flex", alignItems:"flex-end" }}>
                   <div style={{ width:"100%", height:`${ht}px`, background:col, borderRadius:"3px 3px 0 0", opacity:0.85 }} />
                 </div>
-                <div style={{ fontFamily:"monospace", fontSize:"7px", color:C.muted, letterSpacing:"0.05em" }}>{LABELS[i]}</div>
+                <div style={{ fontFamily:"monospace", fontSize:"0.4375rem", color:C.muted, letterSpacing:"0.05em" }}>{LABELS[i]}</div>
               </div>
             );
           })}
@@ -729,11 +729,11 @@ export function TimeOfDayChart({ trades, C }: ChartProps) {
           if (!b || b.total === 0 || !isFinite(b.pnl)) return null;
           return (
             <div key={label} style={{ flex:1, minWidth:"120px", padding:"10px 12px", border:`1px solid ${C.border}`, borderRadius:"8px" }}>
-              <div style={{ fontFamily:"monospace", fontSize:"9px", color:C.muted, letterSpacing:"0.1em", marginBottom:"4px" }}>{label}</div>
-              <div style={{ fontFamily:"monospace", fontSize:"14px", fontWeight:600, color: b.pnl >= 0 ? C.green : C.red }}>
+              <div style={{ fontFamily:"monospace", fontSize:"0.5625rem", color:C.muted, letterSpacing:"0.1em", marginBottom:"4px" }}>{label}</div>
+              <div style={{ fontFamily:"monospace", fontSize:"0.875rem", fontWeight:600, color: b.pnl >= 0 ? C.green : C.red }}>
                 {LABELS[b.i]}
               </div>
-              <div style={{ fontFamily:"monospace", fontSize:"9px", color:C.muted, marginTop:"2px" }}>
+              <div style={{ fontFamily:"monospace", fontSize:"0.5625rem", color:C.muted, marginTop:"2px" }}>
                 {b.pnl >= 0 ? "+" : ""}{b.pnl.toFixed(1)}R · {b.total}t
               </div>
             </div>
@@ -779,14 +779,14 @@ export function DayOfWeekChart({ trades, C }: ChartProps) {
                   : <div style={{ width:"100%", height:"6px", background:C.border, borderRadius:"4px", opacity:0.3 }} />
                 }
               </div>
-              <div style={{ fontFamily:"monospace", fontSize:"9px", color:C.muted, letterSpacing:"0.08em" }}>{DAYS[i].toUpperCase()}</div>
+              <div style={{ fontFamily:"monospace", fontSize:"0.5625rem", color:C.muted, letterSpacing:"0.08em" }}>{DAYS[i].toUpperCase()}</div>
               {b.total > 0 && (
-                <div style={{ fontFamily:"monospace", fontSize:"8px", color:col, fontWeight:600 }}>
+                <div style={{ fontFamily:"monospace", fontSize:"0.5rem", color:col, fontWeight:600 }}>
                   {b.pnl >= 0 ? "+" : ""}{b.pnl.toFixed(1)}R
                 </div>
               )}
               {b.total > 0 && (
-                <div style={{ fontFamily:"monospace", fontSize:"7px", color:C.muted }}>{wr}%</div>
+                <div style={{ fontFamily:"monospace", fontSize:"0.4375rem", color:C.muted }}>{wr}%</div>
               )}
             </div>
           );
@@ -806,7 +806,7 @@ export function MAEMFEChart({ trades, C }: ChartProps) {
     pair: t.pair,
   }));
   if (pts.length < 3) return (
-    <div style={{ textAlign: "center", padding: "40px 0", color: C.muted, fontSize: "13px", fontStyle: "italic", fontFamily: "sans-serif" }}>
+    <div style={{ textAlign: "center", padding: "40px 0", color: C.muted, fontSize: "0.8125rem", fontStyle: "italic", fontFamily: "sans-serif" }}>
       Log MAE & MFE on {Math.max(0, 3 - pts.length)} more trade{3 - pts.length !== 1 ? "s" : ""} to see the scatter.
     </div>
   );
@@ -831,12 +831,12 @@ export function MAEMFEChart({ trades, C }: ChartProps) {
       </svg>
       <div style={{ display: "flex", gap: "20px", marginTop: "8px" }}>
         <div>
-          <div style={{ fontFamily: "monospace", fontSize: "9px", color: C.muted, letterSpacing: "0.1em" }}>AVG CAPTURE EFF</div>
-          <div style={{ fontFamily: "Georgia, serif", fontSize: "20px", color: avgEff >= 60 ? "#00C96B" : "#BCBCB4" }}>{avgEff.toFixed(0)}%</div>
+          <div style={{ fontFamily: "monospace", fontSize: "0.5625rem", color: C.muted, letterSpacing: "0.1em" }}>AVG CAPTURE EFF</div>
+          <div style={{ fontFamily: "Georgia, serif", fontSize: "1.25rem", color: avgEff >= 60 ? "#00C96B" : "#BCBCB4" }}>{avgEff.toFixed(0)}%</div>
         </div>
         <div>
-          <div style={{ fontFamily: "monospace", fontSize: "9px", color: C.muted, letterSpacing: "0.1em" }}>TRADES WITH DATA</div>
-          <div style={{ fontFamily: "Georgia, serif", fontSize: "20px", color: C.text }}>{pts.length}</div>
+          <div style={{ fontFamily: "monospace", fontSize: "0.5625rem", color: C.muted, letterSpacing: "0.1em" }}>TRADES WITH DATA</div>
+          <div style={{ fontFamily: "Georgia, serif", fontSize: "1.25rem", color: C.text }}>{pts.length}</div>
         </div>
       </div>
     </div>

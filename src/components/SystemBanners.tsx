@@ -101,11 +101,11 @@ function TopBanner({
     >
       {icon}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 13.5, fontWeight: 600, color: C.text, fontFamily: BODY }}>
+        <div style={{ fontSize: "0.84375rem", fontWeight: 600, color: C.text, fontFamily: BODY }}>
           {title}
         </div>
         {body && (
-          <div style={{ fontSize: 11.5, color: C.text2, marginTop: 2, fontFamily: BODY, lineHeight: 1.4 }}>
+          <div style={{ fontSize: "0.71875rem", color: C.text2, marginTop: 2, fontFamily: BODY, lineHeight: 1.4 }}>
             {body}
           </div>
         )}
@@ -200,7 +200,7 @@ export function VersionMismatchBanner({ C, onReload }: { C: Theme; onReload?: ()
       }}
     >
       <IconRefresh c={C.accent} s={18} />
-      <div style={{ flex: 1, fontSize: 12.5, color: C.text, fontFamily: BODY }}>
+      <div style={{ flex: 1, fontSize: "0.78125rem", color: C.text, fontFamily: BODY }}>
         Kōda was updated.{" "}
         <span onClick={onReload} style={{ fontWeight: 600, cursor: "pointer", textDecoration: "underline", textDecorationColor: C.accent }}>
           Reload
@@ -241,10 +241,10 @@ export function SWUpdateBanner({ C, onReload, onDismiss }: {
         <IconDownload c={C.live} s={18} />
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 13.5, fontWeight: 600, color: C.text, fontFamily: BODY }}>
+        <div style={{ fontSize: "0.84375rem", fontWeight: 600, color: C.text, fontFamily: BODY }}>
           Update ready
         </div>
-        <div style={{ fontSize: 11.5, color: C.text2, marginTop: 2, fontFamily: BODY }}>
+        <div style={{ fontSize: "0.71875rem", color: C.text2, marginTop: 2, fontFamily: BODY }}>
           A new version of Kōda is available.
         </div>
       </div>
@@ -253,7 +253,7 @@ export function SWUpdateBanner({ C, onReload, onDismiss }: {
           onClick={onDismiss}
           style={{
             background: "transparent", border: "none", color: C.muted,
-            fontFamily: MONO, fontSize: 10, letterSpacing: "0.08em", cursor: "pointer",
+            fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.08em", cursor: "pointer",
             padding: "8px 10px",
           }}
         >
@@ -265,7 +265,7 @@ export function SWUpdateBanner({ C, onReload, onDismiss }: {
         style={{
           background: C.live, color: "#0A0A0A", border: "none",
           borderRadius: 999, padding: "8px 18px",
-          fontFamily: BODY, fontSize: 13, fontWeight: 600, cursor: "pointer",
+          fontFamily: BODY, fontSize: "0.8125rem", fontWeight: 600, cursor: "pointer",
         }}
       >
         Reload
@@ -306,10 +306,10 @@ export function OptimisticRollbackToast({ C, message, onRetry, onDismiss }: {
         <IconRefresh c={C.warn} s={16} />
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: C.text, fontFamily: BODY }}>
+        <div style={{ fontSize: "0.8125rem", fontWeight: 600, color: C.text, fontFamily: BODY }}>
           Couldn't save — reverted
         </div>
-        <div style={{ fontSize: 11.5, color: C.text2, marginTop: 2, fontFamily: BODY }}>
+        <div style={{ fontSize: "0.71875rem", color: C.text2, marginTop: 2, fontFamily: BODY }}>
           {message}
         </div>
       </div>
@@ -318,7 +318,7 @@ export function OptimisticRollbackToast({ C, message, onRetry, onDismiss }: {
           onClick={onRetry}
           style={{
             background: "transparent", border: "none",
-            fontFamily: MONO, fontSize: 10, letterSpacing: "0.08em", color: C.live,
+            fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.08em", color: C.live,
             cursor: "pointer", padding: "8px 4px",
           }}
         >
@@ -372,10 +372,10 @@ export function SessionExpiredModal({ C, onSignIn, onDismiss }: {
       }}>
         <IconLock c={C.accent} s={24} />
       </div>
-      <div style={{ fontFamily: DISPLAY, fontSize: 21, fontWeight: 600, letterSpacing: "-0.02em", color: C.text }}>
+      <div style={{ fontFamily: DISPLAY, fontSize: "1.3125rem", fontWeight: 600, letterSpacing: "-0.02em", color: C.text }}>
         Session expired
       </div>
-      <div style={{ fontSize: 13.5, color: C.text2, marginTop: 10, lineHeight: 1.55, fontFamily: BODY }}>
+      <div style={{ fontSize: "0.84375rem", color: C.text2, marginTop: 10, lineHeight: 1.55, fontFamily: BODY }}>
         For your security we signed you out after inactivity. Sign back in — your draft trade is saved.
       </div>
       <div style={{ marginTop: 22, display: "flex", flexDirection: "column", gap: 10 }}>
@@ -384,7 +384,7 @@ export function SessionExpiredModal({ C, onSignIn, onDismiss }: {
           style={{
             background: C.live, color: "#0A0A0A", border: "none",
             borderRadius: 999, padding: "13px 22px",
-            fontFamily: BODY, fontSize: 14, fontWeight: 600, cursor: "pointer", width: "100%",
+            fontFamily: BODY, fontSize: "0.875rem", fontWeight: 600, cursor: "pointer", width: "100%",
           }}
         >
           Sign back in
@@ -394,7 +394,7 @@ export function SessionExpiredModal({ C, onSignIn, onDismiss }: {
           style={{
             background: "transparent", color: C.text,
             border: `1px solid ${C.border2}`, borderRadius: 999, padding: "13px 22px",
-            fontFamily: BODY, fontSize: 14, fontWeight: 500, cursor: "pointer", width: "100%",
+            fontFamily: BODY, fontSize: "0.875rem", fontWeight: 500, cursor: "pointer", width: "100%",
           }}
         >
           Not now
@@ -424,10 +424,10 @@ export function RateLimitedModal({ C, secondsLeft = 23, onDismiss }: {
       }}>
         <IconClock c={C.warn} s={24} />
       </div>
-      <div style={{ fontFamily: DISPLAY, fontSize: 21, fontWeight: 600, letterSpacing: "-0.02em", color: C.text, textAlign: "center" }}>
+      <div style={{ fontFamily: DISPLAY, fontSize: "1.3125rem", fontWeight: 600, letterSpacing: "-0.02em", color: C.text, textAlign: "center" }}>
         Slow down a sec
       </div>
-      <div style={{ fontSize: 13.5, color: C.text2, marginTop: 10, lineHeight: 1.55, fontFamily: BODY, textAlign: "center" }}>
+      <div style={{ fontSize: "0.84375rem", color: C.text2, marginTop: 10, lineHeight: 1.55, fontFamily: BODY, textAlign: "center" }}>
         You've made a lot of requests quickly.{" "}
         {s > 0 ? <>Try again in <span style={{ color: C.text, fontFamily: MONO }}>{mins}:{secs}</span>.</> : "You can try again now."}
       </div>
@@ -437,7 +437,7 @@ export function RateLimitedModal({ C, secondsLeft = 23, onDismiss }: {
           style={{
             background: "transparent", color: C.text,
             border: `1px solid ${C.border2}`, borderRadius: 999, padding: "13px 22px",
-            fontFamily: BODY, fontSize: 14, fontWeight: 500, cursor: "pointer", width: "100%",
+            fontFamily: BODY, fontSize: "0.875rem", fontWeight: 500, cursor: "pointer", width: "100%",
           }}
         >
           Got it
@@ -479,7 +479,7 @@ export function ErrorPage({
       }}>
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 24, alignItems: "center", gap: 9 }}>
           <KodaMark size={22} color={C.text} />
-          <span style={{ fontFamily: BODY, fontWeight: 600, fontSize: 15, letterSpacing: "0.22em", color: C.text }}>
+          <span style={{ fontFamily: BODY, fontWeight: 600, fontSize: "0.9375rem", letterSpacing: "0.22em", color: C.text }}>
             Kōda
           </span>
         </div>
@@ -493,7 +493,7 @@ export function ErrorPage({
           {accent && <span style={{ fontStyle: "italic", fontWeight: 500, color: C.live }}>{accent}</span>}
         </div>
         <div style={{
-          fontSize: 15, color: C.text2, marginTop: 16, lineHeight: 1.6, fontFamily: BODY,
+          fontSize: "0.9375rem", color: C.text2, marginTop: 16, lineHeight: 1.6, fontFamily: BODY,
         }}>
           {sub}
         </div>
@@ -506,7 +506,7 @@ export function ErrorPage({
             style={{
               background: C.live, color: "#0A0A0A", border: "none",
               borderRadius: 999, padding: "13px 24px",
-              fontFamily: BODY, fontSize: 14, fontWeight: 600, cursor: "pointer",
+              fontFamily: BODY, fontSize: "0.875rem", fontWeight: 600, cursor: "pointer",
             }}
           >
             {cta}
@@ -517,7 +517,7 @@ export function ErrorPage({
               style={{
                 background: "transparent", color: C.text,
                 border: `1px solid ${C.border2}`, borderRadius: 999, padding: "13px 22px",
-                fontFamily: BODY, fontSize: 14, fontWeight: 500, cursor: "pointer",
+                fontFamily: BODY, fontSize: "0.875rem", fontWeight: 500, cursor: "pointer",
               }}
             >
               {secondary}

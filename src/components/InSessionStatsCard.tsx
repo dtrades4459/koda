@@ -37,16 +37,16 @@ export function InSessionStatsCard({
       borderRadius: 14, padding: 16, marginBottom: 12,
     }}>
       <div style={{
-        fontFamily: MONO, fontSize: 10, letterSpacing: "0.16em",
+        fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.16em",
         textTransform: "uppercase", color: C.muted, marginBottom: 10,
       }}>
         In-Session Check-Ins · Last 7d
       </div>
-      <div style={{ fontFamily: BODY, fontSize: 14, color: C.text, lineHeight: 1.6 }}>
+      <div style={{ fontFamily: BODY, fontSize: "0.875rem", color: C.text, lineHeight: 1.6 }}>
         <strong>{stats.fired}</strong> fired · <strong>{stats.continued}</strong> continued · <strong>{stats.cancelled}</strong> cancelled
       </div>
       {stats.continued > 0 && (
-        <div style={{ fontFamily: MONO, fontSize: 11, color: C.muted, marginTop: 6, letterSpacing: "0.04em" }}>
+        <div style={{ fontFamily: MONO, fontSize: "0.6875rem", color: C.muted, marginTop: 6, letterSpacing: "0.04em" }}>
           Post-intervention trades: {stats.postInterventionTrades}
         </div>
       )}

@@ -64,7 +64,7 @@ export function PostSessionDebriefSheet({
           boxShadow: `0 0 10px ${C.accent ?? C.live}`,
         }} />
         <span style={{
-          fontFamily: MONO, fontSize: 10, letterSpacing: "0.18em",
+          fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.18em",
           textTransform: "uppercase", color: C.accent ?? C.live,
         }}>
           Wrap up
@@ -77,7 +77,7 @@ export function PostSessionDebriefSheet({
       }}>
         How did today go?
       </div>
-      <div style={{ fontFamily: BODY, fontSize: 13, color: C.text2, marginBottom: 14 }}>
+      <div style={{ fontFamily: BODY, fontSize: "0.8125rem", color: C.text2, marginBottom: 14 }}>
         Sixty seconds of reflection beats none.
       </div>
 
@@ -89,11 +89,11 @@ export function PostSessionDebriefSheet({
         border: `1px solid ${C.border}`,
       }}>
         <div style={{ flex: 1 }}>
-          <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.14em", color: C.muted, marginBottom: 4 }}>TRADES</div>
+          <div style={{ fontFamily: MONO, fontSize: "0.5625rem", letterSpacing: "0.14em", color: C.muted, marginBottom: 4 }}>TRADES</div>
           <div style={{ fontFamily: MONO, fontSize: 16, color: C.text, fontWeight: 600 }}>{summary.trades}</div>
         </div>
         <div style={{ flex: 1, borderLeft: `1px solid ${C.border}`, paddingLeft: 12 }}>
-          <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.14em", color: C.muted, marginBottom: 4 }}>W / L</div>
+          <div style={{ fontFamily: MONO, fontSize: "0.5625rem", letterSpacing: "0.14em", color: C.muted, marginBottom: 4 }}>W / L</div>
           <div style={{ fontFamily: MONO, fontSize: 16, color: C.text, fontWeight: 600 }}>
             <span style={{ color: C.green }}>{summary.wins}</span>
             <span style={{ color: C.muted }}> / </span>
@@ -101,7 +101,7 @@ export function PostSessionDebriefSheet({
           </div>
         </div>
         <div style={{ flex: 1, borderLeft: `1px solid ${C.border}`, paddingLeft: 12 }}>
-          <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.14em", color: C.muted, marginBottom: 4 }}>P&amp;L</div>
+          <div style={{ fontFamily: MONO, fontSize: "0.5625rem", letterSpacing: "0.14em", color: C.muted, marginBottom: 4 }}>P&amp;L</div>
           <div style={{
             fontFamily: MONO, fontSize: 16, fontWeight: 600,
             color: summary.pnlPositive ? C.green : C.red,
@@ -110,7 +110,7 @@ export function PostSessionDebriefSheet({
       </div>
 
       {/* Question */}
-      <div style={{ fontFamily: BODY, fontSize: 13, color: C.text, marginBottom: 10, fontWeight: 600 }}>
+      <div style={{ fontFamily: BODY, fontSize: "0.8125rem", color: C.text, marginBottom: 10, fontWeight: 600 }}>
         Did you follow your rules today?
       </div>
       <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
@@ -126,7 +126,7 @@ export function PostSessionDebriefSheet({
                 border: `1px solid ${active ? C.text : C.border2}`,
                 background: active ? C.text : "transparent",
                 color: active ? C.bg : C.text,
-                fontFamily: BODY, fontSize: 13, fontWeight: 600,
+                fontFamily: BODY, fontSize: "0.8125rem", fontWeight: 600,
                 cursor: "pointer", transition: "all 120ms ease",
               }}
             >
@@ -147,7 +147,7 @@ export function PostSessionDebriefSheet({
           width: "100%", boxSizing: "border-box",
           background: "transparent", color: C.text,
           border: `1px solid ${C.border2}`, borderRadius: 10,
-          padding: "10px 12px", fontFamily: BODY, fontSize: 13,
+          padding: "10px 12px", fontFamily: BODY, fontSize: "0.8125rem",
           resize: "none", outline: "none", marginBottom: 16,
         }}
       />
@@ -161,7 +161,7 @@ export function PostSessionDebriefSheet({
             color: rulesFollowed ? C.bg : C.muted,
             border: rulesFollowed ? "none" : `1px solid ${C.border2}`,
             borderRadius: 999, padding: "12px 20px",
-            fontWeight: 600, fontSize: 12, fontFamily: BODY,
+            fontWeight: 600, fontSize: "0.75rem", fontFamily: BODY,
             cursor: rulesFollowed ? "pointer" : "not-allowed",
             letterSpacing: "0.02em",
             flex: isMobile ? undefined : 1.5,
@@ -177,7 +177,7 @@ export function PostSessionDebriefSheet({
             background: "transparent", color: C.text2,
             border: `1px solid ${C.border2}`, borderRadius: 999,
             padding: "12px 20px",
-            fontSize: 11, fontFamily: MONO,
+            fontSize: "0.6875rem", fontFamily: MONO,
             cursor: "pointer", letterSpacing: "0.06em", textTransform: "uppercase",
             flex: isMobile ? undefined : 1,
             width: isMobile ? "100%" : undefined,

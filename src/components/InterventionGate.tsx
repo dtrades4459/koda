@@ -54,7 +54,7 @@ export function InterventionGate({
         border: `1px solid ${C.live}`,
         borderRadius: 999, padding: "8px 14px",
         background: "transparent",
-        color: C.live, fontFamily: MONO, fontSize: 11,
+        color: C.live, fontFamily: MONO, fontSize: "0.6875rem",
         letterSpacing: "0.08em", textTransform: "uppercase",
         boxShadow: `0 0 12px ${C.live}33`,
       }}>
