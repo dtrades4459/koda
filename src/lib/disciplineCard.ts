@@ -31,7 +31,8 @@ const GRADE_LABEL: Record<string, string> = {
 export interface DisciplineCardEntry {
   disciplineScore?: number | null;
   disciplineGrade?: string | null;
-  winRate?: number | null;
+  /** string admitted for legacy entries (toFixed); null = withheld. */
+  winRate?: number | string | null;
   total?: number | null;
   streak?: { type: string; count: number } | null;
   topStrategy?: string | null;
@@ -105,6 +106,9 @@ export function buildDisciplineCard(input: DisciplineCardInput): DisciplineCardP
   const ref = refForCircle(circle, memberCode);
   const shareUrl = `${APP_URL}/join?ref=${encodeURIComponent(ref)}&utm_source=share_card`;
 
+  // Legacy entries published winRate as a toFixed() string; null = withheld.
+  const wr = entry.winRate == null ? NaN : Number(entry.winRate);
+
   return {
     username: profile.name?.trim() || "Trader",
     handle: profile.handle ?? "",
@@ -120,7 +124,7 @@ export function buildDisciplineCard(input: DisciplineCardInput): DisciplineCardP
       display: `${score}/100 — ${label}`,
     },
     highlights: highlights.slice(0, 3),
-    winRate: typeof entry.winRate === "number" ? Math.round(Number(entry.winRate)) : null,
+    winRate: Number.isFinite(wr) ? Math.round(wr) : null,
     ref,
     shareUrl,
     shareText: `Discipline ${score}/100 — ${label} on Kōda this week. Process over P&L. ${shareUrl}`,

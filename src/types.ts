@@ -97,6 +97,9 @@ export interface CircleMember {
 export interface Circle {
   metric?: "dollar" | "r" | "winrate" | "trades" | "avgr";
   emoji?: string;
+  /** Metrics members must share (consented at join). The comp circle is
+   *  hardcoded in circleVisibility.requiredMetricsFor regardless of meta. */
+  requiredMetrics?: ("pnl" | "winRate" | "discipline" | "avgRR")[];
   id: number;
   code: string;
   name: string;

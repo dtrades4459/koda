@@ -18,6 +18,8 @@ import { subscribeToCircle } from "../data/circles";
 import type { Circle, CircleMember, Profile } from "../types";
 import { COMP_CIRCLE_CODE, COMP_STAFF_UIDS, type CompEligibility } from "../lib/competition";
 import { METRIC_VALUE, type CircleMetric } from "../lib/leaderboardSort";
+import { readVisibility, applyRequiredMetrics } from "../lib/circleVisibility";
+import { buildLeaderboardEntry, type PublishedVizFlags } from "../lib/leaderboardEntry";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -35,11 +37,12 @@ export interface LeaderboardEntry {
   wins: number;
   losses: number;
   total: number;
-  winRate: number;
+  /** null = withheld by the member's privacy toggle (check viz.winRate). */
+  winRate: number | string | null;
   totalPnL: number;
-  totalPnLDollar?: number;
-  weekPnL?: number;
-  avgRR: number;
+  totalPnLDollar?: number | null;
+  weekPnL?: number | null;
+  avgRR: number | null;
   streak: { type: string; count: number } | null;
   topStrategy: string | null;
   pnlPercent?: number | null;
@@ -47,6 +50,12 @@ export interface LeaderboardEntry {
   disciplineScore?: number | null;
   /** Letter grade ("A+"..."F") matching disciplineScore. */
   disciplineGrade?: string | null;
+  /** % of tagged trades that followed the member's rules. */
+  ruleCompliancePct?: number | null;
+  taggedCount?: number | null;
+  /** Echoed privacy toggles — absent on entries published before 2026-06-12;
+   *  readers treat absence as all-visible. */
+  viz?: PublishedVizFlags;
   updatedAt: string | null;
   /** True for competition staff — shown as referees, stats excluded from scoring. */
   staff?: true;
@@ -79,6 +88,10 @@ export interface CircleStats {
   disciplineScore: number | null;
   /** Letter grade matching disciplineScore. */
   disciplineGrade: string | null;
+  /** % of tagged trades that followed rules (breakdown.rules earned/max). */
+  ruleCompliancePct: number | null;
+  /** How many trades were rule-tagged in the window. */
+  taggedCount: number | null;
 }
 
 interface UseCirclesParams {
@@ -529,38 +542,33 @@ export function useCircles({
       ? compStatsRef.current
       : statsRef.current;
     const accountSize = parseFloat((p as any).fundedAmount || (p as any).accountBalance || "0") || 0;
-    const pnlPercent = accountSize > 0 && s.totalPnlDollar !== 0
-      ? (s.totalPnlDollar / accountSize) * 100
-      : null;
-    const entry = {
-      memberCode: myCode,
-      name: p.name || "Trader",
-      handle: p.handle || "@trader",
-      avatar: p.avatar || "",
-      alias: p.alias?.trim() || myCode,
-      wins: s.wins,
-      losses: s.losses,
-      total: s.total,
-      winRate: s.winRate,
-      totalPnL: parseFloat(s.totalPnL),
-      totalPnLDollar: s.totalPnlDollar,
-      weekPnL: s.weekPnL,
-      avgRR: s.avgRR === "—" ? 0 : parseFloat(s.avgRR),
-      streak: s.streak.count > 0 ? { type: s.streak.type, count: s.streak.count } : null,
-      topStrategy: Object.entries(s.stratStats)
-        .sort((a, b) =>
-          (b[1] as { w: number; count: number }).w / Math.max((b[1] as { w: number; count: number }).count, 1) -
-          (a[1] as { w: number; count: number }).w / Math.max((a[1] as { w: number; count: number }).count, 1)
-        )[0]?.[0] || null,
-      pnlPercent,
-      disciplineScore: s.disciplineScore,
-      disciplineGrade: s.disciplineGrade,
-      updatedAt: new Date().toISOString(),
-      ...(circleCode === COMP_CIRCLE_CODE && compEligibilityRef.current
-        ? { shotsMissing: compEligibilityRef.current.missingShots }
-        : {}),
-      ...(isCompStaff ? { staff: true as const } : {}),
-    };
+    // Privacy: hidden metrics are nulled BEFORE the row is written — they never
+    // reach shared_kv. Circle-required metrics (and the comp circle, hardcoded)
+    // override the user's toggles; that requirement is shown at join time.
+    const circle = myCirclesRef.current.find((c: Circle) => c.code === circleCode);
+    const viz = applyRequiredMetrics(
+      await readVisibility(circleCode),
+      circleCode,
+      circle?.requiredMetrics,
+    );
+    const entry = buildLeaderboardEntry({
+      me: {
+        memberCode: myCode,
+        name: p.name || "Trader",
+        handle: p.handle || "@trader",
+        avatar: p.avatar || "",
+        alias: p.alias?.trim() || myCode,
+      },
+      stats: s,
+      viz,
+      accountSize,
+      extras: {
+        ...(circleCode === COMP_CIRCLE_CODE && compEligibilityRef.current
+          ? { shotsMissing: compEligibilityRef.current.missingShots }
+          : {}),
+        ...(isCompStaff ? { staff: true as const } : {}),
+      },
+    });
     try {
       await storage.set(
         "koda_circle_entry_" + circleCode + "_" + myCode,

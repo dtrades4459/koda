@@ -8,6 +8,7 @@ import { sortLeaderboard, METRIC_VALUE, type LeaderboardSortKey } from "./lib/le
 import { buildDisciplineCard } from "./lib/disciplineCard";
 import { shareDisciplineCard } from "./lib/renderDisciplineCard";
 import { phCapture } from "./lib/posthog";
+import { readVisibility, saveCircleVisibility, requiredMetricsFor, type CircleVisibility } from "./lib/circleVisibility";
 import { markChatRead } from "./data/chatReads";
 import { useUnreadCircles } from "./hooks/useUnreadCircles";
 import { createChallenge, fetchActiveChallenge, fetchTrophies } from "./data/circlesChallenges";
@@ -22,15 +23,20 @@ interface LeaderboardEntry {
   handle?: string;
   alias?: string;
   total: number;
-  winRate: number;
+  /** null = withheld via privacy toggle (check viz.winRate). */
+  winRate: number | string | null;
   totalPnL: number;
-  totalPnLDollar?: number;
+  totalPnLDollar?: number | null;
   pnlPercent?: number | null;
   topStrategy?: string | null;
   streak?: { count: number; type: string } | null;
-  avgRR?: number;
+  avgRR?: number | null;
   disciplineScore?: number | null;
   disciplineGrade?: string | null;
+  ruleCompliancePct?: number | null;
+  taggedCount?: number | null;
+  /** Echoed privacy toggles; absent = published pre-2026-06-12 = all visible. */
+  viz?: { pnl: boolean; winRate: boolean; discipline: boolean; avgRR: boolean };
   updatedAt?: string | null;
   staff?: boolean;
   shotsMissing?: number;
@@ -59,7 +65,7 @@ export interface TradingCirclesProps {
   setCircleMsg: React.Dispatch<React.SetStateAction<string>>;
   createCircle: () => void | Promise<void>;
   joinCircle: () => void | Promise<void>;
-  publishToCircle: (code: string) => void | Promise<void>;
+  publishToCircle: (code: string, silent?: boolean) => void | Promise<void>;
   fetchCircleLeaderboard: (circle: Circle, sort?: "all" | "week") => Promise<LeaderboardEntry[]>;
   profile: Profile;
   getMyCode: () => string;
@@ -186,17 +192,53 @@ export function TradingCircles({
   const CIRCLE_EMOJIS = ["◆","▲","●","■","⬡","◈","△","○","□","✦"];
   const MEDALS = ["🥇","🥈","🥉"];
 
+  // ── Per-circle sharing (privacy) sheet ────────────────────────────────
+  const [showVizSheet, setShowVizSheet] = useState(false);
+  const [vizDraft, setVizDraft] = useState<CircleVisibility | null>(null);
+  const [vizSaving, setVizSaving] = useState(false);
+
+  async function openVizSheet() {
+    if (!activeCircle) return;
+    setVizDraft(null); // loading state
+    setShowVizSheet(true);
+    setVizDraft(await readVisibility(activeCircle.code));
+  }
+
+  async function saveVizSheet() {
+    if (!activeCircle || !vizDraft || vizSaving) return;
+    setVizSaving(true);
+    try {
+      await saveCircleVisibility(activeCircle.code, vizDraft);
+      // Republish immediately: the OLD shared row may still carry values the
+      // user just hid — the overwrite is the scrub, it must not wait for the
+      // next trade's auto-publish.
+      await publishToCircle(activeCircle.code, true);
+      phCapture("circle_privacy_updated", { circle: activeCircle.code, ...vizDraft });
+      showToast("Sharing updated — board refreshed");
+      setShowVizSheet(false);
+    } catch {
+      showToast("Couldn't save — try again");
+    } finally {
+      setVizSaving(false);
+    }
+  }
+
   // Returns the primary metric label + formatted value for a leaderboard entry
   function metricDisplay(entry: any, circle: any): { val: string; raw: number; label: string } {
     const m = circle?.metric || "dollar";
+    // Privacy: viz flags are echoed on entries published after 2026-06-12.
+    // flag === false means the member withheld the metric — render "Private",
+    // never a fake $0. Absent viz (legacy entries) = all visible.
+    const withheld = (k: "pnl" | "winRate" | "discipline" | "avgRR") => entry.viz?.[k] === false;
     // Negative-value sign: previously losses showed as "$165" (no minus) — only color
     // marked them as red, ambiguous with positive in red error states. Use explicit "-".
-    if (m === "dollar") { const v = METRIC_VALUE.dollar(entry); const pct = entry.pnlPercent; const sign = v >= 0 ? "+" : "-"; const pctSign = (p: number) => p >= 0 ? "+" : "-"; const val = pct !== null && pct !== undefined ? `${sign}$${Math.abs(v).toFixed(0)} (${pctSign(pct)}${Math.abs(pct).toFixed(1)}%)` : `${sign}$${Math.abs(v).toFixed(0)}`; return { val, raw: v, label: "$ P&L" }; }
+    if (m === "dollar") { if (withheld("pnl")) return { val: "Private", raw: 0, label: "$ P&L" }; const v = METRIC_VALUE.dollar(entry); const pct = entry.pnlPercent; const sign = v >= 0 ? "+" : "-"; const pctSign = (p: number) => p >= 0 ? "+" : "-"; const val = pct !== null && pct !== undefined ? `${sign}$${Math.abs(v).toFixed(0)} (${pctSign(pct)}${Math.abs(pct).toFixed(1)}%)` : `${sign}$${Math.abs(v).toFixed(0)}`; return { val, raw: v, label: "$ P&L" }; }
     if (m === "r")       { const v = METRIC_VALUE.r(entry); return { val: `${v >= 0 ? "+" : ""}${v.toFixed(1)}R`, raw: v, label: "R P&L" }; }
-    if (m === "winrate") { const v = METRIC_VALUE.winrate(entry); return { val: `${v.toFixed(0)}%`, raw: v, label: "WIN RATE" }; }
+    if (m === "winrate") { if (withheld("winRate")) return { val: "Private", raw: 0, label: "WIN RATE" }; const v = METRIC_VALUE.winrate(entry); return { val: `${v.toFixed(0)}%`, raw: v, label: "WIN RATE" }; }
     if (m === "trades")  { const v = METRIC_VALUE.trades(entry); return { val: `${v}`, raw: v, label: "TRADES" }; }
-    if (m === "avgr")    { const v = METRIC_VALUE.avgr(entry); return { val: `${v.toFixed(2)}R`, raw: v, label: "AVG R" }; }
+    if (m === "avgr")    { if (withheld("avgRR")) return { val: "Private", raw: 0, label: "AVG R" }; const v = METRIC_VALUE.avgr(entry); return { val: `${v.toFixed(2)}R`, raw: v, label: "AVG R" }; }
     if (m === "discipline") {
+      if (withheld("discipline")) return { val: "Private", raw: -1, label: "DISCIPLINE" };
       const s = entry.disciplineScore;
       if (s === null || s === undefined) return { val: "—", raw: -1, label: "DISCIPLINE" };
       const g = entry.disciplineGrade ? ` ${entry.disciplineGrade}` : "";
@@ -617,8 +659,13 @@ export function TradingCircles({
   // which makes (s + e.winRate) string-concatenate → divide → NaN.
   // Numeric guards: Supabase can return PG numeric/decimal columns as strings,
   // which makes (s + e.winRate) string-concatenate → divide → NaN.
-  const circleAvgWR = leaderboard.length > 0
-    ? Math.round((leaderboard as LeaderboardEntry[]).reduce((s, e) => s + (Number(e.winRate) || 0), 0) / leaderboard.length)
+  // Average only members who actually publish a win rate — withheld (null)
+  // entries used to count as 0% and drag the circle average down.
+  const circleWRVals = (leaderboard as LeaderboardEntry[])
+    .map(e => (e.winRate == null ? NaN : Number(e.winRate)))
+    .filter(n => Number.isFinite(n));
+  const circleAvgWR = circleWRVals.length > 0
+    ? Math.round(circleWRVals.reduce((s, n) => s + n, 0) / circleWRVals.length)
     : 0;
   const circleTotalTrades = (leaderboard as LeaderboardEntry[]).reduce((s, e) => s + (Number(e.total) || 0), 0);
 
@@ -993,12 +1040,18 @@ export function TradingCircles({
           {/* Header bar */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "14px" }}>
             <button onClick={() => { setCirclesView("browse"); setActiveCircle(null); setLeaderboard([]); }} style={{ ...pillGhost, padding: "8px 14px" }}>‹ BACK</button>
-            {!activeCircle.isOwner && activeCircle.code !== KODA_GLOBAL_CODE && (
-              <button onClick={() => setShowLeaveSheet(true)}
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={openVizSheet}
                 style={{ background: "transparent", color: C.muted, border: `0.5px solid ${C.border2}`, borderRadius: "999px", padding: "8px 14px", cursor: "pointer", fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.12em", textTransform: "uppercase" }}>
-                Leave
+                Sharing
               </button>
-            )}
+              {!activeCircle.isOwner && activeCircle.code !== KODA_GLOBAL_CODE && (
+                <button onClick={() => setShowLeaveSheet(true)}
+                  style={{ background: "transparent", color: C.muted, border: `0.5px solid ${C.border2}`, borderRadius: "999px", padding: "8px 14px", cursor: "pointer", fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.12em", textTransform: "uppercase" }}>
+                  Leave
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Circle hero */}
@@ -1035,7 +1088,7 @@ export function TradingCircles({
                 ["MEMBERS", activeCircle.members?.length || 1],
                 ["ON BOARD", leaderboard.length || "—"],
                 ["TRADES", circleTotalTrades || "—"],
-                ["AVG WR", leaderboard.length > 0 ? `${circleAvgWR}%` : "—"],
+                ["AVG WR", circleWRVals.length > 0 ? `${circleAvgWR}%` : "—"],
               ].map(([k, v], i) => (
                 <div key={k as string} style={{ padding: "16px 8px", textAlign: "center", borderLeft: i > 0 ? `1px solid ${C.border}` : "none" }}>
                   <div style={{ fontFamily: DISPLAY, fontSize: "1.25rem", fontWeight: 500, color: C.text, letterSpacing: "-0.02em", lineHeight: 1 }}>{v}</div>
@@ -1760,6 +1813,93 @@ export function TradingCircles({
                 style={{ flex: 1, padding: "12px 0", borderRadius: 999, background: C.red, color: "#fff", border: "none", fontFamily: MONO, fontSize: "0.6875rem", letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer", fontWeight: 600 }}
               >
                 Leave
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Sharing (privacy) bottom sheet */}
+      {showVizSheet && activeCircle && (
+        <div
+          onClick={() => { if (!vizSaving) setShowVizSheet(false); }}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 50, display: "flex", alignItems: "flex-end", justifyContent: "center" }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{ width: "100%", maxWidth: 420, background: C.panel, borderRadius: "16px 16px 0 0", padding: "22px 18px 30px", border: `1px solid ${C.border2}`, borderBottom: "none", animation: "kRise 0.32s ease-out" }}
+          >
+            <div style={{ fontFamily: DISPLAY, fontSize: "1.125rem", fontWeight: 600, color: C.text, marginBottom: 4, letterSpacing: "-0.01em" }}>
+              Sharing in “{activeCircle.name}”
+            </div>
+            <div style={{ fontFamily: BODY, fontSize: "0.8125rem", color: C.text2, lineHeight: 1.55, marginBottom: 18 }}>
+              Choose what this circle sees on the board. Hidden metrics show as <span style={{ fontFamily: MONO, color: C.text }}>Private</span> — they’re never published, not just hidden.
+            </div>
+            {!vizDraft ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 18 }}>
+                {[0, 1, 2, 3, 4].map(i => <Skeleton key={i} height={40} radius={10} />)}
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 20 }}>
+                {([
+                  ["pnl", "$ P&L", "Dollar amounts on the leaderboard"],
+                  ["winRate", "Win rate", "Win percentage"],
+                  ["discipline", "Discipline score", "Score, grade & rule compliance"],
+                  ["avgRR", "Avg R multiple", "Average risk-to-reward"],
+                  ["tradeLogs", "Trade sharing", "Allow posting trades to this circle’s feed"],
+                ] as [keyof CircleVisibility, string, string][]).map(([key, label, desc]) => {
+                  const required = key !== "tradeLogs" &&
+                    requiredMetricsFor(activeCircle.code, activeCircle.requiredMetrics).includes(key as Exclude<keyof CircleVisibility, "tradeLogs">);
+                  const on = required || vizDraft[key];
+                  return (
+                    <div key={key} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "10px 2px", borderBottom: `1px solid ${C.border}` }}>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontFamily: MONO, fontSize: "0.6875rem", color: C.text, letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                          {label}
+                          {required && (
+                            <span style={{ marginLeft: 8, fontSize: "0.5625rem", color: C.muted, border: `1px solid ${C.border2}`, borderRadius: 999, padding: "2px 8px", letterSpacing: "0.1em" }}>
+                              Required
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ fontFamily: BODY, fontSize: "0.75rem", color: C.muted, marginTop: 2 }}>{desc}</div>
+                      </div>
+                      <button
+                        disabled={required}
+                        aria-pressed={on}
+                        onClick={() => setVizDraft({ ...vizDraft, [key]: !vizDraft[key] })}
+                        style={{
+                          flexShrink: 0,
+                          background: on ? C.text : "transparent",
+                          color: on ? C.bg : C.muted,
+                          border: `1px solid ${on ? C.text : C.border2}`,
+                          borderRadius: 999, padding: "6px 14px",
+                          cursor: required ? "not-allowed" : "pointer",
+                          opacity: required ? 0.55 : 1,
+                          fontFamily: MONO, fontSize: "0.625rem", fontWeight: 600,
+                          letterSpacing: "0.1em", textTransform: "uppercase",
+                        }}
+                      >
+                        {on ? "Shown" : "Hidden"}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            <div style={{ display: "flex", gap: 10 }}>
+              <button
+                onClick={() => setShowVizSheet(false)}
+                disabled={vizSaving}
+                style={{ flex: 1, padding: "12px 0", borderRadius: 999, background: "transparent", color: C.text, border: `1px solid ${C.border2}`, fontFamily: MONO, fontSize: "0.6875rem", letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer" }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveVizSheet}
+                disabled={!vizDraft || vizSaving}
+                style={{ flex: 1, padding: "12px 0", borderRadius: 999, background: C.text, color: C.bg, border: "none", fontFamily: MONO, fontSize: "0.6875rem", letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer", fontWeight: 600, opacity: !vizDraft || vizSaving ? 0.6 : 1 }}
+              >
+                {vizSaving ? "Saving…" : "Save"}
               </button>
             </div>
           </div>
