@@ -5,6 +5,9 @@ import { KODA_GLOBAL_CODE } from "./hooks/useCircles";
 import { COMP_CIRCLE_CODE, COMP_MIN_TRADES, COMP_STAFF_UIDS, isCompetitionStarted, shouldShowCompetitionCard, compStatusText, type CompEligibility } from "./lib/competition";
 import { readCircleMembers } from "./data/circles";
 import { sortLeaderboard, METRIC_VALUE, type LeaderboardSortKey } from "./lib/leaderboardSort";
+import { buildDisciplineCard } from "./lib/disciplineCard";
+import { shareDisciplineCard } from "./lib/renderDisciplineCard";
+import { phCapture } from "./lib/posthog";
 import { markChatRead } from "./data/chatReads";
 import { useUnreadCircles } from "./hooks/useUnreadCircles";
 import { createChallenge, fetchActiveChallenge, fetchTrophies } from "./data/circlesChallenges";
@@ -649,6 +652,40 @@ export function TradingCircles({
   // Staff sinking + rank assignment (staff get none) live in sortLeaderboard.
   const rankedLeaderboard = sortLeaderboard(displayLeaderboard, lbViewKey);
 
+  // ── Discipline share card (growth loop) ───────────────────────────────
+  // Only my own entry, only when a discipline score exists (3+ tagged trades).
+  const myRankedEntry = rankedLeaderboard.find(
+    (e) => e.memberCode === getMyCode() && (e as LeaderboardEntry).disciplineScore != null
+  ) as (LeaderboardEntry & { rank: number | null }) | undefined;
+
+  const [sharingCard, setSharingCard] = useState(false);
+  async function handleShareCard() {
+    if (!activeCircle || !myRankedEntry || sharingCard) return;
+    const payload = buildDisciplineCard({
+      profile,
+      entry: myRankedEntry,
+      circle: activeCircle,
+      memberCode: getMyCode(),
+      rank: myRankedEntry.rank,
+    });
+    if (!payload) return;
+    setSharingCard(true);
+    try {
+      const result = await shareDisciplineCard(payload);
+      phCapture("share_card", {
+        circle: activeCircle.code,
+        ref: payload.ref,
+        result,
+        score: payload.discipline.score,
+      });
+      showToast(result === "shared" ? "Card shared" : "Card saved — attach it to your post");
+    } catch {
+      showToast("Couldn't create the card — try again");
+    } finally {
+      setSharingCard(false);
+    }
+  }
+
   return (
     <div style={{ position: "relative" }}>
       {/* ambient orb */}
@@ -1184,6 +1221,32 @@ export function TradingCircles({
                       </span>
                     </button>
                   ))}
+                </div>
+              )}
+              {/* Share my discipline card — growth loop. Only when I'm on the
+                  board with a real score; the card never contains $ P&L. */}
+              {circleTab === "leaderboard" && myRankedEntry && (
+                <div style={{ display: "flex", justifyContent: "flex-end", paddingTop: "8px" }}>
+                  <button
+                    onClick={handleShareCard}
+                    disabled={sharingCard}
+                    style={{
+                      background: "transparent",
+                      border: `1px solid ${C.border2}`,
+                      borderRadius: 999,
+                      padding: "6px 14px",
+                      cursor: sharingCard ? "default" : "pointer",
+                      fontFamily: MONO,
+                      fontSize: "0.625rem",
+                      fontWeight: 600,
+                      letterSpacing: "0.08em",
+                      textTransform: "uppercase",
+                      color: sharingCard ? C.dim : C.text,
+                      opacity: sharingCard ? 0.6 : 1,
+                    }}
+                  >
+                    {sharingCard ? "Rendering…" : "⇪ Share my discipline card"}
+                  </button>
                 </div>
               )}
             </div>
