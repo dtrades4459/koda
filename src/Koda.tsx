@@ -115,13 +115,16 @@ const STREAK_FLAVOUR: Record<number, string> = {
 export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" | "pro" | "elite" } = {}) {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [draftCount, setDraftCount] = useState(0);
-  const [announcement, setAnnouncement] = useState<{ id: string; message: string } | null>(null);
+  const [announcement, setAnnouncement] = useState<{ id: string; message: string; audience: string } | null>(null);
   const [announcementDismissedId, setAnnouncementDismissedId] = useState<string | null>(() => {
     try { return localStorage.getItem("koda_announcement_dismissed") ?? null; } catch { return null; }
   });
   const [compBannerDismissed, setCompBannerDismissed] = useState(isCompetitionBannerDismissed);
   // Cross-device banner dismissals loaded from the DB (merged with localStorage).
   const [remoteDismissed, setRemoteDismissed] = useState<Set<string>>(new Set());
+  // True once cross-device dismissals have been resolved (or there's no user).
+  // Banners wait for this so they don't flash in then vanish when the set loads.
+  const [dismissalsResolved, setDismissalsResolved] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [unreadMsgs, setUnreadMsgs] = useState<Record<string, number>>({});
   const [view, setView] = useState("home");
@@ -1013,12 +1016,14 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
 
   // Fetch latest active announcement for home screen banner
   useEffect(() => {
-    supabase.from("announcements").select("id, message").eq("is_active", true)
+    // select("*") so a not-yet-migrated `audience` column degrades to 'all'.
+    supabase.from("announcements").select("*").eq("is_active", true)
       .order("created_at", { ascending: false }).limit(1)
       .then(({ data }) => {
-        if (data?.[0]) {
-          setAnnouncement(data[0]);
-          if (data[0].id !== announcementDismissedId) phCapture("announcement_shown", { id: data[0].id });
+        const row = data?.[0] as { id: string; message: string; audience?: string | null } | undefined;
+        if (row) {
+          setAnnouncement({ id: row.id, message: row.message, audience: row.audience ?? "all" });
+          if (row.id !== announcementDismissedId) phCapture("announcement_shown", { id: row.id });
         }
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- impression fires once on mount; dismissedId read intentionally stale
@@ -1029,9 +1034,12 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   // banners fall back to their localStorage dismissal state.
   useEffect(() => {
     const uid = user?.id;
-    if (!uid) return;
+    if (!uid) { setDismissalsResolved(true); return; }
+    setDismissalsResolved(false); // signed-in: hold banners until the set loads
     let active = true;
-    loadDismissedBannerKeys().then((keys) => { if (active) setRemoteDismissed(keys); });
+    loadDismissedBannerKeys().then((keys) => {
+      if (active) { setRemoteDismissed(keys); setDismissalsResolved(true); }
+    });
     return () => { active = false; };
   }, [user]);
 
@@ -2067,6 +2075,11 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                 <div>
                   {(() => {
                     const bannerItems: BannerStackItem[] = [];
+                    const daysSinceStart = profile.startDate ? Math.floor((Date.now() - Date.parse(profile.startDate)) / 86400000) : Infinity;
+                    const isNewUser = daysSinceStart <= 14;
+                    // Hold banners until cross-device dismissals resolve so they don't
+                    // flash in then vanish once the dismissed set loads.
+                    if (dismissalsResolved) {
                     // Competition CTA — highest priority, sits on top of the stack.
                     if (!compBannerDismissed && !remoteDismissed.has("comp_2026") && !isCompetitionJoined() && isCompetitionActive()) {
                       bannerItems.push({
@@ -2087,7 +2100,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                       });
                     }
                     // Team announcement — informational, lower priority.
-                    if (announcement && announcement.id !== announcementDismissedId && !remoteDismissed.has(`announcement:${announcement.id}`)) {
+                    if (announcement && announcement.id !== announcementDismissedId && !remoteDismissed.has(`announcement:${announcement.id}`) && (announcement.audience !== "new" || isNewUser)) {
                       const a = announcement;
                       bannerItems.push({
                         id: "announcement",
@@ -2109,6 +2122,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                           </>
                         ),
                       });
+                    }
                     }
                     return <BannerStack C={C} items={bannerItems} isMobile={!isDesktop} />;
                   })()}
