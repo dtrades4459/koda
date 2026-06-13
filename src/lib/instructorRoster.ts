@@ -42,6 +42,8 @@ export interface RosterRow {
   withheld: boolean;
   /** No discipline score AND didn't withhold — just hasn't tagged enough yet. */
   notPublishing: boolean;
+  /** Publishing member scoring below the coach's threshold — the ones to act on. */
+  belowThreshold: boolean;
 }
 
 export interface RosterSummary {
@@ -52,10 +54,16 @@ export interface RosterSummary {
   notPublishingCount: number;
   /** Median discipline across publishing members, or null if none. */
   medianDiscipline: number | null;
-  /** Count of publishing members scoring >= 70 ("on track"). */
+  /** Count of publishing members scoring >= threshold ("on track"). */
   aboveThresholdCount: number;
-  threshold: 70;
+  /** Publishing members scoring below threshold — the ones to act on. */
+  belowThresholdCount: number;
+  /** The discipline threshold this roster was built against (coach-set). */
+  threshold: number;
 }
+
+/** Default discipline threshold ("on track" >= this) when a circle hasn't set one. */
+export const DEFAULT_DISCIPLINE_THRESHOLD = 70;
 
 export interface Roster {
   rows: RosterRow[];
@@ -76,17 +84,21 @@ function median(values: number[]): number | null {
  * they aren't students. Sort: discipline desc, then rule-compliance desc, then
  * name; withheld/not-publishing sink below anyone with a real score.
  */
-export function buildRoster(entries: RosterEntryInput[]): Roster {
+export function buildRoster(
+  entries: RosterEntryInput[],
+  threshold: number = DEFAULT_DISCIPLINE_THRESHOLD,
+): Roster {
   const rows: RosterRow[] = entries
     .filter(e => !e.staff)
     .map(e => {
       const withheld = e.viz?.discipline === false;
       const hasScore = typeof e.disciplineScore === "number";
+      const score = hasScore ? (e.disciplineScore as number) : null;
       return {
         memberCode: e.memberCode,
         name: e.name || "Trader",
         handle: e.handle ?? "",
-        disciplineScore: hasScore ? (e.disciplineScore as number) : null,
+        disciplineScore: score,
         disciplineGrade: hasScore ? e.disciplineGrade ?? null : null,
         ruleCompliancePct:
           typeof e.ruleCompliancePct === "number" ? e.ruleCompliancePct : null,
@@ -96,6 +108,7 @@ export function buildRoster(entries: RosterEntryInput[]): Roster {
         updatedAt: e.updatedAt ?? null,
         withheld,
         notPublishing: !hasScore && !withheld,
+        belowThreshold: score !== null && score < threshold,
       };
     });
 
@@ -120,8 +133,9 @@ export function buildRoster(entries: RosterEntryInput[]): Roster {
     withheldCount: rows.filter(r => r.withheld).length,
     notPublishingCount: rows.filter(r => r.notPublishing).length,
     medianDiscipline: median(scores),
-    aboveThresholdCount: scores.filter(s => s >= 70).length,
-    threshold: 70,
+    aboveThresholdCount: scores.filter(s => s >= threshold).length,
+    belowThresholdCount: scores.filter(s => s < threshold).length,
+    threshold,
   };
 
   return { rows, summary };
@@ -140,7 +154,7 @@ export function rosterToCsv(roster: Roster): string {
   ];
   const lines = [header.join(",")];
   for (const r of roster.rows) {
-    const status = r.withheld ? "withheld" : r.notPublishing ? "not_publishing" : "active";
+    const status = r.withheld ? "withheld" : r.notPublishing ? "not_publishing" : r.belowThreshold ? "below_threshold" : "active";
     const streak = r.streak ? `${r.streak.count}${r.streak.type === "win" ? "W" : "L"}` : "";
     lines.push([
       esc(r.name), esc(r.handle), esc(r.disciplineScore), esc(r.disciplineGrade),

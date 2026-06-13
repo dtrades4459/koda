@@ -564,12 +564,33 @@ export function useCircles({
     if (on) mods.add(memberCode); else mods.delete(memberCode);
     try {
       await storage.set(`koda_circle_mods_${circleCode}`, JSON.stringify([...mods]), true);
-      showToast(on ? "Moderator added" : "Moderator removed");
+      showToast(on ? "Coach added" : "Coach removed");
     } catch (e) {
       log.error("setMemberModerator", e, { circleCode });
-      showToast("Couldn't update moderators — try again");
+      showToast("Couldn't update coaches — try again");
     }
     return mods;
+  }
+
+  /** Owner updates circle meta fields (e.g. requiredMetrics, disciplineThreshold).
+   *  RLS-safe: only the meta owner can write koda_circle_<code>. Merges into the
+   *  existing meta and reflects the change in myCircles. Returns true on success. */
+  async function updateCircleMeta(circleCode: string, patch: Partial<Circle>): Promise<boolean> {
+    try {
+      const res = await storage.get("koda_circle_" + circleCode, true);
+      const meta = res ? JSON.parse(res.value) : {};
+      const next = { ...meta, ...patch };
+      await storage.set("koda_circle_" + circleCode, JSON.stringify(next), true);
+      const updated = myCirclesRef.current.map((c: Circle) =>
+        c.code === circleCode ? ({ ...c, ...patch } as Circle) : c
+      );
+      await saveMyCircles(updated);
+      return true;
+    } catch (e) {
+      log.error("updateCircleMeta", e, { circleCode });
+      showToast("Couldn't save circle settings — try again");
+      return false;
+    }
   }
 
   /** Member leaves a circle they joined. Deletes their own member + entry rows. */
@@ -707,6 +728,7 @@ export function useCircles({
     joinCircleByCode,
     kickMember,
     setMemberModerator,
+    updateCircleMeta,
     leaveCircle,
     publishToCircle,
     fetchCircleLeaderboard,

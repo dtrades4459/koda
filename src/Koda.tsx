@@ -924,7 +924,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     circleLatestMsgs,
     isCreatingCircle, isJoiningCircle,
     saveMyCircles, readCircleMods,
-    createCircle, joinCircle, joinCircleByCode, kickMember, setMemberModerator, leaveCircle,
+    createCircle, joinCircle, joinCircleByCode, kickMember, setMemberModerator, updateCircleMeta, leaveCircle,
     publishToCircle, fetchCircleLeaderboard,
   } = useCircles({
     loading,
@@ -4653,6 +4653,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
               kickMember={kickMember}
               readCircleMods={readCircleMods}
               setMemberModerator={setMemberModerator}
+              updateCircleMeta={updateCircleMeta}
               leaveCircle={leaveCircle}
               openProfile={openProfile}
               isJoiningCircle={isJoiningCircle}

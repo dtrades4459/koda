@@ -4,7 +4,7 @@ import { StrategyPill, stratCode, KodaMark, MONO, BODY, DISPLAY, EmptyCirclesSta
 import { KODA_GLOBAL_CODE } from "./hooks/useCircles";
 import { COMP_CIRCLE_CODE, COMP_MIN_TRADES, COMP_STAFF_UIDS, isCompetitionStarted, shouldShowCompetitionCard, compStatusText, type CompEligibility } from "./lib/competition";
 import { readCircleMembers, readMyCircleRole, type CircleRole } from "./data/circles";
-import { buildRoster, rosterToCsv } from "./lib/instructorRoster";
+import { buildRoster, rosterToCsv, DEFAULT_DISCIPLINE_THRESHOLD } from "./lib/instructorRoster";
 import { sortLeaderboard, METRIC_VALUE, type LeaderboardSortKey } from "./lib/leaderboardSort";
 import { buildDisciplineCard } from "./lib/disciplineCard";
 import { shareDisciplineCard } from "./lib/renderDisciplineCard";
@@ -96,6 +96,7 @@ export interface TradingCirclesProps {
   kickMember: (circleCode: string, memberCode: string) => Promise<void> | void;
   readCircleMods: (circleCode: string) => Promise<Set<string>>;
   setMemberModerator: (circleCode: string, memberCode: string, on: boolean) => Promise<Set<string>>;
+  updateCircleMeta: (circleCode: string, patch: { requiredMetrics?: ("pnl" | "winRate" | "discipline" | "avgRR")[]; disciplineThreshold?: number }) => Promise<boolean>;
   leaveCircle: (circleCode: string) => Promise<void> | void;
   openProfile?: (handle: string) => void;
   isJoiningCircle: boolean;
@@ -127,7 +128,7 @@ export function TradingCircles({
   wins, losses, winRate, totalPnL, pnlPos,
   avgRR,
   STRATEGY_NAMES, C, inp, sel, lbl, pillPrimary, pillGhost,
-  following, followUser, unfollowUser, kickMember, readCircleMods, setMemberModerator, leaveCircle,
+  following, followUser, unfollowUser, kickMember, readCircleMods, setMemberModerator, updateCircleMeta, leaveCircle,
   openProfile, isJoiningCircle, isCreatingCircle,
   totalPnlDollar, hasDollarData, isPro, isDesktop, onJoinCompetition, myCompEligibility,
 }: TradingCirclesProps) {
@@ -746,9 +747,10 @@ export function TradingCircles({
     !isCompCircle &&
     !!activeCircle &&
     (activeCircle.isOwner || myRole === "owner" || iAmModerator);
-  // Promote/kick stay owner-only; moderators get the dashboard read only.
+  // Promote/kick + circle settings stay owner-only; coaches get the dashboard read only.
   const canManageMembers = !!activeCircle && (activeCircle.isOwner || myRole === "owner");
-  const roster = canInstruct ? buildRoster(leaderboard as LeaderboardEntry[]) : null;
+  const coachThreshold = activeCircle?.disciplineThreshold ?? DEFAULT_DISCIPLINE_THRESHOLD;
+  const roster = canInstruct ? buildRoster(leaderboard as LeaderboardEntry[], coachThreshold) : null;
 
   function downloadRosterCsv() {
     if (!roster || !activeCircle) return;
@@ -1754,7 +1756,7 @@ export function TradingCircles({
                           <div style={{ display: "flex", alignItems: "baseline", gap: "8px" }}>
                             <span style={{ fontFamily: DISPLAY, fontSize: "1rem", fontWeight: 500, color: C.text, letterSpacing: "-0.01em" }}>{m.name || "Trader"}</span>
                             {isMe && <span style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.green, letterSpacing: "0.12em" }}>· YOU</span>}
-                            {(m.code === activeCircle.createdBy || m.isOwner) ? <span style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.1em" }}>OWNER</span> : circleMods.has(m.code) ? <span style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.accent ?? C.text2, letterSpacing: "0.1em" }}>MOD</span> : null}
+                            {(m.code === activeCircle.createdBy || m.isOwner) ? <span style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.1em" }}>OWNER</span> : circleMods.has(m.code) ? <span style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.accent ?? C.text2, letterSpacing: "0.1em" }}>COACH</span> : null}
                           </div>
                           {m.handle && <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.04em", marginTop: "2px" }}>@{stripHandlePrefix(m.handle)}</div>}
                           {!m.handle && m.alias && <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.06em", marginTop: "2px" }}>{m.alias}</div>}
@@ -1771,9 +1773,9 @@ export function TradingCircles({
                                   const next = await setMemberModerator(activeCircle.code, m.code, !isMod);
                                   setCircleMods(new Set(next));
                                 }}
-                                  title={isMod ? "Remove moderator" : "Make moderator"}
+                                  title={isMod ? "Remove coach" : "Make coach"}
                                   style={{ background: isMod ? (C.accentSoft ?? "transparent") : "transparent", color: isMod ? (C.accent ?? C.text2) : C.muted, border: `1px solid ${isMod ? (C.accent ?? C.border2) : C.border2}`, borderRadius: "999px", padding: "6px 12px", cursor: "pointer", fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.08em", textTransform: "uppercase" as const }}>
-                                  {isMod ? "− Mod" : "+ Mod"}
+                                  {isMod ? "− Coach" : "+ Coach"}
                                 </button>
                               );
                             })()}
@@ -1874,6 +1876,44 @@ export function TradingCircles({
                   Your members ranked by discipline, not profit. No P&L here by design — this is about who’s following their rules.
                 </div>
 
+                {/* Coach settings — owner only */}
+                {canManageMembers && (
+                  <div style={{ background: C.panel, borderRadius: 12, border: `1px solid ${C.border}`, padding: "14px 16px", display: "flex", flexDirection: "column", gap: 16 }}>
+                    <div style={{ fontFamily: MONO, fontSize: "0.5625rem", color: C.muted, letterSpacing: "0.14em", textTransform: "uppercase" as const }}>Coach settings</div>
+                    {/* Discipline bar */}
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontFamily: BODY, fontSize: "0.8125rem", color: C.text, fontWeight: 600 }}>Discipline bar</div>
+                        <div style={{ fontFamily: BODY, fontSize: "0.6875rem", color: C.muted, marginTop: 2 }}>Members scoring below this get flagged.</div>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                        <button type="button" aria-label="Lower discipline bar" onClick={async () => { const next = Math.max(30, coachThreshold - 5); setActiveCircle({ ...activeCircle, disciplineThreshold: next }); await updateCircleMeta(activeCircle.code, { disciplineThreshold: next }); }} style={{ width: 32, height: 32, borderRadius: 8, background: "transparent", border: `1px solid ${C.border2}`, color: C.text, cursor: "pointer", fontFamily: MONO, fontSize: "1rem", lineHeight: 1 }}>−</button>
+                        <span style={{ fontFamily: DISPLAY, fontSize: "1.125rem", fontWeight: 600, color: C.text, minWidth: 28, textAlign: "center", fontVariantNumeric: "tabular-nums" }}>{coachThreshold}</span>
+                        <button type="button" aria-label="Raise discipline bar" onClick={async () => { const next = Math.min(95, coachThreshold + 5); setActiveCircle({ ...activeCircle, disciplineThreshold: next }); await updateCircleMeta(activeCircle.code, { disciplineThreshold: next }); }} style={{ width: 32, height: 32, borderRadius: 8, background: "transparent", border: `1px solid ${C.border2}`, color: C.text, cursor: "pointer", fontFamily: MONO, fontSize: "1rem", lineHeight: 1 }}>+</button>
+                      </div>
+                    </div>
+                    {/* Required metrics */}
+                    <div>
+                      <div style={{ fontFamily: BODY, fontSize: "0.8125rem", color: C.text, fontWeight: 600, marginBottom: 8 }}>Members must share</div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                        {([["pnl", "P&L"], ["winRate", "Win rate"], ["discipline", "Discipline"], ["avgRR", "Avg R"]] as const).map(([val, label]) => {
+                          const cur: ("pnl" | "winRate" | "discipline" | "avgRR")[] = activeCircle.requiredMetrics ?? [];
+                          const on = cur.includes(val);
+                          return (
+                            <button key={val} type="button" onClick={async () => {
+                              const nextArr = on ? cur.filter((x) => x !== val) : [...cur, val];
+                              setActiveCircle({ ...activeCircle, requiredMetrics: nextArr });
+                              await updateCircleMeta(activeCircle.code, { requiredMetrics: nextArr });
+                            }} style={{ background: on ? (C.accentSoft ?? C.surface) : "transparent", color: on ? (C.accent ?? C.text) : C.text2, border: `1px solid ${on ? (C.accent ?? C.border2) : C.border2}`, borderRadius: 999, padding: "6px 12px", cursor: "pointer", fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.06em", textTransform: "uppercase" as const }}>
+                              {label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Summary strip */}
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 0, background: C.panel, borderRadius: 12, overflow: "hidden", border: `1px solid ${C.border}` }}>
                   {[
@@ -1899,8 +1939,8 @@ export function TradingCircles({
                     </div>
                     {roster.rows.map((r, i) => {
                       const dColor = r.disciplineScore == null ? C.muted
-                        : r.disciplineScore >= 70 ? C.green
-                        : r.disciplineScore >= 50 ? (C.accent ?? C.text) : C.red;
+                        : r.disciplineScore >= coachThreshold ? C.green
+                        : r.disciplineScore >= coachThreshold - 20 ? (C.accent ?? C.text) : C.red;
                       const status = r.withheld ? "Private" : r.notPublishing ? "No data" : null;
                       return (
                         <div key={r.memberCode} style={{ display: "grid", gridTemplateColumns: "20px 1fr 56px 56px", gap: 8, alignItems: "center", padding: "11px 4px", borderBottom: `1px solid ${C.border}` }}>
@@ -1912,10 +1952,10 @@ export function TradingCircles({
                             >
                               <div style={{ fontFamily: BODY, fontSize: "0.8125rem", color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</div>
                             </button>
-                            <div style={{ fontFamily: MONO, fontSize: "0.5625rem", color: C.muted, marginTop: 2, letterSpacing: "0.04em" }}>
+                            <div style={{ fontFamily: MONO, fontSize: "0.5625rem", color: r.belowThreshold ? C.red : C.muted, marginTop: 2, letterSpacing: "0.04em" }}>
                               {status
                                 ? status
-                                : `${r.taggedCount ?? 0}/${r.totalTrades ?? 0} tagged${r.streak && r.streak.type === "win" && r.streak.count >= 2 ? ` · ${r.streak.count}W` : ""}`}
+                                : `${r.belowThreshold ? "⚠ Below target · " : ""}${r.taggedCount ?? 0}/${r.totalTrades ?? 0} tagged${r.streak && r.streak.type === "win" && r.streak.count >= 2 ? ` · ${r.streak.count}W` : ""}`}
                             </div>
                           </div>
                           <span style={{ textAlign: "right", fontFamily: DISPLAY, fontSize: "0.9375rem", fontWeight: 600, color: dColor, fontVariantNumeric: "tabular-nums" }}>
