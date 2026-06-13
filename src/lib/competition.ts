@@ -9,6 +9,7 @@ export const COMP_STAFF_UIDS = new Set([
 export const COMP_END_TS = new Date("2026-07-15T23:59:59Z").getTime();
 export const COMP_START_TS = new Date("2026-06-15T00:00:00Z").getTime();
 export const COMP_JOINED_KEY = "koda_comp_2026_joined";
+export const COMP_BANNER_DISMISSED_KEY = "koda_comp_2026_banner_dismissed";
 
 export function isCompetitionActive(): boolean {
   return Date.now() < COMP_END_TS;
@@ -24,6 +25,14 @@ export function isCompetitionJoined(): boolean {
 
 export function markCompetitionJoined(): void {
   try { localStorage.setItem(COMP_JOINED_KEY, "1"); } catch {}
+}
+
+export function isCompetitionBannerDismissed(): boolean {
+  try { return localStorage.getItem(COMP_BANNER_DISMISSED_KEY) === "1"; } catch { return false; }
+}
+
+export function markCompetitionBannerDismissed(): void {
+  try { localStorage.setItem(COMP_BANNER_DISMISSED_KEY, "1"); } catch {}
 }
 
 export function compDaysRemaining(): number {

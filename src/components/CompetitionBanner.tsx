@@ -1,7 +1,13 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BODY, MONO, DISPLAY } from "../shared";
 import type { Theme } from "../theme";
-import { isCompetitionActive, isCompetitionJoined } from "../lib/competition";
+import {
+  isCompetitionActive,
+  isCompetitionJoined,
+  isCompetitionBannerDismissed,
+  markCompetitionBannerDismissed,
+} from "../lib/competition";
+import { phCapture } from "../lib/posthog";
 
 export interface CompetitionBannerProps {
   C: Theme;
@@ -10,18 +16,40 @@ export interface CompetitionBannerProps {
 }
 
 export function CompetitionBanner({ C, isMobile, onJoin }: CompetitionBannerProps) {
-  const [dismissed, setDismissed] = useState(false);
+  // Dismiss now persists across reloads (localStorage), so the banner doesn't
+  // re-appear on every page load for the full 30-day competition window.
+  const [dismissed, setDismissed] = useState(isCompetitionBannerDismissed);
   const [joining, setJoining] = useState(false);
 
-  if (dismissed || isCompetitionJoined() || !isCompetitionActive()) return null;
+  const visible = !dismissed && !isCompetitionJoined() && isCompetitionActive();
+
+  // Impression — fire once per mount when the banner is actually shown.
+  const impressionFired = useRef(false);
+  useEffect(() => {
+    if (visible && !impressionFired.current) {
+      impressionFired.current = true;
+      phCapture("comp_banner_shown", { placement: "home_feed" });
+    }
+  }, [visible]);
+
+  if (!visible) return null;
 
   async function handleJoin() {
+    phCapture("comp_join_clicked", { placement: "home_feed" });
     setJoining(true);
     try { await onJoin(); } finally { setJoining(false); }
   }
 
+  function handleDismiss() {
+    markCompetitionBannerDismissed();
+    setDismissed(true);
+    phCapture("comp_banner_dismissed", { placement: "home_feed" });
+  }
+
   return (
     <div
+      role="region"
+      aria-label="50K Eval Challenge"
       style={{
         background: C.surfaceGlass,
         backdropFilter: "blur(20px) saturate(160%)",
@@ -39,20 +67,20 @@ export function CompetitionBanner({ C, isMobile, onJoin }: CompetitionBannerProp
             letterSpacing: "0.16em", textTransform: "uppercase" as const,
             fontWeight: 700, marginBottom: 10,
           }}>
-            ⚡ 50K EVAL CHALLENGE · JUNE 15 – JULY 15
+            ⚡ $50K EVAL CHALLENGE · JUNE 15 – JULY 15
           </div>
           <div style={{
             fontFamily: DISPLAY, fontSize: isMobile ? 22 : 26,
             fontWeight: 600, letterSpacing: "-0.02em",
             lineHeight: 1.1, color: C.text, marginBottom: 8,
           }}>
-            Trade your eval.<br />Win the leaderboard.
+            Trade your eval.<br />Top the leaderboard.
           </div>
           <div style={{
             fontFamily: BODY, fontSize: "0.8125rem", color: C.text2,
             lineHeight: 1.5, marginBottom: 14,
           }}>
-            30-day R-multiple competition. Free to enter.
+            30-day R-multiple leaderboard for $50K eval traders. Free to enter.
           </div>
           <button
             onClick={handleJoin}
@@ -69,7 +97,7 @@ export function CompetitionBanner({ C, isMobile, onJoin }: CompetitionBannerProp
           </button>
         </div>
         <button
-          onClick={() => setDismissed(true)}
+          onClick={handleDismiss}
           aria-label="Dismiss"
           style={{
             background: "none", border: "none", color: C.muted,

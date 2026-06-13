@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { CompetitionBanner } from "./CompetitionBanner";
-import { COMP_END_TS, COMP_JOINED_KEY, markCompetitionJoined } from "../lib/competition";
+import { COMP_END_TS, COMP_BANNER_DISMISSED_KEY, markCompetitionJoined } from "../lib/competition";
 import { DARK } from "../theme";
 
 describe("CompetitionBanner", () => {
@@ -38,10 +38,14 @@ describe("CompetitionBanner", () => {
     expect(onJoin).toHaveBeenCalledOnce();
   });
 
-  it("soft-dismisses on × without setting localStorage", () => {
-    render(<CompetitionBanner C={DARK} isMobile onJoin={async () => {}} />);
+  it("persists dismissal across remounts", () => {
+    const first = render(<CompetitionBanner C={DARK} isMobile onJoin={async () => {}} />);
     fireEvent.click(screen.getByRole("button", { name: /dismiss/i }));
     expect(screen.queryByText(/enter competition/i)).not.toBeInTheDocument();
-    expect(localStorage.getItem(COMP_JOINED_KEY)).toBeNull();
+    expect(localStorage.getItem(COMP_BANNER_DISMISSED_KEY)).toBe("1");
+    first.unmount();
+    // Remount (e.g. page reload) — banner stays dismissed.
+    const { container } = render(<CompetitionBanner C={DARK} isMobile onJoin={async () => {}} />);
+    expect(container.firstChild).toBeNull();
   });
 });
