@@ -211,6 +211,22 @@ const storage = {
     return cached;
   },
 
+  /**
+   * Always read the latest value from Supabase, bypassing the stale-cache-first
+   * behaviour of get(). Falls back to the local cache only when the remote is
+   * unreachable. Use for data that must reconcile across devices on load — e.g.
+   * the user's circle membership list, where a stale read can clobber circles
+   * created on another device.
+   */
+  async getFresh(key: string, shared: boolean = false): Promise<StorageRow> {
+    const remote = await remoteGet(key, shared);
+    if (remote) {
+      writeCache(key, remote.value, shared);
+      return remote;
+    }
+    return readCache(key, shared);
+  },
+
   async getMany(keys: string[]): Promise<Map<string, StorageRow>> {
     const result = new Map<string, StorageRow>();
     const misses: string[] = [];
