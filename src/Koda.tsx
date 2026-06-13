@@ -67,6 +67,7 @@ import { LoadingSplash } from "./components/LoadingSplash";
 import { OfflineBanner } from "./components/OfflineBanner";
 import { CompetitionBannerContent } from "./components/CompetitionBanner";
 import { BannerStack, type BannerStackItem } from "./components/BannerStack";
+import { loadDismissedBannerKeys, recordBannerDismissal } from "./lib/bannerDismissals";
 import { COMP_CIRCLE_CODE, markCompetitionJoined, compEligibility, isInCompWindow, isCompetitionActive, isCompetitionJoined, isCompetitionBannerDismissed, markCompetitionBannerDismissed } from "./lib/competition";
 import { HomeNewsWidget } from "./components/HomeNewsWidget";
 import { NewsScreen } from "./NewsScreen";
@@ -119,6 +120,8 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     try { return localStorage.getItem("koda_announcement_dismissed") ?? null; } catch { return null; }
   });
   const [compBannerDismissed, setCompBannerDismissed] = useState(isCompetitionBannerDismissed);
+  // Cross-device banner dismissals loaded from the DB (merged with localStorage).
+  const [remoteDismissed, setRemoteDismissed] = useState<Set<string>>(new Set());
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [unreadMsgs, setUnreadMsgs] = useState<Record<string, number>>({});
   const [view, setView] = useState("home");
@@ -1020,6 +1023,17 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- impression fires once on mount; dismissedId read intentionally stale
   }, []);
+
+  // Load cross-device banner dismissals once signed in. Best-effort: failures
+  // (signed out / offline / table not yet migrated) leave the set empty and the
+  // banners fall back to their localStorage dismissal state.
+  useEffect(() => {
+    const uid = user?.id;
+    if (!uid) return;
+    let active = true;
+    loadDismissedBannerKeys().then((keys) => { if (active) setRemoteDismissed(keys); });
+    return () => { active = false; };
+  }, [user]);
 
   // Global circle-message listener — tracks unread counts across all joined
   // circles while the user is anywhere in the app, not just in the Circles tab.
@@ -2054,7 +2068,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                   {(() => {
                     const bannerItems: BannerStackItem[] = [];
                     // Competition CTA — highest priority, sits on top of the stack.
-                    if (!compBannerDismissed && !isCompetitionJoined() && isCompetitionActive()) {
+                    if (!compBannerDismissed && !remoteDismissed.has("comp_2026") && !isCompetitionJoined() && isCompetitionActive()) {
                       bannerItems.push({
                         id: "competition",
                         priority: 100,
@@ -2063,6 +2077,8 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                         onDismiss: () => {
                           markCompetitionBannerDismissed();
                           setCompBannerDismissed(true);
+                          setRemoteDismissed((s) => new Set(s).add("comp_2026"));
+                          if (user?.id) recordBannerDismissal(user.id, "comp_2026");
                           phCapture("comp_banner_dismissed", { placement: "home_feed" });
                         },
                         children: (
@@ -2071,7 +2087,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                       });
                     }
                     // Team announcement — informational, lower priority.
-                    if (announcement && announcement.id !== announcementDismissedId) {
+                    if (announcement && announcement.id !== announcementDismissedId && !remoteDismissed.has(`announcement:${announcement.id}`)) {
                       const a = announcement;
                       bannerItems.push({
                         id: "announcement",
@@ -2079,8 +2095,11 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                         ariaLabel: `Kōda Team: ${a.message}`,
                         dismissible: true,
                         onDismiss: () => {
+                          const key = `announcement:${a.id}`;
                           try { localStorage.setItem("koda_announcement_dismissed", a.id); } catch {}
                           setAnnouncementDismissedId(a.id);
+                          setRemoteDismissed((s) => new Set(s).add(key));
+                          if (user?.id) recordBannerDismissal(user.id, key);
                           phCapture("announcement_dismissed", { id: a.id });
                         },
                         children: (
