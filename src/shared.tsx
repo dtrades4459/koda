@@ -70,21 +70,6 @@ export function KodaMark({ size = 28, color = "currentColor", strokeWidth = 9 }:
   );
 }
 
-/** @deprecated Use KodaMark instead — kept for backward compat */
-export function KodaMarkFilled({ size = 28, bg = "#0C0C0B" }: { size?: number; bg?: string }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style={{ display: "block", flexShrink: 0 }}>
-      <rect width="100" height="100" rx="18" fill={bg}/>
-      <g fill="none" stroke="#45E0C6" strokeWidth="8" strokeLinejoin="miter">
-        <polyline points="14,20 38,50 14,80"/>
-        <polyline points="31,20 55,50 31,80"/>
-        <polyline points="48,20 72,50 48,80"/>
-        <polyline points="65,20 89,50 65,80"/>
-      </g>
-    </svg>
-  );
-}
-
 // ─── CROWN ICON ──────────────────────────────────────────────────────────────
 // Minimal crown badge — shown next to handle for Pro/Elite users
 export function CrownIcon({ size = 13, color = "currentColor" }: { size?: number; color?: string }) {

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MONO, BODY, DISPLAY, KodaMarkFilled } from "./shared";
+import { MONO, BODY, DISPLAY, KodaMark } from "./shared";
 import { subscribeToPush } from "./lib/push";
 
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
@@ -200,7 +200,7 @@ export function OnboardingFlow({ C, onComplete }: {
       <div style={{ width: "100%", maxWidth: "420px" }}>
 
         <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "48px" }}>
-          <KodaMarkFilled size={28} bg={C.panel} />
+          <KodaMark size={28} color={C.text} />
           <span style={{ fontFamily: DISPLAY, fontSize: "1.0625rem", fontWeight: 700, letterSpacing: "-0.02em", color: C.text, lineHeight: 1 }}>Kōda</span>
         </div>
 

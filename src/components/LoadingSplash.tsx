@@ -1,5 +1,5 @@
 import { DARK } from "../theme";
-import { DISPLAY, KodaMarkFilled } from "../shared";
+import { DISPLAY, KodaMark } from "../shared";
 
 // First-paint splash. Always renders in the DARK palette regardless of the
 // user's saved theme since the theme is not known yet at this point.
@@ -15,7 +15,7 @@ export function LoadingSplash() {
       <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div style={{ position: "absolute", width: "96px", height: "96px", borderRadius: "50%", border: `1.5px solid ${DARK.text}`, animation: "splashPulse 2s ease-in-out infinite" }} />
         <div style={{ animation: "splashBreath 2.4s ease-in-out infinite" }}>
-          <KodaMarkFilled size={64} bg={DARK.panel} />
+          <KodaMark size={64} color={DARK.text} />
         </div>
       </div>
       {/* Wordmark */}

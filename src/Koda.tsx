@@ -33,7 +33,7 @@ import { KODA_GLOBAL_CODE } from "./hooks/useCircles";
 import { STRATEGIES, STRATEGY_NAMES, getAllStrategiesMap, addExtraStrategies } from "./data/strategies";
 
 import type { TradeComment, ReactionMap, Trade, Profile, Circle, Insight, StrategyDef } from "./types";
-import { AvatarCircle, SectionKicker, StrategySelect, SubNavDropdown, GearButton, Toast, ToastStack, KodaMarkFilled, KodaMark, GlassOrb, Pill, Card, Kicker, Delta, IconButton, EmptyState, outcomeColor, outcomeLetter, stratCode, stratShort, compressImage, MONO, BODY, DISPLAY, EmptyTradesState, CelebrationOverlay } from "./shared";
+import { AvatarCircle, SectionKicker, StrategySelect, SubNavDropdown, GearButton, Toast, ToastStack, KodaMark, GlassOrb, Pill, Card, Kicker, Delta, IconButton, EmptyState, outcomeColor, outcomeLetter, stratCode, stratShort, compressImage, MONO, BODY, DISPLAY, EmptyTradesState, CelebrationOverlay } from "./shared";
 import type { ToastItem } from "./shared";
 import { TradingCircles } from "./TradingCircles";
 import { FriendsFeed } from "./FriendsFeed";
@@ -2397,7 +2397,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                   {trades.length === 0 && (
                     <section style={{ marginTop: "clamp(32px, 6vw, 48px)", textAlign: "center", padding: "0 8px" }}>
                       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "16px", padding: "40px 24px", background: C.panel, border: `1px solid ${C.border}`, borderRadius: "16px" }}>
-                        <KodaMarkFilled size={52} bg={C.bg} />
+                        <KodaMark size={52} color={C.text} />
                         <div>
                           <p style={{ fontFamily: DISPLAY, fontSize: "1.375rem", fontWeight: 700, color: C.text, letterSpacing: "-0.02em", marginBottom: "10px" }}>One trade. That's all it takes.</p>
                           <p style={{ fontFamily: BODY, fontSize: "0.875rem", color: C.text2, lineHeight: 1.6, maxWidth: "280px", margin: "0 auto" }}>
