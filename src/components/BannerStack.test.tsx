@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, act } from "@testing-library/react";
+import { describe, it, expect, vi } from "vitest";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { BannerStack, type BannerStackItem } from "./BannerStack";
 import { DARK } from "../theme";
 
@@ -12,9 +12,6 @@ function items(over: Partial<BannerStackItem>[] = []): BannerStackItem[] {
 }
 
 describe("BannerStack", () => {
-  beforeEach(() => vi.useFakeTimers());
-  afterEach(() => vi.useRealTimers());
-
   it("renders nothing when empty", () => {
     const { container } = render(<BannerStack C={DARK} items={[]} />);
     expect(container.firstChild).toBeNull();
@@ -43,13 +40,11 @@ describe("BannerStack", () => {
     expect(live?.textContent).toBe("Beta");
   });
 
-  it("dismisses the top banner after the exit animation", () => {
+  it("calls onDismiss when the top card's dismiss is clicked", () => {
     const onDismiss = vi.fn();
     render(<BannerStack C={DARK} items={items([{ onDismiss }])} />);
     // The top card is rendered first; its dismiss button is the first one.
     fireEvent.click(screen.getAllByLabelText("Dismiss")[0]);
-    expect(onDismiss).not.toHaveBeenCalled();
-    act(() => { vi.advanceTimersByTime(300); });
     expect(onDismiss).toHaveBeenCalledOnce();
   });
 });

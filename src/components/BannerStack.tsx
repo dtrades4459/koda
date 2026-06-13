@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import type { ReactNode } from "react";
+import { motion, AnimatePresence, MotionConfig } from "motion/react";
 import type { Theme } from "../theme";
 import { MONO } from "../shared";
 
@@ -11,12 +12,15 @@ import { MONO } from "../shared";
 // vertical pile that shoves the feed down.
 //
 //   • Highest `priority` sits on top (CTA banners outrank informational ones).
-//   • Dismissing the top card slides the next one up into its place.
+//   • Dismissing the top card SPRINGS the next one up into its place
+//     (framer-motion `layout` handles the promote across differing heights;
+//     `AnimatePresence` animates the dismissed card out).
 //   • Rear cards peek a fixed sliver at the bottom (bottom-anchored + clipped),
 //     so the deck reads cleanly whichever card is on top, regardless of height.
 //   • Rear cards stay reachable — a "Next ›" control cycles the stack, so no
 //     banner is hidden for good.
 //   • A polite live region announces whichever card is currently on top.
+//   • Honours prefers-reduced-motion via MotionConfig.
 //
 // The stack is purely presentational: parents decide which items are visible
 // and own dismiss/analytics side-effects via `onDismiss`.
@@ -35,9 +39,8 @@ export interface BannerStackItem {
 }
 
 const PEEK_OFFSET = 10;   // px each rear card peeks below the one above
-const PEEK_SCALE = 0.04;  // scale reduction per depth level (deck inset)
 const MAX_PEEK = 2;       // how many rear cards are visibly offset
-const EXIT_MS = 280;      // dismiss animation duration
+const SPRING = { type: "spring" as const, stiffness: 380, damping: 32, mass: 0.9 };
 
 export function BannerStack({
   C,
@@ -51,7 +54,6 @@ export function BannerStack({
   // Highest priority first. Rotation lets the user cycle rear cards to the top.
   const sorted = [...items].sort((a, b) => b.priority - a.priority);
   const [rotation, setRotation] = useState(0);
-  const [exiting, setExiting] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const count = sorted.length;
@@ -60,119 +62,108 @@ export function BannerStack({
   const order = count > 0 ? [...sorted.slice(rot), ...sorted.slice(0, rot)] : [];
   const peekPad = Math.min(count - 1, MAX_PEEK) * PEEK_OFFSET;
 
-  // Reset transient state if the underlying items change out from under us.
-  useEffect(() => {
-    setExiting(false);
-  }, [count]);
-
   if (count === 0) return null;
 
   const top = order[0];
 
   function dismissTop() {
-    if (exiting) return;
-    setExiting(true);
-    window.setTimeout(() => {
-      setExiting(false);
-      setRotation(0);
-      top.onDismiss?.();
-      // Return focus to the stack so keyboard users aren't stranded.
-      containerRef.current?.focus();
-    }, EXIT_MS);
+    const cb = top.onDismiss;
+    setRotation(0);
+    cb?.();
+    // Return focus to the stack so keyboard users aren't stranded.
+    requestAnimationFrame(() => containerRef.current?.focus());
   }
 
   function cycle() {
-    if (count < 2 || exiting) return;
+    if (count < 2) return;
     setRotation((r) => r + 1);
   }
 
   return (
-    <div
-      ref={containerRef}
-      tabIndex={-1}
-      role="region"
-      aria-roledescription="Announcements"
-      aria-label={count > 1 ? `Announcements, ${count} items` : "Announcement"}
-      style={{ position: "relative", marginBottom: 16, outline: "none" }}
-    >
-      {/* Polite live region — announces whichever card is on top. */}
-      <div aria-live="polite" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>
-        {top.ariaLabel}
-      </div>
-
-      {/* Clipped viewport — rear cards peek a fixed sliver; overflow is hidden. */}
-      <div style={{ position: "relative", overflow: "hidden", paddingBottom: peekPad, borderRadius: 16 }}>
-        {order.map((item, depth) => {
-          const isTop = depth === 0;
-          const d = Math.min(depth, MAX_PEEK);
-          return (
-            <div
-              key={item.id}
-              aria-hidden={isTop ? undefined : true}
-              style={
-                isTop
-                  ? {
-                      position: "relative",
-                      zIndex: count + 1,
-                      transform: exiting ? "translateY(-10px) scale(0.97)" : "none",
-                      opacity: exiting ? 0 : 1,
-                      transition: `transform ${EXIT_MS}ms cubic-bezier(.2,.8,.2,1), opacity ${EXIT_MS}ms ease`,
-                      pointerEvents: "auto",
-                    }
-                  : {
-                      position: "absolute",
-                      left: 0,
-                      right: 0,
-                      bottom: peekPad - d * PEEK_OFFSET,
-                      zIndex: count + 1 - depth,
-                      transform: `scale(${1 - d * PEEK_SCALE})`,
-                      transformOrigin: "bottom center",
-                      opacity: Math.max(0, 0.6 - (d - 1) * 0.2),
-                      transition: `transform ${EXIT_MS}ms cubic-bezier(.2,.8,.2,1), opacity ${EXIT_MS}ms ease`,
-                      pointerEvents: "none",
-                      filter: "saturate(0.9)",
-                    }
-              }
-            >
-              <BannerCard
-                C={C}
-                dismissible={item.dismissible}
-                onDismiss={item.dismissible ? dismissTop : undefined}
-              >
-                {item.children}
-              </BannerCard>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Count + cycle control — only when the stack holds more than one. */}
-      {count > 1 && (
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10, marginTop: 8 }}>
-          <span style={{
-            fontFamily: MONO, fontSize: "0.5625rem", letterSpacing: "0.12em",
-            textTransform: "uppercase" as const, color: C.muted,
-          }}>
-            {rot + 1} of {count}
-          </span>
-          <button
-            type="button"
-            onClick={cycle}
-            aria-label="Show next announcement"
-            style={{
-              display: "inline-flex", alignItems: "center", gap: 6,
-              background: "transparent", border: `1px solid ${C.border2}`,
-              borderRadius: 999, padding: isMobile ? "6px 12px" : "5px 12px",
-              minHeight: 32,
-              fontFamily: MONO, fontSize: "0.5625rem", letterSpacing: "0.1em",
-              textTransform: "uppercase" as const, color: C.text2, cursor: "pointer",
-            }}
-          >
-            Next ›
-          </button>
+    <MotionConfig reducedMotion="user">
+      <div
+        ref={containerRef}
+        tabIndex={-1}
+        role="region"
+        aria-roledescription="Announcements"
+        aria-label={count > 1 ? `Announcements, ${count} items` : "Announcement"}
+        style={{ position: "relative", marginBottom: 16, outline: "none" }}
+      >
+        {/* Polite live region — announces whichever card is on top. */}
+        <div aria-live="polite" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>
+          {top.ariaLabel}
         </div>
-      )}
-    </div>
+
+        {/* Clipped viewport — rear cards peek a fixed sliver; overflow is hidden. */}
+        <div style={{ position: "relative", overflow: "hidden", paddingBottom: peekPad, borderRadius: 16 }}>
+          <AnimatePresence initial={false}>
+            {order.map((item, depth) => {
+              const isTop = depth === 0;
+              const d = Math.min(depth, MAX_PEEK);
+              return (
+                <motion.div
+                  key={item.id}
+                  layout
+                  aria-hidden={isTop ? undefined : true}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: isTop ? 1 : Math.max(0, 0.6 - (d - 1) * 0.2) }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={SPRING}
+                  style={
+                    isTop
+                      ? { position: "relative", zIndex: count + 1, pointerEvents: "auto" }
+                      : {
+                          position: "absolute",
+                          left: 0,
+                          right: 0,
+                          bottom: peekPad - d * PEEK_OFFSET,
+                          zIndex: count + 1 - depth,
+                          pointerEvents: "none",
+                          filter: "saturate(0.9)",
+                        }
+                  }
+                >
+                  <BannerCard
+                    C={C}
+                    dismissible={item.dismissible}
+                    onDismiss={item.dismissible ? dismissTop : undefined}
+                  >
+                    {item.children}
+                  </BannerCard>
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
+        </div>
+
+        {/* Count + cycle control — only when the stack holds more than one. */}
+        {count > 1 && (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10, marginTop: 8 }}>
+            <span style={{
+              fontFamily: MONO, fontSize: "0.5625rem", letterSpacing: "0.12em",
+              textTransform: "uppercase" as const, color: C.muted,
+            }}>
+              {rot + 1} of {count}
+            </span>
+            <button
+              type="button"
+              onClick={cycle}
+              aria-label="Show next announcement"
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 6,
+                background: "transparent", border: `1px solid ${C.border2}`,
+                borderRadius: 999, padding: isMobile ? "6px 12px" : "5px 12px",
+                minHeight: 32,
+                fontFamily: MONO, fontSize: "0.5625rem", letterSpacing: "0.1em",
+                textTransform: "uppercase" as const, color: C.text2, cursor: "pointer",
+              }}
+            >
+              Next ›
+            </button>
+          </div>
+        )}
+      </div>
+    </MotionConfig>
   );
 }
 
@@ -198,6 +189,7 @@ function BannerCard({
         <div style={{ flex: 1, minWidth: 0 }}>{children}</div>
         {dismissible && onDismiss && (
           <button
+            type="button"
             onClick={onDismiss}
             aria-label="Dismiss"
             style={{
