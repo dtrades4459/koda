@@ -287,16 +287,35 @@ export function useCircles({
     }
 
     async function syncCircles() {
-      const current = myCirclesRef.current;
-      if (!current.length) return;
+      // Cross-device reconcile. koda_circles lives in user_kv, but storage.get()
+      // returns the stale local cache first — so a circle created/joined on
+      // another device wouldn't appear here, and writing the local list back
+      // would CLOBBER it out of user_kv. Read the list fresh and union any
+      // remote-only circles into the working set. Because every device unions
+      // on each tick, a circle on any device propagates and survives a stale
+      // write (self-healing): the device that owns it re-asserts it next tick.
+      let working = myCirclesRef.current;
+      try {
+        const remoteRaw = await storage.getFresh("koda_circles");
+        if (remoteRaw) {
+          const remoteCircles = JSON.parse(remoteRaw.value) as Circle[];
+          if (Array.isArray(remoteCircles)) {
+            const localCodes = new Set(working.map((c: Circle) => c.code));
+            const extras = remoteCircles.filter((c: Circle) => c?.code && !localCodes.has(c.code));
+            if (extras.length) working = [...working, ...extras];
+          }
+        }
+      } catch { /* offline / bad JSON — fall back to the local list */ }
+      if (!alive) return;
+      if (!working.length) return;
       // One-shot migration on first tick: ensure every circle I'm in has my
       // own member row in shared_kv. Fixes old data that only had inline
       // members[] on the creator's row.
       if (!migrated) {
         migrated = true;
-        await Promise.all(current.map(ensureMyMemberRow));
+        await Promise.all(working.map(ensureMyMemberRow));
       }
-      const refreshed = await Promise.all(current.map(async (c: Circle) => {
+      const refreshed = await Promise.all(working.map(async (c: Circle) => {
         try {
           const [metaRes, members] = await Promise.all([
             storage.get("koda_circle_" + c.code, true),
@@ -307,7 +326,9 @@ export function useCircles({
         } catch { return c; }
       }));
       if (!alive) return;
-      const changed = JSON.stringify(refreshed) !== JSON.stringify(current);
+      // Compare against actual state (not `working`) so newly-discovered remote
+      // circles always land in state even if their meta/members were unchanged.
+      const changed = JSON.stringify(refreshed) !== JSON.stringify(myCirclesRef.current);
       if (changed) {
         // Merge refreshed circles with any joined since this sync started.
         // Use the ref (not closure state) for the latest value, then write
