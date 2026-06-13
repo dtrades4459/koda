@@ -70,6 +70,8 @@ export interface CircleForm {
   privacy: string;
   emoji: string;
   metric: string;
+  /** Metrics members must share — written to the circle meta as requiredMetrics. */
+  requiredMetrics?: ("pnl" | "winRate" | "discipline" | "avgRR")[];
 }
 
 /** Snapshot of the computed trade stats needed by publishToCircle. */
@@ -136,7 +138,7 @@ export function useCircles({
   const [circlesView, setCirclesView] = useState<string>("browse");
   const [activeCircle, setActiveCircle] = useState<Circle | null>(null);
   const [circleForm, setCircleForm] = useState<CircleForm>({
-    name: "", description: "", strategy: "", privacy: "public", emoji: "◆", metric: "dollar",
+    name: "", description: "", strategy: "", privacy: "public", emoji: "◆", metric: "dollar", requiredMetrics: [],
   });
   const [circleJoinCode, setCircleJoinCode] = useState<string>("");
   const [circleMsg, setCircleMsg] = useState<string>("");
@@ -369,6 +371,9 @@ export function useCircles({
         privacy: circleForm.privacy,
         emoji: circleForm.emoji || "◆",
         metric: circleForm.metric || "dollar",
+        ...(circleForm.requiredMetrics && circleForm.requiredMetrics.length
+          ? { requiredMetrics: circleForm.requiredMetrics }
+          : {}),
         createdBy: profileRef.current.name || "Trader",
         createdAt: new Date().toISOString(),
       };
@@ -377,7 +382,7 @@ export function useCircles({
       await storage.set(`koda_circle_member_${code}_${me.code}`, JSON.stringify(me), true);
       const updated = [...myCirclesRef.current, { ...circle, members: [me], isOwner: true }];
       await saveMyCircles(updated as Circle[]);
-      setCircleForm({ name: "", description: "", strategy: "", privacy: "public", emoji: "◆", metric: "dollar" });
+      setCircleForm({ name: "", description: "", strategy: "", privacy: "public", emoji: "◆", metric: "dollar", requiredMetrics: [] });
       setCirclesView("browse");
       showToast("Circle created");
     } catch {

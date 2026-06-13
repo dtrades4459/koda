@@ -175,6 +175,34 @@ export async function publishLeaderboardEntry(input: {
   }
 }
 
+// ── Roles ─────────────────────────────────────────────────────────────────────
+// circle_members is populated by a DB trigger that mirrors the KV member rows;
+// the client only READS it. role drives the Instructor Dashboard gate. Returns
+// null when there's no row yet (trigger lag) or on error — callers fall back to
+// the local `isOwner` flag so an owner is never locked out of their own circle.
+
+export type CircleRole = "owner" | "moderator" | "member" | "banned";
+
+export async function readMyCircleRole(
+  circleCode: string,
+  uid: string | undefined,
+): Promise<CircleRole | null> {
+  if (!uid) return null;
+  try {
+    const { data, error } = await supabase
+      .from("circle_members")
+      .select("role")
+      .eq("circle_code", circleCode)
+      .eq("user_id", uid)
+      .maybeSingle();
+    if (error) return null;
+    return (data?.role as CircleRole | undefined) ?? null;
+  } catch (e) {
+    log.error("circles.readMyCircleRole", e, { circleCode });
+    return null;
+  }
+}
+
 // ── Realtime ────────────────────────────────────────────────────────────────
 // Subscribe to shared_kv changes for a specific circle. Fires on any INSERT
 // /UPDATE/DELETE whose key starts with koda_circle_<CODE> — that covers

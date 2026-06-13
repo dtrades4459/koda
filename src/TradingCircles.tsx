@@ -3,7 +3,8 @@ import { supabase } from "./lib/supabase";
 import { StrategyPill, stratCode, KodaMark, MONO, BODY, DISPLAY, EmptyCirclesState, CornerGlow, SubNavDropdown } from "./shared";
 import { KODA_GLOBAL_CODE } from "./hooks/useCircles";
 import { COMP_CIRCLE_CODE, COMP_MIN_TRADES, COMP_STAFF_UIDS, isCompetitionStarted, shouldShowCompetitionCard, compStatusText, type CompEligibility } from "./lib/competition";
-import { readCircleMembers } from "./data/circles";
+import { readCircleMembers, readMyCircleRole, type CircleRole } from "./data/circles";
+import { buildRoster, rosterToCsv } from "./lib/instructorRoster";
 import { sortLeaderboard, METRIC_VALUE, type LeaderboardSortKey } from "./lib/leaderboardSort";
 import { buildDisciplineCard } from "./lib/disciplineCard";
 import { shareDisciplineCard } from "./lib/renderDisciplineCard";
@@ -49,6 +50,7 @@ interface CircleFormShape {
   privacy: string;
   emoji: string;
   metric: string;
+  requiredMetrics?: ("pnl" | "winRate" | "discipline" | "avgRR")[];
 }
 
 export interface TradingCirclesProps {
@@ -135,7 +137,11 @@ export function TradingCircles({
   const [loadingLB, setLoadingLB] = useState(false);
   const [lbError, setLbError] = useState(false);
   const [membersLoading, setMembersLoading] = useState(false);
-  const [circleTab, setCircleTab] = useState<"feed" | "leaderboard" | "chat" | "members" | "trophies">("chat");
+  const [circleTab, setCircleTab] = useState<"feed" | "leaderboard" | "chat" | "members" | "trophies" | "instructor">("chat");
+  // Caller's role in the active circle (from circle_members, read-only). null
+  // until resolved; the owner gate falls back to the local isOwner flag so an
+  // owner is never locked out of their own dashboard on a slow/missing read.
+  const [myRole, setMyRole] = useState<CircleRole | null>(null);
   const [chatMessages, setChatMessages] = useState<any[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [chatSending, setChatSending] = useState(false);
@@ -598,6 +604,14 @@ export function TradingCircles({
     };
   }, [circlesView, activeCircle, fetchCircleLeaderboard, lbSort]);
 
+  // Resolve my role in the active circle (Instructor Dashboard gate).
+  useEffect(() => {
+    if (circlesView !== "detail" || !activeCircle) { setMyRole(null); return; }
+    let alive = true;
+    readMyCircleRole(activeCircle.code, profile.uid).then(r => { if (alive) setMyRole(r); });
+    return () => { alive = false; };
+  }, [circlesView, activeCircle, profile.uid]);
+
   // Poll chat every 8s when the chat tab is active — fallback while realtime warms up
   useEffect(() => {
     if (circleTab !== "chat" || !activeCircle) return;
@@ -698,6 +712,30 @@ export function TradingCircles({
     isCompCircle && lbMetric === "dollar" && lbViewSort === "rank" ? "dollar" : lbViewSort;
   // Staff sinking + rank assignment (staff get none) live in sortLeaderboard.
   const rankedLeaderboard = sortLeaderboard(displayLeaderboard, lbViewKey);
+
+  // ── Instructor Dashboard (B2B coach view) ─────────────────────────────
+  // Owner gate falls back to the local isOwner flag (circle_members read may
+  // lag the trigger); moderators come only from the role read. Never on the
+  // comp circle. Roster re-projects the already-fetched leaderboard.
+  const canInstruct =
+    !isCompCircle &&
+    !!activeCircle &&
+    (activeCircle.isOwner || myRole === "owner" || myRole === "moderator");
+  const roster = canInstruct ? buildRoster(leaderboard as LeaderboardEntry[]) : null;
+
+  function downloadRosterCsv() {
+    if (!roster || !activeCircle) return;
+    const blob = new Blob([rosterToCsv(roster)], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `koda-roster-${activeCircle.code}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10_000);
+    phCapture("instructor_roster_export", { circle: activeCircle.code, members: roster.summary.memberCount });
+  }
 
   // ── Discipline share card (growth loop) ───────────────────────────────
   // Only my own entry, only when a discipline score exists (3+ tagged trades).
@@ -999,6 +1037,34 @@ export function TradingCircles({
               }[circleForm.metric as string] || "Leaderboard ranks by total dollar P&L."}
             </div>
           </div>
+          {/* Required to share — coach circles (consented at join) */}
+          <div>
+            <label style={lbl}>Members must share <span style={{ color: C.muted, textTransform: "none", letterSpacing: 0 }}>(optional)</span></label>
+            <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "8px" }}>
+              {([
+                ["discipline", "Discipline"],
+                ["winRate",    "Win Rate"],
+                ["avgRR",      "Avg R"],
+                ["pnl",        "$ P&L"],
+              ] as const).map(([val, label]) => {
+                const on = (circleForm.requiredMetrics ?? []).includes(val);
+                return (
+                  <button key={val} onClick={() => setCircleForm(f => {
+                    const cur = f.requiredMetrics ?? [];
+                    return { ...f, requiredMetrics: on ? cur.filter(x => x !== val) : [...cur, val] };
+                  })}
+                    style={{ background: on ? C.text : "transparent", border: `1px solid ${on ? C.text : C.border2}`, borderRadius: "999px", padding: "7px 14px", cursor: "pointer", fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.08em", color: on ? C.bg : C.muted, textTransform: "uppercase", transition: "all 100ms" }}>
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+            <div style={{ fontFamily: BODY, fontSize: "0.75rem", color: C.muted, marginTop: "8px", lineHeight: 1.55 }}>
+              {(circleForm.requiredMetrics ?? []).length
+                ? "Members agree to share these when they join, and can't hide them while in the circle. Best for coaching circles tracking discipline."
+                : "Leave empty to let members choose what they share. Turn on a metric to require it from everyone (e.g. a coach tracking discipline)."}
+            </div>
+          </div>
           <button onClick={createCircle} disabled={isCreatingCircle || !circleForm.name.trim()} style={{ ...pillPrimary(!!circleForm.name.trim() && !isCreatingCircle), marginTop: "8px" }}>
             {isCreatingCircle ? "Creating…" : "Create circle →"}
           </button>
@@ -1072,6 +1138,16 @@ export function TradingCircles({
             {activeCircle.description && (
               <div style={{ fontFamily: BODY, fontSize: "0.875rem", color: C.text2, lineHeight: 1.6, maxWidth: "48ch", marginBottom: "16px" }}>{activeCircle.description}</div>
             )}
+            {(() => {
+              const req = requiredMetricsFor(activeCircle.code, activeCircle.requiredMetrics);
+              if (!req.length) return null;
+              const LABEL: Record<string, string> = { pnl: "$ P&L", winRate: "win rate", discipline: "discipline", avgRR: "avg R" };
+              return (
+                <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.04em", marginBottom: "16px", lineHeight: 1.5 }}>
+                  <span style={{ color: C.text2 }}>Requires sharing:</span> {req.map(m => LABEL[m] ?? m).join(" · ")}
+                </div>
+              );
+            })()}
             {activeCircle.code === COMP_CIRCLE_CODE && (
               <div style={{
                 fontFamily: MONO, fontSize: "0.625rem", color: C.muted,
@@ -1155,6 +1231,7 @@ export function TradingCircles({
                       { id: "chat", label: "Chat" },
                       { id: "members", label: "Members" },
                       { id: "trophies", label: "Trophies" },
+                      ...(canInstruct ? [{ id: "instructor", label: "Coach" }] : []),
                     ];
                 const handleTabChange = (t: typeof circleTab) => {
                   setCircleTab(t);
@@ -1172,7 +1249,7 @@ export function TradingCircles({
                   <div style={{ display: "flex", borderBottom: `1px solid ${C.border}`, overflowX: "auto", gap: 0, marginBottom: circleTab === "leaderboard" ? "10px" : 0 }}>
                     {(isCompCircle
                       ? (["leaderboard", "chat"] as const)
-                      : (["feed", "leaderboard", "chat", "members", "trophies"] as const)
+                      : ([...["feed", "leaderboard", "chat", "members", "trophies"], ...(canInstruct ? ["instructor"] : [])] as typeof circleTab[])
                     ).map(t => (
                       <button
                         key={t}
@@ -1194,7 +1271,7 @@ export function TradingCircles({
                           flexShrink: 0,
                         }}
                       >
-                        {t === "leaderboard" ? "Board" : t.charAt(0).toUpperCase() + t.slice(1)}
+                        {t === "leaderboard" ? "Board" : t === "instructor" ? "Coach" : t.charAt(0).toUpperCase() + t.slice(1)}
                       </button>
                     ))}
                   </div>
@@ -1742,6 +1819,75 @@ export function TradingCircles({
 
                 {!trophiesLoading && trophies.length === 0 && !activeChallenge && (
                   <div style={{ fontFamily: BODY, fontSize: "0.8125rem", color: C.muted, textAlign: "center", padding: "32px 0" }}>No challenges yet</div>
+                )}
+              </div>
+            )}
+
+            {/* ── INSTRUCTOR / COACH DASHBOARD ── owner & moderator only ── */}
+            {circleTab === "instructor" && canInstruct && roster && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 16, paddingTop: 4, paddingBottom: 90 }}>
+                <div style={{ fontFamily: BODY, fontSize: "0.75rem", color: C.muted, lineHeight: 1.5 }}>
+                  Your members ranked by discipline, not profit. No P&L here by design — this is about who’s following their rules.
+                </div>
+
+                {/* Summary strip */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 0, background: C.panel, borderRadius: 12, overflow: "hidden", border: `1px solid ${C.border}` }}>
+                  {[
+                    ["MEDIAN", roster.summary.medianDiscipline != null ? String(roster.summary.medianDiscipline) : "—"],
+                    ["ON TRACK", `${roster.summary.aboveThresholdCount}/${roster.summary.publishingCount}`],
+                    ["NOT SHARING", String(roster.summary.withheldCount + roster.summary.notPublishingCount)],
+                  ].map(([k, v], i) => (
+                    <div key={k as string} style={{ padding: "16px 8px", textAlign: "center", borderLeft: i > 0 ? `1px solid ${C.border}` : "none" }}>
+                      <div style={{ fontFamily: DISPLAY, fontSize: "1.25rem", fontWeight: 500, color: C.text, letterSpacing: "-0.02em", lineHeight: 1 }}>{v}</div>
+                      <div style={{ fontFamily: MONO, fontSize: "0.5625rem", color: C.muted, letterSpacing: "0.1em", marginTop: 8 }}>{k}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Roster */}
+                {roster.rows.length === 0 ? (
+                  <div style={{ fontFamily: BODY, fontSize: "0.8125rem", color: C.muted, textAlign: "center", padding: "32px 0" }}>No members on the board yet.</div>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column" }}>
+                    {/* header row */}
+                    <div style={{ display: "grid", gridTemplateColumns: "20px 1fr 56px 56px", gap: 8, padding: "0 4px 8px", fontFamily: MONO, fontSize: "0.5625rem", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase", borderBottom: `1px solid ${C.border}` }}>
+                      <span>#</span><span>Member</span><span style={{ textAlign: "right" }}>Disc</span><span style={{ textAlign: "right" }}>Rules</span>
+                    </div>
+                    {roster.rows.map((r, i) => {
+                      const dColor = r.disciplineScore == null ? C.muted
+                        : r.disciplineScore >= 70 ? C.green
+                        : r.disciplineScore >= 50 ? (C.accent ?? C.text) : C.red;
+                      const status = r.withheld ? "Private" : r.notPublishing ? "No data" : null;
+                      return (
+                        <div key={r.memberCode} style={{ display: "grid", gridTemplateColumns: "20px 1fr 56px 56px", gap: 8, alignItems: "center", padding: "11px 4px", borderBottom: `1px solid ${C.border}` }}>
+                          <span style={{ fontFamily: MONO, fontSize: "0.6875rem", color: C.muted }}>{r.disciplineScore == null ? "—" : i + 1}</span>
+                          <div style={{ minWidth: 0 }}>
+                            <button
+                              onClick={() => r.handle && openProfile?.(r.handle)}
+                              style={{ background: "none", border: "none", padding: 0, textAlign: "left", cursor: r.handle ? "pointer" : "default", maxWidth: "100%" }}
+                            >
+                              <div style={{ fontFamily: BODY, fontSize: "0.8125rem", color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</div>
+                            </button>
+                            <div style={{ fontFamily: MONO, fontSize: "0.5625rem", color: C.muted, marginTop: 2, letterSpacing: "0.04em" }}>
+                              {status
+                                ? status
+                                : `${r.taggedCount ?? 0}/${r.totalTrades ?? 0} tagged${r.streak && r.streak.type === "win" && r.streak.count >= 2 ? ` · ${r.streak.count}W` : ""}`}
+                            </div>
+                          </div>
+                          <span style={{ textAlign: "right", fontFamily: DISPLAY, fontSize: "0.9375rem", fontWeight: 600, color: dColor, fontVariantNumeric: "tabular-nums" }}>
+                            {r.disciplineScore == null ? "—" : r.disciplineScore}
+                          </span>
+                          <span style={{ textAlign: "right", fontFamily: MONO, fontSize: "0.75rem", color: r.ruleCompliancePct == null ? C.muted : C.text2, fontVariantNumeric: "tabular-nums" }}>
+                            {r.ruleCompliancePct == null ? "—" : `${r.ruleCompliancePct}%`}
+                          </span>
+                        </div>
+                      );
+                    })}
+                    <button onClick={downloadRosterCsv}
+                      style={{ ...pillGhost, alignSelf: "flex-end", marginTop: 14, padding: "8px 16px" }}>
+                      ↓ EXPORT CSV
+                    </button>
+                  </div>
                 )}
               </div>
             )}
