@@ -20,6 +20,7 @@ import { COMP_CIRCLE_CODE, COMP_STAFF_UIDS, type CompEligibility } from "../lib/
 import { METRIC_VALUE, type CircleMetric } from "../lib/leaderboardSort";
 import { readVisibility, applyRequiredMetrics } from "../lib/circleVisibility";
 import { buildLeaderboardEntry, type PublishedVizFlags } from "../lib/leaderboardEntry";
+import { isFounder } from "../lib/team";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -364,7 +365,8 @@ export function useCircles({
   async function createCircle() {
     if (!circleForm.name.trim() || isCreatingCircle) return;
     const plan = profileRef.current.plan ?? "free";
-    if (plan !== "pro" && plan !== "elite" && myCirclesRef.current.filter((c: Circle) => c.code !== KODA_GLOBAL_CODE).length >= 1) {
+    const unlimited = plan === "pro" || plan === "elite" || isFounder(profileRef.current.uid);
+    if (!unlimited && myCirclesRef.current.filter((c: Circle) => c.code !== KODA_GLOBAL_CODE).length >= 1) {
       showToast("Upgrade to Pro for unlimited Trading Circles");
       return;
     }
@@ -414,7 +416,8 @@ export function useCircles({
       return;
     }
     const plan = profileRef.current.plan ?? "free";
-    if (plan !== "pro" && plan !== "elite" && myCirclesRef.current.filter((c: Circle) => c.code !== KODA_GLOBAL_CODE).length >= 1) {
+    const unlimited = plan === "pro" || plan === "elite" || isFounder(profileRef.current.uid);
+    if (!unlimited && myCirclesRef.current.filter((c: Circle) => c.code !== KODA_GLOBAL_CODE).length >= 1) {
       setCircleMsg("Upgrade to Pro for unlimited circles.");
       setTimeout(() => setCircleMsg(""), 3000);
       return;
