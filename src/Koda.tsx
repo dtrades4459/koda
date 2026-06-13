@@ -65,8 +65,9 @@ import { ConfluenceTracker } from "./components/ConfluenceTracker";
 import { FirstSessionSurvey } from "./components/FirstSessionSurvey";
 import { LoadingSplash } from "./components/LoadingSplash";
 import { OfflineBanner } from "./components/OfflineBanner";
-import { CompetitionBanner } from "./components/CompetitionBanner";
-import { COMP_CIRCLE_CODE, markCompetitionJoined, compEligibility, isInCompWindow } from "./lib/competition";
+import { CompetitionBannerContent } from "./components/CompetitionBanner";
+import { BannerStack, type BannerStackItem } from "./components/BannerStack";
+import { COMP_CIRCLE_CODE, markCompetitionJoined, compEligibility, isInCompWindow, isCompetitionActive, isCompetitionJoined, isCompetitionBannerDismissed, markCompetitionBannerDismissed } from "./lib/competition";
 import { HomeNewsWidget } from "./components/HomeNewsWidget";
 import { NewsScreen } from "./NewsScreen";
 
@@ -117,6 +118,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   const [announcementDismissedId, setAnnouncementDismissedId] = useState<string | null>(() => {
     try { return localStorage.getItem("koda_announcement_dismissed") ?? null; } catch { return null; }
   });
+  const [compBannerDismissed, setCompBannerDismissed] = useState(isCompetitionBannerDismissed);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [unreadMsgs, setUnreadMsgs] = useState<Record<string, number>>({});
   const [view, setView] = useState("home");
@@ -1010,7 +1012,13 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   useEffect(() => {
     supabase.from("announcements").select("id, message").eq("is_active", true)
       .order("created_at", { ascending: false }).limit(1)
-      .then(({ data }) => { if (data?.[0]) setAnnouncement(data[0]); });
+      .then(({ data }) => {
+        if (data?.[0]) {
+          setAnnouncement(data[0]);
+          if (data[0].id !== announcementDismissedId) phCapture("announcement_shown", { id: data[0].id });
+        }
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- impression fires once on mount; dismissedId read intentionally stale
   }, []);
 
   // Global circle-message listener — tracks unread counts across all joined
@@ -2043,23 +2051,48 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
               {/* FEED */}
               {homeSection === "feed" && (
                 <div>
-                  <CompetitionBanner
-                    C={C}
-                    isMobile={!isDesktop}
-                    onJoin={handleJoinCompetition}
-                  />
-                  {announcement && announcement.id !== announcementDismissedId && (
-                    <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", background: `color-mix(in oklch, ${C.accent ?? "#60a5fa"} 8%, ${C.panel})`, border: `1px solid color-mix(in oklch, ${C.accent ?? "#60a5fa"} 25%, transparent)`, borderRadius: "12px", padding: "14px 16px", marginBottom: "16px" }}>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.accent ?? "#60a5fa", letterSpacing: "0.14em", textTransform: "uppercase" as const, fontWeight: 700, marginBottom: "4px" }}>Kōda Team</div>
-                        <div style={{ fontFamily: BODY, fontSize: "0.8125rem", color: C.text, lineHeight: 1.5 }}>{announcement.message}</div>
-                      </div>
-                      <button onClick={() => {
-                        try { localStorage.setItem("koda_announcement_dismissed", announcement.id); } catch {}
-                        setAnnouncementDismissedId(announcement.id);
-                      }} style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontSize: "1.125rem", padding: "0 0 0 4px", lineHeight: 1, flexShrink: 0 }}>×</button>
-                    </div>
-                  )}
+                  {(() => {
+                    const bannerItems: BannerStackItem[] = [];
+                    // Competition CTA — highest priority, sits on top of the stack.
+                    if (!compBannerDismissed && !isCompetitionJoined() && isCompetitionActive()) {
+                      bannerItems.push({
+                        id: "competition",
+                        priority: 100,
+                        ariaLabel: "50K Eval Challenge — 30-day leaderboard, free to enter",
+                        dismissible: true,
+                        onDismiss: () => {
+                          markCompetitionBannerDismissed();
+                          setCompBannerDismissed(true);
+                          phCapture("comp_banner_dismissed", { placement: "home_feed" });
+                        },
+                        children: (
+                          <CompetitionBannerContent C={C} isMobile={!isDesktop} onJoin={handleJoinCompetition} />
+                        ),
+                      });
+                    }
+                    // Team announcement — informational, lower priority.
+                    if (announcement && announcement.id !== announcementDismissedId) {
+                      const a = announcement;
+                      bannerItems.push({
+                        id: "announcement",
+                        priority: 50,
+                        ariaLabel: `Kōda Team: ${a.message}`,
+                        dismissible: true,
+                        onDismiss: () => {
+                          try { localStorage.setItem("koda_announcement_dismissed", a.id); } catch {}
+                          setAnnouncementDismissedId(a.id);
+                          phCapture("announcement_dismissed", { id: a.id });
+                        },
+                        children: (
+                          <>
+                            <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.accent ?? "#60a5fa", letterSpacing: "0.14em", textTransform: "uppercase" as const, fontWeight: 700, marginBottom: "4px" }}>Kōda Team</div>
+                            <div style={{ fontFamily: BODY, fontSize: "0.8125rem", color: C.text, lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 4, WebkitBoxOrient: "vertical" as const, overflow: "hidden" }}>{a.message}</div>
+                          </>
+                        ),
+                      });
+                    }
+                    return <BannerStack C={C} items={bannerItems} isMobile={!isDesktop} />;
+                  })()}
                   {(() => {
                     const today = todayLocalDate();
                     const todayCount = trades.filter(t => t.date === today).length;

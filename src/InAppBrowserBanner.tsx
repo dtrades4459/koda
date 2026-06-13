@@ -58,7 +58,7 @@ export function InAppBrowserBanner() {
   return (
     <div role="alert" style={{
       width: "100%",
-      background: "#13110E",
+      background: "#0A0A0B",
       borderBottom: "1px solid rgba(255,255,255,0.12)",
       padding: "12px 16px calc(12px + env(safe-area-inset-top, 0px)) 16px",
       paddingTop: "calc(12px + env(safe-area-inset-top, 0px))",
