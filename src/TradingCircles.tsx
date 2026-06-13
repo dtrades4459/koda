@@ -94,6 +94,8 @@ export interface TradingCirclesProps {
   followUser: (code: string) => void | Promise<void>;
   unfollowUser: (code: string) => void | Promise<void>;
   kickMember: (circleCode: string, memberCode: string) => Promise<void> | void;
+  readCircleMods: (circleCode: string) => Promise<Set<string>>;
+  setMemberModerator: (circleCode: string, memberCode: string, on: boolean) => Promise<Set<string>>;
   leaveCircle: (circleCode: string) => Promise<void> | void;
   openProfile?: (handle: string) => void;
   isJoiningCircle: boolean;
@@ -125,7 +127,7 @@ export function TradingCircles({
   wins, losses, winRate, totalPnL, pnlPos,
   avgRR,
   STRATEGY_NAMES, C, inp, sel, lbl, pillPrimary, pillGhost,
-  following, followUser, unfollowUser, kickMember, leaveCircle,
+  following, followUser, unfollowUser, kickMember, readCircleMods, setMemberModerator, leaveCircle,
   openProfile, isJoiningCircle, isCreatingCircle,
   totalPnlDollar, hasDollarData, isPro, isDesktop, onJoinCompetition, myCompEligibility,
 }: TradingCirclesProps) {
@@ -142,6 +144,9 @@ export function TradingCircles({
   // until resolved; the owner gate falls back to the local isOwner flag so an
   // owner is never locked out of their own dashboard on a slow/missing read.
   const [myRole, setMyRole] = useState<CircleRole | null>(null);
+  // Moderator member codes for the active circle (owner-owned KV mods list,
+  // mirror of the ban list). Drives the moderator dashboard gate + Members UI.
+  const [circleMods, setCircleMods] = useState<Set<string>>(new Set());
   const [chatMessages, setChatMessages] = useState<any[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [chatSending, setChatSending] = useState(false);
@@ -604,13 +609,14 @@ export function TradingCircles({
     };
   }, [circlesView, activeCircle, fetchCircleLeaderboard, lbSort]);
 
-  // Resolve my role in the active circle (Instructor Dashboard gate).
+  // Resolve my role + the moderator list for the active circle (dashboard gate).
   useEffect(() => {
-    if (circlesView !== "detail" || !activeCircle) { setMyRole(null); return; }
+    if (circlesView !== "detail" || !activeCircle) { setMyRole(null); setCircleMods(new Set()); return; }
     let alive = true;
     readMyCircleRole(activeCircle.code, profile.uid).then(r => { if (alive) setMyRole(r); });
+    readCircleMods(activeCircle.code).then(m => { if (alive) setCircleMods(m); });
     return () => { alive = false; };
-  }, [circlesView, activeCircle, profile.uid]);
+  }, [circlesView, activeCircle, profile.uid, readCircleMods]);
 
   // Poll chat every 8s when the chat tab is active — fallback while realtime warms up
   useEffect(() => {
@@ -717,10 +723,15 @@ export function TradingCircles({
   // Owner gate falls back to the local isOwner flag (circle_members read may
   // lag the trigger); moderators come only from the role read. Never on the
   // comp circle. Roster re-projects the already-fetched leaderboard.
+  // Moderators come from the owner-owned KV mods list (not circle_members.role,
+  // which the sync trigger would clobber). Owners get in via the local flag.
+  const iAmModerator = circleMods.has(getMyCode());
   const canInstruct =
     !isCompCircle &&
     !!activeCircle &&
-    (activeCircle.isOwner || myRole === "owner" || myRole === "moderator");
+    (activeCircle.isOwner || myRole === "owner" || iAmModerator);
+  // Promote/kick stay owner-only; moderators get the dashboard read only.
+  const canManageMembers = !!activeCircle && (activeCircle.isOwner || myRole === "owner");
   const roster = canInstruct ? buildRoster(leaderboard as LeaderboardEntry[]) : null;
 
   function downloadRosterCsv() {
@@ -1727,17 +1738,34 @@ export function TradingCircles({
                           <div style={{ display: "flex", alignItems: "baseline", gap: "8px" }}>
                             <span style={{ fontFamily: DISPLAY, fontSize: "1rem", fontWeight: 500, color: C.text, letterSpacing: "-0.01em" }}>{m.name || "Trader"}</span>
                             {isMe && <span style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.green, letterSpacing: "0.12em" }}>· YOU</span>}
-                            {(m.code === activeCircle.createdBy || m.isOwner) ? <span style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.1em" }}>OWNER</span> : null}
+                            {(m.code === activeCircle.createdBy || m.isOwner) ? <span style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.1em" }}>OWNER</span> : circleMods.has(m.code) ? <span style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.accent ?? C.text2, letterSpacing: "0.1em" }}>MOD</span> : null}
                           </div>
                           {m.handle && <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.04em", marginTop: "2px" }}>@{stripHandlePrefix(m.handle)}</div>}
                           {!m.handle && m.alias && <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.06em", marginTop: "2px" }}>{m.alias}</div>}
                           {lbEntry && <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: lbEntry.totalPnL >= 0 ? C.green : C.red, letterSpacing: "0.06em", marginTop: "2px" }}>{lbEntry.totalPnL >= 0 ? "+" : ""}{lbEntry.totalPnL.toFixed(1)}R · {Number(lbEntry.winRate ?? 0).toFixed(0)}% WR</div>}
                         </div>
                         {!isMe && (
-                          <button onClick={(e) => { e.stopPropagation(); if (isFollowing) { unfollowUser(m.code); } else { followUser(m.code); } }}
-                            style={{ background: isFollowing ? "transparent" : C.text, color: isFollowing ? C.muted : C.bg, border: `1px solid ${isFollowing ? C.border2 : C.text}`, borderRadius: "999px", padding: "6px 14px", cursor: "pointer", fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.1em", textTransform: "uppercase" as const, flexShrink: 0 }}>
-                            {isFollowing ? "✓" : "+Follow"}
-                          </button>
+                          <div style={{ display: "flex", gap: 6, alignItems: "center", flexShrink: 0 }}>
+                            {/* Owner promotes/demotes moderators (not other owners). */}
+                            {canManageMembers && !(m.code === activeCircle.createdBy || m.isOwner) && (() => {
+                              const isMod = circleMods.has(m.code);
+                              return (
+                                <button onClick={async (e) => {
+                                  e.stopPropagation();
+                                  const next = await setMemberModerator(activeCircle.code, m.code, !isMod);
+                                  setCircleMods(new Set(next));
+                                }}
+                                  title={isMod ? "Remove moderator" : "Make moderator"}
+                                  style={{ background: isMod ? (C.accentSoft ?? "transparent") : "transparent", color: isMod ? (C.accent ?? C.text2) : C.muted, border: `1px solid ${isMod ? (C.accent ?? C.border2) : C.border2}`, borderRadius: "999px", padding: "6px 12px", cursor: "pointer", fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.08em", textTransform: "uppercase" as const }}>
+                                  {isMod ? "− Mod" : "+ Mod"}
+                                </button>
+                              );
+                            })()}
+                            <button onClick={(e) => { e.stopPropagation(); if (isFollowing) { unfollowUser(m.code); } else { followUser(m.code); } }}
+                              style={{ background: isFollowing ? "transparent" : C.text, color: isFollowing ? C.muted : C.bg, border: `1px solid ${isFollowing ? C.border2 : C.text}`, borderRadius: "999px", padding: "6px 14px", cursor: "pointer", fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.1em", textTransform: "uppercase" as const }}>
+                              {isFollowing ? "✓" : "+Follow"}
+                            </button>
+                          </div>
                         )}
                       </div>
                     );
