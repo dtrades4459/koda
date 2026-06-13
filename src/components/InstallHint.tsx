@@ -21,6 +21,7 @@
 
 import { useEffect, useState } from "react";
 import { isStandalone, isIOS, useInstallPrompt } from "../lib/pwa";
+import { MONO, BODY } from "../shared";
 
 // iPadOS reports as Mac in newer versions — augment the shared isIOS() check.
 function isIOSDevice(): boolean {
@@ -101,7 +102,7 @@ export function InstallHint() {
         bottom: "calc(12px + env(safe-area-inset-bottom))",
         zIndex: 9997,
         padding: "14px 16px",
-        background: "#131317",
+        background: "#0A0A0B",
         border: "1px solid rgba(255,255,255,0.13)",
         borderRadius: "16px",
         boxShadow: "0 16px 40px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.2)",
@@ -110,13 +111,13 @@ export function InstallHint() {
         display: "flex",
         alignItems: "flex-start",
         gap: "12px",
-        fontFamily: "'Geist', -apple-system, sans-serif",
+        fontFamily: BODY,
         color: "#F2F2EE",
       }}
     >
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{
-          fontFamily: "'Geist Mono', monospace",
+          fontFamily: MONO,
           fontSize: "0.5625rem",
           letterSpacing: "0.18em",
           textTransform: "uppercase" as const,
@@ -169,7 +170,7 @@ export function InstallHint() {
                 padding: "8px 14px",
                 fontSize: "0.75rem",
                 fontWeight: 600,
-                fontFamily: "'Geist', -apple-system, sans-serif",
+                fontFamily: BODY,
                 cursor: "pointer",
               }}
             >
@@ -186,7 +187,7 @@ export function InstallHint() {
           border: "none",
           color: "#65655F",
           cursor: "pointer",
-          fontFamily: "'Geist Mono', monospace",
+          fontFamily: MONO,
           fontSize: "1rem",
           lineHeight: 1,
           padding: "4px 6px",

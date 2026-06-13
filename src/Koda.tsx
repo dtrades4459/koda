@@ -2086,7 +2086,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                         children: (
                           <>
                             <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.accent ?? "#60a5fa", letterSpacing: "0.14em", textTransform: "uppercase" as const, fontWeight: 700, marginBottom: "4px" }}>Kōda Team</div>
-                            <div style={{ fontFamily: BODY, fontSize: "0.8125rem", color: C.text, lineHeight: 1.5 }}>{a.message}</div>
+                            <div style={{ fontFamily: BODY, fontSize: "0.8125rem", color: C.text, lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 4, WebkitBoxOrient: "vertical" as const, overflow: "hidden" }}>{a.message}</div>
                           </>
                         ),
                       });
