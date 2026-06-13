@@ -33,7 +33,7 @@ export function CompetitionBannerContent({ C, isMobile, onJoin }: CompetitionBan
   return (
     <>
       <div style={{
-        fontFamily: MONO, fontSize: "0.625rem", color: C.live,
+        fontFamily: MONO, fontSize: "0.625rem", color: C.accent,
         letterSpacing: "0.16em", textTransform: "uppercase" as const,
         fontWeight: 700, marginBottom: 10,
       }}>
