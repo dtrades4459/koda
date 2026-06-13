@@ -191,6 +191,19 @@ export function useCircles({
     } catch { return new Set(); }
   }
 
+  /** Read the moderator list for a circle. Returns a Set of member codes.
+   *  Same owner-owned-KV pattern as the ban list — deliberately NOT
+   *  circle_members.role, which a DB trigger mirrors from the KV member rows
+   *  and would clobber on the next sync. */
+  async function readCircleMods(circleCode: string): Promise<Set<string>> {
+    try {
+      const r = await storage.get(`koda_circle_mods_${circleCode}`, true);
+      if (!r) return new Set();
+      const arr = JSON.parse(r.value);
+      return new Set(Array.isArray(arr) ? arr : []);
+    } catch { return new Set(); }
+  }
+
   async function readCircleMembers(code: string, fallback: CircleMember[] = []) {
     try {
       const [rows, bans] = await Promise.all([
@@ -519,6 +532,22 @@ export function useCircles({
     }
   }
 
+  /** Owner promotes/demotes a moderator via the mods list (RLS-safe — owner
+   *  writes a row they own). on=true adds, on=false removes. Returns the new
+   *  Set so callers can update UI without a re-read. */
+  async function setMemberModerator(circleCode: string, memberCode: string, on: boolean): Promise<Set<string>> {
+    const mods = await readCircleMods(circleCode);
+    if (on) mods.add(memberCode); else mods.delete(memberCode);
+    try {
+      await storage.set(`koda_circle_mods_${circleCode}`, JSON.stringify([...mods]), true);
+      showToast(on ? "Moderator added" : "Moderator removed");
+    } catch (e) {
+      log.error("setMemberModerator", e, { circleCode });
+      showToast("Couldn't update moderators — try again");
+    }
+    return mods;
+  }
+
   /** Member leaves a circle they joined. Deletes their own member + entry rows. */
   async function leaveCircle(circleCode: string) {
     if (circleCode === KODA_GLOBAL_CODE) {
@@ -647,11 +676,13 @@ export function useCircles({
     saveMyCircles,
     myMemberRecord,
     readCircleMembers,
+    readCircleMods,
     // Actions
     createCircle,
     joinCircle,
     joinCircleByCode,
     kickMember,
+    setMemberModerator,
     leaveCircle,
     publishToCircle,
     fetchCircleLeaderboard,
