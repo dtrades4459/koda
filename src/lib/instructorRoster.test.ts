@@ -41,6 +41,19 @@ describe("buildRoster", () => {
     expect(summary.notPublishingCount).toBe(1);   // D
     expect(summary.medianDiscipline).toBe(88);    // median(88,95,88) = 88
     expect(summary.aboveThresholdCount).toBe(3);  // all >= 70
+    expect(summary.belowThresholdCount).toBe(0);  // none below default 70
+    expect(summary.threshold).toBe(70);           // default
+  });
+
+  it("respects a coach-set threshold for above/below counts and per-row flags", () => {
+    const { rows, summary } = buildRoster(base, 90);
+    expect(summary.threshold).toBe(90);
+    expect(summary.aboveThresholdCount).toBe(1);  // B(95)
+    expect(summary.belowThresholdCount).toBe(2);  // A(88), C(88)
+    expect(rows.find(r => r.memberCode === "A")!.belowThreshold).toBe(true);
+    expect(rows.find(r => r.memberCode === "B")!.belowThreshold).toBe(false);
+    // No score → never flagged (nothing for the coach to act on yet).
+    expect(rows.find(r => r.memberCode === "D")!.belowThreshold).toBe(false);
   });
 
   it("never exposes a dollar field", () => {
@@ -72,6 +85,11 @@ describe("rosterToCsv", () => {
     expect(lines).toHaveLength(6); // header + 5
     expect(csv).toContain("withheld");
     expect(csv).toContain("not_publishing");
+  });
+
+  it("marks below_threshold status when scoring under the coach threshold", () => {
+    const csv = rosterToCsv(buildRoster(base, 90));
+    expect(csv).toContain("below_threshold");
   });
 
   it("escapes commas/quotes in names", () => {

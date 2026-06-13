@@ -1754,7 +1754,7 @@ export function TradingCircles({
                           <div style={{ display: "flex", alignItems: "baseline", gap: "8px" }}>
                             <span style={{ fontFamily: DISPLAY, fontSize: "1rem", fontWeight: 500, color: C.text, letterSpacing: "-0.01em" }}>{m.name || "Trader"}</span>
                             {isMe && <span style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.green, letterSpacing: "0.12em" }}>· YOU</span>}
-                            {(m.code === activeCircle.createdBy || m.isOwner) ? <span style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.1em" }}>OWNER</span> : circleMods.has(m.code) ? <span style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.accent ?? C.text2, letterSpacing: "0.1em" }}>MOD</span> : null}
+                            {(m.code === activeCircle.createdBy || m.isOwner) ? <span style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.1em" }}>OWNER</span> : circleMods.has(m.code) ? <span style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.accent ?? C.text2, letterSpacing: "0.1em" }}>COACH</span> : null}
                           </div>
                           {m.handle && <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.04em", marginTop: "2px" }}>@{stripHandlePrefix(m.handle)}</div>}
                           {!m.handle && m.alias && <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.06em", marginTop: "2px" }}>{m.alias}</div>}
@@ -1771,9 +1771,9 @@ export function TradingCircles({
                                   const next = await setMemberModerator(activeCircle.code, m.code, !isMod);
                                   setCircleMods(new Set(next));
                                 }}
-                                  title={isMod ? "Remove moderator" : "Make moderator"}
+                                  title={isMod ? "Remove coach" : "Make coach"}
                                   style={{ background: isMod ? (C.accentSoft ?? "transparent") : "transparent", color: isMod ? (C.accent ?? C.text2) : C.muted, border: `1px solid ${isMod ? (C.accent ?? C.border2) : C.border2}`, borderRadius: "999px", padding: "6px 12px", cursor: "pointer", fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.08em", textTransform: "uppercase" as const }}>
-                                  {isMod ? "− Mod" : "+ Mod"}
+                                  {isMod ? "− Coach" : "+ Coach"}
                                 </button>
                               );
                             })()}
@@ -1912,10 +1912,10 @@ export function TradingCircles({
                             >
                               <div style={{ fontFamily: BODY, fontSize: "0.8125rem", color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</div>
                             </button>
-                            <div style={{ fontFamily: MONO, fontSize: "0.5625rem", color: C.muted, marginTop: 2, letterSpacing: "0.04em" }}>
+                            <div style={{ fontFamily: MONO, fontSize: "0.5625rem", color: r.belowThreshold ? C.red : C.muted, marginTop: 2, letterSpacing: "0.04em" }}>
                               {status
                                 ? status
-                                : `${r.taggedCount ?? 0}/${r.totalTrades ?? 0} tagged${r.streak && r.streak.type === "win" && r.streak.count >= 2 ? ` · ${r.streak.count}W` : ""}`}
+                                : `${r.belowThreshold ? "⚠ Below target · " : ""}${r.taggedCount ?? 0}/${r.totalTrades ?? 0} tagged${r.streak && r.streak.type === "win" && r.streak.count >= 2 ? ` · ${r.streak.count}W` : ""}`}
                             </div>
                           </div>
                           <span style={{ textAlign: "right", fontFamily: DISPLAY, fontSize: "0.9375rem", fontWeight: 600, color: dColor, fontVariantNumeric: "tabular-nums" }}>
