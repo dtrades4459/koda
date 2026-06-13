@@ -618,6 +618,22 @@ export function TradingCircles({
     return () => { alive = false; };
   }, [circlesView, activeCircle, profile.uid, readCircleMods]);
 
+  // Referee self-heal: a staff member's REFEREE badge comes from the staff flag
+  // on their OWN published entry. Entries published before the staff logic (or
+  // that simply haven't republished since — no new trades) are stale and show
+  // the person as a competitor. Republish once when a staff member opens the
+  // comp circle so the flag refreshes without them having to log a trade.
+  useEffect(() => {
+    if (circlesView !== "detail") return;
+    if (activeCircle?.code !== COMP_CIRCLE_CODE) return;
+    if (!COMP_STAFF_UIDS.has(profile.uid ?? "")) return;
+    void publishToCircle(COMP_CIRCLE_CODE, true);
+    // refresh the board so the badge appears this session, not next open
+    fetchCircleLeaderboard(activeCircle, lbSort).then(setLeaderboard).catch(() => {});
+    // Fire once per comp-circle open; lbSort/publishToCircle intentionally omitted.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [circlesView, activeCircle?.code, profile.uid]);
+
   // Poll chat every 8s when the chat tab is active — fallback while realtime warms up
   useEffect(() => {
     if (circleTab !== "chat" || !activeCircle) return;
