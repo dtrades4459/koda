@@ -12,6 +12,8 @@ import { MONO } from "../shared";
 //
 //   • Highest `priority` sits on top (CTA banners outrank informational ones).
 //   • Dismissing the top card slides the next one up into its place.
+//   • Rear cards peek a fixed sliver at the bottom (bottom-anchored + clipped),
+//     so the deck reads cleanly whichever card is on top, regardless of height.
 //   • Rear cards stay reachable — a "Next ›" control cycles the stack, so no
 //     banner is hidden for good.
 //   • A polite live region announces whichever card is currently on top.
@@ -32,10 +34,10 @@ export interface BannerStackItem {
   children: ReactNode;
 }
 
-const PEEK_OFFSET = 9;   // px each rear card peeks below the one above
-const PEEK_SCALE = 0.035; // scale reduction per depth level
-const MAX_PEEK = 2;      // how many rear cards are visibly offset
-const EXIT_MS = 280;     // dismiss animation duration
+const PEEK_OFFSET = 10;   // px each rear card peeks below the one above
+const PEEK_SCALE = 0.04;  // scale reduction per depth level (deck inset)
+const MAX_PEEK = 2;       // how many rear cards are visibly offset
+const EXIT_MS = 280;      // dismiss animation duration
 
 export function BannerStack({
   C,
@@ -56,6 +58,7 @@ export function BannerStack({
   // Clamp rotation into range whenever the item count changes.
   const rot = count > 0 ? ((rotation % count) + count) % count : 0;
   const order = count > 0 ? [...sorted.slice(rot), ...sorted.slice(0, rot)] : [];
+  const peekPad = Math.min(count - 1, MAX_PEEK) * PEEK_OFFSET;
 
   // Reset transient state if the underlying items change out from under us.
   useEffect(() => {
@@ -90,63 +93,62 @@ export function BannerStack({
       role="region"
       aria-roledescription="Announcements"
       aria-label={count > 1 ? `Announcements, ${count} items` : "Announcement"}
-      style={{
-        position: "relative",
-        marginBottom: 16,
-        // Reserve room for the peeking cards so nothing below jumps.
-        paddingBottom: count > 1 ? Math.min(count - 1, MAX_PEEK) * PEEK_OFFSET : 0,
-        outline: "none",
-      }}
+      style={{ position: "relative", marginBottom: 16, outline: "none" }}
     >
       {/* Polite live region — announces whichever card is on top. */}
       <div aria-live="polite" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>
         {top.ariaLabel}
       </div>
 
-      {order.map((item, depth) => {
-        const isTop = depth === 0;
-        const clampedDepth = Math.min(depth, MAX_PEEK);
-        const behind = !isTop;
-        return (
-          <div
-            key={item.id}
-            aria-hidden={behind ? true : undefined}
-            style={{
-              ...(isTop
-                ? { position: "relative" as const }
-                : { position: "absolute" as const, top: 0, left: 0, right: 0 }),
-              zIndex: count - depth,
-              transform: isTop
-                ? exiting
-                  ? "translateY(-10px) scale(0.97)"
-                  : "translateY(0) scale(1)"
-                : `translateY(${clampedDepth * PEEK_OFFSET}px) scale(${1 - clampedDepth * PEEK_SCALE})`,
-              opacity: isTop ? (exiting ? 0 : 1) : Math.max(0, 0.55 - (clampedDepth - 1) * 0.22),
-              transformOrigin: "top center",
-              transition: `transform ${EXIT_MS}ms cubic-bezier(.2,.8,.2,1), opacity ${EXIT_MS}ms ease`,
-              pointerEvents: isTop ? "auto" : "none",
-              filter: behind ? "saturate(0.85)" : undefined,
-            }}
-          >
-            <BannerCard
-              C={C}
-              dismissible={item.dismissible}
-              onDismiss={item.dismissible ? dismissTop : undefined}
+      {/* Clipped viewport — rear cards peek a fixed sliver; overflow is hidden. */}
+      <div style={{ position: "relative", overflow: "hidden", paddingBottom: peekPad, borderRadius: 16 }}>
+        {order.map((item, depth) => {
+          const isTop = depth === 0;
+          const d = Math.min(depth, MAX_PEEK);
+          return (
+            <div
+              key={item.id}
+              aria-hidden={isTop ? undefined : true}
+              style={
+                isTop
+                  ? {
+                      position: "relative",
+                      zIndex: count + 1,
+                      transform: exiting ? "translateY(-10px) scale(0.97)" : "none",
+                      opacity: exiting ? 0 : 1,
+                      transition: `transform ${EXIT_MS}ms cubic-bezier(.2,.8,.2,1), opacity ${EXIT_MS}ms ease`,
+                      pointerEvents: "auto",
+                    }
+                  : {
+                      position: "absolute",
+                      left: 0,
+                      right: 0,
+                      bottom: peekPad - d * PEEK_OFFSET,
+                      zIndex: count + 1 - depth,
+                      transform: `scale(${1 - d * PEEK_SCALE})`,
+                      transformOrigin: "bottom center",
+                      opacity: Math.max(0, 0.6 - (d - 1) * 0.2),
+                      transition: `transform ${EXIT_MS}ms cubic-bezier(.2,.8,.2,1), opacity ${EXIT_MS}ms ease`,
+                      pointerEvents: "none",
+                      filter: "saturate(0.9)",
+                    }
+              }
             >
-              {item.children}
-            </BannerCard>
-          </div>
-        );
-      })}
+              <BannerCard
+                C={C}
+                dismissible={item.dismissible}
+                onDismiss={item.dismissible ? dismissTop : undefined}
+              >
+                {item.children}
+              </BannerCard>
+            </div>
+          );
+        })}
+      </div>
 
       {/* Count + cycle control — only when the stack holds more than one. */}
       {count > 1 && (
-        <div
-          style={{
-            display: "flex", alignItems: "center", justifyContent: "flex-end",
-            gap: 10, marginTop: 8,
-          }}
-        >
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10, marginTop: 8 }}>
           <span style={{
             fontFamily: MONO, fontSize: "0.5625rem", letterSpacing: "0.12em",
             textTransform: "uppercase" as const, color: C.muted,
