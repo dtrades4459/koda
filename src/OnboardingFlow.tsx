@@ -27,6 +27,19 @@ export const FUTURES_INSTRUMENTS = [
   { code: "6E",  label: "Euro FX"         },
 ];
 
+// Spot forex / metals — so forex traders see their instruments at onboarding too.
+// Rendered alongside FUTURES_INSTRUMENTS in the "What do you trade?" step.
+export const FOREX_INSTRUMENTS = [
+  { code: "EURUSD", label: "Euro / USD"   },
+  { code: "GBPUSD", label: "Pound / USD"  },
+  { code: "USDJPY", label: "USD / Yen"    },
+  { code: "GBPJPY", label: "Pound / Yen"  },
+  { code: "AUDUSD", label: "Aussie / USD" },
+  { code: "USDCAD", label: "USD / CAD"    },
+  { code: "EURJPY", label: "Euro / Yen"   },
+  { code: "XAUUSD", label: "Gold (spot)"  },
+];
+
 export interface OnboardingData {
   name: string;
   handle: string;
@@ -273,7 +286,7 @@ export function OnboardingFlow({ C, onComplete }: {
             </p>
 
             <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "32px" }}>
-              {FUTURES_INSTRUMENTS.map(inst => {
+              {[...FUTURES_INSTRUMENTS, ...FOREX_INSTRUMENTS].map(inst => {
                 const active = instruments.includes(inst.code);
                 return (
                   <button key={inst.code}
