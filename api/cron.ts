@@ -15,8 +15,9 @@ import { tryDecrypt, encrypt } from "./_lib/cryptoUtils.js";
 import { getAdminClient, getUserIdFromJwt } from "./_lib/supabaseAdmin.js";
 import { checkRateLimit, getClientIp } from "./_lib/rateLimit.js";
 import { deliverNotification } from "./push.js";
-import { sendEmail, weeklyRecapHtml, buildUnsubscribeUrl } from "./_lib/email.js";
+import { sendEmail, weeklyRecapHtml, buildUnsubscribeUrl, winbackEmailHtml } from "./_lib/email.js";
 import { fetchWeeklyRecap } from "./_lib/metrics/weeklyRecap.js";
+import { isWinbackCandidate } from "./_lib/retention/winback.js";
 
 type Req = { method?: string; headers: Record<string, string | string[] | undefined>; body: Record<string, unknown>; query: Record<string, string | string[] | undefined> };
 type Res = { status(n: number): Res; json(d: unknown): Res; end(): void; setHeader(k: string, v: string): void };
@@ -831,6 +832,61 @@ async function handleWeeklyDigest(req: Req, res: Res) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
+// Job: winback  (daily — re-engage users idle 7–14 days)
+// ══════════════════════════════════════════════════════════════════════════════
+
+async function handleWinback(req: Req, res: Res) {
+  if (!isCronAuthed(req)) return res.status(401).json({ error: "Unauthorized" });
+  const admin = getAdminClient();
+
+  const { data: profiles } = await admin
+    .from("profiles")
+    .select("user_id, name, unsubscribe_token, last_active_at, winback_opt_in, last_winback_at");
+
+  let sent = 0;
+  for (const row of profiles ?? []) {
+    const p = row as {
+      user_id: string; name: string; unsubscribe_token: string;
+      last_active_at: string | null; winback_opt_in: boolean; last_winback_at: string | null;
+    };
+    if (!isWinbackCandidate(
+      { last_active_at: p.last_active_at, winback_opt_in: p.winback_opt_in, last_winback_at: p.last_winback_at },
+    )) continue;
+
+    const email = await recoveryEmailForUid(admin, p.user_id);
+
+    try {
+      if (email) {
+        await sendEmail({
+          to: email,
+          subject: "Your Kōda edge is waiting",
+          html: winbackEmailHtml({
+            firstName: p.name || "Trader",
+            unsubscribeUrl: buildUnsubscribeUrl(p.unsubscribe_token, "winback"),
+          }),
+        });
+      }
+      // Best-effort push too (no-op if not subscribed)
+      await deliverNotification({
+        targetUid: p.user_id,
+        kind: "digest",
+        title: "Your edge is waiting",
+        body: "It's been a minute — log a trade and pick the thread back up.",
+        data: { reason: "winback" },
+      }).catch(() => {});
+
+      await admin.from("profiles").update({ last_winback_at: new Date().toISOString() }).eq("user_id", p.user_id);
+      sent++;
+    } catch (err) {
+      console.error("[winback] failed for", p.user_id, err);
+      // leave last_winback_at untouched → retried next run
+    }
+  }
+
+  return res.status(200).json({ ok: true, sent });
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
 // Router
 // ══════════════════════════════════════════════════════════════════════════════
 
@@ -845,6 +901,7 @@ export default async function handler(req: Req, res: Res) {
   if (job === "news-calendar")       return handleNewsCalendar(req, res);
   if (job === "news-headlines")      return handleNewsHeadlines(req, res);
   if (job === "weekly-digest")       return handleWeeklyDigest(req, res);
+  if (job === "winback")             return handleWinback(req, res);
 
   if (job === 'daily-digest') {
     if (!isCronAuthed(req)) return res.status(401).json({ error: 'Unauthorized' });
@@ -853,5 +910,5 @@ export default async function handler(req: Req, res: Res) {
     return res.status(200).json({ ok: true });
   }
 
-  return res.status(400).json({ error: "?job= required: complete-challenges | sync | daily-digest | news-calendar | news-headlines | weekly-digest" });
+  return res.status(400).json({ error: "?job= required: complete-challenges | sync | daily-digest | news-calendar | news-headlines | weekly-digest | winback" });
 }
