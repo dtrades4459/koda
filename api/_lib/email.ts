@@ -13,6 +13,13 @@ function esc(s: string): string {
 }
 const FROM = "Kōda <noreply@kodatrade.co.uk>";
 
+const APP_ORIGIN = process.env.APP_URL ?? "https://kodatrade.co.uk";
+
+/** Public, unauthenticated unsubscribe link clicked from an email client. */
+export function buildUnsubscribeUrl(token: string, type: "weekly" | "winback" | "product" | "all"): string {
+  return `${APP_ORIGIN}/api/account?action=unsubscribe&token=${encodeURIComponent(token)}&type=${type}`;
+}
+
 export async function sendEmail({ to, subject, html }: { to: string; subject: string; html: string }) {
   if (!RESEND_API_KEY) throw new Error("RESEND_API_KEY not set");
   const res = await fetch("https://api.resend.com/emails", {
@@ -118,7 +125,7 @@ const EMAIL_LIVE = "oklch(0.84 0.14 175)";
 const EMAIL_RED = "oklch(0.70 0.21 25)";
 const EMAIL_WARN = "oklch(0.79 0.16 75)";
 
-function emailShell({ kicker, title, body }: { kicker: string; title: string; body: string }): string {
+function emailShell({ kicker, title, body, unsubscribeUrl }: { kicker: string; title: string; body: string; unsubscribeUrl?: string }): string {
   return `<!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>${esc(title)} · Kōda</title></head>
@@ -137,7 +144,7 @@ function emailShell({ kicker, title, body }: { kicker: string; title: string; bo
     <tr><td style="padding:4px 32px 8px">${body}</td></tr>
     <tr><td style="padding:24px 32px 30px;border-top:1px solid ${EMAIL_LINE};margin-top:8px">
       <p style="font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:0.14em;color:${EMAIL_MUTE};text-transform:uppercase;margin:0">Kōda · kodatrade.co.uk</p>
-      <p style="font-size:11px;color:${EMAIL_MUTE};margin:8px 0 0;line-height:1.6">You're receiving this because you have a Kōda account. <a href="https://kodatrade.co.uk/settings" style="color:${EMAIL_INK2};text-decoration:underline">Manage emails</a> · <a href="https://kodatrade.co.uk/unsubscribe" style="color:${EMAIL_INK2};text-decoration:underline">Unsubscribe</a></p>
+      <p style="font-size:11px;color:${EMAIL_MUTE};margin:8px 0 0;line-height:1.6">You're receiving this because you have a Kōda account. <a href="https://kodatrade.co.uk/settings" style="color:${EMAIL_INK2};text-decoration:underline">Manage emails</a> · <a href="${unsubscribeUrl ?? "https://kodatrade.co.uk/settings"}" style="color:${EMAIL_INK2};text-decoration:underline">Unsubscribe</a></p>
     </td></tr>
   </table>
 </body></html>`;
