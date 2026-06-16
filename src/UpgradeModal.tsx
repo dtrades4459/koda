@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "./lib/supabase";
 import { MONO, BODY, DISPLAY } from "./shared";
+import { phCapture } from "./lib/posthog";
 import type { Theme } from "./theme";
 
 export function UpgradeModal({ C, userId, userEmail, stripeCustomerId, onCustomerId, onClose, mandatory = false }: {
@@ -15,9 +16,12 @@ export function UpgradeModal({ C, userId, userEmail, stripeCustomerId, onCustome
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  useEffect(() => { phCapture("paywall_viewed", { mandatory }); }, [mandatory]);
+
   async function handleUpgrade() {
     setLoading(true);
     setError("");
+    phCapture("checkout_started", { mandatory });
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) throw new Error("Not signed in");
