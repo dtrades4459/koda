@@ -15,7 +15,7 @@ import { getAdminClient, getUserIdFromJwt } from "./_lib/supabaseAdmin.js";
 import { sendEmail, waitlistConfirmHtml } from "./_lib/email.js";
 
 type Req = { method?: string; headers: Record<string, string | string[] | undefined>; body: Record<string, unknown>; query: Record<string, string | string[] | undefined> };
-type Res = { status(n: number): Res; json(d: unknown): Res; end(): void; setHeader(k: string, v: string): void };
+type Res = { status(n: number): Res; json(d: unknown): Res; end(body?: string): void; setHeader(k: string, v: string): void };
 
 const APP_URL          = process.env.APP_URL ?? "https://kodatrade.co.uk";
 const USERNAME_DOMAIN  = "users.kodatrade.co.uk";
@@ -389,15 +389,56 @@ async function handleDelete(req: Req, res: Res) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
+// Action: unsubscribe  (public GET — clicked from an email client)
+// ══════════════════════════════════════════════════════════════════════════════
+
+const UNSUB_COLUMNS: Record<string, string[]> = {
+  weekly:  ["weekly_recap_opt_in"],
+  winback: ["winback_opt_in"],
+  product: ["product_opt_in"],
+  all:     ["weekly_recap_opt_in", "winback_opt_in", "product_opt_in"],
+};
+
+function unsubPage(message: string): string {
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Kōda</title></head>
+<body style="margin:0;background:#0A0A0B;color:#F2F2EE;font-family:system-ui,sans-serif">
+<div style="max-width:480px;margin:80px auto;padding:0 24px;text-align:center">
+<p style="font-size:22px;font-weight:600;margin:0 0 12px">${message}</p>
+<p style="font-size:13px;color:#A6A6A2;margin:0 0 28px">You can change email preferences anytime in Settings.</p>
+<a href="https://kodatrade.co.uk/settings" style="display:inline-block;padding:11px 22px;border-radius:999px;background:#F2F2EE;color:#0A0A0B;text-decoration:none;font-size:13px;font-weight:600">Open Settings →</a>
+</div></body></html>`;
+}
+
+async function handleUnsubscribe(req: Req, res: Res) {
+  const token = (req.query?.token as string | undefined)?.trim() ?? "";
+  const type  = ((req.query?.type as string | undefined) ?? "all").trim();
+  const cols  = UNSUB_COLUMNS[type] ?? UNSUB_COLUMNS.all;
+
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+
+  // Always show success (no token enumeration). Only update on a real match.
+  if (token) {
+    const admin = getAdminClient();
+    const patch = Object.fromEntries(cols.map(c => [c, false]));
+    await admin.from("profiles").update(patch).eq("unsubscribe_token", token);
+  }
+  return res.status(200).end(unsubPage("You're unsubscribed."));
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
 // Router
 // ══════════════════════════════════════════════════════════════════════════════
 
 export default async function handler(req: Req, res: Res) {
   cors(req, res);
   if (req.method === "OPTIONS") return res.status(200).end();
-  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
   const action = req.query?.action as string | undefined;
+
+  // Public GET-only action (clicked from email) — must bypass the POST guard.
+  if (action === "unsubscribe") return handleUnsubscribe(req, res);
+
+  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
   if (action === "reset-password") return handleResetPassword(req, res);
   if (action === "beta-unlock")    return handleBetaUnlock(req, res);
