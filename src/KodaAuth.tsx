@@ -96,6 +96,7 @@ function AuthForm({ onSuccess, initialError = "", onModeChange, modeRequest }: {
           options: { data: { username: u, ...(recoveryEmail.trim() ? { recovery_email: recoveryEmail.trim().toLowerCase() } : {}) } },
         });
         if (e) throw e;
+        phCapture("signed_up", { method: "password", has_recovery_email: !!recoveryEmail.trim() });
         onSuccess();
       }
     } catch (e: any) {
