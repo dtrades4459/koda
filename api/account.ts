@@ -410,6 +410,10 @@ function unsubPage(message: string): string {
 }
 
 async function handleUnsubscribe(req: Req, res: Res) {
+  const ip = getClientIp(req);
+  const ok = await checkRateLimit("unsubscribe", ip, { limit: 30, windowMs: 600_000 });
+  if (!ok) { res.setHeader("Content-Type", "text/html; charset=utf-8"); return res.status(429).end(unsubPage("Too many requests — try again later.")); }
+
   const token = (req.query?.token as string | undefined)?.trim() ?? "";
   const type  = ((req.query?.type as string | undefined) ?? "all").trim();
   const cols  = UNSUB_COLUMNS[type] ?? UNSUB_COLUMNS.all;
