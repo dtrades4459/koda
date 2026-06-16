@@ -347,3 +347,15 @@ ${bestSetup ? emailP(`Best setup this week: <strong style="color:${EMAIL_INK}">$
 <div style="margin:24px 0">${emailCTA({ label: "Open Kōda →", href: "https://kodatrade.co.uk" })}</div>`;
   return emailShell({ kicker: `${weekLabel} · Weekly Recap`, title: "Your Kōda week", body, unsubscribeUrl });
 }
+
+// 14 · Win-back — re-engage a lapsed user
+export function winbackEmailHtml({
+  firstName = "Trader", appUrl = "https://kodatrade.co.uk", unsubscribeUrl,
+}: { firstName?: string; appUrl?: string; unsubscribeUrl?: string }): string {
+  const body = `
+${emailH({ title: "Your edge is", accent: "waiting." })}
+${emailP(`Hey ${esc(firstName)} — it's been a minute. Your journal, your rules and your stats are exactly where you left them. One logged trade and Kōda picks the thread back up.`)}
+<div style="margin:24px 0">${emailCTA({ label: "Pick up where you left off →", href: `${appUrl}/?screen=log` })}</div>
+${emailPanel(`<p style="font-size:12.5px;color:${EMAIL_INK2};margin:0">Traders who journal consistently break fewer rules. Don't let the streak go cold.</p>`)}`;
+  return emailShell({ kicker: "We miss you", title: "Your Kōda edge is waiting", body, unsubscribeUrl });
+}
