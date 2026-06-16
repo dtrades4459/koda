@@ -61,7 +61,7 @@ Three components, in build order. **A must ship before B/C** (compliance + don't
 
 Transactional emails (receipt, password reset, verification, payment-failed, account-deletion) are **never gated**.
 
-**Public unsubscribe route** — mounted as `?action=unsubscribe` on an **existing** API function (e.g. `api/account.ts`), to respect the 12-function cap:
+**Public unsubscribe route** — mounted as `?action=unsubscribe` on `api/account.ts`, to respect the 12-function cap. Note `api/account.ts` is currently **POST-only** (returns 405 otherwise) — the router must special-case `GET` for `action=unsubscribe`:
 - `GET /api/account?action=unsubscribe&token=<uuid>&type=<weekly|winback|product|all>`
 - Looks up the profile by `unsubscribe_token` (service role), sets the matching opt-in(s) to `false`, returns a minimal styled HTML confirmation page.
 - No auth (clicked from email client). Rate-limited via existing `checkRateLimit`. Invalid/unknown token → generic "you're unsubscribed" page (no enumeration).
@@ -74,7 +74,9 @@ Transactional emails (receipt, password reset, verification, payment-failed, acc
 
 Extend the existing **Sunday 18:00 `weekly-digest`** job (do not add a cron slot).
 
-**Recipient filter:** profile has an email, `weekly_recap_opt_in = true`, and the user logged **≥1 trade in the trailing 7 days**. (No trades that week → handled by win-back, not here.)
+**Recipient email sourcing (important):** accounts use **synthetic auth emails** (`<username>@users.kodatrade.co.uk`); the deliverable address is `auth.users.raw_user_meta_data.recovery_email`. The recap/win-back jobs must read the recovery email via the admin client (`.schema("auth").from("users")`), and **skip any user without one** (push-only for those).
+
+**Recipient filter:** has a recovery email, `weekly_recap_opt_in = true`, and the user logged **≥1 trade in the trailing 7 days**. (No trades that week → handled by win-back, not here.)
 
 **Stats (per user, trailing 7 days)** — computed in a new `api/_lib/metrics/weeklyRecap.ts`:
 - `tradeCount` = count of trades in window.
@@ -124,10 +126,10 @@ Extend the existing **Sunday 18:00 `weekly-digest`** job (do not add a cron slot
 
 ## 6. Open Items (resolve during planning, not blockers)
 
-1. Confirm Resend domain auth (SPF/DKIM) for `kodatrade.co.uk` is live.
-2. Confirm which existing `api/*` function best hosts the public `?action=unsubscribe` (candidate: `api/account.ts`) and that it can serve an unauthenticated GET returning HTML.
-3. Decide the `last_active_at` upsert throttle (per-session vs once/day) to avoid write amplification.
-4. Confirm `profiles` RLS allows the user to update their own opt-in columns.
+1. Confirm Resend domain auth (SPF/DKIM) for `kodatrade.co.uk` is live (a Dylon/ops check, not a code task).
+2. ~~Host for unsubscribe route~~ → **resolved:** `api/account.ts`, router special-cased for GET.
+3. Decide the `last_active_at` upsert throttle — **plan uses once/day** (localStorage date-guard) to avoid write amplification.
+4. ~~profiles RLS~~ → **resolved:** `profiles_self` policy already allows authenticated self-update.
 
 ---
 
