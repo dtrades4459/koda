@@ -15,6 +15,8 @@ import { tryDecrypt, encrypt } from "./_lib/cryptoUtils.js";
 import { getAdminClient, getUserIdFromJwt } from "./_lib/supabaseAdmin.js";
 import { checkRateLimit, getClientIp } from "./_lib/rateLimit.js";
 import { deliverNotification } from "./push.js";
+import { sendEmail, weeklyRecapHtml, buildUnsubscribeUrl } from "./_lib/email.js";
+import { fetchWeeklyRecap } from "./_lib/metrics/weeklyRecap.js";
 
 type Req = { method?: string; headers: Record<string, string | string[] | undefined>; body: Record<string, unknown>; query: Record<string, string | string[] | undefined> };
 type Res = { status(n: number): Res; json(d: unknown): Res; end(): void; setHeader(k: string, v: string): void };
@@ -716,6 +718,15 @@ async function handleNewsHeadlines(req: Req, res: Res) {
 // Job: weekly-digest  (Sunday 18:00 UTC — consolidates the past 7 days)
 // ══════════════════════════════════════════════════════════════════════════════
 
+/** Real deliverable email for a user: recovery_email from auth metadata, or null. */
+async function recoveryEmailForUid(admin: ReturnType<typeof getAdminClient>, uid: string): Promise<string | null> {
+  const { data } = await admin.schema("auth").from("users")
+    .select("raw_user_meta_data").eq("id", uid).maybeSingle();
+  const meta = (data as { raw_user_meta_data?: { recovery_email?: string } } | null)?.raw_user_meta_data;
+  const email = meta?.recovery_email?.trim();
+  return email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : null;
+}
+
 async function handleWeeklyDigest(req: Req, res: Res) {
   if (!isCronAuthed(req)) return res.status(401).json({ error: "Unauthorized" });
   const admin = getAdminClient();
@@ -776,7 +787,47 @@ async function handleWeeklyDigest(req: Req, res: Res) {
       .in("id", agg.ids);
   }
 
-  return res.status(200).json({ ok: true, users: userCount });
+  // ── Weekly trading recap email (separate from the social digest above) ──
+  const weekStart = new Date(Date.now() - 7 * 24 * 3600 * 1000);
+  const weekLabel = `${weekStart.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}–${new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`;
+  const thisWeekIso = new Date(Date.now() - 6.5 * 24 * 3600 * 1000).toISOString(); // already-sent guard
+
+  const { data: optedIn } = await admin
+    .from("profiles")
+    .select("user_id, name, unsubscribe_token, last_weekly_recap_at")
+    .eq("weekly_recap_opt_in", true);
+
+  let recapsSent = 0;
+  for (const p of optedIn ?? []) {
+    const prof = p as { user_id: string; name: string; unsubscribe_token: string; last_weekly_recap_at: string | null };
+    if (prof.last_weekly_recap_at && prof.last_weekly_recap_at > thisWeekIso) continue; // already sent this week
+
+    const recap = await fetchWeeklyRecap(prof.user_id);
+    if (recap.tradeCount < 1) continue; // empty week → win-back's job, not the recap's
+
+    const email = await recoveryEmailForUid(admin, prof.user_id);
+    if (!email) continue; // no deliverable address → skip (push handled elsewhere)
+
+    try {
+      await sendEmail({
+        to: email,
+        subject: `Your Kōda week: ${recap.netDollar >= 0 ? "+" : "-"}$${Math.abs(Math.round(recap.netDollar))}`,
+        html: weeklyRecapHtml({
+          name: prof.name || "Trader",
+          netDollar: recap.netDollar, winRate: recap.winRate, netR: recap.netR,
+          bestSetup: recap.bestSetup, tradeCount: recap.tradeCount, weekLabel,
+          unsubscribeUrl: buildUnsubscribeUrl(prof.unsubscribe_token, "weekly"),
+        }),
+      });
+      await admin.from("profiles").update({ last_weekly_recap_at: new Date().toISOString() }).eq("user_id", prof.user_id);
+      recapsSent++;
+    } catch (err) {
+      console.error("[weekly-digest] recap email failed for", prof.user_id, err);
+      // leave last_weekly_recap_at untouched → retried next run
+    }
+  }
+
+  return res.status(200).json({ ok: true, users: userCount, recapsSent });
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
