@@ -45,3 +45,6 @@ playwright-report/
 
 # Vite PWA dev artifacts
 dev-dist/
+
+# Investor materials — keep OUT of the public repo
+docs/investors/
