@@ -44,6 +44,30 @@ export interface Trade {
   accountType?: "personal" | "funded" | "demo";
   /** Broker-supplied unique trade/order ID — preferred dedup key when present. */
   brokerId?: string;
+  /** Which account this row belongs to (multi-account tracking). */
+  accountId?: string;
+  /** Shared across the fanned-out copies of one logical trade (group edit/delete). */
+  groupId?: string;
+}
+
+export type AccountType = "eval" | "funded" | "personal" | "demo";
+export type DrawdownType = "trailing" | "eod" | "static";
+
+/** A tradeable account in the multi-account registry. Eval-aware so Kōda can
+ *  track per-account progress to target and drawdown proximity. */
+export interface Account {
+  id: string;
+  name: string;
+  type: AccountType;
+  propFirm?: string | null;
+  accountSize?: number | null;
+  startingBalance?: number | null;
+  profitTarget?: number | null;
+  maxDrawdown?: number | null;
+  drawdownType: DrawdownType;
+  isArchived: boolean;
+  sortOrder: number;
+  createdAt: string;
 }
 
 export interface Profile {

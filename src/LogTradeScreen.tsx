@@ -8,7 +8,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import React from "react";
-import type { Trade } from "./types";
+import type { Trade, Account } from "./types";
 import { Card, Kicker, Pill, MONO, BODY, DISPLAY } from "./shared";
 import type { Theme } from "./theme";
 import { SESSIONS, BIAS, EMOTION_TAGS, MISTAKE_TAGS, getEmotionTags } from "./tradeConstants";
@@ -42,6 +42,10 @@ export interface LogTradeScreenProps {
   lossStreak?: number;
   /** Default account type (derived from profile.propFirmMode). */
   defaultAccountType?: "personal" | "funded" | "demo";
+  accounts?: Account[];
+  isPro?: boolean;
+  selectedAccountIds?: string[];
+  onToggleAccount?: (id: string) => void;
 }
 
 /* ── Segmented outcome button (matches koda-screens.jsx SegBtn) ── */
@@ -67,6 +71,7 @@ export function LogTradeScreen({
   allStrategyNames, _allStratMap, allSetups, setView,
   todayTradeCount = 0, todayPnl = 0, maxTradesPerDay = 0,
   maxDailyLoss = 0, lossStreak = 0, defaultAccountType = "personal",
+  accounts, isPro = false, selectedAccountIds = [], onToggleAccount,
 }: LogTradeScreenProps) {
   const T = C as any as Theme;
   const live = T.live ?? "oklch(0.84 0.14 175)";
@@ -193,6 +198,28 @@ export function LogTradeScreen({
             })}
           </div>
         </div>
+        {accounts && accounts.filter(a => !a.isArchived).length > 0 && (
+          <div style={{ marginTop: 14 }}>
+            <label style={lbl}>{isPro ? "Accounts" : "Account"}</label>
+            <div style={{ display: "flex", gap: 6, marginTop: 6, flexWrap: "wrap" }}>
+              {accounts.filter(a => !a.isArchived).map(a => {
+                const on = selectedAccountIds.includes(a.id);
+                return (
+                  <SegBtn key={a.id}
+                    active={on}
+                    label={a.name}
+                    color={on ? (T.accent ?? C.accent) : C.text2}
+                    border2={C.border2}
+                    onClick={() => onToggleAccount?.(a.id)}
+                  />
+                );
+              })}
+            </div>
+            <div style={{ marginTop: 6, fontFamily: MONO, fontSize: "0.5625rem", color: C.muted, letterSpacing: "0.04em" }}>
+              {isPro ? "Tap multiple to log this trade across accounts." : "Upgrade to log across multiple accounts."}
+            </div>
+          </div>
+        )}
       </Card>
 
       {/* ── Outcome (segmented buttons) ── */}
