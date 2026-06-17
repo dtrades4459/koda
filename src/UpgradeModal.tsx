@@ -51,7 +51,7 @@ export function UpgradeModal({ C, userId, userEmail, stripeCustomerId, onCustome
 
   const FEATURES = [
     { icon: "📊", text: "Unlimited trade history" },
-    { icon: "📥", text: "CSV & broker auto-import" },
+    { icon: "📥", text: "CSV import — 8 broker formats" },
     { icon: "↗", text: "Advanced analytics — heatmaps, MAE/MFE, edge stats", mono: true },
     { icon: "◈", text: "Full insights — pattern detection & discipline scoring", mono: true },
     { icon: "⇣", text: "Export reports (CSV + PDF)", mono: true },
