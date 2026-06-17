@@ -1,6 +1,7 @@
 ﻿import { useState, useEffect, useRef } from "react";
 import { supabase } from "./lib/supabase";
 import { installStorage, clearStorageCache } from "./lib/storage";
+import { pingLastActive } from "./lib/activity";
 import type { Session } from "@supabase/supabase-js";
 import Koda from "./Koda";
 import { DARK } from "./theme";
@@ -994,11 +995,13 @@ export default function KodaAuth() {
     supabase.auth.getSession().then(({ data }) => {
       installStorage(data.session?.user?.id ?? null);
       setSession(data.session);
+      if (data.session?.user) void pingLastActive(data.session.user.id);
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, sess) => {
       if (event === "SIGNED_OUT") clearStorageCache();
       installStorage(sess?.user?.id ?? null);
       setSession(sess);
+      if (sess?.user) void pingLastActive(sess.user.id);
     });
     return () => subscription.unsubscribe();
   }, []);

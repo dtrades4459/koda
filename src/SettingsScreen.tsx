@@ -82,6 +82,35 @@ export function SettingsScreen({
       .catch(() => {});
   }, []);
 
+  const [emailPrefs, setEmailPrefs] = React.useState<{ weekly: boolean; winback: boolean; product: boolean } | null>(null);
+  React.useEffect(() => {
+    let alive = true;
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase
+        .from("profiles")
+        .select("weekly_recap_opt_in, winback_opt_in, product_opt_in")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (alive && data) setEmailPrefs({
+        weekly: data.weekly_recap_opt_in ?? true,
+        winback: data.winback_opt_in ?? true,
+        product: data.product_opt_in ?? true,
+      });
+    })();
+    return () => { alive = false; };
+  }, []);
+
+  async function setEmailPref(key: "weekly" | "winback" | "product", value: boolean) {
+    const col = key === "weekly" ? "weekly_recap_opt_in" : key === "winback" ? "winback_opt_in" : "product_opt_in";
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    setEmailPrefs(p => (p ? { ...p, [key]: value } : p));
+    const { error } = await supabase.from("profiles").update({ [col]: value }).eq("user_id", user.id);
+    if (error) setEmailPrefs(p => (p ? { ...p, [key]: !value } : p));
+  }
+
   const inp: React.CSSProperties = {
     background: "transparent",
     border: "none",
@@ -350,6 +379,62 @@ export function SettingsScreen({
           Payments handled securely by Stripe
         </div>
       </div>
+
+      {/* ── Manage emails ── */}
+      {emailPrefs !== null && (
+        <>
+          <div style={{ marginTop: 20, marginBottom: 8 }}>
+            <Kicker C={C as any}>Emails</Kicker>
+          </div>
+          <div style={{ borderRadius: "22px", background: C.panel, border: `1px solid ${C.border}`, overflow: "hidden", marginBottom: "4px" }}>
+            {/* Weekly recap */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", borderBottom: `1px solid ${C.border}` }}>
+              <div>
+                <div style={{ fontFamily: BODY, fontSize: "0.875rem", color: C.text }}>Weekly recap</div>
+                <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.08em", marginTop: 2 }}>Your week in numbers, every Monday</div>
+              </div>
+              <button
+                type="button"
+                aria-label={emailPrefs.weekly ? "Disable weekly recap emails" : "Enable weekly recap emails"}
+                onClick={() => { void setEmailPref("weekly", !emailPrefs.weekly); }}
+                style={{ width: 38, height: 22, borderRadius: 999, border: "none", cursor: "pointer", background: emailPrefs.weekly ? (C as any).live ?? C.green : C.border2, position: "relative", transition: "background 0.2s", boxShadow: emailPrefs.weekly ? `0 0 0 3px color-mix(in oklch, ${(C as any).live ?? C.green} 22%, transparent)` : "none", flexShrink: 0 }}
+              >
+                <div style={{ position: "absolute", top: 2, left: emailPrefs.weekly ? 18 : 2, width: 18, height: 18, borderRadius: "50%", background: "#fff", boxShadow: "0 1px 2px rgba(0,0,0,0.2)", transition: "left 0.2s" }} />
+              </button>
+            </div>
+            {/* Win-back nudges */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", borderBottom: `1px solid ${C.border}` }}>
+              <div>
+                <div style={{ fontFamily: BODY, fontSize: "0.875rem", color: C.text }}>Win-back nudges</div>
+                <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.08em", marginTop: 2 }}>Re-engagement when you go quiet</div>
+              </div>
+              <button
+                type="button"
+                aria-label={emailPrefs.winback ? "Disable win-back nudge emails" : "Enable win-back nudge emails"}
+                onClick={() => { void setEmailPref("winback", !emailPrefs.winback); }}
+                style={{ width: 38, height: 22, borderRadius: 999, border: "none", cursor: "pointer", background: emailPrefs.winback ? (C as any).live ?? C.green : C.border2, position: "relative", transition: "background 0.2s", boxShadow: emailPrefs.winback ? `0 0 0 3px color-mix(in oklch, ${(C as any).live ?? C.green} 22%, transparent)` : "none", flexShrink: 0 }}
+              >
+                <div style={{ position: "absolute", top: 2, left: emailPrefs.winback ? 18 : 2, width: 18, height: 18, borderRadius: "50%", background: "#fff", boxShadow: "0 1px 2px rgba(0,0,0,0.2)", transition: "left 0.2s" }} />
+              </button>
+            </div>
+            {/* Product news */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px" }}>
+              <div>
+                <div style={{ fontFamily: BODY, fontSize: "0.875rem", color: C.text }}>Product news</div>
+                <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, letterSpacing: "0.08em", marginTop: 2 }}>New features and release notes</div>
+              </div>
+              <button
+                type="button"
+                aria-label={emailPrefs.product ? "Disable product news emails" : "Enable product news emails"}
+                onClick={() => { void setEmailPref("product", !emailPrefs.product); }}
+                style={{ width: 38, height: 22, borderRadius: 999, border: "none", cursor: "pointer", background: emailPrefs.product ? (C as any).live ?? C.green : C.border2, position: "relative", transition: "background 0.2s", boxShadow: emailPrefs.product ? `0 0 0 3px color-mix(in oklch, ${(C as any).live ?? C.green} 22%, transparent)` : "none", flexShrink: 0 }}
+              >
+                <div style={{ position: "absolute", top: 2, left: emailPrefs.product ? 18 : 2, width: 18, height: 18, borderRadius: "50%", background: "#fff", boxShadow: "0 1px 2px rgba(0,0,0,0.2)", transition: "left 0.2s" }} />
+              </button>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* ── Text size ── */}
       <div style={{ marginTop: 20, marginBottom: 8 }}>

@@ -15,6 +15,9 @@ import { tryDecrypt, encrypt } from "./_lib/cryptoUtils.js";
 import { getAdminClient, getUserIdFromJwt } from "./_lib/supabaseAdmin.js";
 import { checkRateLimit, getClientIp } from "./_lib/rateLimit.js";
 import { deliverNotification } from "./push.js";
+import { sendEmail, weeklyRecapHtml, buildUnsubscribeUrl, winbackEmailHtml } from "./_lib/email.js";
+import { fetchWeeklyRecap } from "./_lib/metrics/weeklyRecap.js";
+import { isWinbackCandidate } from "./_lib/retention/winback.js";
 
 type Req = { method?: string; headers: Record<string, string | string[] | undefined>; body: Record<string, unknown>; query: Record<string, string | string[] | undefined> };
 type Res = { status(n: number): Res; json(d: unknown): Res; end(): void; setHeader(k: string, v: string): void };
@@ -716,9 +719,33 @@ async function handleNewsHeadlines(req: Req, res: Res) {
 // Job: weekly-digest  (Sunday 18:00 UTC — consolidates the past 7 days)
 // ══════════════════════════════════════════════════════════════════════════════
 
+/** Real deliverable email for a user: recovery_email from auth metadata, or null. */
+async function recoveryEmailForUid(admin: ReturnType<typeof getAdminClient>, uid: string): Promise<string | null> {
+  const { data } = await admin.schema("auth").from("users")
+    .select("raw_user_meta_data").eq("id", uid).maybeSingle();
+  const meta = (data as { raw_user_meta_data?: { recovery_email?: string } } | null)?.raw_user_meta_data;
+  const email = meta?.recovery_email?.trim();
+  return email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : null;
+}
+
+/** Batched recovery emails for many uids → Map<uid, email>. */
+async function recoveryEmailsForUids(admin: ReturnType<typeof getAdminClient>, uids: string[]): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  if (uids.length === 0) return out;
+  const { data } = await admin.schema("auth").from("users")
+    .select("id, raw_user_meta_data").in("id", uids);
+  for (const row of (data ?? []) as { id: string; raw_user_meta_data?: { recovery_email?: string } }[]) {
+    const email = row.raw_user_meta_data?.recovery_email?.trim();
+    if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) out.set(row.id, email);
+  }
+  return out;
+}
+
 async function handleWeeklyDigest(req: Req, res: Res) {
   if (!isCronAuthed(req)) return res.status(401).json({ error: "Unauthorized" });
   const admin = getAdminClient();
+
+  let userCount = 0;
 
   // 1. Pull notifications from the past 7 days that haven't been aggregated yet
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
@@ -729,54 +756,170 @@ async function handleWeeklyDigest(req: Req, res: Res) {
     .is("aggregated_at", null);
   if (rowsErr) {
     console.error("[weekly-digest] fetch error:", rowsErr);
-    return res.status(500).json({ error: rowsErr.message });
-  }
-  if (!rows?.length) return res.status(200).json({ ok: true, users: 0 });
-
-  // 2. Group by user_id, count by kind
-  const byUser: Record<string, { ids: string[]; counts: Record<string, number> }> = {};
-  for (const r of rows) {
-    const uid = r.user_id as string;
-    if (!byUser[uid]) byUser[uid] = { ids: [], counts: {} };
-    byUser[uid].ids.push(r.id as string);
-    const kind = r.kind as string;
-    byUser[uid].counts[kind] = (byUser[uid].counts[kind] ?? 0) + 1;
+    // Do not return — social digest failure must not block the recap pass.
   }
 
-  // 3. For each user: deliver summary, mark rows aggregated
-  const userCount = Object.keys(byUser).length;
-  for (const [uid, agg] of Object.entries(byUser)) {
-    const parts: string[] = [];
-    if (agg.counts.follow)      parts.push(`${agg.counts.follow} new follower${agg.counts.follow > 1 ? "s" : ""}`);
-    if (agg.counts.circle_join) parts.push(`${agg.counts.circle_join} circle join${agg.counts.circle_join > 1 ? "s" : ""}`);
-    if (agg.counts.reaction)    parts.push(`${agg.counts.reaction} reaction${agg.counts.reaction > 1 ? "s" : ""}`);
-    if (agg.counts.idea_like)   parts.push(`${agg.counts.idea_like} idea like${agg.counts.idea_like > 1 ? "s" : ""}`);
-
-    if (parts.length === 0) continue; // nothing useful to summarise (only digest rows or unknown kinds)
-
-    const body = `This week: ${parts.join(" · ")}`;
-
-    try {
-      await deliverNotification({
-        targetUid: uid,
-        kind: "digest",
-        title: "Your Kōda week",
-        body,
-        data: { counts: agg.counts },
-      });
-    } catch (err) {
-      console.error("[weekly-digest] deliver failed for user", uid, err);
-      // Don't mark aggregated if delivery failed — try again next week
-      continue;
+  if (rows && rows.length) {
+    // 2. Group by user_id, count by kind
+    const byUser: Record<string, { ids: string[]; counts: Record<string, number> }> = {};
+    for (const r of rows) {
+      const uid = r.user_id as string;
+      if (!byUser[uid]) byUser[uid] = { ids: [], counts: {} };
+      byUser[uid].ids.push(r.id as string);
+      const kind = r.kind as string;
+      byUser[uid].counts[kind] = (byUser[uid].counts[kind] ?? 0) + 1;
     }
 
-    await admin
-      .from("notification_feed")
-      .update({ aggregated_at: new Date().toISOString() })
-      .in("id", agg.ids);
+    // 3. For each user: deliver summary, mark rows aggregated
+    userCount = Object.keys(byUser).length;
+    for (const [uid, agg] of Object.entries(byUser)) {
+      const parts: string[] = [];
+      if (agg.counts.follow)      parts.push(`${agg.counts.follow} new follower${agg.counts.follow > 1 ? "s" : ""}`);
+      if (agg.counts.circle_join) parts.push(`${agg.counts.circle_join} circle join${agg.counts.circle_join > 1 ? "s" : ""}`);
+      if (agg.counts.reaction)    parts.push(`${agg.counts.reaction} reaction${agg.counts.reaction > 1 ? "s" : ""}`);
+      if (agg.counts.idea_like)   parts.push(`${agg.counts.idea_like} idea like${agg.counts.idea_like > 1 ? "s" : ""}`);
+
+      if (parts.length === 0) continue; // nothing useful to summarise (only digest rows or unknown kinds)
+
+      const body = `This week: ${parts.join(" · ")}`;
+
+      try {
+        await deliverNotification({
+          targetUid: uid,
+          kind: "digest",
+          title: "Your Kōda week",
+          body,
+          data: { counts: agg.counts },
+        });
+      } catch (err) {
+        console.error("[weekly-digest] deliver failed for user", uid, err);
+        // Don't mark aggregated if delivery failed — try again next week
+        continue;
+      }
+
+      await admin
+        .from("notification_feed")
+        .update({ aggregated_at: new Date().toISOString() })
+        .in("id", agg.ids);
+    }
   }
 
-  return res.status(200).json({ ok: true, users: userCount });
+  // ── Weekly trading recap email (separate from the social digest above) ──
+  const now = new Date();
+  const weekStart = new Date(now);
+  weekStart.setUTCDate(now.getUTCDate() - now.getUTCDay()); // back to Sunday
+  weekStart.setUTCHours(0, 0, 0, 0);
+  const weekStartIso = weekStart.toISOString();
+  const weekLabel = `${weekStart.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}–${now.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`;
+
+  const { data: optedIn } = await admin
+    .from("profiles")
+    .select("user_id, name, unsubscribe_token, last_weekly_recap_at")
+    .eq("weekly_recap_opt_in", true);
+
+  let recapsSent = 0;
+  for (const p of optedIn ?? []) {
+    const prof = p as { user_id: string; name: string; unsubscribe_token: string; last_weekly_recap_at: string | null };
+    if (prof.last_weekly_recap_at && prof.last_weekly_recap_at >= weekStartIso) continue; // already sent this week
+
+    const recap = await fetchWeeklyRecap(prof.user_id);
+    if (recap.tradeCount < 1) continue; // empty week → win-back's job, not the recap's
+
+    const email = await recoveryEmailForUid(admin, prof.user_id);
+    if (!email) continue; // no deliverable address → skip (push handled elsewhere)
+
+    try {
+      await sendEmail({
+        to: email,
+        subject: `Your Kōda week: ${recap.netDollar >= 0 ? "+" : "-"}$${Math.abs(Math.round(recap.netDollar))}`,
+        html: weeklyRecapHtml({
+          name: prof.name || "Trader",
+          netDollar: recap.netDollar, winRate: recap.winRate, netR: recap.netR,
+          bestSetup: recap.bestSetup, tradeCount: recap.tradeCount, weekLabel,
+          unsubscribeUrl: buildUnsubscribeUrl(prof.unsubscribe_token, "weekly"),
+        }),
+      });
+      await admin.from("profiles").update({ last_weekly_recap_at: new Date().toISOString() }).eq("user_id", prof.user_id);
+      recapsSent++;
+    } catch (err) {
+      console.error("[weekly-digest] recap email failed for", prof.user_id, err);
+      // leave last_weekly_recap_at untouched → retried next run
+    }
+  }
+
+  return res.status(200).json({ ok: true, users: userCount, recapsSent });
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Job: winback  (daily — re-engage users idle 7–14 days)
+// ══════════════════════════════════════════════════════════════════════════════
+
+async function handleWinback(req: Req, res: Res) {
+  if (!isCronAuthed(req)) return res.status(401).json({ error: "Unauthorized" });
+  const admin = getAdminClient();
+
+  const nowMs = Date.now();
+  const idleMinIso  = new Date(nowMs - 14 * 24 * 3600 * 1000).toISOString(); // active no earlier than 14d ago
+  const idleMaxIso  = new Date(nowMs -  7 * 24 * 3600 * 1000).toISOString(); // active no later than 7d ago
+  const cooldownIso = new Date(nowMs - 30 * 24 * 3600 * 1000).toISOString();
+
+  const { data: profiles } = await admin
+    .from("profiles")
+    .select("user_id, name, unsubscribe_token, last_active_at, winback_opt_in, last_winback_at")
+    .eq("winback_opt_in", true)
+    .gte("last_active_at", idleMinIso)
+    .lte("last_active_at", idleMaxIso)
+    .or(`last_winback_at.is.null,last_winback_at.lt.${cooldownIso}`);
+
+  // Belt-and-suspenders: apply in-memory guard after DB filter
+  const candidates = (profiles ?? []).filter(row => {
+    const p = row as {
+      last_active_at: string | null; winback_opt_in: boolean; last_winback_at: string | null;
+    };
+    return isWinbackCandidate(
+      { last_active_at: p.last_active_at, winback_opt_in: p.winback_opt_in, last_winback_at: p.last_winback_at },
+    );
+  }) as {
+    user_id: string; name: string; unsubscribe_token: string;
+    last_active_at: string | null; winback_opt_in: boolean; last_winback_at: string | null;
+  }[];
+
+  // Batch-fetch all recovery emails in one query
+  const emailMap = await recoveryEmailsForUids(admin, candidates.map(c => c.user_id));
+
+  let sent = 0;
+  for (const p of candidates) {
+    const email = emailMap.get(p.user_id) ?? null;
+
+    try {
+      if (email) {
+        await sendEmail({
+          to: email,
+          subject: "Your Kōda edge is waiting",
+          html: winbackEmailHtml({
+            firstName: p.name || "Trader",
+            unsubscribeUrl: buildUnsubscribeUrl(p.unsubscribe_token, "winback"),
+          }),
+        });
+      }
+      // Best-effort push too (no-op if not subscribed)
+      await deliverNotification({
+        targetUid: p.user_id,
+        kind: "digest",
+        title: "Your edge is waiting",
+        body: "It's been a minute — log a trade and pick the thread back up.",
+        data: { reason: "winback" },
+      }).catch(() => {});
+
+      await admin.from("profiles").update({ last_winback_at: new Date().toISOString() }).eq("user_id", p.user_id);
+      sent++;
+    } catch (err) {
+      console.error("[winback] failed for", p.user_id, err);
+      // leave last_winback_at untouched → retried next run
+    }
+  }
+
+  return res.status(200).json({ ok: true, sent });
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -794,6 +937,7 @@ export default async function handler(req: Req, res: Res) {
   if (job === "news-calendar")       return handleNewsCalendar(req, res);
   if (job === "news-headlines")      return handleNewsHeadlines(req, res);
   if (job === "weekly-digest")       return handleWeeklyDigest(req, res);
+  if (job === "winback")             return handleWinback(req, res);
 
   if (job === 'daily-digest') {
     if (!isCronAuthed(req)) return res.status(401).json({ error: 'Unauthorized' });
@@ -802,5 +946,5 @@ export default async function handler(req: Req, res: Res) {
     return res.status(200).json({ ok: true });
   }
 
-  return res.status(400).json({ error: "?job= required: complete-challenges | sync | daily-digest | news-calendar | news-headlines | weekly-digest" });
+  return res.status(400).json({ error: "?job= required: complete-challenges | sync | daily-digest | news-calendar | news-headlines | weekly-digest | winback" });
 }

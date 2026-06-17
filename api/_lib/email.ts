@@ -13,6 +13,13 @@ function esc(s: string): string {
 }
 const FROM = "Kōda <noreply@kodatrade.co.uk>";
 
+const APP_ORIGIN = process.env.APP_URL ?? "https://kodatrade.co.uk";
+
+/** Public, unauthenticated unsubscribe link clicked from an email client. */
+export function buildUnsubscribeUrl(token: string, type: "weekly" | "winback" | "product" | "all"): string {
+  return `${APP_ORIGIN}/api/account?action=unsubscribe&token=${encodeURIComponent(token)}&type=${type}`;
+}
+
 export async function sendEmail({ to, subject, html }: { to: string; subject: string; html: string }) {
   if (!RESEND_API_KEY) throw new Error("RESEND_API_KEY not set");
   const res = await fetch("https://api.resend.com/emails", {
@@ -25,43 +32,6 @@ export async function sendEmail({ to, subject, html }: { to: string; subject: st
     throw new Error(`Resend error ${res.status}: ${body}`);
   }
   return res.json();
-}
-
-export function weeklyRecapHtml({
-  name, netR, winRate, bestSetup, tradeCount, weekLabel,
-}: { name: string; netR: number; winRate: number; bestSetup: string; tradeCount: number; weekLabel: string }) {
-  const positive = netR >= 0;
-  const color = positive ? "oklch(0.78 0.18 152)" : "oklch(0.70 0.21 25)";
-  return `<!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Kōda Weekly Recap</title></head>
-<body style="margin:0;padding:0;background:#0A0A0B;font-family:system-ui,sans-serif;color:#F2F2EE">
-  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;padding:40px 24px">
-    <tr><td>
-      <p style="font-family:monospace;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#65655F;margin:0 0 8px">${weekLabel} · Weekly Recap</p>
-      <p style="font-size:28px;font-weight:600;letter-spacing:-0.02em;margin:0 0 32px">Your week in review, ${esc(name)}.</p>
-      <table width="100%" cellpadding="16" style="background:#131317;border-radius:16px;border:1px solid rgba(255,255,255,0.07);margin-bottom:24px">
-        <tr>
-          <td style="text-align:center;border-right:1px solid rgba(255,255,255,0.07)">
-            <p style="font-family:monospace;font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:#65655F;margin:0 0 6px">Net R</p>
-            <p style="font-size:32px;font-weight:600;color:${color};margin:0">${positive ? "+" : ""}${netR.toFixed(1)}R</p>
-          </td>
-          <td style="text-align:center;border-right:1px solid rgba(255,255,255,0.07)">
-            <p style="font-family:monospace;font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:#65655F;margin:0 0 6px">Win Rate</p>
-            <p style="font-size:32px;font-weight:600;color:#F2F2EE;margin:0">${winRate}%</p>
-          </td>
-          <td style="text-align:center">
-            <p style="font-family:monospace;font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:#65655F;margin:0 0 6px">Trades</p>
-            <p style="font-size:32px;font-weight:600;color:#F2F2EE;margin:0">${tradeCount}</p>
-          </td>
-        </tr>
-      </table>
-      ${bestSetup ? `<p style="font-size:13px;color:#A6A6A2;margin:0 0 32px">Best setup this week: <strong style="color:#F2F2EE">${esc(bestSetup)}</strong></p>` : ""}
-      <a href="https://kodatrade.co.uk" style="display:inline-block;padding:12px 26px;border-radius:999px;background:#F2F2EE;color:#0A0A0B;font-family:monospace;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;text-decoration:none">Open Kōda →</a>
-      <p style="font-size:11px;color:#45453F;margin-top:40px">You're receiving this because weekly recaps are on in your settings. <a href="https://kodatrade.co.uk" style="color:#65655F">Unsubscribe</a></p>
-    </td></tr>
-  </table>
-</body></html>`;
 }
 
 export function receiptHtml({ name, plan, amount, date }: { name: string; plan: string; amount: string; date: string }) {
@@ -118,7 +88,7 @@ const EMAIL_LIVE = "oklch(0.84 0.14 175)";
 const EMAIL_RED = "oklch(0.70 0.21 25)";
 const EMAIL_WARN = "oklch(0.79 0.16 75)";
 
-function emailShell({ kicker, title, body }: { kicker: string; title: string; body: string }): string {
+function emailShell({ kicker, title, body, unsubscribeUrl }: { kicker: string; title: string; body: string; unsubscribeUrl?: string }): string {
   return `<!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>${esc(title)} · Kōda</title></head>
@@ -137,7 +107,7 @@ function emailShell({ kicker, title, body }: { kicker: string; title: string; bo
     <tr><td style="padding:4px 32px 8px">${body}</td></tr>
     <tr><td style="padding:24px 32px 30px;border-top:1px solid ${EMAIL_LINE};margin-top:8px">
       <p style="font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:0.14em;color:${EMAIL_MUTE};text-transform:uppercase;margin:0">Kōda · kodatrade.co.uk</p>
-      <p style="font-size:11px;color:${EMAIL_MUTE};margin:8px 0 0;line-height:1.6">You're receiving this because you have a Kōda account. <a href="https://kodatrade.co.uk/settings" style="color:${EMAIL_INK2};text-decoration:underline">Manage emails</a> · <a href="https://kodatrade.co.uk/unsubscribe" style="color:${EMAIL_INK2};text-decoration:underline">Unsubscribe</a></p>
+      <p style="font-size:11px;color:${EMAIL_MUTE};margin:8px 0 0;line-height:1.6">You're receiving this because you have a Kōda account. <a href="https://kodatrade.co.uk/settings" style="color:${EMAIL_INK2};text-decoration:underline">Manage emails</a> · <a href="${unsubscribeUrl ?? "https://kodatrade.co.uk/settings"}" style="color:${EMAIL_INK2};text-decoration:underline">Unsubscribe</a></p>
     </td></tr>
   </table>
 </body></html>`;
@@ -350,4 +320,42 @@ ${emailP(`Here's how ${esc(monthLabel)} actually went.`)}
 </table>
 <div style="margin-top:22px">${emailCTA({ label: "See full report", href: reportUrl })}</div>`;
   return emailShell({ kicker: `${monthLabel} · in review`, title: `Your ${monthLabel} in review: ${netR}`, body });
+}
+
+// 13 · Weekly recap — net $ leads, Net R secondary when present (else Win Rate)
+export function weeklyRecapHtml({
+  name, netDollar, winRate, netR, bestSetup, tradeCount, weekLabel, unsubscribeUrl,
+}: {
+  name: string; netDollar: number; winRate: number; netR: number | null;
+  bestSetup: string; tradeCount: number; weekLabel: string; unsubscribeUrl?: string;
+}) {
+  const positive = netDollar >= 0;
+  const color = positive ? "oklch(0.78 0.18 152)" : "oklch(0.70 0.21 25)";
+  const dollarStr = `${positive ? "+" : "-"}$${Math.abs(Math.round(netDollar))}`;
+  const secondLabel = netR === null ? "Win Rate" : "Net R";
+  const secondValue = netR === null ? `${winRate}%` : `${netR >= 0 ? "+" : ""}${netR}R`;
+  const body = `
+${emailH({ title: "Your week in review,", accent: `${esc(name)}.` })}
+${emailP(`${esc(weekLabel)} · ${tradeCount} trade${tradeCount === 1 ? "" : "s"} logged`)}
+<table width="100%" cellpadding="0" cellspacing="0" style="margin:22px 0">
+  <tr>
+    <td style="padding-right:6px">${emailPanel(`<p style="font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:0.12em;color:${EMAIL_MUTE};text-transform:uppercase;margin:0">Net</p><p style="font-size:28px;font-weight:600;color:${color};margin:6px 0 0">${dollarStr}</p>`, "text-align:center")}</td>
+    <td style="padding-left:6px">${emailPanel(`<p style="font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:0.12em;color:${EMAIL_MUTE};text-transform:uppercase;margin:0">${secondLabel}</p><p style="font-size:28px;font-weight:600;color:${EMAIL_INK};margin:6px 0 0">${secondValue}</p>`, "text-align:center")}</td>
+  </tr>
+</table>
+${bestSetup ? emailP(`Best setup this week: <strong style="color:${EMAIL_INK}">${esc(bestSetup)}</strong>`) : ""}
+<div style="margin:24px 0">${emailCTA({ label: "Open Kōda →", href: "https://kodatrade.co.uk" })}</div>`;
+  return emailShell({ kicker: `${weekLabel} · Weekly Recap`, title: "Your Kōda week", body, unsubscribeUrl });
+}
+
+// 14 · Win-back — re-engage a lapsed user
+export function winbackEmailHtml({
+  firstName = "Trader", appUrl = "https://kodatrade.co.uk", unsubscribeUrl,
+}: { firstName?: string; appUrl?: string; unsubscribeUrl?: string }): string {
+  const body = `
+${emailH({ title: "Your edge is", accent: "waiting." })}
+${emailP(`Hey ${esc(firstName)} — it's been a minute. Your journal, your rules and your stats are exactly where you left them. One logged trade and Kōda picks the thread back up.`)}
+<div style="margin:24px 0">${emailCTA({ label: "Pick up where you left off →", href: `${appUrl}/?screen=log` })}</div>
+${emailPanel(`<p style="font-size:12.5px;color:${EMAIL_INK2};margin:0">Traders who journal consistently break fewer rules. Don't let the streak go cold.</p>`)}`;
+  return emailShell({ kicker: "We miss you", title: "Your Kōda edge is waiting", body, unsubscribeUrl });
 }
