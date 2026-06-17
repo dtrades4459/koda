@@ -24,10 +24,19 @@ export function fanOutTrade(base: Trade, accountIds: string[], genId: () => stri
   return accountIds.map(accountId => ({ ...base, accountId, groupId }));
 }
 
-/** Scope a trade list to one account. null → all trades (the "All accounts" view). */
-export function tradesForAccount(trades: Trade[], accountId: string | null): Trade[] {
+/** Scope a trade list to one account. null → all trades (the "All accounts" view).
+ *  Trades with no accountId (logged before multi-account, or never attributed)
+ *  belong to `defaultAccountId` if given — so existing history shows under the
+ *  default account without rewriting stored trades. */
+export function tradesForAccount(
+  trades: Trade[],
+  accountId: string | null,
+  defaultAccountId?: string,
+): Trade[] {
   if (!accountId) return trades;
-  return trades.filter(t => t.accountId === accountId);
+  return trades.filter(
+    t => t.accountId === accountId || (!t.accountId && accountId === defaultAccountId),
+  );
 }
 
 /** Progress toward an eval's profit target. pct is null when no target is set. */

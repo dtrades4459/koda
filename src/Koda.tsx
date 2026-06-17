@@ -33,7 +33,9 @@ import { shareTrade } from "./data/circlesSharedTrades";
 import { KODA_GLOBAL_CODE } from "./hooks/useCircles";
 import { STRATEGIES, STRATEGY_NAMES, getAllStrategiesMap, addExtraStrategies } from "./data/strategies";
 
-import type { TradeComment, ReactionMap, Trade, Profile, Circle, Insight, StrategyDef } from "./types";
+import type { TradeComment, ReactionMap, Trade, Profile, Circle, Insight, StrategyDef, Account } from "./types";
+import { AccountsScreen } from "./AccountsScreen";
+import { listAccounts, createAccount, updateAccount, archiveAccount, ensureDefaultAccount } from "./data/accounts";
 import { AvatarCircle, SectionKicker, StrategySelect, SubNavDropdown, GearButton, Toast, ToastStack, KodaMark, GlassOrb, Pill, Card, Kicker, Delta, IconButton, EmptyState, outcomeColor, outcomeLetter, stratCode, stratShort, compressImage, MONO, BODY, DISPLAY, EmptyTradesState, CelebrationOverlay } from "./shared";
 import type { ToastItem } from "./shared";
 import { TradingCircles } from "./TradingCircles";
@@ -418,6 +420,9 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   const [taggerTrades, setTaggerTrades] = useState<Trade[] | null>(null);
   const [taggerMode, setTaggerMode] = useState<"fresh-import" | "resume">("fresh-import");
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [activeAccountId, setActiveAccountId] = useState<string | null>(null);
+  const defaultAccountId = accounts.find(a => !a.isArchived)?.id;
   const [mandatoryUpgrade, setMandatoryUpgrade] = useState(false);
   const [showCalc,    setShowCalc]    = useState(false);
   const [showFirstSessionSurvey, setShowFirstSessionSurvey] = useState(false);
@@ -573,6 +578,12 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
       const parsed = t ? JSON.parse(t.value) : null;
       const loadedTrades: Trade[] = Array.isArray(parsed) ? parsed : [];
       setTrades(loadedTrades);
+      // Multi-account: ensure a default account exists; existing trades attribute
+      // to it at read time (no blob rewrite). Own try so a failure can't wipe trades.
+      try {
+        const { accounts: accts } = await ensureDefaultAccount(loadedTrades);
+        setAccounts(accts);
+      } catch (e) { log.error("loadAll.accounts", e); }
       // Lazy migration: migrate any base64 screenshots to Supabase Storage
       // Fire-and-forget — does not block the rest of loadAll.
       const uid = user?.id;
@@ -1728,6 +1739,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     { id: "rules", label: "Rules & Checklist" },
     { id: "sync", label: "Sync & Log" },
     { id: "journal", label: "Journal" },
+    { id: "accounts", label: "Accounts" },
     ...(profile.propFirmMode ? [{ id: "eval", label: "Eval" }] : []),
   ];
   const STATS_SECTIONS = [
@@ -3124,6 +3136,29 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
               )}
 
               {/* SETTINGS */}
+              {homeSection === "accounts" && (
+                <AccountsScreen
+                  C={C}
+                  accounts={accounts}
+                  trades={trades}
+                  isPro={isPro}
+                  defaultAccountId={defaultAccountId}
+                  activeAccountId={activeAccountId}
+                  onSelectAccount={setActiveAccountId}
+                  onSaveAccount={async (input, editingId) => {
+                    if (editingId) await updateAccount(editingId, input);
+                    else await createAccount(input);
+                    setAccounts(await listAccounts());
+                  }}
+                  onArchiveAccount={async (id) => {
+                    await archiveAccount(id);
+                    setAccounts(await listAccounts());
+                    if (activeAccountId === id) setActiveAccountId(null);
+                  }}
+                  onUpgrade={() => setShowUpgrade(true)}
+                />
+              )}
+
               {homeSection === "eval" && profile.propFirmMode && (
                 <EvalAccountScreen
                   profile={profile}

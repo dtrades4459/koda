@@ -38,6 +38,11 @@ describe("tradesForAccount", () => {
   it("null returns all", () => {
     expect(tradesForAccount(trades, null)).toHaveLength(3);
   });
+  it("attributes un-tagged trades to the default account", () => {
+    const mixed = [t({ id: 1, accountId: "a1" }), t({ id: 2 }), t({ id: 3 })]; // 2 & 3 have no accountId
+    expect(tradesForAccount(mixed, "a1", "a1").map(x => x.id)).toEqual([1, 2, 3]);
+    expect(tradesForAccount(mixed, "a2", "a1")).toHaveLength(0);
+  });
 });
 
 describe("evalProgress", () => {
