@@ -36,6 +36,7 @@ import { STRATEGIES, STRATEGY_NAMES, getAllStrategiesMap, addExtraStrategies } f
 import type { TradeComment, ReactionMap, Trade, Profile, Circle, Insight, StrategyDef, Account } from "./types";
 import { AccountsScreen } from "./AccountsScreen";
 import { listAccounts, createAccount, updateAccount, archiveAccount, ensureDefaultAccount } from "./data/accounts";
+import { fanOutTrade } from "./lib/accounts";
 import { AvatarCircle, SectionKicker, StrategySelect, SubNavDropdown, GearButton, Toast, ToastStack, KodaMark, GlassOrb, Pill, Card, Kicker, Delta, IconButton, EmptyState, outcomeColor, outcomeLetter, stratCode, stratShort, compressImage, MONO, BODY, DISPLAY, EmptyTradesState, CelebrationOverlay } from "./shared";
 import type { ToastItem } from "./shared";
 import { TradingCircles } from "./TradingCircles";
@@ -423,6 +424,14 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [activeAccountId, setActiveAccountId] = useState<string | null>(null);
   const defaultAccountId = accounts.find(a => !a.isArchived)?.id;
+  // Accounts ticked in the log screen (fan-out targets). Free tier = single-select.
+  const [logAccountIds, setLogAccountIds] = useState<string[]>([]);
+  function toggleLogAccount(id: string) {
+    setLogAccountIds(prev => {
+      if (!isPro) return [id];
+      return prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
+    });
+  }
   const [mandatoryUpgrade, setMandatoryUpgrade] = useState(false);
   const [showCalc,    setShowCalc]    = useState(false);
   const [showFirstSessionSurvey, setShowFirstSessionSurvey] = useState(false);
@@ -1222,7 +1231,13 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
       u = trades.map(t => t.id === editId ? { ...base, id: editId, createdAt: t.createdAt ?? now } as Trade : t);
       setEditId(null);
     } else {
-      u = [{ ...base, id: Date.now(), createdAt: now } as Trade, ...trades];
+      // Fan out: one row per ticked account (sharing a groupId), each a unique id.
+      const ids = logAccountIds.length ? logAccountIds : (defaultAccountId ? [defaultAccountId] : []);
+      const groupBase = { ...base, createdAt: now } as Trade;
+      const fanned = ids.length
+        ? fanOutTrade(groupBase, ids).map((t, i) => ({ ...t, id: Date.now() + i }))
+        : [{ ...groupBase, id: Date.now() } as Trade];
+      u = [...fanned, ...trades];
     }
     await saveTrades(u); setForm(EMPTY_TRADE);
     phCapture(editId ? "trade_edited" : "trade_logged", { outcome: base.outcome, pair: base.pair, total_trades: u.length });
@@ -1258,15 +1273,19 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     setViewHistory(h => { if (h.length > 0) { setView(h[h.length - 1]); return h.slice(0, -1); } setView("history"); return h; });
   }
 
-  function editTrade(t: Trade) { setForm(t); setEditId(t.id); navigateTo("log"); }
+  function editTrade(t: Trade) { setForm(t); setEditId(t.id); setLogAccountIds(t.accountId ? [t.accountId] : []); navigateTo("log"); }
   async function deleteTrade(id: number) {
-    await saveTrades(trades.filter(t => t.id !== id));
+    // Group-aware: deleting any fanned-out copy removes the whole logical trade.
+    const target = trades.find(t => t.id === id);
+    const ids = target?.groupId ? trades.filter(t => t.groupId === target.groupId).map(t => t.id) : [id];
+    await saveTrades(trades.filter(t => !ids.includes(t.id)));
     // Also remove from v2 when flag is on
     if (isFlagOn("newTrades") && user?.id) {
-      deleteTradeV2ByClientId(user.id, String(id)).catch(e => log.error("deleteTrade.v2", e));
+      const uid = user.id;
+      ids.forEach(tid => deleteTradeV2ByClientId(uid, String(tid)).catch(e => log.error("deleteTrade.v2", e)));
     }
     setConfirmDelete(null);
-    showToast("Trade deleted");
+    showToast(ids.length > 1 ? `Trade deleted from ${ids.length} accounts` : "Trade deleted");
   }
   async function toggleReaction(tid: number, reaction: string) {
     const myCode = getMyCode();
@@ -3292,6 +3311,10 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                   maxDailyLoss={_maxDl}
                   lossStreak={_lossStreak}
                   defaultAccountType={profile.propFirmMode ? "funded" : "personal"}
+                  accounts={accounts}
+                  isPro={isPro}
+                  selectedAccountIds={logAccountIds.length ? logAccountIds : (defaultAccountId ? [defaultAccountId] : [])}
+                  onToggleAccount={toggleLogAccount}
                 />
               );
             })()}
