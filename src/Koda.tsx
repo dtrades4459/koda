@@ -6,6 +6,7 @@ import { calcRR, calcStreak, calcDisciplineScore } from "./lib/stats";
 import type { DisciplineScore, DisciplineLogEntry } from "./lib/stats";
 import { log } from "./lib/log";
 import { isFlagOn } from "./lib/flags";
+import { computeIsPro } from "./lib/entitlements";
 import { useFollows } from "./hooks/useFollows";
 import { useFeed } from "./hooks/useFeed";
 import { useTiltState } from "./hooks/useTiltState";
@@ -192,7 +193,14 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   // the paywall check is correct before loadAll() finishes.
   const [profile, setProfile] = useState<Profile>({ ...DEF_PROFILE, plan: jwtPlan ?? "free" });
   const FOUNDER_EMAILS = new Set(["dnyland420@gmail.com", "bmlopes1986@gmail.com", "dannyarnold0509@gmail.com"]);
-  const isPro = !isFlagOn("paywall") || FOUNDER_EMAILS.has((user?.email ?? "").toLowerCase()) || profile.plan === "pro" || profile.plan === "elite";
+  // Paywall auto-activates at PAYWALL_GO_LIVE (30 Jun 2026). Before then everyone
+  // has access; after then, users who joined pre-launch keep Pro free forever and
+  // new users must pay. See src/lib/entitlements.ts.
+  const isPro = computeIsPro({
+    plan: profile.plan,
+    createdAt: user?.created_at,
+    isFounder: FOUNDER_EMAILS.has((user?.email ?? "").toLowerCase()),
+  });
 
   // ── In-Session Intervention ─────────────────────────────────────────────────
   // Pure tilt evaluator + cooldown lockout. See:
