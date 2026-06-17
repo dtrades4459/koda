@@ -1754,6 +1754,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   // Sub-section config per main view — fed to the desktop SubNavDropdown so
   // main-nav + sub-nav fit on one row instead of stacking into two.
   const HOME_SECTIONS = [
+    { id: "feed", label: "Home" },
     { id: "analytics", label: "Analytics" },
     { id: "rules", label: "Rules & Checklist" },
     { id: "sync", label: "Sync & Log" },
@@ -3221,6 +3222,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                     phReset();
                   }}
                   onPlanRefreshed={() => { void loadAll(); }}
+                  onManageAccounts={() => setHomeSection("accounts")}
                 />
               )}
 

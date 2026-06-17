@@ -40,6 +40,7 @@ export interface SettingsScreenProps {
   onSignOut: () => Promise<void>;
   onPlanRefreshed?: () => void;
   isPro: boolean;
+  onManageAccounts?: () => void;
 }
 
 export function SettingsScreen({
@@ -70,6 +71,7 @@ export function SettingsScreen({
   onSignOut,
   onPlanRefreshed,
   isPro,
+  onManageAccounts,
 }: SettingsScreenProps) {
   const [refreshingPlan, setRefreshingPlan] = React.useState(false);
   const [pushEnabled, setPushEnabled] = React.useState(false);
@@ -524,6 +526,20 @@ export function SettingsScreen({
               </div>
             </div>
           )}
+        </div>
+
+        {/* Trading accounts (multi-account registry) */}
+        <div style={{ padding: "14px 18px", borderBottom: `1px solid ${C.border}` }}>
+          <button onClick={() => onManageAccounts?.()} style={{ display: "flex", alignItems: "center", gap: "14px", width: "100%", background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: 0 }}>
+            <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: (C as Record<string, string>).accentSoft ?? C.panel, border: `1px solid ${C.border2}`, color: C.accent, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontFamily: DISPLAY, fontSize: "0.875rem", fontWeight: 600, color: C.text }}>Trading accounts</div>
+              <div style={{ fontFamily: MONO, fontSize: "0.6875rem", color: C.muted, marginTop: "2px" }}>Add &amp; manage the accounts you trade</div>
+            </div>
+            <span style={{ color: C.muted, fontSize: "1.1rem", flexShrink: 0 }}>›</span>
+          </button>
         </div>
 
         {/* Discipline — In-Session Intervention settings */}
