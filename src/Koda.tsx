@@ -57,7 +57,6 @@ import { TradeTagger } from "./TradeTagger";
 import { phIdentify, phCapture, phReset } from "./lib/posthog";
 import { readUtm } from "./lib/utm";
 import { readRef, applyRefAttribution } from "./lib/ref";
-import EvalAccountScreen from "./EvalAccountScreen";
 import WeeklyReportCard from "./WeeklyReportCard";
 import NotificationsDrawer from "./NotificationsDrawer";
 import { DARK, LIGHT, makeStyles } from "./theme";
@@ -1760,7 +1759,6 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     { id: "sync", label: "Sync & Log" },
     { id: "journal", label: "Journal" },
     { id: "accounts", label: "Accounts" },
-    ...(profile.propFirmMode ? [{ id: "eval", label: "Eval" }] : []),
   ];
   const STATS_SECTIONS = [
     { id: "performance", label: "Performance" },
@@ -3179,14 +3177,6 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                 />
               )}
 
-              {homeSection === "eval" && profile.propFirmMode && (
-                <EvalAccountScreen
-                  profile={profile}
-                  trades={trades}
-                  C={C}
-                  onEditTargets={() => setHomeSection("settings")}
-                />
-              )}
 
               {homeSection === "settings" && (
                 <SettingsScreen
