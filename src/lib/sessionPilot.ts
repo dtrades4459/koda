@@ -8,8 +8,12 @@
 // Spec: docs/superpowers/specs/2026-06-16-pre-trade-intervention-design.md
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// TODO(dylon): paste the founder Supabase auth uid here before dogfooding.
-export const SESSION_PILOT_UIDS: string[] = [];
+// Pilot cohort (Supabase auth uids). Phase 1 dogfood — add/remove names here.
+export const SESSION_PILOT_UIDS: string[] = [
+  "f38aae7d-e953-4a00-a5aa-5370677ca876", // Dylon Nyla
+  "83583169-6fc4-486a-a371-ae41c3c5f645", // Bruno Lope
+  "0f507c1d-770b-4884-b3c2-848701ab2c6d", // xDnii
+];
 
 // Phase 2 switch: flip to true to enable the session for every beta user.
 export const SESSION_PILOT_ALL = false;
