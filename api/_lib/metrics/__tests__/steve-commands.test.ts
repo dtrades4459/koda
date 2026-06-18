@@ -20,7 +20,7 @@ describe('funnel buildSteps', () => {
 
   it('labels all six funnel steps', () => {
     expect(buildSteps([1, 1, 1, 1, 1, 1]).map(s => s.label)).toEqual([
-      'Landed', 'Clicked CTA', 'Signed up', 'Onboarded', 'Imported CSV', 'Returned (wk1)',
+      'Landed', 'Clicked CTA', 'Signed up', 'Onboarded', 'Activated', 'Returned (wk1)',
     ]);
   });
 

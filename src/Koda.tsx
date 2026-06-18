@@ -984,6 +984,18 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     if (profile.onboarded && !profile.priorTool) setShowFirstSessionSurvey(true);
   }, [loading, profile.uid, profile.onboarded, profile.priorTool]);
 
+  // Activation = the user's first trade in the journal, by ANY path — CSV import
+  // OR a manual log. Fired once per user. The funnel uses this instead of
+  // csv_imported so manual-loggers (the whole competition cohort) aren't forced
+  // through a mandatory import step and dropped before "Returned".
+  useEffect(() => {
+    if (loading || !profile.uid || trades.length === 0) return;
+    const key = `koda_activated_fired_${profile.uid}`;
+    if (localStorage.getItem(key)) return;
+    try { localStorage.setItem(key, "1"); } catch {}
+    phCapture("activated", { trades: trades.length });
+  }, [loading, profile.uid, trades.length]);
+
   // Activation funnel events — session_guard_seen and returned_active.
   useEffect(() => {
     if (loading || !profile.uid || !profile.onboarded || !profile.startDate) return;

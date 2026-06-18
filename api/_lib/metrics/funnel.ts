@@ -14,7 +14,7 @@ const FUNNEL_STEPS: Step[] = [
   { event: 'landing_cta_clicked', label: 'Clicked CTA' },
   { event: 'signed_up',           label: 'Signed up' },
   { event: 'onboarding_complete', label: 'Onboarded' },
-  { event: 'csv_imported',        label: 'Imported CSV' },
+  { event: 'activated',           label: 'Activated' },
   { event: 'returned_active',     label: 'Returned (wk1)' },
 ];
 
