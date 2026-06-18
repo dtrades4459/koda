@@ -14,6 +14,7 @@ import type { Theme } from "./theme";
 import { SESSIONS, BIAS, EMOTION_TAGS, MISTAKE_TAGS, getEmotionTags } from "./tradeConstants";
 import { SignedImg } from "./components/SignedImg";
 import { CompShotWarning } from "./components/CompShotWarning";
+import { preShot, postShot, hasAnyShot, type ShotSlot } from "./lib/tradeScreenshots";
 
 export interface LogTradeScreenProps {
   C: Record<string, string>;
@@ -22,8 +23,8 @@ export interface LogTradeScreenProps {
   editId: string | null;
   setEditId: (id: string | null) => void;
   handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
-  handleScreenshotUpload: (e: React.ChangeEvent<HTMLInputElement>, id: string | null) => void;
-  removeScreenshot: (id: string | null) => void;
+  handleScreenshotUpload: (e: React.ChangeEvent<HTMLInputElement>, id: string | null, slot: ShotSlot) => void;
+  removeScreenshot: (id: string | null, slot: ShotSlot) => void;
   submitTrade: () => void;
   savingTrade: boolean;
   allStrategyNames: string[];
@@ -423,35 +424,43 @@ export function LogTradeScreen({
           style={{ ...inp, resize: "vertical", lineHeight: 1.55, marginTop: 6, borderBottom: "none" }} />
       </Card>
 
-      {/* ── Screenshot ── */}
-      <Card C={T} pad={16}>
-        <Kicker C={T}>Screenshot</Kicker>
-        {form.screenshot ? (
-          <div style={{ position: "relative", marginTop: 8 }}>
-            <SignedImg src={form.screenshot} alt="screenshot"
-              style={{ width: "100%", border: `1px solid ${C.border}`, borderRadius: 12,
-                display: "block", maxHeight: 200, objectFit: "cover" }} loading="lazy" />
-            <button onClick={() => removeScreenshot(null)}
-              style={{ position: "absolute", top: 8, right: 8, background: C.bg,
-                border: `1px solid ${C.border2}`, borderRadius: 999, color: C.text,
-                padding: "4px 10px", cursor: "pointer", fontSize: "0.625rem", fontFamily: MONO, letterSpacing: "0.08em" }}>
-              REMOVE
-            </button>
-          </div>
-        ) : (
-          <label htmlFor="ssUpload" style={{
-            display: "flex", alignItems: "center", justifyContent: "center",
-            border: `1px dashed ${C.border2}`, borderRadius: 14, padding: 20,
-            cursor: "pointer", color: C.muted, fontSize: "0.75rem", fontFamily: MONO,
-            letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 8,
-          }}>
-            Upload screenshot
-            <input id="ssUpload" type="file" accept="image/jpeg,image/png"
-              onChange={e => handleScreenshotUpload(e, null)} style={{ display: "none" }} />
-          </label>
-        )}
-        <CompShotWarning C={T} date={form.date || ""} hasScreenshot={!!form.screenshot} />
-      </Card>
+      {/* ── Screenshots: pre-trade + post-trade ── */}
+      {(["pre", "post"] as ShotSlot[]).map((slot) => {
+        const value = slot === "pre" ? preShot(form) : postShot(form);
+        const label = slot === "pre" ? "Pre-trade screenshot" : "Post-trade screenshot";
+        const inputId = slot === "pre" ? "ssUploadPre" : "ssUploadPost";
+        const uploadText = slot === "pre" ? "Upload pre-trade screenshot" : "Upload post-trade screenshot";
+        return (
+          <Card C={T} pad={16} key={slot}>
+            <Kicker C={T}>{label}</Kicker>
+            {value ? (
+              <div style={{ position: "relative", marginTop: 8 }}>
+                <SignedImg src={value} alt={label}
+                  style={{ width: "100%", border: `1px solid ${C.border}`, borderRadius: 12,
+                    display: "block", maxHeight: 200, objectFit: "cover" }} loading="lazy" />
+                <button onClick={() => removeScreenshot(null, slot)}
+                  style={{ position: "absolute", top: 8, right: 8, background: C.bg,
+                    border: `1px solid ${C.border2}`, borderRadius: 999, color: C.text,
+                    padding: "4px 10px", cursor: "pointer", fontSize: "0.625rem", fontFamily: MONO, letterSpacing: "0.08em" }}>
+                  REMOVE
+                </button>
+              </div>
+            ) : (
+              <label htmlFor={inputId} style={{
+                display: "flex", alignItems: "center", justifyContent: "center",
+                border: `1px dashed ${C.border2}`, borderRadius: 14, padding: 20,
+                cursor: "pointer", color: C.muted, fontSize: "0.75rem", fontFamily: MONO,
+                letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 8,
+              }}>
+                {uploadText}
+                <input id={inputId} type="file" accept="image/jpeg,image/png"
+                  onChange={e => handleScreenshotUpload(e, null, slot)} style={{ display: "none" }} />
+              </label>
+            )}
+            {slot === "post" && <CompShotWarning C={T} date={form.date || ""} hasScreenshot={hasAnyShot(form)} />}
+          </Card>
+        );
+      })}
 
       {/* ── Save button (design-spec: teal arrow CTA) ── */}
       <button data-testid="trade-save" onClick={submitTrade} disabled={!enabled}

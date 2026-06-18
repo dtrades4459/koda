@@ -15,22 +15,22 @@ export function screenshotField(slot: ShotSlot): "preTradeScreenshot" | "postTra
   return slot === "pre" ? "preTradeScreenshot" : "postTradeScreenshot";
 }
 
-export function preShot(t: Pick<Trade, "preTradeScreenshot">): string {
+// Params accept partials (the in-progress log `form` is Partial<Trade>); the
+// nullish fallbacks below already handle missing fields at runtime.
+type ShotFields = Partial<Pick<Trade, "preTradeScreenshot" | "postTradeScreenshot" | "screenshot">>;
+
+export function preShot(t: ShotFields): string {
   return t.preTradeScreenshot ?? "";
 }
 
-export function postShot(t: Pick<Trade, "postTradeScreenshot" | "screenshot">): string {
+export function postShot(t: ShotFields): string {
   return t.postTradeScreenshot ?? t.screenshot ?? "";
 }
 
-export function hasAnyShot(
-  t: Pick<Trade, "preTradeScreenshot" | "postTradeScreenshot" | "screenshot">,
-): boolean {
+export function hasAnyShot(t: ShotFields): boolean {
   return Boolean(preShot(t) || postShot(t));
 }
 
-export function shotArray(
-  t: Pick<Trade, "preTradeScreenshot" | "postTradeScreenshot" | "screenshot">,
-): string[] {
+export function shotArray(t: ShotFields): string[] {
   return [preShot(t), postShot(t)].filter((s): s is string => s.length > 0);
 }
