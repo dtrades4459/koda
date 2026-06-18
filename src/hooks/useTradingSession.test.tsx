@@ -70,4 +70,13 @@ describe("useTradingSession", () => {
     const { result } = renderHook(() => useTradingSession({ profile: PROFILE }));
     await waitFor(() => expect(result.current.session).toBeNull());
   });
+
+  it("fires session_started on start and session_ended on end", async () => {
+    const { result } = renderHook(() => useTradingSession({ profile: PROFILE }));
+    await act(async () => { await result.current.start({ maxDailyLoss: 500, maxTradesPerDay: 5 }); });
+    expect(phCaptureMock).toHaveBeenCalledWith("session_started", expect.objectContaining({ maxDailyLoss: 500, maxTradesPerDay: 5 }));
+    await act(async () => { await result.current.tap("Win", 100); });
+    await act(async () => { await result.current.end(); });
+    expect(phCaptureMock).toHaveBeenCalledWith("session_ended", expect.objectContaining({ taps: 1 }));
+  });
 });

@@ -16,6 +16,7 @@ import { log } from "../lib/log";
 import { evaluateTilt, type TiltSignal } from "../lib/tilt";
 import { useTiltState } from "./useTiltState";
 import { logInterventionEvent } from "../data/interventions";
+import { phCapture } from "../lib/posthog";
 import type { Profile } from "../types";
 import {
   ACTIVE_SESSION_KEY, startSession, addTap, isStale, tapsToTrades, tally as computeTally,
@@ -50,6 +51,8 @@ export function useTradingSession({ profile }: { profile: Profile }): UseTrading
   // Guards the async mount-load from clobbering a session armed before the
   // stored row resolves (start() can win the race against storage.get()).
   const hasArmed = useRef(false);
+  // How many times the sheet auto-fired this session (reported on end()).
+  const firedCount = useRef(0);
 
   // Cooldown is owned by the existing useTiltState. We feed it the session's
   // adapted trades so its lockout read/write stays a single source of truth.
@@ -92,7 +95,9 @@ export function useTradingSession({ profile }: { profile: Profile }): UseTrading
     const next = startSession({ startedAt: new Date().toISOString(), ...cfg });
     prevActive.current = false;
     hasArmed.current = true;
+    firedCount.current = 0;
     setSession(next);
+    try { phCapture("session_started", { maxDailyLoss: cfg.maxDailyLoss, maxTradesPerDay: cfg.maxTradesPerDay }); } catch { /* posthog optional */ }
     await persist(next);
   }, [persist]);
 
@@ -106,6 +111,7 @@ export function useTradingSession({ profile }: { profile: Profile }): UseTrading
     if (state.active && !prevActive.current && !locked) {
       setInterventionSignals(state.signals);
       setInterventionOpen(true);
+      firedCount.current += 1;
     }
     prevActive.current = state.active;
     setSession(next);
@@ -150,11 +156,19 @@ export function useTradingSession({ profile }: { profile: Profile }): UseTrading
   }, [profile.uid, interventionSignals, tilt]);
 
   const end = useCallback(async () => {
+    const t = session ? computeTally(session) : null;
+    try {
+      phCapture("session_ended", {
+        taps: session ? session.taps.length : 0,
+        netDollar: t?.netDollar ?? 0,
+        interventions: firedCount.current,
+      });
+    } catch { /* posthog optional */ }
     prevActive.current = false;
     setSession(null);
     setInterventionOpen(false);
     await persist(null);
-  }, [persist]);
+  }, [session, persist]);
 
   return {
     session,
