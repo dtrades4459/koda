@@ -984,16 +984,20 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     if (profile.onboarded && !profile.priorTool) setShowFirstSessionSurvey(true);
   }, [loading, profile.uid, profile.onboarded, profile.priorTool]);
 
-  // Activation funnel events — session_guard_seen and app_opened_day2.
+  // Activation funnel events — session_guard_seen and returned_active.
   useEffect(() => {
     if (loading || !profile.uid || !profile.onboarded || !profile.startDate) return;
     const today = todayLocalDate();
     const daysSince = Math.floor((Date.now() - Date.parse(profile.startDate)) / 86400000);
-    if (daysSince === 1) {
-      const key = `koda_day2_fired_${profile.uid}`;
+    // Bursty-use retention: a discretionary futures trader returns 2–4×/week, not
+    // daily, so "came back on calendar day 2" undercounts. Fire once when they
+    // return on ANY later day within the first 2 weeks. days_since_signup lets us
+    // see the real return-day distribution in PostHog.
+    if (daysSince >= 1 && daysSince <= 14) {
+      const key = `koda_returned_active_${profile.uid}`;
       if (!localStorage.getItem(key)) {
         try { localStorage.setItem(key, "1"); } catch {}
-        phCapture("app_opened_day2");
+        phCapture("returned_active", { days_since_signup: daysSince });
       }
     }
     const todayCount = trades.filter(t => t.date === today).length;

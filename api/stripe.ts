@@ -16,6 +16,7 @@ export const config = { runtime: "nodejs", api: { bodyParser: false } };
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 import { sendEmail, receiptHtml } from "./_lib/email.js";
+import { phCaptureServer } from "./_lib/posthogCapture.js";
 
 type Req = { method?: string; headers: Record<string, string | string[] | undefined>; body: Record<string, unknown>; query: Record<string, string | string[] | undefined>; on(event: string, cb: (chunk: Buffer) => void): Req };
 type Res = { status(n: number): Res; json(d: unknown): Res; end(): void; setHeader(k: string, v: string): void };
@@ -310,6 +311,13 @@ async function handleWebhook(req: Req, res: Res) {
         await setUserPlan(uid, "pro", {
           subscriptionId: typeof s.subscription === "string" ? s.subscription : s.subscription?.id,
           customerId:     typeof s.customer === "string"     ? s.customer     : s.customer?.id,
+        });
+        // Bottom-of-funnel "paid" conversion. distinct_id = uid so it joins the
+        // client-side paywall_viewed → checkout_started events in the funnel.
+        await phCaptureServer("subscription_activated", uid, {
+          amount_total: s.amount_total,
+          currency:     s.currency,
+          source:       "stripe_webhook",
         });
       }
 

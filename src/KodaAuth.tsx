@@ -6,7 +6,7 @@ import type { Session } from "@supabase/supabase-js";
 import Koda from "./Koda";
 import { DARK } from "./theme";
 import { KodaMark, FloatingInput, Kicker, MONO, BODY, DISPLAY } from "./shared";
-import { phCapture } from "./lib/posthog";
+import { phCapture, hasAnalyticsConsent, ANALYTICS_READY_EVENT } from "./lib/posthog";
 
 // â”€â”€â”€ THEME (dark-only for auth surfaces) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const C = DARK;
@@ -320,7 +320,16 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
   const authRef     = useRef<HTMLElement>(null);
   const featuresRef = useRef<HTMLElement>(null);
 
-  useEffect(() => { phCapture("landing_page_viewed"); }, []);
+  // Top-of-funnel view. PostHog only initializes after analytics consent, and the
+  // banner is answered AFTER this mounts — so for first-time visitors, capture
+  // when consent arrives (ANALYTICS_READY_EVENT) instead of dropping the event.
+  // Returning (already-consented) visitors capture immediately.
+  useEffect(() => {
+    if (hasAnalyticsConsent()) { phCapture("landing_page_viewed"); return; }
+    const onReady = () => phCapture("landing_page_viewed");
+    window.addEventListener(ANALYTICS_READY_EVENT, onReady, { once: true });
+    return () => window.removeEventListener(ANALYTICS_READY_EVENT, onReady);
+  }, []);
 
   const handleStarted = () => {
     phCapture("landing_cta_clicked", { cta: "get_started" });

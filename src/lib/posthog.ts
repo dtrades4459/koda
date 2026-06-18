@@ -29,6 +29,14 @@ export function hasAnalyticsConsent(): boolean {
   } catch { return false; }
 }
 
+/**
+ * Dispatched after PostHog initializes (including when a first-time visitor
+ * accepts the cookie banner). Lets pre-consent views — e.g. landing_page_viewed,
+ * which mounts before the banner is answered — capture once consent arrives
+ * instead of being silently dropped.
+ */
+export const ANALYTICS_READY_EVENT = "koda:analytics-ready";
+
 export function initPostHog() {
   if (!KEY) return;
   if (!hasAnalyticsConsent()) return;
@@ -43,6 +51,9 @@ export function initPostHog() {
       maskInputOptions: { password: true },
     },
   });
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event(ANALYTICS_READY_EVENT));
+  }
 }
 
 /** Identify the user so events are tied to their account. */

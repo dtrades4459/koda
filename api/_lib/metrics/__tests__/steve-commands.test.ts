@@ -20,8 +20,19 @@ describe('funnel buildSteps', () => {
 
   it('labels all six funnel steps', () => {
     expect(buildSteps([1, 1, 1, 1, 1, 1]).map(s => s.label)).toEqual([
-      'Landed', 'Clicked CTA', 'Signed up', 'Onboarded', 'Imported CSV', 'Returned day 2',
+      'Landed', 'Clicked CTA', 'Signed up', 'Onboarded', 'Imported CSV', 'Returned (wk1)',
     ]);
+  });
+
+  it('accepts custom step labels (revenue funnel)', () => {
+    const revenue = [
+      { event: 'paywall_viewed',         label: 'Saw paywall' },
+      { event: 'checkout_started',       label: 'Started checkout' },
+      { event: 'subscription_activated', label: 'Subscribed' },
+    ];
+    const steps = buildSteps([40, 12, 5], revenue);
+    expect(steps.map(s => s.label)).toEqual(['Saw paywall', 'Started checkout', 'Subscribed']);
+    expect(steps[2]).toMatchObject({ count: 5, pctOfTop: 13, pctOfPrev: 42 });
   });
 });
 
@@ -57,7 +68,12 @@ describe('formatFunnelMetrics', () => {
   it('renders steps with drop-off arrows', () => {
     const out = formatFunnelMetrics({ windowDays: 14, steps: buildSteps([100, 50, 25, 20, 10, 5]) });
     expect(out).toContain('Landed');
-    expect(out).toContain('Returned day 2');
+    expect(out).toContain('Returned (wk1)');
     expect(out).toContain('↓');
+  });
+
+  it('renders a custom title for the revenue funnel', () => {
+    const out = formatFunnelMetrics({ windowDays: 30, steps: buildSteps([40, 12, 5]) }, '💷 Revenue funnel');
+    expect(out).toContain('Revenue funnel');
   });
 });

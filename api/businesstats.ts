@@ -14,7 +14,7 @@ import { getRevenueMetrics, formatRevenueMetrics } from './_lib/metrics/revenue.
 import { getSentryMetrics, formatSentryMetrics } from './_lib/metrics/errors.js';
 import { getPostHogMetrics, formatPostHogMetrics } from './_lib/metrics/analytics.js';
 import { getWedgeMetrics, formatWedgeMetrics } from './_lib/metrics/interventions.js';
-import { getFunnelMetrics, formatFunnelMetrics } from './_lib/metrics/funnel.js';
+import { getFunnelMetrics, getRevenueFunnelMetrics, formatFunnelMetrics } from './_lib/metrics/funnel.js';
 import { getRetentionMetrics, formatRetentionMetrics } from './_lib/metrics/retention.js';
 import { sendDailyDigest } from './_lib/metrics/digest.js';
 
@@ -287,7 +287,9 @@ export default async function handler(req: Req, res: Res) {
           await sendMessage(chatId, '❌ PostHog unavailable — check POSTHOG_PERSONAL_API_KEY and POSTHOG_PROJECT_ID in Vercel env.');
           break;
         }
-        await sendMessage(chatId, formatFunnelMetrics(m));
+        await sendMessage(chatId, formatFunnelMetrics(m, '🫧 Activation funnel'));
+        const rev = await getRevenueFunnelMetrics();
+        if (rev) await sendMessage(chatId, formatFunnelMetrics(rev, '💷 Revenue funnel'));
         break;
       }
       case '/retention': {
