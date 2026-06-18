@@ -20,12 +20,16 @@ vi.mock("../lib/supabase", () => {
   return { supabase: { from, auth: { getUser: () => ({ data: { user: { id: "user-1" } } }) } } };
 });
 
+const phCaptureMock = vi.fn();
+vi.mock("../lib/posthog", () => ({ phCapture: (...a: unknown[]) => phCaptureMock(...a) }));
+
 import { logInterventionEvent } from "./interventions";
 
 beforeEach(() => {
   insertMock.mockClear();
   selectMock.mockClear();
   updateMock.mockClear();
+  phCaptureMock.mockClear();
 });
 
 describe("logInterventionEvent", () => {
@@ -43,5 +47,26 @@ describe("logInterventionEvent", () => {
     expect(arg.signals).toEqual(["consec_losses", "tilt_emotion"]);
     expect(arg.choice).toBe("cancelled");
     expect(arg.session_date).toBe("2026-06-02");
+  });
+});
+
+describe("logInterventionEvent source property", () => {
+  it("passes source to phCapture when provided", async () => {
+    await logInterventionEvent({
+      userUid: "user-1", signals: ["consec_losses"], critical: false,
+      choice: "cancelled", sessionDate: "2026-06-18", source: "session",
+    });
+    expect(phCaptureMock).toHaveBeenCalledWith("intervention_fired", expect.objectContaining({ source: "session" }));
+    // source is PostHog-only — it must NOT be on the DB row
+    const row = insertMock.mock.calls[0][0] as Record<string, unknown>;
+    expect(row).not.toHaveProperty("source");
+  });
+
+  it("defaults source to 'log' when omitted", async () => {
+    await logInterventionEvent({
+      userUid: "user-1", signals: ["consec_losses"], critical: false,
+      choice: "continued", sessionDate: "2026-06-18",
+    });
+    expect(phCaptureMock).toHaveBeenCalledWith("intervention_fired", expect.objectContaining({ source: "log" }));
   });
 });

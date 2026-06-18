@@ -30,6 +30,7 @@ export interface LogInterventionArgs {
   critical: boolean;
   choice: InterventionChoice;
   sessionDate: string;
+  source?: "log" | "session";   // PostHog-only; NOT persisted
 }
 
 export async function logInterventionEvent(args: LogInterventionArgs): Promise<string | null> {
@@ -55,6 +56,7 @@ export async function logInterventionEvent(args: LogInterventionArgs): Promise<s
       critical: args.critical,
       choice: args.choice,
       session_date: args.sessionDate,
+      source: args.source ?? "log",
     });
   } catch { /* posthog optional / not configured */ }
   return (data as { id: string } | null)?.id ?? null;
