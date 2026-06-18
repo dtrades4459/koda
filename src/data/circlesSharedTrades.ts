@@ -5,6 +5,7 @@ import type { SharedTrade, Trade, Profile } from "../types";
 import { uidForCode } from "./follows";
 import { notifyReaction } from "./notifications";
 import { readVisibility } from "../lib/circleVisibility";
+import { postShot, preShot } from "../lib/tradeScreenshots";
 
 export async function shareTrade(
   circleCode: string,
@@ -37,7 +38,7 @@ export async function shareTrade(
     rr: trade.rr ? parseFloat(trade.rr) || null : null,
     strategy: trade.strategy || null,
     notes: trade.notes || null,
-    screenshot: trade.screenshot || null,
+    screenshot: postShot(trade) || preShot(trade) || null,
     date: trade.date,
   });
   if (!error) return "ok";

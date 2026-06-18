@@ -1,3 +1,5 @@
+import { hasAnyShot } from "./tradeScreenshots";
+
 export const COMP_CIRCLE_CODE = "50K-EVAL-2026";
 
 // UIDs of competition staff — shown as referees on the leaderboard, stats not counted.
@@ -79,10 +81,12 @@ export interface CompEligibility {
 }
 
 export function compEligibility(
-  trades: Array<{ date: string; screenshot: string }>
+  trades: Array<{ date: string; screenshot?: string; preTradeScreenshot?: string; postTradeScreenshot?: string }>
 ): CompEligibility {
   const wt = trades.filter(t => isInCompWindow(t.date));
-  const missingShots = wt.filter(t => !t.screenshot).length;
+  // A trade satisfies the screenshot requirement with EITHER a pre- or post-trade shot
+  // (legacy single `screenshot` counts as post via hasAnyShot).
+  const missingShots = wt.filter(t => !hasAnyShot(t)).length;
   return {
     trades: wt.length,
     missingShots,
