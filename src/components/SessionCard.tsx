@@ -39,7 +39,7 @@ export function SessionCard({ profile, C, isMobile, onToast }: SessionCardProps)
   const [debriefOpen, setDebriefOpen] = useState(false);
   const [lossDollarOpen, setLossDollarOpen] = useState(false);
   const [lossDollar, setLossDollar] = useState("");
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState(() => Date.now());
 
   const locked = s.lockedUntil !== null && s.lockedUntil > now;
 
