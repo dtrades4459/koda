@@ -763,13 +763,13 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
               </div>
               <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 10 }}>
                 {[
-                  "Unlimited trade logging",
-                  "Full stats dashboard",
-                  "Tilt intervention",
-                  "Discipline score",
-                  "Prop firm eval tracker",
+                  "Unlimited trade logging & history",
+                  "CSV import — 8 broker formats",
+                  "Core stats dashboard (P&L, win rate, calendar)",
+                  "Tilt intervention (default rules)",
+                  "Prop firm eval tracker (1 account)",
                   "Ideas feed",
-                  "Kōda global Circle + 2 Circles (join or create)",
+                  "Kōda global Circle + 2 Circles",
                   "iOS + Android (PWA)",
                 ].map((item) => (
                   <li key={item} style={{ fontFamily: BODY, fontSize: "0.875rem", color: C.text2, display: "flex", alignItems: "flex-start", gap: 10 }}>
@@ -825,10 +825,10 @@ function LandingPage({ onSuccess }: { onSuccess: () => void }) {
               <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 10, position: "relative", zIndex: 1 }}>
                 {[
                   "Everything in Free",
+                  "Track unlimited funded accounts",
+                  "Advanced analytics (MAE / MFE, heatmaps, drawdown, AI insights)",
+                  "Custom discipline rules (your tilt limits & cooldown)",
                   "Unlimited Trading Circles",
-                  "Advanced analytics (MAE / MFE, heatmaps, drawdown curves)",
-                  "Custom strategy slots",
-                  "Weekly digest emails",
                 ].map((item) => (
                   <li key={item} style={{ fontFamily: BODY, fontSize: "0.875rem", color: C.text2, display: "flex", alignItems: "flex-start", gap: 10 }}>
                     <svg width="14" height="14" viewBox="0 0 14 14" style={{ marginTop: 4, flexShrink: 0 }}>

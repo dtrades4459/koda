@@ -2794,7 +2794,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                           <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: C.live, boxShadow: `0 0 8px ${C.live}`, flexShrink: 0 }}/>
                           <div style={{ textAlign: "left" }}>
                             <div style={{ fontSize: "0.8125rem", fontWeight: 600, color: C.live, fontFamily: DISPLAY }}>Upgrade to Pro</div>
-                            <div style={{ fontSize: "0.6875rem", color: C.muted, marginTop: "1px", fontFamily: MONO }}>Unlimited imports · Advanced analytics</div>
+                            <div style={{ fontSize: "0.6875rem", color: C.muted, marginTop: "1px", fontFamily: MONO }}>Multi-account · Advanced analytics</div>
                           </div>
                         </div>
                         <span style={{ fontFamily: MONO, fontSize: "0.6875rem", color: C.live }}>£24.99/mo →</span>

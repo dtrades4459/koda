@@ -909,7 +909,7 @@ export function CelebrationOverlay({ C, kind, streakCount, tradeStats, onDismiss
             <div style={{ position: "absolute", top: 0, left: 0, width: "40%", height: "100%", background: "rgba(255,255,255,0.45)", animation: "kSheen 2.8s linear infinite" }} />
           </div>
           <div style={{ fontFamily: DISPLAY, fontSize: "1.625rem", fontWeight: 600, color: C.text, letterSpacing: "-0.02em", position: "relative" }}>You're in.</div>
-          <div style={{ fontSize: "0.8125rem", color: C.text2, maxWidth: 270, lineHeight: 1.5, position: "relative" }}>Auto-import, unlimited circles, prop firm tracker, and Kōda AI are now active.</div>
+          <div style={{ fontSize: "0.8125rem", color: C.text2, maxWidth: 270, lineHeight: 1.5, position: "relative" }}>Multi-account tracking, unlimited circles, advanced analytics, and Kōda AI are now active.</div>
           <button onClick={onDismiss} style={{ marginTop: 8, padding: "12px 28px", borderRadius: 999, background: C.text, color: C.bg, border: "none", fontFamily: MONO, fontSize: "0.6875rem", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase" as const, cursor: "pointer", position: "relative" }}>Start trading →</button>
         </div>
       )}

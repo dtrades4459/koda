@@ -493,10 +493,9 @@ export function SettingsScreen({
             </div>
             <button
               onClick={() => {
-                if (!profile.propFirmMode && !isPro) {
-                  setShowUpgrade(true);
-                  return;
-                }
+                // Basic eval tracking (single account) is free — it's the core of
+                // the prop-trader wedge. Tracking multiple funded accounts is the
+                // Pro upgrade, gated separately in lib/accounts.ts.
                 saveProfile({ ...profile, propFirmMode: !profile.propFirmMode });
               }}
               style={{ width: "38px", height: "22px", borderRadius: "999px", border: "none", cursor: "pointer", background: profile.propFirmMode ? (C as any).live ?? C.green : C.border2, position: "relative", transition: "background 0.2s", flexShrink: 0 }}
@@ -592,8 +591,11 @@ export function SettingsScreen({
               );
             })()}
           </div>
-          <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, marginBottom: 8, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+          <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, marginBottom: 8, letterSpacing: "0.08em", textTransform: "uppercase", display: "flex", alignItems: "center", gap: 8 }}>
             Cooldown when cancelled
+            {!isPro && (
+              <span style={{ color: C.accent, fontSize: "0.5625rem", letterSpacing: "0.14em", border: `1px solid ${C.border2}`, borderRadius: 999, padding: "1px 7px" }}>PRO</span>
+            )}
           </div>
           <div style={{ display: "flex", gap: 6 }}>
             {([0, 5, 15, 30] as const).map(min => {
@@ -604,6 +606,8 @@ export function SettingsScreen({
                   key={min}
                   type="button"
                   onClick={() => {
+                    // Custom discipline rules are Pro; free stays on the 15-min default.
+                    if (!isPro) { setShowUpgrade(true); return; }
                     void saveProfile({
                       ...profile,
                       prefs: {

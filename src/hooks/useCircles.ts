@@ -387,7 +387,7 @@ export function useCircles({
     if (!circleForm.name.trim() || isCreatingCircle) return;
     const plan = profileRef.current.plan ?? "free";
     const unlimited = plan === "pro" || plan === "elite" || isFounder(profileRef.current.uid);
-    if (!unlimited && myCirclesRef.current.filter((c: Circle) => c.code !== KODA_GLOBAL_CODE).length >= 1) {
+    if (!unlimited && myCirclesRef.current.filter((c: Circle) => c.code !== KODA_GLOBAL_CODE).length >= 2) {
       showToast("Upgrade to Pro for unlimited Trading Circles");
       return;
     }
@@ -438,7 +438,7 @@ export function useCircles({
     }
     const plan = profileRef.current.plan ?? "free";
     const unlimited = plan === "pro" || plan === "elite" || isFounder(profileRef.current.uid);
-    if (!unlimited && myCirclesRef.current.filter((c: Circle) => c.code !== KODA_GLOBAL_CODE).length >= 1) {
+    if (!unlimited && myCirclesRef.current.filter((c: Circle) => c.code !== KODA_GLOBAL_CODE).length >= 2) {
       setCircleMsg("Upgrade to Pro for unlimited circles.");
       setTimeout(() => setCircleMsg(""), 3000);
       return;
