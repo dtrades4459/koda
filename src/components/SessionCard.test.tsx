@@ -17,6 +17,10 @@ const PROFILE: Profile = {
   uid: "u1", maxDailyLoss: "500",
 };
 
+// useTradingSession is mocked, so the bridge is inert here — it only needs to
+// satisfy the prop type.
+const COOLDOWN = { lockedUntil: null, cooldownMin: 15, startCooldown: vi.fn() };
+
 function baseHook() {
   return {
     session: null, tally: null, interventionOpen: false, interventionSignals: [],
@@ -37,7 +41,7 @@ beforeEach(() => {
 
 describe("SessionCard", () => {
   it("idle: shows Start session and opens the pre-session sheet", () => {
-    render(<SessionCard profile={PROFILE} C={DARK} isMobile />);
+    render(<SessionCard profile={PROFILE} C={DARK} isMobile cooldown={COOLDOWN} />);
     const start = screen.getByRole("button", { name: /start session/i });
     fireEvent.click(start);
     // PreSessionSheet renders the captured limits — unique to the sheet.
@@ -49,7 +53,7 @@ describe("SessionCard", () => {
       session: { startedAt: new Date().toISOString(), maxDailyLoss: 500, maxTradesPerDay: 5, taps: [] },
       tally: { wins: 0, losses: 0, netDollar: 0, hasDollar: false, streak: 0, streakKind: null },
     });
-    render(<SessionCard profile={PROFILE} C={DARK} isMobile />);
+    render(<SessionCard profile={PROFILE} C={DARK} isMobile cooldown={COOLDOWN} />);
     fireEvent.click(screen.getByRole("button", { name: /\+ loss/i }));
     fireEvent.click(screen.getByRole("button", { name: /log loss/i }));
     expect(hookState.tap).toHaveBeenCalledWith("Loss", null);
@@ -60,7 +64,7 @@ describe("SessionCard", () => {
       session: { startedAt: new Date().toISOString(), maxDailyLoss: 500, maxTradesPerDay: 5, taps: [] },
       tally: { wins: 0, losses: 0, netDollar: 0, hasDollar: false, streak: 0, streakKind: null },
     });
-    render(<SessionCard profile={PROFILE} C={DARK} isMobile />);
+    render(<SessionCard profile={PROFILE} C={DARK} isMobile cooldown={COOLDOWN} />);
     fireEvent.click(screen.getByRole("button", { name: /\+ loss/i }));
     fireEvent.change(screen.getByPlaceholderText(/\$ lost/i), { target: { value: "200" } });
     fireEvent.click(screen.getByRole("button", { name: /log loss/i }));
@@ -73,7 +77,7 @@ describe("SessionCard", () => {
       session: { startedAt: new Date().toISOString(), maxDailyLoss: 500, maxTradesPerDay: 5, taps: [] },
       tally: { wins: 0, losses: 0, netDollar: 0, hasDollar: false, streak: 0, streakKind: null },
     });
-    render(<SessionCard profile={PROFILE} C={DARK} isMobile />);
+    render(<SessionCard profile={PROFILE} C={DARK} isMobile cooldown={COOLDOWN} />);
     fireEvent.click(screen.getByRole("button", { name: /\+ loss/i }));
     fireEvent.change(screen.getByPlaceholderText(/\$ lost/i), { target: { value: "-150" } });
     fireEvent.click(screen.getByRole("button", { name: /log loss/i }));
@@ -85,7 +89,7 @@ describe("SessionCard", () => {
       session: { startedAt: new Date().toISOString(), maxDailyLoss: 500, maxTradesPerDay: 5, taps: [] },
       tally: { wins: 0, losses: 0, netDollar: 0, hasDollar: false, streak: 0, streakKind: null },
     });
-    render(<SessionCard profile={PROFILE} C={DARK} isMobile />);
+    render(<SessionCard profile={PROFILE} C={DARK} isMobile cooldown={COOLDOWN} />);
     fireEvent.click(screen.getByRole("button", { name: /\+ win/i }));
     expect(hookState.tap).toHaveBeenCalledWith("Win", null);
   });
@@ -95,7 +99,7 @@ describe("SessionCard", () => {
       session: { startedAt: new Date().toISOString(), maxDailyLoss: 500, maxTradesPerDay: 5, taps: [] },
       tally: { wins: 1, losses: 2, netDollar: -50, hasDollar: true, streak: 2, streakKind: "Loss" },
     });
-    render(<SessionCard profile={PROFILE} C={DARK} isMobile />);
+    render(<SessionCard profile={PROFILE} C={DARK} isMobile cooldown={COOLDOWN} />);
     fireEvent.click(screen.getByRole("button", { name: /end session/i }));
     await waitFor(() => expect(screen.getByText(/follow your rules/i)).toBeInTheDocument());
   });
@@ -107,7 +111,7 @@ describe("SessionCard", () => {
       interventionOpen: true,
       interventionSignals: [{ id: "consec_losses", label: "2 consecutive losses", critical: false }],
     });
-    render(<SessionCard profile={PROFILE} C={DARK} isMobile />);
+    render(<SessionCard profile={PROFILE} C={DARK} isMobile cooldown={COOLDOWN} />);
     expect(screen.getByText(/heads up/i)).toBeInTheDocument();
   });
 });

@@ -2114,7 +2114,13 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
               {homeSection === "feed" && (
                 <div>
                   {isSessionPilot(profile.uid) && (
-                    <SessionCard profile={profile} C={C} isMobile={!isDesktop} onToast={showToast} />
+                    <SessionCard
+                      profile={profile}
+                      C={C}
+                      isMobile={!isDesktop}
+                      cooldown={{ lockedUntil: tilt.lockedUntil, cooldownMin: tilt.settings.cooldownMin, startCooldown: tilt.startCooldown }}
+                      onToast={showToast}
+                    />
                   )}
                   {(() => {
                     const bannerItems: BannerStackItem[] = [];

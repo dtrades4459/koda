@@ -14,7 +14,7 @@ import { useEffect, useState } from "react";
 import { MONO, BODY } from "../shared";
 import type { Theme } from "../theme";
 import type { Profile } from "../types";
-import { useTradingSession } from "../hooks/useTradingSession";
+import { useTradingSession, type TiltCooldownBridge } from "../hooks/useTradingSession";
 import { InterventionSheet } from "./InterventionSheet";
 import { PreSessionSheet } from "./PreSessionSheet";
 import { PostSessionDebriefSheet } from "./PostSessionDebriefSheet";
@@ -23,6 +23,9 @@ export interface SessionCardProps {
   profile: Profile;
   C: Theme;
   isMobile: boolean;
+  // The single app-wide cooldown bridge (Koda's useTiltState instance) so the
+  // session shares one live lockout with the logging flow rather than its own.
+  cooldown: TiltCooldownBridge;
   onToast?: (msg: string) => void;
 }
 
@@ -33,8 +36,8 @@ function formatCountdown(msRemaining: number): string {
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
-export function SessionCard({ profile, C, isMobile, onToast }: SessionCardProps) {
-  const s = useTradingSession({ profile });
+export function SessionCard({ profile, C, isMobile, cooldown, onToast }: SessionCardProps) {
+  const s = useTradingSession({ profile, cooldown });
   const [preOpen, setPreOpen] = useState(false);
   const [debriefOpen, setDebriefOpen] = useState(false);
   const [lossDollarOpen, setLossDollarOpen] = useState(false);

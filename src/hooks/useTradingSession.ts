@@ -13,8 +13,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { storage } from "../lib/storage";
 import { log } from "../lib/log";
-import { evaluateTilt, type TiltSignal } from "../lib/tilt";
-import { useTiltState } from "./useTiltState";
+import { evaluateTilt, type TiltSignal, type TiltSignalId } from "../lib/tilt";
 import { logInterventionEvent } from "../data/interventions";
 import { phCapture } from "../lib/posthog";
 import type { Profile } from "../types";
@@ -26,6 +25,16 @@ import {
 function todayLocal(now: number): string {
   const d = new Date(now);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+// The cooldown lockout is a single app-wide resource (the logging flow and the
+// session must observe the *same* lockout, live). Rather than spin a second
+// useTiltState — which would give the session its own un-synced copy of the
+// lockout — the caller injects the one instance Koda already owns.
+export interface TiltCooldownBridge {
+  lockedUntil: number | null;
+  cooldownMin: number;
+  startCooldown: (signals: TiltSignalId[]) => Promise<void>;
 }
 
 export interface UseTradingSession {
@@ -43,7 +52,7 @@ export interface UseTradingSession {
   end(): Promise<void>;
 }
 
-export function useTradingSession({ profile }: { profile: Profile }): UseTradingSession {
+export function useTradingSession({ profile, cooldown }: { profile: Profile; cooldown: TiltCooldownBridge }): UseTradingSession {
   const [session, setSession] = useState<ActiveSession | null>(null);
   const [interventionOpen, setInterventionOpen] = useState(false);
   const [interventionSignals, setInterventionSignals] = useState<TiltSignal[]>([]);
@@ -53,11 +62,6 @@ export function useTradingSession({ profile }: { profile: Profile }): UseTrading
   const hasArmed = useRef(false);
   // How many times the sheet auto-fired this session (reported on end()).
   const firedCount = useRef(0);
-
-  // Cooldown is owned by the existing useTiltState. We feed it the session's
-  // adapted trades so its lockout read/write stays a single source of truth.
-  const sessionTrades = session ? tapsToTrades(session.taps, todayLocal(Date.now())) : [];
-  const tilt = useTiltState({ trades: sessionTrades, profile });
 
   // ── Load (with stale-day guard) ─────────────────────────────────────────
   useEffect(() => {
@@ -107,7 +111,7 @@ export function useTradingSession({ profile }: { profile: Profile }): UseTrading
     const next = addTap(session, { outcome, pnlDollar, at: new Date().toISOString() });
     const now = Date.now();
     const state = evaluateTilt(tapsToTrades(next.taps, todayLocal(now)), profile, now);
-    const locked = tilt.lockedUntil !== null && tilt.lockedUntil > now;
+    const locked = cooldown.lockedUntil !== null && cooldown.lockedUntil > now;
     if (state.active && !prevActive.current && !locked) {
       setInterventionSignals(state.signals);
       setInterventionOpen(true);
@@ -116,7 +120,7 @@ export function useTradingSession({ profile }: { profile: Profile }): UseTrading
     prevActive.current = state.active;
     setSession(next);
     await persist(next);
-  }, [session, profile, tilt.lockedUntil, persist]);
+  }, [session, profile, cooldown.lockedUntil, persist]);
 
   const checkMe = useCallback(() => {
     if (!session) return;
@@ -152,8 +156,8 @@ export function useTradingSession({ profile }: { profile: Profile }): UseTrading
         source: "session",
       });
     }
-    await tilt.startCooldown(interventionSignals.map(s => s.id));
-  }, [profile.uid, interventionSignals, tilt]);
+    await cooldown.startCooldown(interventionSignals.map(s => s.id));
+  }, [profile.uid, interventionSignals, cooldown]);
 
   const end = useCallback(async () => {
     const t = session ? computeTally(session) : null;
@@ -175,8 +179,8 @@ export function useTradingSession({ profile }: { profile: Profile }): UseTrading
     tally: session ? computeTally(session) : null,
     interventionOpen,
     interventionSignals,
-    lockedUntil: tilt.lockedUntil,
-    cooldownMin: tilt.settings.cooldownMin,
+    lockedUntil: cooldown.lockedUntil,
+    cooldownMin: cooldown.cooldownMin,
     start, tap, checkMe, continueTrading, coolOff, end,
   };
 }
