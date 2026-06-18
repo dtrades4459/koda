@@ -20,6 +20,8 @@ import { logInterventionEvent, linkTradeToRecentIntervention } from "./data/inte
 import { InterventionSheet } from "./components/InterventionSheet";
 import { PreSessionSheet } from "./components/PreSessionSheet";
 import { PostSessionDebriefSheet } from "./components/PostSessionDebriefSheet";
+import { SessionCard } from "./components/SessionCard";
+import { isSessionPilot } from "./lib/sessionPilot";
 import { LiveRuleMonitor } from "./components/LiveRuleMonitor";
 import { InSessionStatsCard } from "./components/InSessionStatsCard";
 import { ComputedBadge } from "./components/ComputedBadge";
@@ -2111,6 +2113,15 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
               {/* FEED */}
               {homeSection === "feed" && (
                 <div>
+                  {isSessionPilot(profile.uid) && (
+                    <SessionCard
+                      profile={profile}
+                      C={C}
+                      isMobile={!isDesktop}
+                      cooldown={{ lockedUntil: tilt.lockedUntil, cooldownMin: tilt.settings.cooldownMin, startCooldown: tilt.startCooldown }}
+                      onToast={showToast}
+                    />
+                  )}
                   {(() => {
                     const bannerItems: BannerStackItem[] = [];
                     const daysSinceStart = profile.startDate ? Math.floor((Date.now() - Date.parse(profile.startDate)) / 86400000) : Infinity;
