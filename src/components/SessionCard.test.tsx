@@ -55,6 +55,31 @@ describe("SessionCard", () => {
     expect(hookState.tap).toHaveBeenCalledWith("Loss", null);
   });
 
+  it("armed: a $ amount typed as a positive number is stored as a NEGATIVE loss", () => {
+    Object.assign(hookState, {
+      session: { startedAt: new Date().toISOString(), maxDailyLoss: 500, maxTradesPerDay: 5, taps: [] },
+      tally: { wins: 0, losses: 0, netDollar: 0, hasDollar: false, streak: 0, streakKind: null },
+    });
+    render(<SessionCard profile={PROFILE} C={DARK} isMobile />);
+    fireEvent.click(screen.getByRole("button", { name: /\+ loss/i }));
+    fireEvent.change(screen.getByPlaceholderText(/\$ lost/i), { target: { value: "200" } });
+    fireEvent.click(screen.getByRole("button", { name: /log loss/i }));
+    // critical: evaluateTilt only fires daily-loss signals when netPnl < 0
+    expect(hookState.tap).toHaveBeenCalledWith("Loss", -200);
+  });
+
+  it("armed: a negative number typed is normalised to a single negative loss", () => {
+    Object.assign(hookState, {
+      session: { startedAt: new Date().toISOString(), maxDailyLoss: 500, maxTradesPerDay: 5, taps: [] },
+      tally: { wins: 0, losses: 0, netDollar: 0, hasDollar: false, streak: 0, streakKind: null },
+    });
+    render(<SessionCard profile={PROFILE} C={DARK} isMobile />);
+    fireEvent.click(screen.getByRole("button", { name: /\+ loss/i }));
+    fireEvent.change(screen.getByPlaceholderText(/\$ lost/i), { target: { value: "-150" } });
+    fireEvent.click(screen.getByRole("button", { name: /log loss/i }));
+    expect(hookState.tap).toHaveBeenCalledWith("Loss", -150);
+  });
+
   it("armed: + Win taps immediately with null", () => {
     Object.assign(hookState, {
       session: { startedAt: new Date().toISOString(), maxDailyLoss: 500, maxTradesPerDay: 5, taps: [] },

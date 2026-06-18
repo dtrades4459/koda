@@ -92,7 +92,10 @@ export function SessionCard({ profile, C, isMobile, onToast }: SessionCardProps)
 
   function commitLoss() {
     const parsed = lossDollar.trim() === "" ? null : parseFloat(lossDollar);
-    const val = parsed !== null && Number.isFinite(parsed) ? parsed : null;
+    // A loss is stored as a negative pnl regardless of whether the trader typed
+    // "200" or "-200" — evaluateTilt only fires the daily-loss signals when the
+    // running net is < 0, and the tally's net $ must read red for a losing day.
+    const val = parsed !== null && Number.isFinite(parsed) ? -Math.abs(parsed) : null;
     void s.tap("Loss", val);
     setLossDollar("");
     setLossDollarOpen(false);
