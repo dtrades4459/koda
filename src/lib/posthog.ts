@@ -6,7 +6,11 @@
 import posthog from "posthog-js";
 
 const KEY  = import.meta.env.VITE_POSTHOG_KEY as string | undefined;
-const HOST = import.meta.env.VITE_POSTHOG_HOST as string | undefined ?? "https://us.i.posthog.com";
+// Project lives on PostHog EU (eu.posthog.com, project 182606). The browser MUST
+// ingest to the EU region — sending an EU key to the US host returns 200 but the
+// events are silently dropped. `||` (not `??`) so an empty-string env still falls
+// back to the EU default.
+const HOST = (import.meta.env.VITE_POSTHOG_HOST as string | undefined) || "https://eu.i.posthog.com";
 
 export const COOKIE_CONSENT_KEY = "koda_cookie_consent";
 
