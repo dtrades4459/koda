@@ -5,6 +5,7 @@ import { onStorageError, storage } from "./lib/storage";
 import { calcRR, calcStreak, calcDisciplineScore } from "./lib/stats";
 import type { DisciplineScore, DisciplineLogEntry } from "./lib/stats";
 import { log } from "./lib/log";
+import { screenshotField, shotArray, postShot, type ShotSlot } from "./lib/tradeScreenshots";
 import { isFlagOn } from "./lib/flags";
 import { computeIsPro } from "./lib/entitlements";
 import { useFollows } from "./hooks/useFollows";
@@ -818,7 +819,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
       pnl: parseNum(t.pnl) ?? 0,
       rr: parseNum(t.rr),
       notes: t.notes ?? undefined,
-      screenshots: t.screenshot ? [t.screenshot] : [],
+      screenshots: shotArray(t),
       reactions: t.reactions ?? {},
     };
   }
@@ -1332,10 +1333,11 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
   }
 
   // Screenshot upload
-  async function handleScreenshotUpload(e: React.ChangeEvent<HTMLInputElement>, tradeId: number | null) {
+  async function handleScreenshotUpload(e: React.ChangeEvent<HTMLInputElement>, tradeId: number | null, slot: ShotSlot) {
     const file = e.target.files?.[0]; if (!file) return;
     if (file.size > 15 * 1024 * 1024) { showToast("Image too large — max 15MB"); return; }
     if (!file.type.startsWith("image/")) { showToast("File must be an image"); return; }
+    const field = screenshotField(slot);
     showToast("Uploading screenshot\u2026");
     try {
       const dataUri = await compressImage(file, 800);
@@ -1347,19 +1349,20 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
       if (error) throw error;
       const { data: urlData } = supabase.storage.from("trade-screenshots").getPublicUrl(path);
       const screenshotUrl = urlData.publicUrl;
-      if (tradeId) { const u = trades.map(t => t.id === tradeId ? { ...t, screenshot: screenshotUrl } : t); await saveTrades(u); }
-      else setForm((f) => ({ ...f, screenshot: screenshotUrl }));
+      if (tradeId) { const u = trades.map(t => t.id === tradeId ? { ...t, [field]: screenshotUrl } : t); await saveTrades(u); }
+      else setForm((f) => ({ ...f, [field]: screenshotUrl }));
       showToast("Screenshot saved");
     } catch (err) {
       log.error("screenshot.upload", err);
       const compressed = await compressImage(file, 800);
-      if (tradeId) { const u = trades.map(t => t.id === tradeId ? { ...t, screenshot: compressed } : t); await saveTrades(u); }
-      else setForm((f) => ({ ...f, screenshot: compressed }));
+      if (tradeId) { const u = trades.map(t => t.id === tradeId ? { ...t, [field]: compressed } : t); await saveTrades(u); }
+      else setForm((f) => ({ ...f, [field]: compressed }));
       showToast("Saved locally (Storage unavailable)");
     }
   }
-  async function removeScreenshot(tradeId: number | null) {
-    const existing = tradeId ? trades.find((t: Trade) => t.id === tradeId)?.screenshot : (form as any)?.screenshot;
+  async function removeScreenshot(tradeId: number | null, slot: ShotSlot) {
+    const field = screenshotField(slot);
+    const existing = tradeId ? trades.find((t: Trade) => t.id === tradeId)?.[field] : (form as any)?.[field];
     if (existing && typeof existing === "string" && existing.includes("trade-screenshots")) {
       try {
         const url = new URL(existing);
@@ -1371,8 +1374,8 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
         }
       } catch { /* non-fatal */ }
     }
-    if (tradeId) { const u = trades.map(t => t.id === tradeId ? { ...t, screenshot: "" } : t); await saveTrades(u); }
-    else setForm((f) => ({ ...f, screenshot: "" }));
+    if (tradeId) { const u = trades.map(t => t.id === tradeId ? { ...t, [field]: "" } : t); await saveTrades(u); }
+    else setForm((f) => ({ ...f, [field]: "" }));
   }
 
   // Avatar upload
@@ -3538,23 +3541,23 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
 
                             {/* ── Chart / screenshot card ── */}
                             <div style={{ margin: "0 2px" }}>
-                              {t.screenshot ? (
+                              {postShot(t) ? (
                                 <div style={{ borderRadius: 22, overflow: "hidden", background: C.panel, border: `1px solid ${C.border}`, position: "relative" }}>
-                                  <SignedImg src={t.screenshot} alt="chart" loading="lazy" style={{ width: "100%", display: "block", maxHeight: 240, objectFit: "cover" }} />
+                                  <SignedImg src={postShot(t)} alt="chart" loading="lazy" style={{ width: "100%", display: "block", maxHeight: 240, objectFit: "cover" }} />
                                   <div style={{ display: "flex", gap: 10, padding: "12px 18px", fontFamily: MONO, fontSize: "0.625rem" }}>
                                     {t.entryPrice && <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: C.text2 }}><span style={{ width: 6, height: 6, borderRadius: 999, background: (C as any).live ?? C.accent }} />Entry {t.entryPrice}</span>}
                                     {t.slPrice && <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: C.text2 }}><span style={{ width: 6, height: 6, borderRadius: 999, background: C.red }} />Stop {t.slPrice}</span>}
                                     {t.tpPrice && <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: C.text2 }}><span style={{ width: 6, height: 6, borderRadius: 999, background: C.green }} />Exit {t.tpPrice}</span>}
                                   </div>
                                   <div style={{ position: "absolute", top: 8, right: 8, display: "flex", gap: 6 }}>
-                                    <label htmlFor={`ss-${t.id}`} style={{ background: C.bg, border: `1px solid ${C.border2}`, borderRadius: 999, padding: "4px 10px", fontSize: "0.625rem", color: C.text, cursor: "pointer", fontFamily: MONO, letterSpacing: "0.08em" }}>REPLACE<input id={`ss-${t.id}`} type="file" accept="image/jpeg,image/png" style={{ display: "none" }} onChange={e => handleScreenshotUpload(e, t.id)} /></label>
-                                    <button onClick={() => removeScreenshot(t.id)} style={{ background: C.bg, border: `1px solid ${C.border2}`, borderRadius: 999, color: C.text, padding: "4px 10px", fontSize: "0.625rem", cursor: "pointer", fontFamily: MONO, letterSpacing: "0.08em" }}>REMOVE</button>
+                                    <label htmlFor={`ss-${t.id}`} style={{ background: C.bg, border: `1px solid ${C.border2}`, borderRadius: 999, padding: "4px 10px", fontSize: "0.625rem", color: C.text, cursor: "pointer", fontFamily: MONO, letterSpacing: "0.08em" }}>REPLACE<input id={`ss-${t.id}`} type="file" accept="image/jpeg,image/png" style={{ display: "none" }} onChange={e => handleScreenshotUpload(e, t.id, "post")} /></label>
+                                    <button onClick={() => removeScreenshot(t.id, "post")} style={{ background: C.bg, border: `1px solid ${C.border2}`, borderRadius: 999, color: C.text, padding: "4px 10px", fontSize: "0.625rem", cursor: "pointer", fontFamily: MONO, letterSpacing: "0.08em" }}>REMOVE</button>
                                   </div>
                                 </div>
                               ) : (
                                 <label htmlFor={`ss-${t.id}`} style={{ display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 22, border: `1px dashed ${C.border2}`, padding: 22, cursor: "pointer", color: C.muted, fontSize: "0.6875rem", fontFamily: MONO, letterSpacing: "0.08em", textTransform: "uppercase", background: C.panel }}>
                                   + Add chart screenshot
-                                  <input id={`ss-${t.id}`} type="file" accept="image/jpeg,image/png" style={{ display: "none" }} onChange={e => handleScreenshotUpload(e, t.id)} />
+                                  <input id={`ss-${t.id}`} type="file" accept="image/jpeg,image/png" style={{ display: "none" }} onChange={e => handleScreenshotUpload(e, t.id, "post")} />
                                 </label>
                               )}
                             </div>
