@@ -1,6 +1,9 @@
 import { b, link } from '../telegram/format.js';
 
-const SENTRY_BASE = 'https://sentry.io/api/0';
+// Kōda's Sentry org (koda-tt) lives in the EU region, so the API host is
+// de.sentry.io — calls to the US host (sentry.io) silently return wrong/empty
+// data for an EU org. Overridable via SENTRY_HOST for other regions/orgs.
+const SENTRY_BASE = (process.env.SENTRY_HOST ?? 'https://de.sentry.io').replace(/\/$/, '') + '/api/0';
 
 async function sentryGet(path: string) {
   const res = await fetch(`${SENTRY_BASE}${path}`, {

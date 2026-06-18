@@ -13,6 +13,9 @@ import { getTradeMetrics, formatTradeMetrics } from './_lib/metrics/trades.js';
 import { getRevenueMetrics, formatRevenueMetrics } from './_lib/metrics/revenue.js';
 import { getSentryMetrics, formatSentryMetrics } from './_lib/metrics/errors.js';
 import { getPostHogMetrics, formatPostHogMetrics } from './_lib/metrics/analytics.js';
+import { getWedgeMetrics, formatWedgeMetrics } from './_lib/metrics/interventions.js';
+import { getFunnelMetrics, formatFunnelMetrics } from './_lib/metrics/funnel.js';
+import { getRetentionMetrics, formatRetentionMetrics } from './_lib/metrics/retention.js';
 import { sendDailyDigest } from './_lib/metrics/digest.js';
 
 const TOKEN  = process.env.TELEGRAM_BUSINESSTATS_TOKEN!;
@@ -40,11 +43,18 @@ async function handleHelp(chatId: number) {
   await sendMessage(chatId, [
     b('📊 Kōda Ops Bot'),
     '',
+    '/today — one-tap morning snapshot',
+    '',
     b('Business'),
     '/users — signups + active users',
     '/waitlist — beta waitlist count',
     '/revenue — MRR, subs, churn',
     '/trades — trade volume + activity',
+    '',
+    b('Wedge & funnel'),
+    '/wedge — pre-trade intervention verdict (% cancelled)',
+    '/funnel — landing → signup → CSV → day-2 survival',
+    '/retention — day-21 logging rate of the cohort',
     '',
     b('Monitoring'),
     '/errors — latest Sentry issues',
@@ -154,6 +164,31 @@ async function handleUserLookup(chatId: number, email: string) {
   ].join('\n'));
 }
 
+// One-tap morning snapshot — the essentials in a single message so you don't
+// fire four commands. Each block degrades gracefully if its integration is off.
+async function handleToday(chatId: number) {
+  const [users, revenue, sentry, wedge] = await Promise.all([
+    getUserMetrics().catch(() => null),
+    getRevenueMetrics().catch(() => null),
+    getSentryMetrics().catch(() => null),
+    getWedgeMetrics().catch(() => null),
+  ]);
+
+  const lines: string[] = [b('☀️ Kōda — Today'), ''];
+  if (users)   lines.push(`👥 Users: ${b(users.total)} total · ${b(users.today)} new today · ${b(users.active30d)} active 30d`);
+  if (revenue) {
+    const sym = revenue.currency === 'GBP' ? '£' : revenue.currency === 'USD' ? '$' : revenue.currency + ' ';
+    lines.push(`💷 MRR: ${b(`${sym}${revenue.mrr.toFixed(2)}`)} · ${b(revenue.activeCount)} subs`);
+  }
+  if (sentry)  lines.push(`🚨 Errors 24h: ${b(sentry.errorCount24h)} · ${b(sentry.issues.length)} unresolved`);
+  else         lines.push('🚨 Errors: ❌ Sentry not configured');
+  if (wedge)   lines.push(`🛡️ Wedge: ${b(wedge.sessionsStarted)} sessions · ${b(wedge.fired)} fired · ${wedge.pctCancelled === null ? 'n/a' : b(`${wedge.pctCancelled}% cancelled`)}`);
+  else         lines.push('🛡️ Wedge: ❌ PostHog not configured');
+  lines.push('', 'Detail: /users /revenue /errors /wedge /funnel /retention');
+
+  await sendMessage(chatId, lines.join('\n'));
+}
+
 export default async function handler(req: Req, res: Res) {
   if (req.method !== 'POST') return res.status(405).end();
 
@@ -234,7 +269,38 @@ export default async function handler(req: Req, res: Res) {
         await sendDailyDigest();
         break;
       }
-      // Further commands added in subsequent tasks
+      case '/wedge':
+      case '/intervention': {
+        await sendMessage(chatId, '⏳ Fetching...');
+        const m = await getWedgeMetrics();
+        if (!m) {
+          await sendMessage(chatId, '❌ PostHog unavailable — check POSTHOG_PERSONAL_API_KEY and POSTHOG_PROJECT_ID in Vercel env.');
+          break;
+        }
+        await sendMessage(chatId, formatWedgeMetrics(m));
+        break;
+      }
+      case '/funnel': {
+        await sendMessage(chatId, '⏳ Fetching...');
+        const m = await getFunnelMetrics();
+        if (!m) {
+          await sendMessage(chatId, '❌ PostHog unavailable — check POSTHOG_PERSONAL_API_KEY and POSTHOG_PROJECT_ID in Vercel env.');
+          break;
+        }
+        await sendMessage(chatId, formatFunnelMetrics(m));
+        break;
+      }
+      case '/retention': {
+        await sendMessage(chatId, '⏳ Fetching...');
+        const m = await getRetentionMetrics();
+        await sendMessage(chatId, formatRetentionMetrics(m));
+        break;
+      }
+      case '/today': {
+        await sendMessage(chatId, '⏳ Building snapshot...');
+        await handleToday(chatId);
+        break;
+      }
     }
   } catch (err) {
     console.error('businesstats bot error:', err);
