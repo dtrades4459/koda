@@ -151,5 +151,12 @@ describe("eligibility helpers", () => {
       const ts = [...Array.from({ length: 9 }, () => shot("2026-06-20")), noShot("2026-06-21")];
       expect(compEligibility(ts).eligible).toBe(false);
     });
+
+    it("counts a pre- or post-trade screenshot as satisfying the requirement", () => {
+      const pre = { date: "2026-06-20", screenshot: "", preTradeScreenshot: "trade-screenshots/pre.png" };
+      const post = { date: "2026-06-20", screenshot: "", postTradeScreenshot: "trade-screenshots/post.png" };
+      const r = compEligibility([pre, post]);
+      expect(r.missingShots).toBe(0);
+    });
   });
 });

@@ -3563,7 +3563,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                             </div>
 
                             {/* ── Prices card (SL/TP if not already shown) ── */}
-                            {(t.slPrice || t.tpPrice) && !t.screenshot && (
+                            {(t.slPrice || t.tpPrice) && !postShot(t) && (
                               <div style={{ margin: "0 2px", borderRadius: 22, padding: 18, background: C.panel, border: `1px solid ${C.border}` }}>
                                 <div style={{ fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.16em", color: C.muted, textTransform: "uppercase", marginBottom: 12 }}>Prices</div>
                                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
@@ -3693,7 +3693,7 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
                               ) : (
                                 <button onClick={() => setConfirmDelete(t.id)} style={{ ...pillGhost, padding: "8px 14px", color: C.red, borderColor: `${C.red}55` }}>DELETE</button>
                               )}
-                              {t.screenshot && <a href={t.screenshot} target="_blank" rel="noreferrer" onClick={(e) => { e.preventDefault(); void resolveScreenshotUrl(t.screenshot).then((u) => window.open(u, "_blank", "noopener,noreferrer")); }} style={{ ...pillGhost, padding: "8px 14px", textDecoration: "none", display: "inline-flex", alignItems: "center" }}>CHART ↗</a>}
+                              {postShot(t) && <a href={postShot(t)} target="_blank" rel="noreferrer" onClick={(e) => { e.preventDefault(); void resolveScreenshotUrl(postShot(t)).then((u) => window.open(u, "_blank", "noopener,noreferrer")); }} style={{ ...pillGhost, padding: "8px 14px", textDecoration: "none", display: "inline-flex", alignItems: "center" }}>CHART ↗</a>}
                             </div>
                           </div>
                         )}
