@@ -36,9 +36,9 @@ export async function getPostHogMetrics(): Promise<PostHogMetrics | null> {
       trend([{ event: '$pageview', math: 'dau' }], '-1d', 'day'),
       trend([{ event: '$pageview', math: 'dau' }], '-7d', 'week'),
       trend([
-        { event: 'trade_logged',   math: 'total' },
-        { event: 'user_signed_up', math: 'total' },
-        { event: '$pageview',      math: 'total' },
+        { event: 'signed_up',     math: 'total' },
+        { event: 'csv_imported',  math: 'total' },
+        { event: '$pageview',     math: 'total' },
       ], '-7d', 'day'),
     ]);
 

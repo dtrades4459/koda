@@ -53,3 +53,36 @@ describe('isAuthorized', () => {
     expect(isAuthorized({ update_id: 1 } as Update)).toBe(false);
   });
 });
+
+describe('logDropDiagnostic', () => {
+  beforeEach(() => {
+    vi.resetModules();
+    process.env.TELEGRAM_ALLOWED_USER_IDS = '100,200';
+    process.env.TELEGRAM_OPS_CHAT_ID = '-9999';
+  });
+
+  it('warns with the new chat id when a whitelisted user hits a mismatched group (the Topics-upgrade signature)', async () => {
+    const { logDropDiagnostic } = await import('../auth.js');
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    logDropDiagnostic(makeUpdate(100, -1001234567890));
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn.mock.calls[0][0]).toContain('TELEGRAM_OPS_CHAT_ID=-1001234567890');
+    warn.mockRestore();
+  });
+
+  it('stays quiet for an unknown user (avoids logging random DMs)', async () => {
+    const { logDropDiagnostic } = await import('../auth.js');
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    logDropDiagnostic(makeUpdate(999, -1001234567890));
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it('stays quiet when the ops chat id already matches', async () => {
+    const { logDropDiagnostic } = await import('../auth.js');
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    logDropDiagnostic(makeUpdate(100, -9999));
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+});
