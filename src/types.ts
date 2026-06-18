@@ -28,6 +28,8 @@ export interface Trade {
   notes: string;
   emotions: string;
   screenshot: string;
+  preTradeScreenshot?: string;
+  postTradeScreenshot?: string;
   pnlDollar: string;
   entryTime?: string;
   exitTime?: string;
