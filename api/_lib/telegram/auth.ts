@@ -30,3 +30,24 @@ export function getChatId(update: TelegramUpdate): number {
   if (!update.message) throw new Error('getChatId called on update without message');
   return update.message.chat.id;
 }
+
+/**
+ * Logs a clear hint when a dropped update is the signature of a stale
+ * TELEGRAM_OPS_CHAT_ID — i.e. a whitelisted user messaged a non-private chat
+ * whose id no longer matches OPS_CHAT_ID. This is exactly what happens when a
+ * group gains Topics and is upgraded to a supergroup (its chat id changes
+ * permanently). Without this, the handler drops the message with a silent 200
+ * and the bot looks dead. The log prints the value to set.
+ */
+export function logDropDiagnostic(update: TelegramUpdate): void {
+  const msg = update.message;
+  if (!msg) return;
+  const uid = msg.from?.id;
+  if (uid && ALLOWED_USER_IDS.has(uid) && msg.chat.type !== 'private' && msg.chat.id !== OPS_CHAT_ID) {
+    console.warn(
+      `[telegram] authorized user ${uid} messaged chat ${msg.chat.id} (${msg.chat.type}) ` +
+      `which != TELEGRAM_OPS_CHAT_ID (${OPS_CHAT_ID}). If this group gained Topics it became a ` +
+      `supergroup with a new id — set TELEGRAM_OPS_CHAT_ID=${msg.chat.id} to restore the bot.`,
+    );
+  }
+}

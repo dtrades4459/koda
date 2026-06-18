@@ -4,7 +4,7 @@ type Req = { method?: string; headers: Record<string, string | string[] | undefi
 type Res = { status(n: number): Res; json(d: unknown): Res; end(): void };
 
 import { timingSafeEqual } from 'crypto';
-import { isAuthorized, getChatId, type TelegramUpdate } from './_lib/telegram/auth.js';
+import { isAuthorized, getChatId, logDropDiagnostic, type TelegramUpdate } from './_lib/telegram/auth.js';
 import Stripe from 'stripe';
 import { getAdminClient } from './_lib/supabaseAdmin.js';
 import { b, code } from './_lib/telegram/format.js';
@@ -165,7 +165,10 @@ export default async function handler(req: Req, res: Res) {
   }
 
   const update = req.body as unknown as TelegramUpdate;
-  if (!isAuthorized(update)) return res.status(200).end();
+  if (!isAuthorized(update)) {
+    logDropDiagnostic(update);   // surfaces a stale TELEGRAM_OPS_CHAT_ID (e.g. after a Topics→supergroup upgrade)
+    return res.status(200).end();
+  }
 
   const text    = update.message?.text ?? '';
   const chatId  = getChatId(update);
