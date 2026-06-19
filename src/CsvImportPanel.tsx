@@ -95,6 +95,30 @@ const CSV_PRESETS: Record<string, {
     mapping: { pair: "Symbol", date: "Buy Time", bias: "B/S", pnl: "P&L", entryPrice: "Buy Price", notes: "Account" },
     dateLocale: "us",
   },
+  tradovate_performance: {
+    label: "Tradovate (Performance)",
+    hint: "Tradovate Performance export — lowercase columns (symbol, pnl, boughtTimestamp). No Side column; direction is inferred from buy/sell fill times.",
+    exportPath: "Performance → Trades → Export CSV",
+    mapping: {
+      pair:       "symbol",
+      date:       "boughtTimestamp",
+      pnl:        "pnl",
+      entryPrice: "buyPrice",
+      exitPrice:  "sellPrice",
+      qty:        "qty",
+    },
+    fallbacks: {
+      date:       ["soldTimestamp", "timestamp"],
+      entryPrice: ["buy price", "price"],
+      exitPrice:  ["sell price"],
+      qty:        ["quantity", "size", "contracts"],
+    },
+    dateLocale: "us",
+    // No explicit Side column — bought-before-sold = long, sold-first = short.
+    biasInferenceColumns: { buyTime: "boughtTimestamp", sellTime: "soldTimestamp" },
+    brokerIdColumn: "buyFillId",
+    brokerIdFallbacks: ["sellFillId", "fillId", "orderId"],
+  },
   rithmic: {
     label: "Rithmic",
     hint: "Apex / TopstepX / Earn2Trade prop firm CSV (Rithmic Trade Route statement)",
