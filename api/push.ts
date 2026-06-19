@@ -253,9 +253,14 @@ async function handleNotifyCircle(req: VercelRequest, res: VercelResponse) {
 
   // messagePreview is the caller's own message they just posted — legitimate to
   // echo. senderName is ignored; the title is derived from the caller's profile.
-  const { circleCode, messagePreview } = req.body as { circleCode?: string; messagePreview?: string };
+  const { circleCode, messagePreview, mentions } = req.body as { circleCode?: string; messagePreview?: string; mentions?: unknown };
   if (!circleCode || typeof circleCode !== "string" || circleCode.length > 64)
     return res.status(400).json({ error: "Invalid circleCode" });
+
+  // @mention handles (may arrive with or without a leading @). Bounded + normalised.
+  const mentionHandles = Array.isArray(mentions)
+    ? mentions.map(m => String(m).trim().replace(/^@+/, "")).filter(Boolean).slice(0, 20)
+    : [];
 
   // Only an actual member may trigger a notification to a circle.
   if (!(await isCircleMemberUid(uid, circleCode)))
@@ -277,9 +282,23 @@ async function handleNotifyCircle(req: VercelRequest, res: VercelResponse) {
 
   if (!recipientUids.length) return res.status(200).json({ ok: true, sent: 0 });
 
+  // Resolve mentioned members → uids. Match both stored conventions (bare and
+  // @-prefixed) so handle-storage drift can't silently drop the elevation. Only
+  // members already in recipientUids can be mentioned — no notifying outsiders.
+  const mentionedUids = new Set<string>();
+  if (mentionHandles.length) {
+    const variants = Array.from(new Set(mentionHandles.flatMap(h => [h, `@${h}`])));
+    const { data: mentionedProfiles } = await supabase
+      .from("profiles").select("user_id, handle").in("handle", variants);
+    const recipientSet = new Set(recipientUids);
+    for (const p of (mentionedProfiles ?? []) as { user_id: string }[]) {
+      if (p.user_id && recipientSet.has(p.user_id)) mentionedUids.add(p.user_id);
+    }
+  }
+
   const { data: subs } = await supabase
     .from("notification_subscriptions")
-    .select("endpoint, p256dh, auth_key")
+    .select("endpoint, p256dh, auth_key, user_id")
     .in("user_id", recipientUids);
 
   if (!subs?.length) return res.status(200).json({ ok: true, sent: 0 });
@@ -290,9 +309,10 @@ async function handleNotifyCircle(req: VercelRequest, res: VercelResponse) {
     : "New message in your circle";
 
   const circlePayload = JSON.stringify({ title: actor.name, body: preview, icon: "/icon-192.png" });
+  const mentionPayload = JSON.stringify({ title: `${actor.name} mentioned you`, body: preview, icon: "/icon-192.png" });
   await Promise.allSettled(
-    subs.map((sub: { endpoint: string; p256dh: string; auth_key: string }) =>
-      sendPush(sub.endpoint, sub.p256dh, sub.auth_key, circlePayload),
+    subs.map((sub: { endpoint: string; p256dh: string; auth_key: string; user_id: string }) =>
+      sendPush(sub.endpoint, sub.p256dh, sub.auth_key, mentionedUids.has(sub.user_id) ? mentionPayload : circlePayload),
     ),
   );
 
