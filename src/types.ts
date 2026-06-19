@@ -126,6 +126,8 @@ export interface Circle {
   /** Metrics members must share (consented at join). The comp circle is
    *  hardcoded in circleVisibility.requiredMetricsFor regardless of meta. */
   requiredMetrics?: ("pnl" | "winRate" | "discipline" | "avgRR")[];
+  /** Coach-set "on track" discipline bar for the Coach roster. Default 70. */
+  disciplineThreshold?: number;
   id: number;
   code: string;
   name: string;
