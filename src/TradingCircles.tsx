@@ -15,6 +15,12 @@ import { useUnreadCircles } from "./hooks/useUnreadCircles";
 import { createChallenge, fetchActiveChallenge, fetchTrophies } from "./data/circlesChallenges";
 import { fetchSharedTrades, reactToSharedTrade, rowToSharedTrade } from "./data/circlesSharedTrades";
 import { SharedTradeCard } from "./components/SharedTradeCard";
+import { ChatMessage, type ChatMessageRow } from "./components/ChatMessage";
+import { ChatComposer } from "./components/ChatComposer";
+import { PinnedBanner } from "./components/PinnedBanner";
+import { fetchReactions, toggleReaction, applyOptimisticToggle, type ReactionMap } from "./data/circleMessageReactions";
+import { useCirclePresence } from "./hooks/useCirclePresence";
+import { isFlagOn } from "./lib/flags";
 import type { Circle, CircleChallenge, ChallengeResult, FeedItem, CircleMessage, CircleMember, Profile } from "./types";
 import type { Theme } from "./theme";
 
@@ -109,16 +115,6 @@ export interface TradingCirclesProps {
   myCompEligibility: CompEligibility;
 }
 
-// Raw DB row shape returned by the circle_messages Supabase query.
-interface ChatMsg {
-  id: string;
-  sender_id: string | null;
-  sender_name: string;
-  sender_handle: string;
-  text: string;
-  created_at: string;
-}
-
 export function TradingCircles({
   myCircles, circlesView, setCirclesView, activeCircle, setActiveCircle,
   circleForm, setCircleForm, circleJoinCode, setCircleJoinCode,
@@ -150,12 +146,28 @@ export function TradingCircles({
   // mirror of the ban list). Drives the moderator dashboard gate + Members UI.
   const [circleMods, setCircleMods] = useState<Set<string>>(new Set());
   const [chatMessages, setChatMessages] = useState<any[]>([]);
+  // Circles Chat v2 (flag: circleChatV2) — emoji reactions + reply state.
+  // Inert when the flag is off: no reaction fetches, no reply_to_id writes.
+  const [reactions, setReactions] = useState<Record<string, ReactionMap>>({});
+  const [replyingTo, setReplyingTo] = useState<ChatMessageRow | null>(null);
   const [chatInput, setChatInput] = useState("");
   const [chatSending, setChatSending] = useState(false);
   const [chatLoading, setChatLoading] = useState(false);
   const chatBottomRef = useRef<HTMLDivElement>(null);
   const circleTabRef = useRef(circleTab);
   useEffect(() => { circleTabRef.current = circleTab; }, [circleTab]);
+  // Latest messages for the realtime reactions channel to re-hydrate against
+  // (avoids a stale closure capturing chatMessages at subscribe time).
+  const chatMessagesRef = useRef<{ id: string }[]>([]);
+  useEffect(() => { chatMessagesRef.current = chatMessages; }, [chatMessages]);
+  // Circles Chat v2 — pinned announcement + presence/typing. All inert when the
+  // flag is off (presence channel only opens when a circleCode is passed).
+  const circleChatV2 = isFlagOn("circleChatV2");
+  const [pinned, setPinned] = useState<{ id: string; senderName: string; text: string } | null>(null);
+  const { online, typingNames, setTyping } = useCirclePresence(
+    circleChatV2 && activeCircle ? activeCircle.code : undefined,
+    profile?.uid ? { id: profile.uid, name: profile.name || "Trader", handle: profile.handle || "" } : null,
+  );
   const [firstUnreadId, setFirstUnreadId] = useState<string | null>(null);
   const firstUnreadCapturedFor = useRef<string | null>(null);
   const [expandedMember, setExpandedMember] = useState<string | null>(null);
@@ -403,7 +415,11 @@ export function TradingCircles({
         .eq("circle_code", circleCode)
         .order("created_at", { ascending: true })
         .limit(100);
-      setChatMessages(data || []);
+      const rows = data || [];
+      setChatMessages(rows);
+      if (isFlagOn("circleChatV2")) {
+        setReactions(await fetchReactions(rows.map((r: { id: string }) => r.id)));
+      }
     } catch {}
     setChatLoading(false);
     setTimeout(() => chatBottomRef.current?.scrollIntoView({ behavior: "smooth" }), 80);
@@ -417,22 +433,34 @@ export function TradingCircles({
     }
     setChatSending(true);
     setChatInput("");
+    const v2 = isFlagOn("circleChatV2");
     try {
-      const { error } = await supabase.from("circle_messages").insert({
+      const payload: Record<string, string | null> = {
         circle_code: circleCode,
         sender_id: myId,
         sender_name: profile.name || "Trader",
         sender_handle: profile.handle || "",
         text,
-      });
+      };
+      // Only write reply_to_id when v2 is on — keeps inserts compatible with the
+      // pre-migration schema so this merges inert.
+      if (v2) payload.reply_to_id = replyingTo?.id ?? null;
+      const { error } = await supabase.from("circle_messages").insert(payload);
       if (error) throw error;
+      if (v2) setReplyingTo(null);
+      // v2: surface @mentions so the server can send those members a
+      // higher-signal "mentioned you" notification. Handles include the @.
+      const mentions = v2 ? (text.match(/@[A-Za-z0-9_]+/g) ?? []) : [];
       supabase.auth.getSession().then(({ data }) => {
         const token = data.session?.access_token;
         if (token) {
           fetch("/api/push?action=notify-circle", {
             method: "POST",
             headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-            body: JSON.stringify({ circleCode, senderName: profile.name || "Trader", messagePreview: text }),
+            body: JSON.stringify({
+              circleCode, senderName: profile.name || "Trader", messagePreview: text,
+              ...(mentions.length ? { mentions } : {}),
+            }),
           }).catch(() => {});
         }
       });
@@ -461,7 +489,54 @@ export function TradingCircles({
 
   async function deleteChatMessage(id: string) {
     await supabase.from("circle_messages").delete().eq("id", id);
-    setChatMessages(prev => prev.filter((m: any) => m.id !== id));
+    setChatMessages(prev => prev.filter((m: { id: string }) => m.id !== id));
+  }
+
+  // Circles Chat v2: optimistic emoji toggle; server (toggle_message_reaction)
+  // is the source of truth and re-syncs via the realtime reactions channel.
+  async function handleReact(messageId: string, emoji: string) {
+    const myId = profile?.uid;
+    if (!myId || !activeCircle) return;
+    setReactions(prev => ({
+      ...prev,
+      [messageId]: applyOptimisticToggle(prev[messageId], emoji, myId),
+    }));
+    await toggleReaction(messageId, activeCircle.code, emoji);
+  }
+
+  // Circles Chat v2: pinned announcement (one per circle, owner-controlled).
+  async function loadPinned(circleCode: string) {
+    if (!isFlagOn("circleChatV2")) { setPinned(null); return; }
+    try {
+      const { data: c } = await supabase
+        .from("circles").select("pinned_message_id").eq("code", circleCode).maybeSingle();
+      const pid = (c as { pinned_message_id?: string | null } | null)?.pinned_message_id;
+      if (!pid) { setPinned(null); return; }
+      const { data: m } = await supabase
+        .from("circle_messages").select("id, sender_name, text").eq("id", pid).maybeSingle();
+      const row = m as { id: string; sender_name: string; text: string } | null;
+      setPinned(row ? { id: row.id, senderName: row.sender_name, text: row.text } : null);
+    } catch { setPinned(null); }
+  }
+
+  async function pinMessage(messageId: string) {
+    if (!activeCircle) return;
+    const { error } = await supabase.from("circles")
+      .update({ pinned_message_id: messageId, pinned_at: new Date().toISOString() })
+      .eq("code", activeCircle.code);
+    // RLS authorizes pinning by created_by = auth.uid(); surface a denial rather
+    // than failing silently (the Pin affordance is already owner-gated client-side).
+    if (error) { showToast(error.code === "42501" ? "Only the owner can pin" : "Couldn't pin message"); return; }
+    await loadPinned(activeCircle.code);
+  }
+
+  async function unpinMessage() {
+    if (!activeCircle) return;
+    const { error } = await supabase.from("circles")
+      .update({ pinned_message_id: null, pinned_at: null })
+      .eq("code", activeCircle.code);
+    if (error) { showToast("Couldn't unpin message"); return; }
+    setPinned(null);
   }
 
   function fmtMsgTime(iso: string) {
@@ -480,6 +555,9 @@ export function TradingCircles({
     setCircleTab("leaderboard");
     setChatMessages([]);
     setChatInput("");
+    setReplyingTo(null);
+    setPinned(null);
+    void loadPinned(circle.code);
     setFeedItems([]);
     setActiveChallenge(null);
     setTrophies([]);
@@ -603,12 +681,26 @@ export function TradingCircles({
         setFeedItems(prev => [newItem, ...prev]);
       })
       .subscribe();
+    // Circles Chat v2: live reaction sync (flag-gated — no channel when off).
+    const reactionsChannel = isFlagOn("circleChatV2")
+      ? supabase
+          .channel(`circle_rx_${activeCircle.code}`)
+          .on("postgres_changes" as any, {
+            event: "*", schema: "public",
+            table: "circle_message_reactions",
+            filter: `circle_code=eq.${activeCircle.code}`,
+          }, () => {
+            void fetchReactions(chatMessagesRef.current.map(m => m.id)).then(setReactions);
+          })
+          .subscribe()
+      : null;
     return () => {
       alive = false; clearInterval(id);
       try { unsub(); } catch {}
       supabase.removeChannel(chatChannel);
       supabase.removeChannel(sharedTradesChannel);
       supabase.removeChannel(challengesChannel);
+      if (reactionsChannel) supabase.removeChannel(reactionsChannel);
     };
   }, [circlesView, activeCircle, fetchCircleLeaderboard, lbSort]);
 
@@ -1668,8 +1760,22 @@ export function TradingCircles({
             {/* ── CHAT ── */}
             {circleTab === "chat" && (() => {
               const myId = profile?.uid;
+              const chatV2 = circleChatV2;
               return (
                 <div>
+                  {chatV2 && pinned && (
+                    <PinnedBanner
+                      senderName={pinned.senderName}
+                      text={pinned.text}
+                      C={C}
+                      onUnpin={activeCircle?.isOwner ? unpinMessage : undefined}
+                    />
+                  )}
+                  {chatV2 && online.length > 0 && (
+                    <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.live, letterSpacing: "0.08em", padding: "8px 0 0", textTransform: "uppercase" }}>
+                      {online.length} online
+                    </div>
+                  )}
                   <div style={{ borderTop: `1px solid ${C.border}`, minHeight: "280px", maxHeight: "min(48dvh, 480px)", overflowY: "auto", paddingTop: "8px" }}>
                     {chatLoading
                       ? <div style={{ padding: "12px 0", display: "flex", flexDirection: "column", gap: 14 }}>
@@ -1686,7 +1792,7 @@ export function TradingCircles({
                             <div style={{ fontFamily: DISPLAY, fontSize: "1rem", fontStyle: "italic", color: C.text2, marginBottom: "6px" }}>No messages yet.</div>
                             <div style={{ fontFamily: BODY, fontSize: "0.75rem", color: C.muted }}>Be the first to say something.</div>
                           </div>
-                        : (chatMessages as ChatMsg[]).map((msg, i) => {
+                        : (chatMessages as ChatMessageRow[]).map((msg, i) => {
                             const isMe = msg.sender_id === myId;
                             return (
                               <Fragment key={msg.id}>
@@ -1701,6 +1807,21 @@ export function TradingCircles({
                                     <div style={{ flex: 1, height: 1, background: C.accent, opacity: 0.4 }} />
                                   </div>
                                 )}
+                                {chatV2 ? (
+                                  <ChatMessage
+                                    msg={msg}
+                                    isMe={isMe}
+                                    myId={myId}
+                                    C={C}
+                                    reactions={reactions[msg.id]}
+                                    replyTo={msg.reply_to_id ? ((chatMessages as ChatMessageRow[]).find(m => m.id === msg.reply_to_id) ?? null) : null}
+                                    onReact={handleReact}
+                                    onReply={setReplyingTo}
+                                    onDelete={isMe ? deleteChatMessage : undefined}
+                                    onPin={activeCircle?.isOwner ? pinMessage : undefined}
+                                    openProfile={openProfile}
+                                  />
+                                ) : (
                                 <div style={{ padding: "10px 0", display: "flex", justifyContent: isMe ? "flex-end" : "flex-start", gap: "10px", alignItems: "flex-end" }}>
                                   {!isMe && (
                                     <div style={{ width: "28px", height: "28px", borderRadius: "50%", background: C.panel, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: MONO, fontSize: "0.625rem", color: C.muted, flexShrink: 0, border: `1px solid ${C.border}` }}>
@@ -1716,14 +1837,32 @@ export function TradingCircles({
                                     </div>
                                   </div>
                                 </div>
+                                )}
                               </Fragment>
                             );
                           })
                     }
+                    {chatV2 && typingNames.length > 0 && (
+                      <div style={{ fontFamily: MONO, fontSize: "0.625rem", color: C.muted, padding: "4px 0", fontStyle: "italic" }}>
+                        {typingNames.join(", ")} {typingNames.length === 1 ? "is" : "are"} typing…
+                      </div>
+                    )}
                     <div ref={chatBottomRef} />
                   </div>
                   {/* Fixed compose bar — same positioning pattern as the feed compose bar
                       so the bottom nav (~80px tall + safe area) doesn't cover the input. */}
+                  {chatV2 ? (
+                    <ChatComposer
+                      value={chatInput}
+                      onChange={setChatInput}
+                      onSend={() => sendChatMessage(activeCircle.code, myId)}
+                      onTyping={() => setTyping(true)}
+                      sending={chatSending}
+                      C={C}
+                      replyingTo={replyingTo}
+                      onCancelReply={() => setReplyingTo(null)}
+                    />
+                  ) : (
                   <div style={{ position: "fixed" as const, bottom: "calc(80px + env(safe-area-inset-bottom))", left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 500, padding: "10px 16px 14px", background: `linear-gradient(to top, ${C.bg} 80%, transparent)`, display: "flex", gap: "10px", alignItems: "flex-end", zIndex: 40 }}>
                     <textarea value={chatInput} onChange={e => setChatInput(e.target.value)}
                       onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendChatMessage(activeCircle.code, myId); } }}
@@ -1735,6 +1874,7 @@ export function TradingCircles({
                       {chatSending ? "…" : "Send"}
                     </button>
                   </div>
+                  )}
                   {/* Spacer so the last message isn't covered by the fixed compose bar. */}
                   <div style={{ height: "calc(110px + env(safe-area-inset-bottom))" }} aria-hidden />
                 </div>
