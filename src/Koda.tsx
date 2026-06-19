@@ -5,6 +5,7 @@ import { onStorageError, storage } from "./lib/storage";
 import { calcRR, calcStreak, calcDisciplineScore } from "./lib/stats";
 import type { DisciplineScore, DisciplineLogEntry } from "./lib/stats";
 import { log } from "./lib/log";
+import { backfillCsvImportR } from "./lib/tradeBackfill";
 import { screenshotField, shotArray, postShot, type ShotSlot } from "./lib/tradeScreenshots";
 import { isFlagOn } from "./lib/flags";
 import { computeIsPro } from "./lib/entitlements";
@@ -587,8 +588,17 @@ export default function Koda({ user, jwtPlan }: { user?: User; jwtPlan?: "free" 
     // Trades
     try {
       const parsed = t ? JSON.parse(t.value) : null;
-      const loadedTrades: Trade[] = Array.isArray(parsed) ? parsed : [];
+      const rawTrades: Trade[] = Array.isArray(parsed) ? parsed : [];
+      // One-time repair: legacy CSV imports wrote the broker's dollar P&L into
+      // the R field (pnl) as well as pnlDollar, inflating R on leaderboards and
+      // lifetime stats. Blank R on those rows; pnlDollar is kept. Idempotent —
+      // only resaves the blob when something was actually fixed.
+      const { trades: loadedTrades, changed: rBackfilled } = backfillCsvImportR(rawTrades);
       setTrades(loadedTrades);
+      if (rBackfilled) {
+        void store.set("koda_trades", JSON.stringify(loadedTrades))
+          .catch(e => log.error("loadAll.rBackfill", e));
+      }
       // Multi-account: ensure a default account exists; existing trades attribute
       // to it at read time (no blob rewrite). Own try so a failure can't wipe trades.
       try {

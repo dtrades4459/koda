@@ -38,6 +38,18 @@ export const METRIC_VALUE: Record<CircleMetric, (e: LeaderboardSortable) => numb
   discipline: e => e.disciplineScore == null ? -1 : Number(e.disciplineScore) || 0,
 };
 
+/**
+ * Official 50K-Eval competition ranking order: by dollar P&L, descending.
+ *
+ * This decides medals and rank numbers. The view sort (sortLeaderboard) only
+ * re-orders the *display* with ranks pinned to this order. Ranking by dollars
+ * (not R) is deliberate: CSV imports carry dollar P&L but no risk basis, so
+ * their R is blank — ranking by R would exclude or mis-rank every importer.
+ */
+export function rankCompByDollar<T extends LeaderboardSortable>(entries: T[]): T[] {
+  return [...entries].sort((a, b) => METRIC_VALUE.dollar(b) - METRIC_VALUE.dollar(a));
+}
+
 export type Ranked<T> = T & { rank: number | null };
 
 export function sortLeaderboard<T extends LeaderboardSortable>(
