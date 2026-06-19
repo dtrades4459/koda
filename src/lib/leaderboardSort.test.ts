@@ -4,7 +4,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { describe, it, expect } from "vitest";
-import { sortLeaderboard, METRIC_VALUE } from "./leaderboardSort";
+import { sortLeaderboard, METRIC_VALUE, rankCompByDollar } from "./leaderboardSort";
 
 // Entries arrive in rank order (server order / comp-metric order).
 const entries = [
@@ -78,7 +78,8 @@ describe("sortLeaderboard", () => {
   });
 
   it("re-orders by dollar as a view sort with ranks still pinned", () => {
-    // Comp circle: official rank is R; the $ toggle is a view-only re-order.
+    // Comp circle: $ is a view sort key here; official rank is decided by
+    // rankCompByDollar (also $). The R/$ toggle re-orders the view, ranks pinned.
     const comp = [
       { memberCode: "AAA", total: 3, winRate: 100, totalPnL: 9.0, totalPnLDollar: 50 },
       { memberCode: "BBB", total: 3, winRate: 50, totalPnL: 4.0, totalPnLDollar: 900 },
@@ -131,5 +132,37 @@ describe("sortLeaderboard", () => {
     expect(out.map(e => e.memberCode)).toEqual(["BBB", "AAA", "CCC"]);
     const wr = sortLeaderboard(sparse, "winrate");
     expect(wr.map(e => e.memberCode)).toEqual(["AAA", "BBB", "CCC"]);
+  });
+});
+
+describe("rankCompByDollar", () => {
+  it("orders the comp leaderboard by dollar P&L descending, not by R", () => {
+    // AAA leads on R (9.0R) but BBB leads on dollars ($900). Official comp
+    // rank is now dollars, so BBB must come first — this is the regression
+    // guard for CSV imports inflating R.
+    const comp = [
+      { memberCode: "AAA", totalPnL: 9.0, totalPnLDollar: 50 },
+      { memberCode: "BBB", totalPnL: 4.0, totalPnLDollar: 900 },
+    ];
+    expect(rankCompByDollar(comp).map(e => e.memberCode)).toEqual(["BBB", "AAA"]);
+  });
+
+  it("treats missing/blank dollar values as 0", () => {
+    const comp = [
+      { memberCode: "AAA", totalPnLDollar: 0 },
+      { memberCode: "BBB" }, // no dollar value
+      { memberCode: "CCC", totalPnLDollar: 120 },
+    ];
+    expect(rankCompByDollar(comp).map(e => e.memberCode)).toEqual(["CCC", "AAA", "BBB"]);
+  });
+
+  it("does not mutate the input array", () => {
+    const input = [
+      { memberCode: "AAA", totalPnLDollar: 50 },
+      { memberCode: "BBB", totalPnLDollar: 900 },
+    ];
+    const snapshot = input.map(e => ({ ...e }));
+    rankCompByDollar(input);
+    expect(input).toEqual(snapshot);
   });
 });

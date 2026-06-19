@@ -5,7 +5,7 @@ import { KODA_GLOBAL_CODE } from "./hooks/useCircles";
 import { COMP_CIRCLE_CODE, COMP_MIN_TRADES, COMP_STAFF_UIDS, isCompetitionStarted, shouldShowCompetitionCard, compStatusText, type CompEligibility } from "./lib/competition";
 import { readCircleMembers, readMyCircleRole, type CircleRole } from "./data/circles";
 import { buildRoster, rosterToCsv } from "./lib/instructorRoster";
-import { sortLeaderboard, METRIC_VALUE, type LeaderboardSortKey } from "./lib/leaderboardSort";
+import { sortLeaderboard, METRIC_VALUE, rankCompByDollar, type LeaderboardSortKey } from "./lib/leaderboardSort";
 import { buildDisciplineCard } from "./lib/disciplineCard";
 import { shareDisciplineCard } from "./lib/renderDisciplineCard";
 import { phCapture } from "./lib/posthog";
@@ -133,7 +133,9 @@ export function TradingCircles({
 }: TradingCirclesProps) {
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [lbSort, setLbSort] = useState<"all" | "week">("all");
-  const [lbMetric, setLbMetric] = useState<"r" | "dollar">("r");
+  // Comp default view is dollars: official rank is dollar P&L, and CSV imports
+  // (which carry $ but no R basis) would otherwise all show a blank/0 R headline.
+  const [lbMetric, setLbMetric] = useState<"r" | "dollar">("dollar");
   const [lbViewSort, setLbViewSort] = useState<LeaderboardSortKey>("rank");
   const [compMemberCount, setCompMemberCount] = useState<number | null>(null);
   const [loadingLB, setLoadingLB] = useState(false);
@@ -474,7 +476,8 @@ export function TradingCircles({
     setActiveCircle(circle);
     setCirclesView("detail");
     setExpandedMember(null);
-    setCircleTab(circle.code === COMP_CIRCLE_CODE ? "chat" : "feed");
+    // Every circle opens on the leaderboard — the board is the draw.
+    setCircleTab("leaderboard");
     setChatMessages([]);
     setChatInput("");
     setFeedItems([]);
@@ -725,13 +728,15 @@ export function TradingCircles({
   // 0 window trades and would be wrongly flagged INELIGIBLE (header shows "Starts in X days").
   const compStarted = isCompetitionStarted();
   const viewerIsStaff = COMP_STAFF_UIDS.has(profile.uid ?? "");
-  // Official comp ranking is R P&L only — medals/rank numbers never move.
-  // The $ toggle (and the sort chips) re-order the VIEW with ranks pinned.
+  // Official comp ranking is dollar P&L — medals/rank numbers are pinned to that
+  // order. (Was R, but CSV imports carry $ with no risk basis to derive R from,
+  // so an R ranking mis-ranked every importer.) The R/$ toggle and the sort
+  // chips re-order the VIEW only, with ranks pinned.
   const displayLeaderboard = isCompCircle
-    ? [...leaderboard].sort((a, b) => METRIC_VALUE.r(b) - METRIC_VALUE.r(a))
+    ? rankCompByDollar(leaderboard)
     : leaderboard;
   const lbViewKey: LeaderboardSortKey =
-    isCompCircle && lbMetric === "dollar" && lbViewSort === "rank" ? "dollar" : lbViewSort;
+    isCompCircle && lbViewSort === "rank" ? "dollar" : lbViewSort;
   // Staff sinking + rank assignment (staff get none) live in sortLeaderboard.
   const rankedLeaderboard = sortLeaderboard(displayLeaderboard, lbViewKey);
 
@@ -1296,16 +1301,31 @@ export function TradingCircles({
                           color: circleTab === t ? C.text : C.muted,
                           whiteSpace: "nowrap",
                           flexShrink: 0,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 6,
                         }}
                       >
-                        {t === "leaderboard" ? "Board" : t === "instructor" ? "Coach" : t.charAt(0).toUpperCase() + t.slice(1)}
+                        <span>{t === "leaderboard" ? "Board" : t === "instructor" ? "Coach" : t.charAt(0).toUpperCase() + t.slice(1)}</span>
+                        {t === "chat" && activeCircle && unread[activeCircle.code] > 0 && (
+                          <span
+                            aria-label={`${unread[activeCircle.code]} unread`}
+                            style={{
+                              minWidth: 16, height: 16, borderRadius: 999, background: C.accent, color: C.bg,
+                              fontFamily: MONO, fontSize: "0.5625rem", fontWeight: 700, padding: "0 5px",
+                              display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                            }}
+                          >
+                            {unread[activeCircle.code] > 99 ? "99+" : unread[activeCircle.code]}
+                          </span>
+                        )}
                       </button>
                     ))}
                   </div>
                 ) : (
                   /* Mobile: dropdown */
                   <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", paddingBottom: "10px", borderBottom: `1px solid ${C.border}` }}>
-                    <SubNavDropdown sections={CIRCLE_TAB_SECTIONS} value={circleTab} onChange={(s: string) => handleTabChange(s as typeof circleTab)} C={C} />
+                    <SubNavDropdown sections={CIRCLE_TAB_SECTIONS} value={circleTab} onChange={(s: string) => handleTabChange(s as typeof circleTab)} C={C} badges={{ chat: (activeCircle && unread[activeCircle.code]) || 0 }} />
                   </div>
                 );
               })()}
@@ -1532,7 +1552,9 @@ export function TradingCircles({
                       const myCode = getMyCode();
                       const renderRow = (entry: typeof rankedLeaderboard[number]) => {
                         const isMe = entry.memberCode === myCode;
-                        const md = metricDisplay(entry, activeCircle);
+                        // On the comp, the R/$ toggle drives the displayed value
+                        // (default $). Other circles use their configured metric.
+                        const md = metricDisplay(entry, isCompCircle ? { ...activeCircle, metric: lbMetric } : activeCircle);
                         const pPos = md.raw >= 0;
                         const isStaffRow = isCompCircle && !!entry.staff;
                         const isFirst = entry.rank === 1 && !isStaffRow;

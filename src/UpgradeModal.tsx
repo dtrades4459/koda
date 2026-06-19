@@ -15,13 +15,14 @@ export function UpgradeModal({ C, userId, userEmail, stripeCustomerId, onCustome
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
 
   useEffect(() => { phCapture("paywall_viewed", { mandatory }); }, [mandatory]);
 
   async function handleUpgrade() {
     setLoading(true);
     setError("");
-    phCapture("checkout_started", { mandatory });
+    phCapture("checkout_started", { mandatory, billing });
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) throw new Error("Not signed in");
@@ -31,7 +32,7 @@ export function UpgradeModal({ C, userId, userEmail, stripeCustomerId, onCustome
           "Content-Type": "application/json",
           "Authorization": `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ userId, email: userEmail, stripeCustomerId }),
+        body: JSON.stringify({ userId, email: userEmail, stripeCustomerId, billing }),
       });
       if (!res.ok) {
         const { error: msg } = await res.json().catch(() => ({}));
@@ -50,10 +51,10 @@ export function UpgradeModal({ C, userId, userEmail, stripeCustomerId, onCustome
   const { live, liveSoft, orb1, orb3 } = C;
 
   const FEATURES = [
-    { icon: "📊", text: "Unlimited trade history" },
-    { icon: "📥", text: "CSV import — 8 broker formats" },
-    { icon: "↗", text: "Advanced analytics — heatmaps, MAE/MFE, edge stats", mono: true },
-    { icon: "◈", text: "Full insights — pattern detection & discipline scoring", mono: true },
+    { icon: "◎", text: "Track unlimited funded accounts" },
+    { icon: "↗", text: "Advanced analytics — heatmaps, MAE/MFE, drawdown, AI insights", mono: true },
+    { icon: "🛡", text: "Custom discipline rules — your cooldown & tilt limits" },
+    { icon: "◈", text: "Unlimited Trading Circles", mono: true },
     { icon: "⇣", text: "Export reports (CSV + PDF)", mono: true },
   ];
 
@@ -116,10 +117,29 @@ export function UpgradeModal({ C, userId, userEmail, stripeCustomerId, onCustome
           </div>
         </div>
 
+        {/* Billing toggle */}
+        <div style={{ position: "relative", zIndex: 1, display: "flex", gap: "6px", background: "rgba(255,255,255,0.04)", border: `1px solid ${C.border2 ?? "rgba(255,255,255,0.13)"}`, borderRadius: "10px", padding: "4px" }}>
+          {(["monthly", "annual"] as const).map(b => (
+            <button
+              key={b}
+              type="button"
+              onClick={() => setBilling(b)}
+              style={{
+                flex: 1, padding: "7px 0", borderRadius: "7px", border: "none", cursor: "pointer",
+                background: billing === b ? live : "transparent",
+                color: billing === b ? "#0A0A0A" : (C.muted ?? "#65655F"),
+                fontFamily: MONO, fontSize: "0.625rem", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase",
+              }}
+            >
+              {b === "monthly" ? "Monthly" : "Annual · save £100"}
+            </button>
+          ))}
+        </div>
+
         {/* Price */}
         <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "baseline", gap: "6px" }}>
-          <span style={{ fontFamily: DISPLAY, fontSize: "2.625rem", fontWeight: 700, color: C.text ?? "#F2F2EE", lineHeight: 1, letterSpacing: "-0.03em" }}>£24.99</span>
-          <span style={{ fontFamily: MONO, fontSize: "0.75rem", color: C.muted ?? "#65655F" }}>/mo · cancel any time</span>
+          <span style={{ fontFamily: DISPLAY, fontSize: "2.625rem", fontWeight: 700, color: C.text ?? "#F2F2EE", lineHeight: 1, letterSpacing: "-0.03em" }}>{billing === "annual" ? "£199" : "£24.99"}</span>
+          <span style={{ fontFamily: MONO, fontSize: "0.75rem", color: C.muted ?? "#65655F" }}>{billing === "annual" ? "/yr · £16.58/mo" : "/mo · cancel any time"}</span>
         </div>
 
         {/* Features */}
@@ -155,7 +175,7 @@ export function UpgradeModal({ C, userId, userEmail, stripeCustomerId, onCustome
               fontFamily: BODY, opacity: loading ? 0.7 : 1, transition: "opacity 0.2s",
             }}
           >
-            <span>{loading ? "Redirecting…" : "Upgrade Now — £24.99/mo"}</span>
+            <span>{loading ? "Redirecting…" : `Upgrade Now — ${billing === "annual" ? "£199/yr" : "£24.99/mo"}`}</span>
             {!loading && (
               <span style={{ width: "36px", height: "36px", borderRadius: "999px", background: "#0A0A0A", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">

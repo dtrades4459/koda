@@ -314,8 +314,12 @@ export interface SubNavDropdownProps {
   onChange: (id: string) => void;
   C: Theme;
   align?: "left" | "right";
+  /** Optional unread counts keyed by section id. Renders a small pill next to
+   *  the matching item, and a roll-up pill on the collapsed trigger for any
+   *  count on a section that isn't currently selected. */
+  badges?: Record<string, number>;
 }
-export function SubNavDropdown({ sections, value, onChange, C, align = "right" }: SubNavDropdownProps) {
+export function SubNavDropdown({ sections, value, onChange, C, align = "right", badges }: SubNavDropdownProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<any>(null);
   useEffect(() => {
@@ -325,6 +329,16 @@ export function SubNavDropdown({ sections, value, onChange, C, align = "right" }
   }, []);
   const current = sections.find((s: any) => s.id === value);
   if (!current) return null;
+  const badgeStyle = {
+    minWidth: 16, height: 16, borderRadius: 999, background: C.accent, color: C.bg,
+    fontFamily: MONO, fontSize: "0.5625rem", fontWeight: 700, padding: "0 5px",
+    display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+  } as const;
+  const fmtCount = (n: number) => (n > 99 ? "99+" : String(n));
+  // Roll-up shown on the collapsed trigger — unread from a non-selected section.
+  const triggerCount = badges
+    ? sections.reduce((sum, s) => (s.id === value ? sum : sum + (badges[s.id] || 0)), 0)
+    : 0;
   return (
     <div ref={ref} style={{ position: "relative", display: "inline-block" }}>
       <button onClick={() => setOpen(o => !o)} style={{
@@ -334,6 +348,9 @@ export function SubNavDropdown({ sections, value, onChange, C, align = "right" }
         fontSize: "0.6875rem", letterSpacing: "0.1em", textTransform: "uppercase",
       }}>
         <span>{current.label}</span>
+        {triggerCount > 0 && (
+          <span aria-label={`${triggerCount} unread`} style={badgeStyle}>{fmtCount(triggerCount)}</span>
+        )}
         <span style={{ fontSize: "0.5625rem", color: C.muted }}>{open ? "▴" : "▾"}</span>
       </button>
       {open && (
@@ -350,8 +367,12 @@ export function SubNavDropdown({ sections, value, onChange, C, align = "right" }
               border: "none", borderRadius: "8px", padding: "9px 11px", minHeight: "44px", cursor: "pointer",
               textAlign: "left", fontFamily: MONO, fontSize: "0.6875rem", letterSpacing: "0.1em",
               textTransform: "uppercase", color: s.id === value ? C.text : C.text2,
+              gap: 8, justifyContent: "space-between",
             }}>
-              {s.label}
+              <span>{s.label}</span>
+              {badges && (badges[s.id] || 0) > 0 && (
+                <span aria-label={`${badges[s.id]} unread`} style={badgeStyle}>{fmtCount(badges[s.id])}</span>
+              )}
             </button>
           ))}
         </div>
@@ -909,7 +930,7 @@ export function CelebrationOverlay({ C, kind, streakCount, tradeStats, onDismiss
             <div style={{ position: "absolute", top: 0, left: 0, width: "40%", height: "100%", background: "rgba(255,255,255,0.45)", animation: "kSheen 2.8s linear infinite" }} />
           </div>
           <div style={{ fontFamily: DISPLAY, fontSize: "1.625rem", fontWeight: 600, color: C.text, letterSpacing: "-0.02em", position: "relative" }}>You're in.</div>
-          <div style={{ fontSize: "0.8125rem", color: C.text2, maxWidth: 270, lineHeight: 1.5, position: "relative" }}>Auto-import, unlimited circles, prop firm tracker, and Kōda AI are now active.</div>
+          <div style={{ fontSize: "0.8125rem", color: C.text2, maxWidth: 270, lineHeight: 1.5, position: "relative" }}>Multi-account tracking, unlimited circles, advanced analytics, and Kōda AI are now active.</div>
           <button onClick={onDismiss} style={{ marginTop: 8, padding: "12px 28px", borderRadius: 999, background: C.text, color: C.bg, border: "none", fontFamily: MONO, fontSize: "0.6875rem", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase" as const, cursor: "pointer", position: "relative" }}>Start trading →</button>
         </div>
       )}

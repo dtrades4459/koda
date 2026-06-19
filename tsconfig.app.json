@@ -26,6 +26,7 @@
   },
   "include": ["src"],
   "exclude": [
-    "src/lib/csvParser.integration.test.ts"
+    "src/lib/csvParser.integration.test.ts",
+    "src/lib/tradovatePerformance.integration.test.ts"
   ]
 }
