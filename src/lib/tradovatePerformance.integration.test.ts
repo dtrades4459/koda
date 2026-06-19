@@ -13,7 +13,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "fs";
 import { join } from "path";
-import { parseCSV, autoDetectMapping } from "./csvParser";
+import { parseCSV, autoDetectMapping, detectBroker } from "./csvParser";
 import { rowToTrade, type RowContext } from "./rowToTrade";
 
 const csv = readFileSync(
@@ -28,6 +28,23 @@ const trades = rows
   .filter((t): t is NonNullable<typeof t> => t !== null);
 
 describe("Tradovate Performance export — real upload", () => {
+  it("is detected as the tradovate_performance broker preset", () => {
+    expect(detectBroker(headers)).toBe("tradovate_performance");
+  });
+
+  it("infers Short on row 1 from buy/sell timestamp order (no Side column)", () => {
+    // The Performance export has no direction column. The preset infers it from
+    // boughtTimestamp vs soldTimestamp. Row 1: sold 03:03:02 BEFORE bought
+    // 03:03:47 → entered short. (Sold 4202.1, bought back 4203.3 → -$12, checks out.)
+    const ctxBias: RowContext = {
+      decimalSeparator: "auto",
+      biasInferenceColumns: { buyTime: "boughtTimestamp", sellTime: "soldTimestamp" },
+    };
+    const t = rowToTrade(rows[0], mapping, "", "us", "personal", ctxBias)!;
+    expect(t.bias).toBe("Bearish");
+    expect(t.direction).toBe("Short");
+  });
+
   it("auto-maps the lowercase Performance columns", () => {
     expect(mapping.pair).toBe("symbol");
     expect(mapping.date).toBe("boughtTimestamp");

@@ -143,6 +143,8 @@ export function detectBroker(headers: string[]): string | null {
   if (has([/net.*p.?l/i, /buy.*fill.*price/i, /sell.*fill.*price/i])) return "rithmic";
   if (h.has("net p&l") || h.has("buy fill price") || h.has("buy fill time")) return "rithmic";
   if (h.has("net p&l") && (h.has("entry date/time") || h.has("entry time")) && h.has("buy/sell")) return "rithmic";
+  // Tradovate "Performance" export (lowercase cols, separate bought/sold fills)
+  if (h.has("boughttimestamp") && h.has("soldtimestamp") && h.has("pnl")) return "tradovate_performance";
   // Tradovate
   if ((h.has("b/s") || h.has("buy time")) && (h.has("p&l") || h.has("p / l"))) return "tradovate";
   // TradingView Strategy Tester — Entry/Exit paired rows, no Symbol column
