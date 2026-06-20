@@ -1513,6 +1513,7 @@ export function TradingCircles({
                         trade={item.data}
                         myCode={getMyCode()}
                         C={C}
+                        annotation={annotations[item.data.id] ?? null}
                         onReact={async (id, emoji) => {
                           await reactToSharedTrade(id, emoji, {
                             authorCode: item.data.authorCode,

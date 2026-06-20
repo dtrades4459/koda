@@ -1,5 +1,6 @@
 // src/components/SharedTradeCard.tsx
 import type { SharedTrade } from "../types";
+import type { TradeAnnotation } from "../data/tradeAnnotations";
 import { MONO } from "../shared";
 import type { Theme } from "../theme";
 import { SignedImg } from "./SignedImg";
@@ -11,9 +12,11 @@ interface Props {
   myCode: string;
   C: Theme;
   onReact: (tradeId: string, emoji: string) => void;
+  /** Read-only mentor annotation on this shared trade, if any (Mentor Mode). */
+  annotation?: TradeAnnotation | null;
 }
 
-export function SharedTradeCard({ trade, myCode, C, onReact }: Props) {
+export function SharedTradeCard({ trade, myCode, C, onReact, annotation }: Props) {
   const isWin = trade.outcome === "win";
   const isLoss = trade.outcome === "loss";
   const borderLeft = isWin ? "2px solid #4ade80" : isLoss ? "2px solid #f87171" : `1px solid ${C.border}`;
@@ -86,6 +89,18 @@ export function SharedTradeCard({ trade, myCode, C, onReact }: Props) {
           <SignedImg src={trade.screenshot} alt="trade screenshot" style={{ width: "100%", borderRadius: 7, maxHeight: 200, objectFit: "cover" }} />
         )}
       </div>
+
+      {/* Mentor annotation (read-only — editing happens in the dashboard) */}
+      {annotation && (annotation.note || annotation.grade) && (
+        <div style={{ margin: "0 13px 10px", padding: "8px 10px", borderRadius: 8, background: C.dim, border: `1px solid ${C.border2}` }}>
+          <div style={{ fontFamily: MONO, fontSize: "0.5625rem", color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 4 }}>
+            Mentor note{annotation.grade ? ` · ${annotation.grade}` : ""}
+          </div>
+          {annotation.note && (
+            <div style={{ fontSize: "0.75rem", color: C.text2, lineHeight: 1.5 }}>{annotation.note}</div>
+          )}
+        </div>
+      )}
 
       {/* Reaction bar */}
       <div style={{ padding: "6px 13px 10px", display: "flex", gap: 10, borderTop: `1px solid ${C.border}` }}>
