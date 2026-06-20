@@ -14,9 +14,11 @@ import { isFlagOn } from "./lib/flags";
 import { markChatRead } from "./data/chatReads";
 import { useUnreadCircles } from "./hooks/useUnreadCircles";
 import { createChallenge, fetchActiveChallenge, fetchTrophies } from "./data/circlesChallenges";
-import { fetchSharedTrades, reactToSharedTrade, rowToSharedTrade } from "./data/circlesSharedTrades";
+import { fetchSharedTrades, reactToSharedTrade, rowToSharedTrade, shareAllTrades } from "./data/circlesSharedTrades";
 import { SharedTradeCard } from "./components/SharedTradeCard";
-import type { Circle, CircleChallenge, ChallengeResult, FeedItem, CircleMessage, CircleMember, Profile } from "./types";
+import { isMentorCircle } from "./lib/mentorCircle";
+import { storage } from "./lib/storage";
+import type { Circle, CircleChallenge, ChallengeResult, FeedItem, CircleMessage, CircleMember, Profile, Trade } from "./types";
 import type { Theme } from "./theme";
 
 interface LeaderboardEntry {
@@ -173,6 +175,7 @@ export function TradingCircles({
   const [challengeCreating, setChallengeCreating] = useState(false);
   const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
   const [feedLoading, setFeedLoading] = useState(false);
+  const [sharingAll, setSharingAll] = useState(false);
   const feedBottomRef = useRef<HTMLDivElement>(null);
   const [showLeaveSheet, setShowLeaveSheet] = useState(false);
   const { perCircle: unread, refresh: refreshUnread } = useUnreadCircles(
@@ -1444,6 +1447,31 @@ export function TradingCircles({
             {/* ── FEED TAB ── */}
             {circleTab === "feed" && (
               <div style={{ paddingBottom: 90, display: "flex", flexDirection: "column", gap: 8 }}>
+                {activeCircle && isMentorCircle(activeCircle) && isFlagOn("mentorMode") && (
+                  <button
+                    disabled={sharingAll}
+                    onClick={async () => {
+                      if (!activeCircle) return;
+                      setSharingAll(true);
+                      try {
+                        const raw = await storage.get("koda_trades");
+                        const trades: Trade[] = raw?.value ? JSON.parse(raw.value) : [];
+                        if (!trades.length) { showToast("No trades to share yet"); return; }
+                        const author = { name: profile.name || "Trader", handle: profile.handle || "", avatar: profile.avatar || "", code: getMyCode() };
+                        const t = await shareAllTrades(activeCircle.code, author, trades);
+                        showToast(
+                          t.ok
+                            ? `Shared ${t.ok}${t.duplicate ? `, ${t.duplicate} already shared` : ""}`
+                            : t.blocked ? "Trade sharing is off for this circle" : "Nothing to share",
+                        );
+                      } catch { showToast("Couldn't share — try again"); }
+                      finally { setSharingAll(false); }
+                    }}
+                    style={{ background: "transparent", border: `1px solid ${C.border2}`, borderRadius: 10, padding: "9px 14px", cursor: sharingAll ? "default" : "pointer", fontFamily: MONO, fontSize: "0.6875rem", letterSpacing: "0.06em", color: C.text, textTransform: "uppercase", opacity: sharingAll ? 0.6 : 1 }}
+                  >
+                    {sharingAll ? "Sharing…" : "⇪ Share all my trades to this cohort"}
+                  </button>
+                )}
                 {feedLoading && (
                   <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                     {[0,1,2].map(i => (

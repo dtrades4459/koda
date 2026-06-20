@@ -6,6 +6,7 @@ import { uidForCode } from "./follows";
 import { notifyReaction } from "./notifications";
 import { readVisibility } from "../lib/circleVisibility";
 import { postShot, preShot } from "../lib/tradeScreenshots";
+import { tallyShareResults, type ShareOutcome, type ShareTally } from "./shareTally";
 
 export async function shareTrade(
   circleCode: string,
@@ -120,4 +121,18 @@ export function rowToSharedTrade(row: Record<string, unknown>): SharedTrade {
     sharedAt: row.shared_at as string,
     reactions: (row.reactions ?? {}) as Record<string, string[]>,
   };
+}
+
+/** Bulk-share every trade into a cohort. Sequential to respect the per-circle
+ *  tradeLogs gate inside shareTrade and avoid hammering the DB on 8GB boxes. */
+export async function shareAllTrades(
+  circleCode: string,
+  author: Pick<Profile, "name" | "handle" | "avatar" | "code">,
+  trades: Trade[],
+): Promise<ShareTally> {
+  const results: ShareOutcome[] = [];
+  for (const trade of trades) {
+    results.push(await shareTrade(circleCode, author, trade));
+  }
+  return tallyShareResults(results);
 }
