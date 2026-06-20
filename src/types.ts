@@ -123,6 +123,10 @@ export interface CircleMember {
 export interface Circle {
   metric?: "dollar" | "r" | "winrate" | "trades" | "avgr";
   emoji?: string;
+  /** "mentor" marks a coaching cohort — unlocks Mentor Mode UI + annotations.
+   *  Absent on ordinary circles. Lives in the KV meta blob; mirrored to the
+   *  circles table column for eventual server-side checks. */
+  type?: "mentor";
   /** Metrics members must share (consented at join). The comp circle is
    *  hardcoded in circleVisibility.requiredMetricsFor regardless of meta. */
   requiredMetrics?: ("pnl" | "winRate" | "discipline" | "avgRR")[];
