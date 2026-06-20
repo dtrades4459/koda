@@ -1297,7 +1297,7 @@ export function TradingCircles({
                       { id: "chat", label: "Chat" },
                       { id: "members", label: "Members" },
                       { id: "trophies", label: "Trophies" },
-                      ...(canInstruct ? [{ id: "instructor", label: "Coach" }] : []),
+                      ...(canInstruct ? [{ id: "instructor", label: mentorDrill ? "Mentor" : "Coach" }] : []),
                     ];
                 const handleTabChange = (t: typeof circleTab) => {
                   setCircleTab(t);
@@ -1340,7 +1340,7 @@ export function TradingCircles({
                           gap: 6,
                         }}
                       >
-                        <span>{t === "leaderboard" ? "Board" : t === "instructor" ? "Coach" : t.charAt(0).toUpperCase() + t.slice(1)}</span>
+                        <span>{t === "leaderboard" ? "Board" : t === "instructor" ? (mentorDrill ? "Mentor" : "Coach") : t.charAt(0).toUpperCase() + t.slice(1)}</span>
                         {t === "chat" && activeCircle && unread[activeCircle.code] > 0 && (
                           <span
                             aria-label={`${unread[activeCircle.code]} unread`}
@@ -1952,7 +1952,9 @@ export function TradingCircles({
             {circleTab === "instructor" && canInstruct && roster && (
               <div style={{ display: "flex", flexDirection: "column", gap: 16, paddingTop: 4, paddingBottom: 90 }}>
                 <div style={{ fontFamily: BODY, fontSize: "0.75rem", color: C.muted, lineHeight: 1.5 }}>
-                  Your members ranked by discipline, not profit. No P&L here by design — this is about who’s following their rules.
+                  {mentorDrill
+                    ? "Your mentees ranked by discipline. Tap a mentee to review and annotate the trades they’ve shared with this cohort."
+                    : "Your members ranked by discipline, not profit. No P&L here by design — this is about who’s following their rules."}
                 </div>
 
                 {/* Summary strip */}
