@@ -14,8 +14,11 @@ interface PanelTheme {
   text2: string;
   muted: string;
   border: string;
+  border2: string;
   panel: string;
+  bg: string;
   surface?: string;
+  accent?: string;
 }
 
 interface Props {

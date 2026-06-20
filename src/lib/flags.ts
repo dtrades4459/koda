@@ -86,6 +86,20 @@ function persistOff(s: Set<string>): void {
   try { localStorage.setItem(STORAGE_KEY_OFF, Array.from(s).join(",")); } catch { /* noop */ }
 }
 
+// Enable flags via URL — for mobile / no-console testing: ?flags=mentorMode,foo
+// Runs in ALL builds; persists to localStorage so it sticks after the param is
+// gone. The only way to flip a dark-launched flag on a phone (no devtools).
+if (typeof window !== "undefined") {
+  try {
+    const fromUrl = new URLSearchParams(window.location.search).get("flags");
+    if (fromUrl) {
+      for (const f of fromUrl.split(",").map(s => s.trim()).filter(Boolean)) {
+        enableFlag(f);
+      }
+    }
+  } catch { /* noop */ }
+}
+
 // Expose on window so you can flip flags from devtools — dev/localhost only.
 // In production builds Vite dead-code-eliminates this entire block.
 if (import.meta.env.DEV && typeof window !== "undefined") {
