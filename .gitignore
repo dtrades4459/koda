@@ -48,3 +48,12 @@ dev-dist/
 
 # Investor materials — keep OUT of the public repo
 docs/investors/
+
+# Local design-audit artifacts (QA screenshots)
+.design-audit-*/
+
+# Internal docs — keep OUT of the public repo
+SECURITY_AUDIT.md
+CSV_CHECKLIST.md
+docs/marketing/
+docs/strategy/
