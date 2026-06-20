@@ -17,6 +17,7 @@ import { createChallenge, fetchActiveChallenge, fetchTrophies } from "./data/cir
 import { fetchSharedTrades, reactToSharedTrade, rowToSharedTrade, shareAllTrades } from "./data/circlesSharedTrades";
 import { SharedTradeCard } from "./components/SharedTradeCard";
 import { isMentorCircle } from "./lib/mentorCircle";
+import { isFounder } from "./lib/team";
 import { StudentTradesPanel } from "./mentor/StudentTradesPanel";
 import { fetchAnnotationsForCircle, type TradeAnnotation } from "./data/tradeAnnotations";
 import { storage } from "./lib/storage";
@@ -774,9 +775,13 @@ export function TradingCircles({
   // Promote/kick stay owner-only; moderators get the dashboard read only.
   const canManageMembers = !!activeCircle && (activeCircle.isOwner || myRole === "owner");
   const roster = canInstruct ? buildRoster(leaderboard as LeaderboardEntry[]) : null;
-  // Mentor Mode: clicking a roster row drills into that student's shared trades
-  // for annotation, instead of opening their public profile.
-  const mentorDrill = !!activeCircle && isMentorCircle(activeCircle) && isFlagOn("mentorMode");
+  // Mentor Mode AUTHORING is locked to founder accounts — the ?flags=mentorMode
+  // URL alone is not enough, so a random user who enables the flag cannot create
+  // a cohort or annotate. (Student-side display stays flag-only; harmless,
+  // because only a founder can create the mentor circle a student would see it in.)
+  const canAuthorMentor = isFlagOn("mentorMode") && isFounder(profile.uid);
+  // Clicking a roster row drills into that student's shared trades for annotation.
+  const mentorDrill = !!activeCircle && isMentorCircle(activeCircle) && canAuthorMentor;
 
   function downloadRosterCsv() {
     if (!roster || !activeCircle) return;
@@ -1120,7 +1125,7 @@ export function TradingCircles({
                 : "Leave empty to let members choose what they share. Turn on a metric to require it from everyone (e.g. a coach tracking discipline)."}
             </div>
           </div>
-          {isFlagOn("mentorMode") && (
+          {canAuthorMentor && (
             <div>
               <button onClick={() => setCircleForm(f => ({ ...f, isMentor: !f.isMentor }))}
                 style={{ background: circleForm.isMentor ? C.text : "transparent", border: `1px solid ${circleForm.isMentor ? C.text : C.border2}`, borderRadius: "999px", padding: "7px 14px", cursor: "pointer", fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.08em", color: circleForm.isMentor ? C.bg : C.muted, textTransform: "uppercase", transition: "all 100ms" }}>
