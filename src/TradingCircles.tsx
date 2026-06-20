@@ -10,6 +10,7 @@ import { buildDisciplineCard } from "./lib/disciplineCard";
 import { shareDisciplineCard } from "./lib/renderDisciplineCard";
 import { phCapture } from "./lib/posthog";
 import { readVisibility, saveCircleVisibility, requiredMetricsFor, type CircleVisibility } from "./lib/circleVisibility";
+import { isFlagOn } from "./lib/flags";
 import { markChatRead } from "./data/chatReads";
 import { useUnreadCircles } from "./hooks/useUnreadCircles";
 import { createChallenge, fetchActiveChallenge, fetchTrophies } from "./data/circlesChallenges";
@@ -51,6 +52,7 @@ interface CircleFormShape {
   emoji: string;
   metric: string;
   requiredMetrics?: ("pnl" | "winRate" | "discipline" | "avgRR")[];
+  isMentor?: boolean;
 }
 
 export interface TradingCirclesProps {
@@ -1097,6 +1099,17 @@ export function TradingCircles({
                 : "Leave empty to let members choose what they share. Turn on a metric to require it from everyone (e.g. a coach tracking discipline)."}
             </div>
           </div>
+          {isFlagOn("mentorMode") && (
+            <div>
+              <button onClick={() => setCircleForm(f => ({ ...f, isMentor: !f.isMentor }))}
+                style={{ background: circleForm.isMentor ? C.text : "transparent", border: `1px solid ${circleForm.isMentor ? C.text : C.border2}`, borderRadius: "999px", padding: "7px 14px", cursor: "pointer", fontFamily: MONO, fontSize: "0.625rem", letterSpacing: "0.08em", color: circleForm.isMentor ? C.bg : C.muted, textTransform: "uppercase", transition: "all 100ms" }}>
+                {circleForm.isMentor ? "✓ Mentor cohort" : "Mentor cohort"}
+              </button>
+              <div style={{ fontFamily: BODY, fontSize: "0.75rem", color: C.muted, marginTop: "8px", lineHeight: 1.55 }}>
+                Unlocks the coach dashboard + trade annotations for this cohort.
+              </div>
+            </div>
+          )}
           <button onClick={createCircle} disabled={isCreatingCircle || !circleForm.name.trim()} style={{ ...pillPrimary(!!circleForm.name.trim() && !isCreatingCircle), marginTop: "8px" }}>
             {isCreatingCircle ? "Creating…" : "Create circle →"}
           </button>

@@ -73,6 +73,8 @@ export interface CircleForm {
   metric: string;
   /** Metrics members must share — written to the circle meta as requiredMetrics. */
   requiredMetrics?: ("pnl" | "winRate" | "discipline" | "avgRR")[];
+  /** When true, the created circle is a mentor cohort (meta type:"mentor"). */
+  isMentor?: boolean;
 }
 
 /** Snapshot of the computed trade stats needed by publishToCircle. */
@@ -139,7 +141,7 @@ export function useCircles({
   const [circlesView, setCirclesView] = useState<string>("browse");
   const [activeCircle, setActiveCircle] = useState<Circle | null>(null);
   const [circleForm, setCircleForm] = useState<CircleForm>({
-    name: "", description: "", strategy: "", privacy: "public", emoji: "◆", metric: "dollar", requiredMetrics: [],
+    name: "", description: "", strategy: "", privacy: "public", emoji: "◆", metric: "dollar", requiredMetrics: [], isMentor: false,
   });
   const [circleJoinCode, setCircleJoinCode] = useState<string>("");
   const [circleMsg, setCircleMsg] = useState<string>("");
@@ -410,6 +412,7 @@ export function useCircles({
         ...(circleForm.requiredMetrics && circleForm.requiredMetrics.length
           ? { requiredMetrics: circleForm.requiredMetrics }
           : {}),
+        ...(circleForm.isMentor ? { type: "mentor" as const } : {}),
         createdBy: profileRef.current.name || "Trader",
         createdAt: new Date().toISOString(),
       };
@@ -418,7 +421,7 @@ export function useCircles({
       await storage.set(`koda_circle_member_${code}_${me.code}`, JSON.stringify(me), true);
       const updated = [...myCirclesRef.current, { ...circle, members: [me], isOwner: true }];
       await saveMyCircles(updated as Circle[]);
-      setCircleForm({ name: "", description: "", strategy: "", privacy: "public", emoji: "◆", metric: "dollar", requiredMetrics: [] });
+      setCircleForm({ name: "", description: "", strategy: "", privacy: "public", emoji: "◆", metric: "dollar", requiredMetrics: [], isMentor: false });
       setCirclesView("browse");
       showToast("Circle created");
     } catch {
