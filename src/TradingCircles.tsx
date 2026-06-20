@@ -17,6 +17,8 @@ import { createChallenge, fetchActiveChallenge, fetchTrophies } from "./data/cir
 import { fetchSharedTrades, reactToSharedTrade, rowToSharedTrade, shareAllTrades } from "./data/circlesSharedTrades";
 import { SharedTradeCard } from "./components/SharedTradeCard";
 import { isMentorCircle } from "./lib/mentorCircle";
+import { StudentTradesPanel } from "./mentor/StudentTradesPanel";
+import { fetchAnnotationsForCircle, type TradeAnnotation } from "./data/tradeAnnotations";
 import { storage } from "./lib/storage";
 import type { Circle, CircleChallenge, ChallengeResult, FeedItem, CircleMessage, CircleMember, Profile, Trade } from "./types";
 import type { Theme } from "./theme";
@@ -176,6 +178,8 @@ export function TradingCircles({
   const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
   const [feedLoading, setFeedLoading] = useState(false);
   const [sharingAll, setSharingAll] = useState(false);
+  const [annotations, setAnnotations] = useState<Record<string, TradeAnnotation>>({});
+  const [selectedStudent, setSelectedStudent] = useState<{ code: string; name: string } | null>(null);
   const feedBottomRef = useRef<HTMLDivElement>(null);
   const [showLeaveSheet, setShowLeaveSheet] = useState(false);
   const { perCircle: unread, refresh: refreshUnread } = useUnreadCircles(
@@ -626,6 +630,17 @@ export function TradingCircles({
     return () => { alive = false; };
   }, [circlesView, activeCircle, profile.uid, readCircleMods]);
 
+  // Mentor Mode: load trade annotations for the active mentor cohort. RLS limits
+  // what each viewer gets (owner: all; student: their own). Cleared on exit.
+  useEffect(() => {
+    if (circlesView !== "detail" || !activeCircle || !isMentorCircle(activeCircle) || !isFlagOn("mentorMode")) {
+      setAnnotations({}); setSelectedStudent(null); return;
+    }
+    let alive = true;
+    fetchAnnotationsForCircle(activeCircle.code).then(a => { if (alive) setAnnotations(a); });
+    return () => { alive = false; };
+  }, [circlesView, activeCircle]);
+
   // Referee self-heal: a staff member's REFEREE badge comes from the staff flag
   // on their OWN published entry. Entries published before the staff logic (or
   // that simply haven't republished since — no new trades) are stale and show
@@ -759,6 +774,9 @@ export function TradingCircles({
   // Promote/kick stay owner-only; moderators get the dashboard read only.
   const canManageMembers = !!activeCircle && (activeCircle.isOwner || myRole === "owner");
   const roster = canInstruct ? buildRoster(leaderboard as LeaderboardEntry[]) : null;
+  // Mentor Mode: clicking a roster row drills into that student's shared trades
+  // for annotation, instead of opening their public profile.
+  const mentorDrill = !!activeCircle && isMentorCircle(activeCircle) && isFlagOn("mentorMode");
 
   function downloadRosterCsv() {
     if (!roster || !activeCircle) return;
@@ -1970,8 +1988,11 @@ export function TradingCircles({
                           <span style={{ fontFamily: MONO, fontSize: "0.6875rem", color: C.muted }}>{r.disciplineScore == null ? "—" : i + 1}</span>
                           <div style={{ minWidth: 0 }}>
                             <button
-                              onClick={() => r.handle && openProfile?.(r.handle)}
-                              style={{ background: "none", border: "none", padding: 0, textAlign: "left", cursor: r.handle ? "pointer" : "default", maxWidth: "100%" }}
+                              onClick={() => {
+                                if (mentorDrill) setSelectedStudent({ code: r.memberCode, name: r.name });
+                                else if (r.handle) openProfile?.(r.handle);
+                              }}
+                              style={{ background: "none", border: "none", padding: 0, textAlign: "left", cursor: (mentorDrill || r.handle) ? "pointer" : "default", maxWidth: "100%" }}
                             >
                               <div style={{ fontFamily: BODY, fontSize: "0.8125rem", color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</div>
                             </button>
@@ -1994,6 +2015,23 @@ export function TradingCircles({
                       style={{ ...pillGhost, alignSelf: "flex-end", marginTop: 14, padding: "8px 16px" }}>
                       ↓ EXPORT CSV
                     </button>
+                  </div>
+                )}
+                {mentorDrill && selectedStudent && activeCircle && (
+                  <div style={{ marginTop: 16, borderTop: `1px solid ${C.border}`, paddingTop: 16 }}>
+                    <button
+                      onClick={() => setSelectedStudent(null)}
+                      style={{ ...pillGhost, marginBottom: 12, padding: "6px 14px" }}>
+                      ← Back to roster
+                    </button>
+                    <StudentTradesPanel
+                      circleCode={activeCircle.code}
+                      student={selectedStudent}
+                      annotations={annotations}
+                      onSaved={() => { void fetchAnnotationsForCircle(activeCircle.code).then(setAnnotations); }}
+                      myUid={profile.uid ?? ""}
+                      C={C}
+                    />
                   </div>
                 )}
               </div>
